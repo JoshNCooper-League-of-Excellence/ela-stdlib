@@ -42,37 +42,9 @@
   #foreign memmove :: fn(dest: void*, src: void*, nbytes: s64) -> s32;
   #foreign memcpy :: fn(dest: void*, src: void*, n: u64) -> void*;
   #foreign memset :: fn(dest: void*, c: s32, n: u64) -> void*;
-}
-
-strncmp :: fn(s: u8*, str2: u8*, len: s32) -> s32 {
-  for i in 0..len {
-    if s[i] != str2[i] {
-      return s[i] - str2[i];
-    }
-    if s[i] == '\0' {
-      return 0;
-    }
-  }
-  return 0;
-}
-
-strcmp :: fn(str1: u8*, str2: u8*) -> s32 {
-  while *str1 && *str1 == *str2 {
-    str1++;
-    str2++;
-  }
-  return *str1 - *str2;
-}
-
-strlen :: fn(string: u8*) -> u32 {
-  if !string then return 0;
-  if string[0] as u32 == '\0' then return 0;
-  i := 0;
-  while *string {
-    i++;
-    string++;
-  }
-  return i;
+  #foreign strncmp :: fn(s: u8*, str2: u8*, len: s32) -> s32;
+  #foreign strcmp :: fn(str1: u8*, str2: u8*) -> s32;
+  #foreign strlen :: fn(string: u8*) -> u32;
 }
 
 isalnum :: fn(c: s32) -> s32 {

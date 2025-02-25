@@ -72,7 +72,7 @@ impl String_Builder {
       offset += current.length;
       current = current.next;
     }
-    return {
+    return .{
       data: data,
       length: length,
     };

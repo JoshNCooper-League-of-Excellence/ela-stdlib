@@ -821,10 +821,10 @@ impl Vec4 {
     return self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w;
   }
   one :: fn() -> #self {
-    return { x: 1.0, y: 1.0, z: 1.0, w: 1.0 };
+    return .{ x: 1.0, y: 1.0, z: 1.0, w: 1.0 };
   }
   zero :: fn() -> #self {
-    return { x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
+    return .{ x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
   }
 }
 
@@ -850,17 +850,17 @@ impl Vec3 {
     return self.x * self.x + self.y * self.y + self.z * self.z;
   }
   one :: fn() -> #self {
-    return { x: 1.0, y: 1.0, z: 1.0 };
+    return .{ x: 1.0, y: 1.0, z: 1.0 };
   }
   zero :: fn() -> Vec3 {
-    return { x: 0.0, y: 0.0, z: 0.0 };
+    return .{ x: 0.0, y: 0.0, z: 0.0 };
   }
   normalize :: fn(self) -> #self {
     mag: f32 = sqrt(self.x * self.x + self.y * self.y + self.z * self.z) as f32;
-    return { x: self.x / mag, y: self.y / mag, z: self.z / mag };
+    return .{ x: self.x / mag, y: self.y / mag, z: self.z / mag };
   }
   cross :: fn(self, other: Vec3) -> Vec3 {
-    return {
+    return .{
       x: self.y * other.z - self.z * other.y,
       y: self.z * other.x - self.x * other.z,
       z: self.x * other.y - self.y * other.x,
@@ -873,28 +873,28 @@ impl Vec3 {
 
 impl Vec3 {
   add :: fn(self, other: Vec3) -> Vec3 {
-    return {
+    return .{
       x: self.x + other.x,
       y: self.y + other.y,
       z: self.z + other.z,
     };
   }
   sub :: fn(self, other: Vec3) -> Vec3 {
-    return {
+    return .{
       x: self.x - other.x,
       y: self.y - other.y,
       z: self.z - other.z,
     };
   }
   mul :: fn(self, scalar: f32) -> Vec3 {
-    return {
+    return .{
       x: self.x * scalar,
       y: self.y * scalar,
       z: self.z * scalar,
     };
   }
   div :: fn(self, scalar: f32) -> Vec3 {
-    return {
+    return .{
       x: self.x / scalar,
       y: self.y / scalar,
       z: self.z / scalar,
@@ -915,14 +915,14 @@ impl Vec2 {
     return self.x * self.x + self.y * self.y;
   }
   one :: fn() -> #self {
-    return { x: 1.0, y: 1.0 };
+    return .{ x: 1.0, y: 1.0 };
   }
   zero  :: fn() -> #self {
-    return { x: 0.0, y: 0.0 };
+    return .{ x: 0.0, y: 0.0 };
   }
   normalize :: fn(self*) -> #self {
     mag: f32 = sqrt(self.x * self.x + self.y * self.y) as f32;
-    return { x: self.x / mag, y: self.y / mag };
+    return .{ x: self.x / mag, y: self.y / mag };
   }
 }
 
@@ -962,7 +962,7 @@ impl Mat4 {
 
 
   zero :: fn() -> #self {
-    return {
+    return .{
       M00: 0.0, M01: 0.0, M02: 0.0, M03: 0.0,
       M10: 0.0, M11: 0.0, M12: 0.0, M13: 0.0,
       M20: 0.0, M21: 0.0, M22: 0.0, M23: 0.0,
@@ -1129,11 +1129,11 @@ impl Mat4 {
   }
 
   get_translation :: fn(self) -> Vec3 {
-    return { x: self.M03, y: self.M13, z: self.M23 };
+    return .{ x: self.M03, y: self.M13, z: self.M23 };
   }
 
   get_scale :: fn(self) -> Vec3 {
-    return {
+    return .{
       x: sqrt(self.M00 * self.M00 + self.M01 * self.M01 + self.M02 * self.M02) as f32,
       y: sqrt(self.M10 * self.M10 + self.M11 * self.M11 + self.M12 * self.M12) as f32,
       z: sqrt(self.M20 * self.M20 + self.M21 * self.M21 + self.M22 * self.M22) as f32,
@@ -1142,7 +1142,7 @@ impl Mat4 {
 
   get_rotation :: fn(self) -> Vec3 {
     scale := self.get_scale();
-    return {
+    return .{
       x: atan2(self.M21 / scale.z, self.M22 / scale.z) as f32,
       y: atan2(-self.M20 / scale.z, sqrt(self.M21 * self.M21 + self.M22 * self.M22) / scale.z) as f32,
       z: atan2(self.M10 / scale.y, self.M00 / scale.x) as f32,
@@ -1304,7 +1304,7 @@ Camera :: struct {
 
 impl Camera {
   new :: fn(up: Vec3, fov: f32, aspect, near, far) -> #self {
-    return {
+    return .{
       position: Vec3::zero(),
       target:   Vec3::zero(),
       up: up,
