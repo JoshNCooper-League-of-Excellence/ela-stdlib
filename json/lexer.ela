@@ -63,7 +63,7 @@ JsonLexer :: struct {
 
 impl JsonLexer {
   create :: fn(file: String, input: String) -> #self {
-    return {
+    return .{
       file: file,
       input: input,
     };

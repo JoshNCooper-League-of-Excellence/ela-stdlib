@@ -1,5 +1,11 @@
 // The standard allocator is only available when not in a freestanding environement.
-#ifndef FREESTANDING  {
+
+#ifdef FREESTANDING {
+  #def WAS_FREESTANDING;
+  #undef FREESTANDING;
+}
+ 
+#ifdef FREESTANDING  {
   mem_zero :: fn![T](ptr: T*, count: u64) {
     memset(ptr, 0, sizeof(T) * count);
   }
@@ -31,4 +37,9 @@
       return self;
     }
   }
+}
+
+#ifdef WAS_FREESTANDING {
+  #def FREESTANDING;
+  #undef WAS_FREESTANDING;
 }

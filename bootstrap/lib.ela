@@ -100,11 +100,11 @@ panic :: fn(msg: str) {
 
 impl As_Char_Slice for u32 {
   as_char_slice :: fn(self) -> Slice![u32] {
-    #static chars : char[2] = {
+    #static chars : char[2] = .[
       '\0', '\0'
-    };
+    ];
     chars[0] = self;
-    return {
+    return .{
       data: chars,
       length: 1,
     }
@@ -113,11 +113,11 @@ impl As_Char_Slice for u32 {
 
 impl As_Byte_Slice for u32 {
   as_byte_slice :: fn(self) -> Slice![u8] {
-    #static chars : u8[2] = {
+    #static chars : u8[2] = .[
       '\0', '\0'
-    };
+    ];
     chars[0] = self;
-    return {
+    return .{
       data: chars,
       length: 1,
     }
@@ -126,13 +126,13 @@ impl As_Byte_Slice for u32 {
 
 impl![_Ok, _Err] Result![_Ok, _Err] {
   Ok :: fn(v: _Ok) -> #self {
-    return {
+    return .{
       index: RESULT_IS_OK,
       ok: v,
     };
   }
   Err :: fn(v: _Err) -> #self {
-    return {
+    return .{
       index: RESULT_IS_ERR,
       err: v
     }
@@ -154,13 +154,13 @@ impl![_Some] Option![_Some] {
     }
   }
   Some :: fn(v: _Some) -> #self {
-    return {
+    return .{
       s: v,
       is_some: true
     };
   }
   None :: fn() -> #self {
-    return {
+    return .{
       is_some: false
     }
   }

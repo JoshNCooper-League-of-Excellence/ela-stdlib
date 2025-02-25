@@ -59,7 +59,7 @@ impl File {
 
   read_all :: fn(filename: str) -> (String, FileError) {
     file := fopen(filename.data, "r"c);
-    if !file then return ({}, "Couldn't open file");
+    if !file then return (.{}, "Couldn't open file");
     string: String;
     string.resize(1024);
     while {
@@ -68,12 +68,12 @@ impl File {
       string.push(c);
     }
     fclose(file);
-    return (string, {});
+    return (string, .{});
   }
   
   read_bytes :: fn(filename: str) -> (u8[], FileError) {
     file := fopen(filename.data, "r"c);
-    if !file then return ({}, "Couldn't open file");
+    if !file then return (.{}, "Couldn't open file");
     
     bytes: u8[];
     bytes.resize(1024);
@@ -85,7 +85,7 @@ impl File {
     }
     
     fclose(file);
-    return (bytes, {});
+    return (bytes, .{});
   }
   
   write_all :: fn(filename: str, data: str) -> FileError {
@@ -95,7 +95,7 @@ impl File {
     }
     fwrite(data.data, sizeof(u8), data.length, file);
     fclose(file);
-    return {};
+    return .{};
   }
 
   // Used to convert our flag enum to a str for fopen/fclose etc.
@@ -108,7 +108,7 @@ impl File {
       return "rw";
     } else {
       panic("unexpected file flags passed to a file api function");
-      return {};
+      return .{};
     }
   }
 }
