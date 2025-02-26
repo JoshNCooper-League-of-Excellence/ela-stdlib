@@ -30,7 +30,7 @@ impl Directory {
 
     if !dir then return .{ 
       path: String::from(path),
-      files : {}
+      files : .{}
     };
 
     files: List![String];
