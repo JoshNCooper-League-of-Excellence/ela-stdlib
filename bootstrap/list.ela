@@ -129,8 +129,8 @@ impl![T] Iterable![T] for List![T] {
 }
 
 impl![T] List![T] {
-  subscript :: fn(self*, idx: s64) -> T {
-    return self.data[idx];
+  subscript :: fn(self*, idx: s64) -> T* {
+    return &self.data[idx];
   }
 }
 

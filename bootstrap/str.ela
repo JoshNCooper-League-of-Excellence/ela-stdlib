@@ -15,8 +15,8 @@ impl str {
     return .{};
   }
 
-  subscript :: fn(self*, idx: s64) -> u8 {
-    return self.data[idx];
+  subscript :: fn(self*, idx: s64) -> u8* {
+    return &self.data[idx];
   }
   
   starts_with :: fn(self*, prefix: u8*) -> bool {
