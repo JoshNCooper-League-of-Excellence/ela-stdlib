@@ -1,0 +1,318 @@
+#c_flags " -lglfw "
+#alias GLFWglproc :: fn*() -> void;
+#alias GLFWvkproc :: fn*() -> void;
+
+GLFWmonitor :: struct;
+GLFWwindow :: struct;
+GLFWcursor :: struct;
+
+#alias GLFWallocatefun :: fn*(u64, void *) -> void *;
+#alias GLFWreallocatefun :: fn*(void *, u64, void *) -> void *;
+#alias GLFWdeallocatefun :: fn*(void *, void *) -> void;
+#alias GLFWerrorfun :: fn*(s32, u8 *) -> void;
+#alias GLFWwindowposfun :: fn*(GLFWwindow *, s32, s32) -> void;
+#alias GLFWwindowsizefun :: fn*(GLFWwindow *, s32, s32) -> void;
+#alias GLFWwindowclosefun :: fn*(GLFWwindow *) -> void;
+#alias GLFWwindowrefreshfun :: fn*(GLFWwindow *) -> void;
+#alias GLFWwindowfocusfun :: fn*(GLFWwindow *, s32) -> void;
+#alias GLFWwindowiconifyfun :: fn*(GLFWwindow *, s32) -> void;
+#alias GLFWwindowmaximizefun :: fn*(GLFWwindow *, s32) -> void;
+#alias GLFWframebuffersizefun :: fn*(GLFWwindow *, s32, s32) -> void;
+#alias GLFWwindowcontentscalefun :: fn*(GLFWwindow *, f32, f32) -> void;
+#alias GLFWmousebuttonfun :: fn*(GLFWwindow *, s32, s32, s32) -> void;
+#alias GLFWcursorposfun :: fn*(GLFWwindow *, f64, f64) -> void;
+#alias GLFWcursorenterfun :: fn*(GLFWwindow *, s32) -> void;
+#alias GLFWscrollfun :: fn*(GLFWwindow *, f64, f64) -> void;
+#alias GLFWkeyfun :: fn*(GLFWwindow *, s32, s32, s32, s32) -> void;
+#alias GLFWcharfun :: fn*(GLFWwindow *, u32) -> void;
+#alias GLFWcharmodsfun :: fn*(GLFWwindow *, u32, s32) -> void;
+#alias GLFWdropfun :: fn*(GLFWwindow *, s32, char *[]) -> void;
+#alias GLFWmonitorfun :: fn*(GLFWmonitor *, s32) -> void;
+#alias GLFWjoystickfun :: fn*(s32, s32) -> void;
+GLFWvidmode :: struct {
+  width: s32,
+  height: s32,
+  redBits: s32,
+  greenBits: s32,
+  blueBits: s32,
+  refreshRate: s32,
+};
+GLFWgammaramp :: struct {
+  red: u16 *,
+  green: u16 *,
+  blue: u16 *,
+  size: u32,
+};
+GLFWimage :: struct {
+  width: s32,
+  height: s32,
+  pixels: u8 *,
+};
+GLFWgamepadstate :: struct {
+  buttons: u8[15],
+  axes: f32[6],
+};
+GLFWallocator :: struct {
+  allocate: GLFWallocatefun,
+  reallocate: GLFWreallocatefun,
+  deallocate: GLFWdeallocatefun,
+  user: void *,
+};
+#foreign glfwInit :: fn() -> s32;
+#foreign glfwTerminate :: fn() -> void;
+#foreign glfwInitHint :: fn(hint: s32, value: s32) -> void;
+#foreign glfwInitAllocator :: fn(allocator: GLFWallocator *) -> void;
+#foreign glfwGetVersion :: fn(major: s32 *, minor: s32 *, rev: s32 *) -> void;
+#foreign glfwGetVersionString :: fn() -> u8 *;
+#foreign glfwGetError :: fn(description: u8 * *) -> s32;
+#foreign glfwSetErrorCallback :: fn(callback: GLFWerrorfun) -> GLFWerrorfun;
+#foreign glfwGetPlatform :: fn() -> s32;
+#foreign glfwPlatformSupported :: fn(platform: s32) -> s32;
+#foreign glfwGetMonitors :: fn(count: s32 *) -> GLFWmonitor * *;
+#foreign glfwGetPrimaryMonitor :: fn() -> GLFWmonitor *;
+#foreign glfwGetMonitorPos :: fn(monitor: GLFWmonitor *, xpos: s32 *, ypos: s32 *) -> void;
+#foreign glfwGetMonitorWorkarea :: fn(monitor: GLFWmonitor *, xpos: s32 *, ypos: s32 *, width: s32 *, height: s32 *) -> void;
+#foreign glfwGetMonitorPhysicalSize :: fn(monitor: GLFWmonitor *, widthMM: s32 *, heightMM: s32 *) -> void;
+#foreign glfwGetMonitorContentScale :: fn(monitor: GLFWmonitor *, xscale: f32 *, yscale: f32 *) -> void;
+#foreign glfwGetMonitorName :: fn(monitor: GLFWmonitor *) -> u8 *;
+#foreign glfwSetMonitorUserPointer :: fn(monitor: GLFWmonitor *, pointer: void *) -> void;
+#foreign glfwGetMonitorUserPointer :: fn(monitor: GLFWmonitor *) -> void *;
+#foreign glfwSetMonitorCallback :: fn(callback: GLFWmonitorfun) -> GLFWmonitorfun;
+#foreign glfwGetVideoModes :: fn(monitor: GLFWmonitor *, count: s32 *) -> GLFWvidmode *;
+#foreign glfwGetVideoMode :: fn(monitor: GLFWmonitor *) -> GLFWvidmode *;
+#foreign glfwSetGamma :: fn(monitor: GLFWmonitor *, gamma: f32) -> void;
+#foreign glfwGetGammaRamp :: fn(monitor: GLFWmonitor *) -> GLFWgammaramp *;
+#foreign glfwSetGammaRamp :: fn(monitor: GLFWmonitor *, ramp: GLFWgammaramp *) -> void;
+#foreign glfwDefaultWindowHints :: fn() -> void;
+#foreign glfwWindowHint :: fn(hint: s32, value: s32) -> void;
+#foreign glfwWindowHintString :: fn(hint: s32, value: u8 *) -> void;
+#foreign glfwCreateWindow :: fn(width: s32, height: s32, title: u8 *, monitor: GLFWmonitor *, share: GLFWwindow *) -> GLFWwindow *;
+#foreign glfwDestroyWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwWindowShouldClose :: fn(window: GLFWwindow *) -> s32;
+#foreign glfwSetWindowShouldClose :: fn(window: GLFWwindow *, value: s32) -> void;
+#foreign glfwGetWindowTitle :: fn(window: GLFWwindow *) -> u8 *;
+#foreign glfwSetWindowTitle :: fn(window: GLFWwindow *, title: u8 *) -> void;
+#foreign glfwSetWindowIcon :: fn(window: GLFWwindow *, count: s32, images: GLFWimage *) -> void;
+#foreign glfwGetWindowPos :: fn(window: GLFWwindow *, xpos: s32 *, ypos: s32 *) -> void;
+#foreign glfwSetWindowPos :: fn(window: GLFWwindow *, xpos: s32, ypos: s32) -> void;
+#foreign glfwGetWindowSize :: fn(window: GLFWwindow *, width: s32 *, height: s32 *) -> void;
+#foreign glfwSetWindowSizeLimits :: fn(window: GLFWwindow *, minwidth: s32, minheight: s32, maxwidth: s32, maxheight: s32) -> void;
+#foreign glfwSetWindowAspectRatio :: fn(window: GLFWwindow *, numer: s32, denom: s32) -> void;
+#foreign glfwSetWindowSize :: fn(window: GLFWwindow *, width: s32, height: s32) -> void;
+#foreign glfwGetFramebufferSize :: fn(window: GLFWwindow *, width: s32 *, height: s32 *) -> void;
+#foreign glfwGetWindowFrameSize :: fn(window: GLFWwindow *, left: s32 *, top: s32 *, right: s32 *, bottom: s32 *) -> void;
+#foreign glfwGetWindowContentScale :: fn(window: GLFWwindow *, xscale: f32 *, yscale: f32 *) -> void;
+#foreign glfwGetWindowOpacity :: fn(window: GLFWwindow *) -> f32;
+#foreign glfwSetWindowOpacity :: fn(window: GLFWwindow *, opacity: f32) -> void;
+#foreign glfwIconifyWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwRestoreWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwMaximizeWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwShowWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwHideWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwFocusWindow :: fn(window: GLFWwindow *) -> void;
+#foreign glfwRequestWindowAttention :: fn(window: GLFWwindow *) -> void;
+#foreign glfwGetWindowMonitor :: fn(window: GLFWwindow *) -> GLFWmonitor *;
+#foreign glfwSetWindowMonitor :: fn(window: GLFWwindow *, monitor: GLFWmonitor *, xpos: s32, ypos: s32, width: s32, height: s32, refreshRate: s32) -> void;
+#foreign glfwGetWindowAttrib :: fn(window: GLFWwindow *, attrib: s32) -> s32;
+#foreign glfwSetWindowAttrib :: fn(window: GLFWwindow *, attrib: s32, value: s32) -> void;
+#foreign glfwSetWindowUserPointer :: fn(window: GLFWwindow *, pointer: void *) -> void;
+#foreign glfwGetWindowUserPointer :: fn(window: GLFWwindow *) -> void *;
+#foreign glfwSetWindowPosCallback :: fn(window: GLFWwindow *, callback: GLFWwindowposfun) -> GLFWwindowposfun;
+#foreign glfwSetWindowSizeCallback :: fn(window: GLFWwindow *, callback: GLFWwindowsizefun) -> GLFWwindowsizefun;
+#foreign glfwSetWindowCloseCallback :: fn(window: GLFWwindow *, callback: GLFWwindowclosefun) -> GLFWwindowclosefun;
+#foreign glfwSetWindowRefreshCallback :: fn(window: GLFWwindow *, callback: GLFWwindowrefreshfun) -> GLFWwindowrefreshfun;
+#foreign glfwSetWindowFocusCallback :: fn(window: GLFWwindow *, callback: GLFWwindowfocusfun) -> GLFWwindowfocusfun;
+#foreign glfwSetWindowIconifyCallback :: fn(window: GLFWwindow *, callback: GLFWwindowiconifyfun) -> GLFWwindowiconifyfun;
+#foreign glfwSetWindowMaximizeCallback :: fn(window: GLFWwindow *, callback: GLFWwindowmaximizefun) -> GLFWwindowmaximizefun;
+#foreign glfwSetFramebufferSizeCallback :: fn(window: GLFWwindow *, callback: GLFWframebuffersizefun) -> GLFWframebuffersizefun;
+#foreign glfwSetWindowContentScaleCallback :: fn(window: GLFWwindow *, callback: GLFWwindowcontentscalefun) -> GLFWwindowcontentscalefun;
+#foreign glfwPollEvents :: fn() -> void;
+#foreign glfwWaitEvents :: fn() -> void;
+#foreign glfwWaitEventsTimeout :: fn(timeout: f64) -> void;
+#foreign glfwPostEmptyEvent :: fn() -> void;
+#foreign glfwGetInputMode :: fn(window: GLFWwindow *, mode: s32) -> s32;
+#foreign glfwSetInputMode :: fn(window: GLFWwindow *, mode: s32, value: s32) -> void;
+#foreign glfwRawMouseMotionSupported :: fn() -> s32;
+#foreign glfwGetKeyName :: fn(key: s32, scancode: s32) -> u8 *;
+#foreign glfwGetKeyScancode :: fn(key: s32) -> s32;
+#foreign glfwGetKey :: fn(window: GLFWwindow *, key: s32) -> s32;
+#foreign glfwGetMouseButton :: fn(window: GLFWwindow *, button: s32) -> s32;
+#foreign glfwGetCursorPos :: fn(window: GLFWwindow *, xpos: f64 *, ypos: f64 *) -> void;
+#foreign glfwSetCursorPos :: fn(window: GLFWwindow *, xpos: f64, ypos: f64) -> void;
+#foreign glfwCreateCursor :: fn(image: GLFWimage *, xhot: s32, yhot: s32) -> GLFWcursor *;
+#foreign glfwCreateStandardCursor :: fn(shape: s32) -> GLFWcursor *;
+#foreign glfwDestroyCursor :: fn(cursor: GLFWcursor *) -> void;
+#foreign glfwSetCursor :: fn(window: GLFWwindow *, cursor: GLFWcursor *) -> void;
+
+#foreign glfwSetKeyCallback :: fn(window: GLFWwindow *, callback: GLFWkeyfun) -> GLFWkeyfun;
+#foreign glfwSetCharCallback :: fn(window: GLFWwindow *, callback: GLFWcharfun) -> GLFWcharfun;
+#foreign glfwSetCharModsCallback :: fn(window: GLFWwindow *, callback: GLFWcharmodsfun) -> GLFWcharmodsfun;
+#foreign glfwSetMouseButtonCallback :: fn(window: GLFWwindow *, callback: GLFWmousebuttonfun) -> GLFWmousebuttonfun;
+#foreign glfwSetCursorPosCallback :: fn(window: GLFWwindow *, callback: GLFWcursorposfun) -> GLFWcursorposfun;
+#foreign glfwSetCursorEnterCallback :: fn(window: GLFWwindow *, callback: GLFWcursorenterfun) -> GLFWcursorenterfun;
+#foreign glfwSetScrollCallback :: fn(window: GLFWwindow *, callback: GLFWscrollfun) -> GLFWscrollfun;
+#foreign glfwSetDropCallback :: fn(window: GLFWwindow *, callback: GLFWdropfun) -> GLFWdropfun;
+
+#foreign glfwJoystickPresent :: fn(jid: s32) -> s32;
+#foreign glfwGetJoystickAxes :: fn(jid: s32, count: s32 *) -> f32 *;
+#foreign glfwGetJoystickButtons :: fn(jid: s32, count: s32 *) -> u8 *;
+#foreign glfwGetJoystickHats :: fn(jid: s32, count: s32 *) -> u8 *;
+#foreign glfwGetJoystickName :: fn(jid: s32) -> u8 *;
+#foreign glfwGetJoystickGUID :: fn(jid: s32) -> u8 *;
+#foreign glfwSetJoystickUserPointer :: fn(jid: s32, pointer: void *) -> void;
+#foreign glfwGetJoystickUserPointer :: fn(jid: s32) -> void *;
+#foreign glfwJoystickIsGamepad :: fn(jid: s32) -> s32;
+#foreign glfwSetJoystickCallback :: fn(callback: GLFWjoystickfun) -> GLFWjoystickfun;
+#foreign glfwUpdateGamepadMappings :: fn(string: u8 *) -> s32;
+#foreign glfwGetGamepadName :: fn(jid: s32) -> u8 *;
+#foreign glfwGetGamepadState :: fn(jid: s32, state: GLFWgamepadstate *) -> s32;
+#foreign glfwSetClipboardString :: fn(window: GLFWwindow *, string: u8 *) -> void;
+#foreign glfwGetClipboardString :: fn(window: GLFWwindow *) -> u8 *;
+#foreign glfwGetTime :: fn() -> f64;
+#foreign glfwSetTime :: fn(time: f64) -> void;
+#foreign glfwGetTimerValue :: fn() -> u64;
+#foreign glfwGetTimerFrequency :: fn() -> u64;
+#foreign glfwMakeContextCurrent :: fn(window: GLFWwindow *) -> void;
+#foreign glfwGetCurrentContext :: fn() -> GLFWwindow *;
+#foreign glfwSwapBuffers :: fn(window: GLFWwindow *) -> void;
+#foreign glfwSwapInterval :: fn(interval: s32) -> void;
+#foreign glfwExtensionSupported :: fn(extension: u8 *) -> s32;
+#foreign glfwGetProcAddress :: fn(procname: u8 *) -> GLFWglproc;
+#foreign glfwVulkanSupported :: fn() -> s32;
+#foreign glfwGetRequiredInstanceExtensions :: fn(count: u32 *) -> u8 * *;
+
+
+GLFW :: enum {
+  KEY_UNKNOWN = -1,
+  KEY_SPACE = 32,
+  KEY_APOSTROPHE = 39,
+  KEY_COMMA = 44,
+  KEY_MINUS = 45,
+  KEY_PERIOD = 46,
+  KEY_SLASH = 47,
+  KEY_0 = 48,
+  KEY_1 = 49,
+  KEY_2 = 50,
+  KEY_3 = 51,
+  KEY_4 = 52,
+  KEY_5 = 53,
+  KEY_6 = 54,
+  KEY_7 = 55,
+  KEY_8 = 56,
+  KEY_9 = 57,
+  KEY_SEMICOLON = 59,
+  KEY_EQUAL = 61,
+  KEY_A = 65,
+  KEY_B = 66,
+  KEY_C = 67,
+  KEY_D = 68,
+  KEY_E = 69,
+  KEY_F = 70,
+  KEY_G = 71,
+  KEY_H = 72,
+  KEY_I = 73,
+  KEY_J = 74,
+  KEY_K = 75,
+  KEY_L = 76,
+  KEY_M = 77,
+  KEY_N = 78,
+  KEY_O = 79,
+  KEY_P = 80,
+  KEY_Q = 81,
+  KEY_R = 82,
+  KEY_S = 83,
+  KEY_T = 84,
+  KEY_U = 85,
+  KEY_V = 86,
+  KEY_W = 87,
+  KEY_X = 88,
+  KEY_Y = 89,
+  KEY_Z = 90,
+  KEY_LEFT_BRACKET = 91,
+  KEY_BACKSLASH = 92,
+  KEY_RIGHT_BRACKET = 93,
+  KEY_GRAVE_ACCENT = 96,
+  KEY_WORLD_1 = 161,
+  KEY_WORLD_2 = 162,
+  KEY_ESCAPE = 256,
+  KEY_ENTER = 257,
+  KEY_TAB = 258,
+  KEY_BACKSPACE = 259,
+  KEY_INSERT = 260,
+  KEY_DELETE = 261,
+  KEY_RIGHT = 262,
+  KEY_LEFT = 263,
+  KEY_DOWN = 264,
+  KEY_UP = 265,
+  KEY_PAGE_UP = 266,
+  KEY_PAGE_DOWN = 267,
+  KEY_HOME = 268,
+  KEY_END = 269,
+  KEY_CAPS_LOCK = 280,
+  KEY_SCROLL_LOCK = 281,
+  KEY_NUM_LOCK = 282,
+  KEY_PRINT_SCREEN = 283,
+  KEY_PAUSE = 284,
+  KEY_F1 = 290,
+  KEY_F2 = 291,
+  KEY_F3 = 292,
+  KEY_F4 = 293,
+  KEY_F5 = 294,
+  KEY_F6 = 295,
+  KEY_F7 = 296,
+  KEY_F8 = 297,
+  KEY_F9 = 298,
+  KEY_F10 = 299,
+  KEY_F11 = 300,
+  KEY_F12 = 301,
+  KEY_F13 = 302,
+  KEY_F14 = 303,
+  KEY_F15 = 304,
+  KEY_F16 = 305,
+  KEY_F17 = 306,
+  KEY_F18 = 307,
+  KEY_F19 = 308,
+  KEY_F20 = 309,
+  KEY_F21 = 310,
+  KEY_F22 = 311,
+  KEY_F23 = 312,
+  KEY_F24 = 313,
+  KEY_F25 = 314,
+  KEY_KP_0 = 320,
+  KEY_KP_1 = 321,
+  KEY_KP_2 = 322,
+  KEY_KP_3 = 323,
+  KEY_KP_4 = 324,
+  KEY_KP_5 = 325,
+  KEY_KP_6 = 326,
+  KEY_KP_7 = 327,
+  KEY_KP_8 = 328,
+  KEY_KP_9 = 329,
+  KEY_KP_DECIMAL = 330,
+  KEY_KP_DIVIDE = 331,
+  KEY_KP_MULTIPLY = 332,
+  KEY_KP_SUBTRACT = 333,
+  KEY_KP_ADD = 334,
+  KEY_KP_ENTER = 335,
+  KEY_KP_EQUAL = 336,
+  KEY_LEFT_SHIFT = 340,
+  KEY_LEFT_CONTROL = 341,
+  KEY_LEFT_ALT = 342,
+  KEY_LEFT_SUPER = 343,
+  KEY_RIGHT_SHIFT = 344,
+  KEY_RIGHT_CONTROL = 345,
+  KEY_RIGHT_ALT = 346,
+  KEY_RIGHT_SUPER = 347,
+  KEY_MENU = 348,
+
+  MOD_SHIFT = 0x0001,
+  MOD_CONTROL = 0x0002,
+  MOD_ALT = 0x0004,
+  MOD_SUPER = 0x0008,
+  MOD_CAPS_LOCK = 0x0010,
+  MOD_NUM_LOCK = 0x0020
+
+  PRESS = 1,
+  RELEASE = 0,
+  REPEAT = 2
+}

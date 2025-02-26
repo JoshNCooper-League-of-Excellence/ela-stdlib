@@ -1,0 +1,23 @@
+
+
+impl![_Some] Option![_Some] {
+  unwrap :: fn(self) -> _Some {
+    if self.is_some {
+      return self.s;
+    } else {
+      panic("unwrapped a 'none' option");
+      return .{};
+    }
+  }
+  Some :: fn(v: _Some) -> #self {
+    return .{
+      s: v,
+      is_some: true
+    };
+  }
+  None :: fn() -> #self {
+    return .{
+      is_some: false
+    }
+  }
+}

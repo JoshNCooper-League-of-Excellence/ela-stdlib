@@ -1,0 +1,21 @@
+
+impl![_Ok, _Err] Result![_Ok, _Err] {
+  Ok :: fn(v: _Ok) -> #self {
+    return .{
+      index: RESULT_IS_OK,
+      ok: v,
+    };
+  }
+  Err :: fn(v: _Err) -> #self {
+    return .{
+      index: RESULT_IS_ERR,
+      err: v
+    }
+  }
+  unwrap :: fn(self) -> _Ok {
+    if self.index == RESULT_IS_ERR {
+      panic("called 'unwrap' on an Err result");
+    }
+    return self.ok;
+  }
+}

@@ -53,6 +53,16 @@ Slice :: struct![Value_Type] {
 }
 
 
+// we can use this in place of Result![void, ...]
+// when we have a function that returns nothing of value,
+// but we can't use void for result.
+
+// this happens because we don't yet support generic specialization.
+// and Result requires that it's members are all sized.
+None :: union {
+
+}
+
 RESULT_IS_ERR : u8 =  0;
 RESULT_IS_OK  : u8 =  1;
 
@@ -63,6 +73,7 @@ Result :: struct![_Ok, _Err] {
     ok:   _Ok,
   },
 }
+
 
 Option :: struct![_Some] {
   #anon :: union {

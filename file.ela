@@ -26,7 +26,6 @@ SeekPosition :: enum {
 #foreign fprintf :: fn(stream: FILE *, format: u8 *, ...) -> s32;
 #foreign fflush :: fn(f: FILE *);
 
-#alias FileError :: str;
 
 // TODO: add a way to do Binary stuff.
 #flags FileOpenFlags :: enum {
@@ -57,9 +56,13 @@ impl File {
     return len as u32;
   }
 
-  read_all :: fn(filename: str) -> (String, FileError) {
+  read_all :: fn(filename: str) -> Result![String, str] {
+    #alias Result :: Result![String, str];
     file := fopen(filename.data, "r"c);
-    if !file then return (.{}, "Couldn't open file");
+
+    if !file then 
+      return Result::Err("Couldn't open file");
+
     string: String;
     string.resize(1024);
     while {
@@ -68,12 +71,13 @@ impl File {
       string.push(c);
     }
     fclose(file);
-    return (string, .{});
+    return Result::Ok(string);
   }
   
-  read_bytes :: fn(filename: str) -> (u8[], FileError) {
+  read_bytes :: fn(filename: str) -> Result![u8[], str] {
+    #alias Result :: Result![u8[], str];
     file := fopen(filename.data, "r"c);
-    if !file then return (.{}, "Couldn't open file");
+    if !file then return Result::Err("Couldn't open file");
     
     bytes: u8[];
     bytes.resize(1024);
@@ -85,17 +89,18 @@ impl File {
     }
     
     fclose(file);
-    return (bytes, .{});
+    return Result::Ok(bytes);
   }
   
-  write_all :: fn(filename: str, data: str) -> FileError {
+  write_all :: fn(filename: str, data: str) -> Option![str] {
+    #alias Option :: Option![str];
     file := fopen(filename.data, "w"c);
     if !file {
-      return "Unable to open file";
+      return Option::Some("Unable to open file");
     }
     fwrite(data.data, sizeof(u8), data.length, file);
     fclose(file);
-    return .{};
+    return Option::None();
   }
 
   // Used to convert our flag enum to a str for fopen/fclose etc.
