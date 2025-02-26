@@ -83,3 +83,30 @@ impl![T] ArenaOf![T] {
     return (&self.memory[self.count]) as T*;
   }
 }
+
+
+/* 
+  a way to allocate while also providing an initialize value.
+  useful for doing things like 
+
+  v: Vec3* = new(.{
+    x: 0.0,
+    y: 250.0,
+    z: 3000.0
+  });
+
+  instead of 
+
+  v: Vec3* = malloc(sizeof(Vec3));
+  *v = .{
+    x: 0.0,
+    y: 250.0,
+    z: 3000.0
+  };
+*/
+
+new :: fn![T](initial_value: T) -> T* {
+  ptr: T* = malloc(sizeof(T));
+  *ptr = initial_value;
+  return ptr;
+}

@@ -135,11 +135,20 @@ impl Type  {
 }
 
 impl any {
-  new :: fn![T](t: T*) -> #self {
+  from :: fn![T](t: T*) -> #self {
     #static type: Type*;
     if !type then type = #type(T);
     return .{
       ptr: t,
+      type: type,
+    }
+  }
+
+  new :: fn![T](t: T) -> #self {
+    #static type: Type*;
+    if !type then type = #type(T);
+    return .{
+      ptr: new(t),
       type: type,
     }
   }
@@ -158,5 +167,11 @@ impl any {
   // use cast anywhere you can, it's much more type safe.
   unwrap :: fn![T](self*) -> T {
     return *(self.ptr as T*);
+  }
+
+  // this should only be used for an any created with any::new()
+  // clearly because it memcpy's it into place.
+  deinit :: fn(self*) {
+    free(self.ptr);
   }
 }

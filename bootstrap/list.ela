@@ -93,6 +93,12 @@ panic :: fn(msg: str);
       memset(self.data, 0, sizeof(T) * self.capacity);
       self.length = num_to_fill;
     }
+
+    // We need vtables to do stuff like this.
+    // with_allocator :: fn![Alloc](allocator: Alloc*) where T is Allocator {
+    //   self: #self;
+    //   self.allocator = allocator;
+    // }
   }
 
   impl![T] Clone for List![T] {
@@ -136,13 +142,15 @@ impl![T] List![T] {
 
 impl![T] As_Slice![T] for List![T] {
   as_slice :: fn(self, range: Range) -> Slice![T] {
+    // it's odd that we're bounds checking here.
+    // do we want to just truncate to the largest possible slice?
+    // this would be nice if we ever had things like [..] or [1..] or [..10]
     if range.begin < 0 || range.end > self.length || range.begin > range.end {
       panic("Invalid range for as_slice");
     }
-    len := range.end - range.begin;
     return .{
       data: self.data + range.begin,
-      length: len,
+      length: range.end - range.begin,
     }
   }
 }

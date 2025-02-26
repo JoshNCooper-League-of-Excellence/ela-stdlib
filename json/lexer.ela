@@ -72,7 +72,7 @@ impl JsonLexer {
   get_location_string :: fn(self) -> String {
     column := self.position - self.line_start;
     line := self.cur_line + 1;
-    return format("%:%:%", {any::new(&self.file), any::new(&line), any::new(&column)})
+    return format("%:%:%", {any::from(&self.file), any::from(&line), any::from(&column)})
   }
 
   get_token :: fn(self*) -> Result![JsonToken, String] {
@@ -115,12 +115,12 @@ impl JsonLexer {
       self.position++;
       if self.position >= self.input.length {
         location := self.get_location_string();
-        return Result::Err(format("at \"%\" unexpected end of input %", {any::new(&location), any::new(&c)}))
+        return Result::Err(format("at \"%\" unexpected end of input %", {any::from(&location), any::from(&c)}))
       }
       c = self.input[self.position];
       if c != '/' {
         location := self.get_location_string();
-        return Result::Err(format("at \"%\" expected /, got %", {any::new(&location), any::new(&c)}))
+        return Result::Err(format("at \"%\" expected /, got %", {any::from(&location), any::from(&c)}))
       }
       while c != '\n' && c != '\r' {
         self.position++;
@@ -242,7 +242,7 @@ impl JsonLexer {
     // we are the consumer of this API, but I guess maybe someone might want to use this?
     if types.length == 0 {
       loc := #location;
-      panic(format("json lexer's `expect_types` got an empty set of types to expect, at '%'", {any::new(&loc)}).as_str());
+      panic(format("json lexer's `expect_types` got an empty set of types to expect, at '%'", {any::from(&loc)}).as_str());
     }
 
     // We do this without the string building so that we can only do that expensive heavy allocating procedure if we
@@ -258,15 +258,15 @@ impl JsonLexer {
     defer builder.deinit();
 
     for i in 0..types.length {
-      builder.append_then_free(format("| %", {any::new(&json_token_type_names.data[types.data[i]])}));
+      builder.append_then_free(format("| %", {any::from(&json_token_type_names.data[types.data[i]])}));
     }
 
     types_string := builder.get_string();
 
     error := format("at: \"%:%:%\" :: unexpected token, expected \"%\", got \"%\"", {
-      any::new(&self.file), any::new(&token.line), any::new(&token.column),
-      any::new(&types_string),
-      any::new(&json_token_type_names.data[token.type])});
+      any::from(&self.file), any::from(&token.line), any::from(&token.column),
+      any::from(&types_string),
+      any::from(&json_token_type_names.data[token.type])});
 
     return Result![JsonToken, String]::Err(error);
   }

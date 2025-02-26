@@ -282,13 +282,13 @@ format :: fn(fmt : str, list: Init_List![any]) -> String {
 }
 
 #static print :: fn![T](message: T) {
-  formatted := format("%", .[any::new(&message)]);
+  formatted := format("%", .[any::from(&message)]);
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
 #static println :: fn![T](message: T) {
-  formatted := format("%", .[any::new(&message)]);
+  formatted := format("%", .[any::from(&message)]);
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }

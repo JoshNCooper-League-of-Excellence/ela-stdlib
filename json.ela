@@ -307,7 +307,7 @@ json_serialize_scalar :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
     val.data.boolean = *(object as bool*);
     return (JsonError::SUCCESS, val);
   }
-  set_json_error(format("Unsupported type :: %", {any::new(&type.name)}))
+  set_json_error(format("Unsupported type :: %", {any::from(&type.name)}))
   return (JsonError::ERROR, null);
 }
 
@@ -359,7 +359,7 @@ json_serialize :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
   } else if Type::is_array(type) {
     return json_serialize_array(object, type);
   }
-  set_json_error(format("Unsupported type :: '%'", {any::new(&type.name)}));
+  set_json_error(format("Unsupported type :: '%'", {any::from(&type.name)}));
   return (JsonError::ERROR, null);
 }
 
@@ -369,7 +369,7 @@ json_deserialize_struct :: fn(val: JsonValue*, object: void*, type: Type*) -> Js
   for json_field in val.data.object {
     struct_field := Type::get_field(type, json_field.key);
     if !struct_field {
-      set_json_error(format("Could not find field % in type %", {any::new(&json_field.key), any::new(&type.name)}))
+      set_json_error(format("Could not find field % in type %", {any::from(&json_field.key), any::from(&type.name)}))
       return JsonError::ERROR;
     }
     err := json_deserialize(json_field.value, object as u8* + struct_field.offset, struct_field.type);
@@ -445,7 +445,7 @@ json_deserialize_scalar :: fn(val: JsonValue*, object: void*, type: Type*) -> Js
   } else if (Type::is_string(type)) {
     *(object as u8**) = val.as_string();
   } else {
-    set_json_error(format("Unable to deserialize into type %", {any::new(&type.name)}));
+    set_json_error(format("Unable to deserialize into type %", {any::from(&type.name)}));
     return JsonError::ERROR;
   }
   return .{};
@@ -457,14 +457,14 @@ json_deserialize :: fn(val: JsonValue*, object: void*, type: Type*) -> JsonError
       *(object as u8**) = val.as_string();
       return .{};
     } else {
-      set_json_error(format("Type mismatch: u8* to %", {any::new(&type.name)}));
+      set_json_error(format("Type mismatch: u8* to %", {any::from(&type.name)}));
       return JsonError::ERROR;
     }
   } else if val.is_object() {
     if Type::is_struct(type) {
       return json_deserialize_struct(val, object, type);
     } else {
-      set_json_error(format("Type mismatch: object to %", {any::new(&type.name)}));
+      set_json_error(format("Type mismatch: object to %", {any::from(&type.name)}));
       return JsonError::ERROR;
     }
   } else if val.is_array() {
