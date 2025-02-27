@@ -53,9 +53,7 @@ impl Shader {
     return program;
   }
 
-  deinit :: fn(self*) {
-    glDeleteProgram(self.handle);
-  }
+
 
   use :: fn(self*) {
     glUseProgram(self.handle);
@@ -113,29 +111,35 @@ impl Shader {
   }
 
   set :: fn![T](self*, name: str, v: T*) {
-    switch #type(T) {
-      #type(f32): {
+    switch typeof(T) {
+      typeof(f32): {
         self.set_float(name, *(v as f32*));
         return;
       }
-      #type(Vec2): {
+      typeof(Vec2): {
         self.set_vec2(name, v as Vec2*);
         return;
       }
-      #type(Vec3): {
+      typeof(Vec3): {
         self.set_vec3(name, v as Vec3*);
         return;
       }
-      #type(Vec4): {
+      typeof(Vec4): {
         self.set_vec4(name, v as Vec4*);
         return;
       }
-      #type(Mat4): {
+      typeof(Mat4): {
         self.set_mat4(name, v as Mat4*);
         return;
       }
     }
     printf("incompatible type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n");
+  }
+}
+
+impl Deinit for Shader {
+  deinit :: fn(self*) {
+    glDeleteProgram(self.handle);
   }
 }
 

@@ -22,7 +22,7 @@
       return result;
     }
     
-    from :: fn(data: u8*) -> #self{
+    from :: fn(data: u8*) -> #self {
       if !data then return .{};
       len := strlen(data);
       return .{

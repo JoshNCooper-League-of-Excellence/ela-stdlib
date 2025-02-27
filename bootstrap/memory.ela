@@ -1,17 +1,11 @@
-// The standard allocator is only available when not in a freestanding environement.
-
-#ifdef FREESTANDING {
-  #def WAS_FREESTANDING;
-  #undef FREESTANDING;
-}
- 
-#ifdef FREESTANDING  {
+#ifndef FREESTANDING  {
   mem_zero :: fn![T](ptr: T*, count: u64) {
     memset(ptr, 0, sizeof(T) * count);
   }
-  Std_Allocator :: struct {}
 
-  impl Allocator for Std_Allocator {
+  Libc_Allocator :: struct {}
+
+  impl Allocator for Libc_Allocator {
     allocate :: fn![T](self*) -> T* {
       return malloc(sizeof(T)) as T*;
     }
@@ -31,15 +25,54 @@
     }
   }
 
-  impl Std_Allocator {
+  impl Libc_Allocator {
     get :: fn() -> #self {
       #static self: #self;
       return self;
     }
   }
-}
 
-#ifdef WAS_FREESTANDING {
-  #def FREESTANDING;
-  #undef WAS_FREESTANDING;
+  Tracking_Allocator :: struct {
+    pointers: void*[],
+  }
+
+  impl Deinit for Tracking_Allocator {
+    deinit :: fn(self*) {
+      for idx in 0..self.pointers.length {
+        ptr := self.pointers.data[idx];
+        free(ptr);
+      }
+    }
+  }
+
+  impl Allocator for Tracking_Allocator {
+    allocate :: fn![T](self*) -> T* {
+      ptr := malloc(sizeof(T)) as T*;
+      self.pointers.push(ptr);
+      return ptr;
+    }
+    free :: fn![T](self*, ptr: T*) {
+      self.pointers.remove(ptr);
+      free(ptr);
+    }
+    allocate_array :: fn![T](self*, n: u64) -> T* {
+      ptr := calloc(sizeof(T) * n) as T*;
+      self.pointers.push(ptr);
+      return ptr;
+    }
+    resize :: fn![T](self*, ptr: T*, new_size: u64) -> T* {
+      if !self.pointers.contains(ptr) {
+        panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
+      }
+      ptr := realloc(ptr, sizeof(T) * new_size) as T*;
+      self.pointers.push(ptr);
+      return ptr;
+    }
+    copy :: fn![T](self*, ptr: T*, n: u64) -> T* {
+      new_ptr : T* = self.allocate_array![T](n);
+      memcpy(new_ptr, ptr, n * sizeof(T));
+      self.pointers.push(new_ptr);
+      return new_ptr;
+    }
+  }
 }

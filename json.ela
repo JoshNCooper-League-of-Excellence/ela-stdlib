@@ -1,6 +1,5 @@
 #import file;
 #import format;
-#import builder;
 
 JsonValueType :: enum {
   Invalid = -1,
@@ -77,7 +76,13 @@ impl JsonValue {
     } else if self.type == JsonValueType::Number {
       builder.append_then_free(to_string(self.data.number));
     } else if self.type == JsonValueType::String {
-      builder.append_concat_then_free({"\"", self.data._string, "\""}, {false, true, false});
+      quote := any::new(&"\"");
+      defer quote.deinit();
+      builder.append_then_free("%%%" .[
+        quote,
+        any::from(&self.data._string),
+        quote
+      ]);
     } else if self.type == JsonValueType::Boolean {
       if self.data.boolean == true {
         builder.append("true");
@@ -346,7 +351,7 @@ json_serialize_array :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
 
 json_serialize :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
   if Type::has_no_extension(type) {
-    if type.id == #typeid(u8*) {
+    if type.id == typeofid(u8*) {
       val : JsonValue* = malloc(sizeof(JsonValue));
       val.type = JsonValueType::String;
       val.data._string = *(object as u8**);
@@ -453,7 +458,7 @@ json_deserialize_scalar :: fn(val: JsonValue*, object: void*, type: Type*) -> Js
 
 json_deserialize :: fn(val: JsonValue*, object: void*, type: Type*) -> JsonError {
   if val.is_string() {
-    if type.id == #typeid(u8*) {
+    if type.id == typeofid(u8*) {
       *(object as u8**) = val.as_string();
       return .{};
     } else {

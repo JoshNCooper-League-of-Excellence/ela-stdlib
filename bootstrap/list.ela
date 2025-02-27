@@ -31,7 +31,7 @@ panic :: fn(msg: str);
 
       self.capacity = new_capacity;
       self.data = realloc(self.data, sizeof(T) * self.capacity);
-      if !self.data then panic("Failed to allocate in List![{#type(T).name}]");
+      if !self.data then panic("Failed to allocate in List![{typeof(T).name}]");
     }
 
     push   :: fn(self*, v: T) {
@@ -44,7 +44,7 @@ panic :: fn(msg: str);
     }
 
     pop    :: fn(self*) -> T {
-      if self.length == 0 then panic("Attempted to pop from an empty List![{#type(T).name}]");
+      if self.length == 0 then panic("Attempted to pop from an empty List![{typeof(T).name}]");
       value := self.data[self.length - 1];
       self.length -= 1;
       return value;
@@ -61,29 +61,12 @@ panic :: fn(msg: str);
     }
 
     pop_front :: fn(self*) -> T {
-      if self.length == 0 then panic("Attempted to pop from an empty List![{#type(T).name}]");
+      if self.length == 0 then panic("Attempted to pop from an empty List![{typeof(T).name}]");
       value := self.data[0];
       memmove(self.data, self.data + 1, sizeof(T) * (self.length - 1));
       self.length -= 1;
       return value;
     }
-
-    // This does not actually deinit any of members in the list.
-    // We should have some compile time way to have alternatives based on a specializiation
-    // like #if T: Deinit { } .. else {}
-
-    // that causes an odd problem, though. Not really a problem, just an oddity:
-    // some specializations would have functions where others would not.
-    // you may expect a Type![T] to have a function and depending on a hidden where condition,
-    // it may just not have it, and that would probably be a really confusing issue, where you call a known function on one generic
-    // instantiation, but another jsut doesn't have it. We could have nice descriptive errors to combat this?
-    deinit :: fn(self*) {
-      free(self.data);
-      self.data = null;
-      self.length = 0;
-    }
-
-
     // Initalize the array to a specific length, and zero initialize the data.
     // useful to create a dynamic of at least num_to_fill length, and have all the elements be valid data.
     // Do not use this on an array that is already full of your data, unless you want to zero it out and reset to 
@@ -99,6 +82,23 @@ panic :: fn(msg: str);
     //   self: #self;
     //   self.allocator = allocator;
     // }
+  }
+
+  impl![T] Deinit for List![T] {
+        // This does not actually deinit any of members in the list.
+    // We should have some compile time way to have alternatives based on a specializiation
+    // like #if T: Deinit { } .. else {}
+
+    // that causes an odd problem, though. Not really a problem, just an oddity:
+    // some specializations would have functions where others would not.
+    // you may expect a Type![T] to have a function and depending on a hidden where condition,
+    // it may just not have it, and that would probably be a really confusing issue, where you call a known function on one generic
+    // instantiation, but another jsut doesn't have it. We could have nice descriptive errors to combat this?
+    deinit :: fn(self*) {
+      free(self.data);
+      self.data = null;
+      self.length = 0;
+    }
   }
 
   impl![T] Clone for List![T] {
@@ -121,6 +121,27 @@ panic :: fn(msg: str);
         self.push(init.data[idx]);
       }
       return self;
+    }
+  }
+
+  impl![T] List![T]  {
+    contains :: fn(self, value: T) -> bool {
+      for idx in 0..self.length {
+        if self.data[idx] == value {
+          return true;
+        }
+      }
+      return false;
+    }
+    remove :: fn(self*, value: T) -> bool {
+      for idx in 0..self.length {
+        if self.data[idx] == value {
+          memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
+          self.length -= 1;
+          return true;
+        }
+      }
+      return false;
     }
   }
 }

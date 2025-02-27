@@ -44,6 +44,9 @@ impl Directory {
     return .{path: String::from(path), files: files};
   }
 
+}
+
+impl Deinit for Directory {
   deinit :: fn(self*) {
     self.path.deinit();
     for path in self.files {

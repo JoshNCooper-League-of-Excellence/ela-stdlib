@@ -59,9 +59,7 @@ Slice :: struct![Value_Type] {
 
 // this happens because we don't yet support generic specialization.
 // and Result requires that it's members are all sized.
-None :: union {
-
-}
+None :: struct {}
 
 RESULT_IS_ERR : u8 =  0;
 RESULT_IS_OK  : u8 =  1;

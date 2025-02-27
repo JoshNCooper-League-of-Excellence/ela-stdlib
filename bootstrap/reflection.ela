@@ -21,11 +21,11 @@ Type :: struct;
   };
 
   impl Field {
-    set :: fn![T, T1](self*, target: T, data: T1) {
+    set :: fn![T, T1](self*, target: T*, data: T1) {
       memcpy((target as u8*) + self.offset, (&data) as u8*, sizeof(T1));
     }
-    get :: fn![T](self*, source: T) -> u8* {
-      return ((&source) as u8*) + self.offset;
+    get :: fn![T](self*, source: T*) -> u8* {
+      return ((source) as u8*) + self.offset;
     }
   }
 
@@ -137,18 +137,21 @@ impl Type  {
 impl any {
   from :: fn![T](t: T*) -> #self {
     #static type: Type*;
-    if !type then type = #type(T);
+    if !type then type = typeof(T);
     return .{
       ptr: t,
       type: type,
     }
   }
 
-  new :: fn![T](t: T) -> #self {
+  new :: fn![T, Alloc](t: T, alloc: Alloc) -> #self 
+  where Alloc is Allocator {
     #static type: Type*;
-    if !type then type = #type(T);
+    if !type then type = typeof(T);
+    ptr : T* = alloc.allocate![T]();
+    *ptr = t;
     return .{
-      ptr: new(t),
+      ptr: ptr,
       type: type,
     }
   }
@@ -157,7 +160,7 @@ impl any {
   // return null.
   cast :: fn![T](self*) -> T* {
     #static type: Type*;
-    if !type then type = #type(T);
+    if !type then type = typeof(T);
     if type != self.type then return null;
     return self.ptr as T*;
   }
@@ -168,8 +171,10 @@ impl any {
   unwrap :: fn![T](self*) -> T {
     return *(self.ptr as T*);
   }
+}
 
-  // this should only be used for an any created with any::new()
+impl Deinit for any {
+    // this should only be used for an any created with any::new()
   // clearly because it memcpy's it into place.
   deinit :: fn(self*) {
     free(self.ptr);
