@@ -34,8 +34,8 @@
   }
   impl Deinit for Tracking_Allocator {
     deinit :: fn(self*) {
-      for ptr in self.pointers {
-        free(ptr);
+      while self.pointers.length {
+        free(self.pointers.pop());
       }
     }
   }
@@ -71,28 +71,3 @@
   }
 }
 
-/* 
-  a way to allocate while also providing an initialize value.
-  useful for doing things like 
-
-  v: Vec3* = new(.{
-    x: 0.0,
-    y: 250.0,
-    z: 3000.0
-  });
-
-  instead of 
-
-  v: Vec3* = malloc(sizeof(Vec3));
-  *v = .{
-    x: 0.0,
-    y: 250.0,
-    z: 3000.0
-  };
-*/
-
-new :: fn!<T>(initial_value: T) -> T* {
-  ptr: T* = malloc(sizeof(T));
-  *ptr = initial_value;
-  return ptr;
-}
