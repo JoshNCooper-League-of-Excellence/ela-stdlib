@@ -28,7 +28,7 @@ UTF8_ERROR : u32 = 0xFFFD;
 // returns a tuple representing:
 // .0: a u32 code point,
 // .1: the 'advance' which is the number of bytes this codepoint consumed.
-utf8_to_code_point :: fn(sequence: Slice![u8]) -> (u32, s8) {
+utf8_to_code_point :: fn(sequence: Slice!<u8>) -> (u32, s8) {
   if sequence.length == 0
     then return (UTF8_ERROR, 1);
 
@@ -104,7 +104,7 @@ utf8_to_code_point :: fn(sequence: Slice![u8]) -> (u32, s8) {
   return (code_point, index as s8);
 }
 
-utf8_decode :: fn![T](data: T) -> u32[] where T is As_Char_Slice {
+utf8_decode :: fn!<T>(data: T) -> u32[] where T is As_Char_Slice {
   slice := data.as_byte_slice();
   output: u32[];
   index := 0;
@@ -274,7 +274,7 @@ Format :: interface {
       };
     }
 
-    append :: fn![T](self*, value: T) where T is As_Byte_Slice {
+    append :: fn!<T>(self*, value: T) where T is As_Byte_Slice {
       slice := value.as_byte_slice();
 
       if slice.length == 0 
@@ -315,8 +315,8 @@ Format :: interface {
     // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
     // this is helpful for doing a builder.append_then_free(some_allocating_function());
     // so you don't leak.
-    append_then_free :: fn![T](self*, value: T) where T is Deinit {
-      self.append![T](value);
+    append_then_free :: fn!<T>(self*, value: T) where T is Deinit {
+      self.append!<T>(value);
       value.deinit();
     }
 
@@ -340,7 +340,7 @@ Format :: interface {
 // TODO: expand this, add support for other stuff.
 // This is only for numerical types, bools, and strings / any pointer.
 // We kinda need generic specialization to do more with this.
-to_string :: fn![T](value: T) -> String {
+to_string :: fn!<T>(value: T) -> String {
   buffer: u8[64];
   type := typeof(T);
   format : str;
@@ -385,12 +385,12 @@ impl Format for s8 {
     buffer: u8[36];
     len := snprintf(buffer, 36, "%d"c, self);
     buffer[len] = '\0';
-    builder.append(Slice![u8]::from(buffer, 36));
+    builder.append(Slice!<u8>::from(buffer, 36));
   }
 }
 
 
-format :: fn(fmt : str, list: Init_List![any], options: Format_Options) -> String {
+format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> String {
   if fmt.length == 0 {
     return .{};
   }
@@ -400,7 +400,7 @@ format :: fn(fmt : str, list: Init_List![any], options: Format_Options) -> Strin
 
   while *fmt.data {
     if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
-      builder.append![u32]('%');
+      builder.append!<u32>('%');
       fmt.data += 2;
       continue;
     }
@@ -410,30 +410,30 @@ format :: fn(fmt : str, list: Init_List![any], options: Format_Options) -> Strin
       if value.ptr == null {
         builder.append("null");
       } else if value.type == typeof(u8*) {
-        builder.append(String::from(value.unwrap![u8*]()));
+        builder.append(String::from(value.unwrap!<u8*>()));
       } else if value.type.is_pointer() {
         builder.append_then_free(to_string(value.ptr));
       } else if value.type.is_enum() {
-        builder.append_then_free(to_string(value.unwrap![s32]()));
+        builder.append_then_free(to_string(value.unwrap!<s32>()));
       } else {
         switch value.type {
-          typeof(u8):      { builder.append_then_free(to_string(value.unwrap![u8]()));  }
-          typeof(u16):     { builder.append_then_free(to_string(value.unwrap![u16]())); }
-          typeof(u32):     { builder.append_then_free(to_string(value.unwrap![u32]())); }
-          typeof(u64):     { builder.append_then_free(to_string(value.unwrap![u64]())); }
+          typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));  }
+          typeof(u16):     { builder.append_then_free(to_string(value.unwrap!<u16>())); }
+          typeof(u32):     { builder.append_then_free(to_string(value.unwrap!<u32>())); }
+          typeof(u64):     { builder.append_then_free(to_string(value.unwrap!<u64>())); }
 
-          typeof(s8):      { builder.append_then_free(to_string(value.unwrap![s8]()));  }
-          typeof(s16):     { builder.append_then_free(to_string(value.unwrap![s16]())); }
-          typeof(s32):     { builder.append_then_free(to_string(value.unwrap![s32]())); }
-          typeof(s64):     { builder.append_then_free(to_string(value.unwrap![s64]())); }
+          typeof(s8):      { builder.append_then_free(to_string(value.unwrap!<s8>()));  }
+          typeof(s16):     { builder.append_then_free(to_string(value.unwrap!<s16>())); }
+          typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>())); }
+          typeof(s64):     { builder.append_then_free(to_string(value.unwrap!<s64>())); }
 
-          typeof(s32):     { builder.append_then_free(to_string(value.unwrap![s32]())); }
+          typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>())); }
 
-          typeof(f32):     { builder.append_then_free(to_string(value.unwrap![f32]()));    }
-          typeof(f32):     { builder.append_then_free(to_string(value.unwrap![f32]()));  }
-          typeof(f64):     { builder.append_then_free(to_string(value.unwrap![f64]()));  }
+          typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));    }
+          typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));  }
+          typeof(f64):     { builder.append_then_free(to_string(value.unwrap!<f64>()));  }
 
-          typeof(bool):    { builder.append_then_free(to_string(value.unwrap![bool]())); }
+          typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>())); }
 
           typeof(String):  {
             string := *(value.ptr as String*);
@@ -453,27 +453,27 @@ format :: fn(fmt : str, list: Init_List![any], options: Format_Options) -> Strin
   return builder.get_string();
 }
 
-#static print :: fn![T](message: T) {
+#static print :: fn!<T>(message: T) {
   formatted := format("%", .[any::from(&message)], Format_Options::default());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
-#static println :: fn![T](message: T) {
+#static println :: fn!<T>(message: T) {
   formatted := format("%", .[any::from(&message)], Format_Options::default());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 // format, print, and deinit a String via `format` function.
-#static printlnf :: fn(fmt: str, list: Init_List![any]) {
+#static printlnf :: fn(fmt: str, list: Init_List!<any>) {
   formatted := format(fmt, list, Format_Options::default());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 impl String_Builder {
-  appendf :: fn(self*, fmt: str, values: Init_List![any], options: Format_Options) {
+  appendf :: fn(self*, fmt: str, values: Init_List!<any>, options: Format_Options) {
     formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();
@@ -482,12 +482,12 @@ impl String_Builder {
 
 
 UTF8_Enumerator :: struct {
-  slice: Slice![u8],
+  slice: Slice!<u8>,
   position: u32,
   current_char: u32,
 }
 
-impl Enumerator![u32] for UTF8_Enumerator {
+impl Enumerator!<u32> for UTF8_Enumerator {
   current   :: fn(self) -> u32 {
     return self.current_char;
   }

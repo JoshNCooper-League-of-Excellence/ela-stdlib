@@ -154,8 +154,8 @@ impl String {
   }
 }
 
-impl Iterable![u8] for String { 
-  iter :: fn(self*) -> Iter![u8] {
+impl Iterable!<u8> for String { 
+  iter :: fn(self*) -> Iter!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
@@ -164,7 +164,7 @@ impl Iterable![u8] for String {
 }
 
 impl As_Char_Slice for String {
-  as_char_slice :: fn(self) -> Slice![u32] {
+  as_char_slice :: fn(self) -> Slice!<u32> {
     return .{
       data: self.data,
       length: self.length / 4, // we do this because we're reinterpreting a u8* as a u32* which effectively packs it and quarters the "length"
@@ -173,7 +173,7 @@ impl As_Char_Slice for String {
 }
 
 impl As_Byte_Slice for String {
-  as_byte_slice :: fn(self) -> Slice![u8] {
+  as_byte_slice :: fn(self) -> Slice!<u8> {
     return .{
       data: self.data,
       length: self.length

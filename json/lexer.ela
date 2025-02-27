@@ -31,7 +31,7 @@ impl JsonToken {
   }
 }
 
-#static json_token_type_names := Init_List![str] {
+#static json_token_type_names := Init_List!<str> {
   "Invalid",
   "True",
   "False",
@@ -57,7 +57,7 @@ JsonLexer :: struct {
   // position in input stream.
   position: u32,
   // lookahead buffer
-  lookahead_buffer : List![JsonToken],
+  lookahead_buffer : JsonToken[],
 }
 
 impl JsonLexer {
@@ -74,8 +74,8 @@ impl JsonLexer {
     return format("%:%:%", {any::from(&self.file), any::from(&line), any::from(&column)})
   }
 
-  get_token :: fn(self*) -> Result![JsonToken, String] {
-    #alias Result :: Result![JsonToken, String];
+  get_token :: fn(self*) -> Result!<JsonToken, String> {
+    #alias Result :: Result!<JsonToken, String>;
 
     token : JsonToken;
     token.type = JsonTokenType::Eof;
@@ -234,14 +234,14 @@ impl JsonLexer {
     return self.lookahead_buffer[0];
   }
 
-  expect_types :: fn(self*, types: Init_List![s32]) -> Result![JsonToken, String] {
+  expect_types :: fn(self*, types: Init_List!<s32>) -> Result!<JsonToken, String> {
     token := self.peek();
 
     // this should never happen.
     // we are the consumer of this API, but I guess maybe someone might want to use this?
     if types.length == 0 {
       loc := #location;
-      panic(format("json lexer's `expect_types` got an empty set of types to expect, at '%'", {any::from(&loc)}).as_str());
+      panic(format("json lexers `expect_types` got an empty set of types to expect, at \"%\"", {any::from(&loc)}).as_str());
     }
 
     // We do this without the string building so that we can only do that expensive heavy allocating procedure if we
@@ -249,7 +249,7 @@ impl JsonLexer {
     for i in 0..types.length {
       type := types.data[i];
       if token.type == type {
-        return Result![JsonToken, String]::Ok(token);
+        return Result!<JsonToken, String>::Ok(token);
       }
     }
 
@@ -267,10 +267,10 @@ impl JsonLexer {
       any::from(&types_string),
       any::from(&json_token_type_names.data[token.type])});
 
-    return Result![JsonToken, String]::Err(error);
+    return Result!<JsonToken, String>::Err(error);
   }
 
-  expect_type :: fn(self*, type: s32) -> Result![JsonToken, String] {
+  expect_type :: fn(self*, type: s32) -> Result!<JsonToken, String> {
     // TODO: it's much cheaper if we just check this, instead of making list lol.
     // saves a stack alloc and a function call.
     return self.expect_types({type});

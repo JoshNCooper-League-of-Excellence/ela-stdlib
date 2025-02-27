@@ -56,12 +56,12 @@ impl File {
     return len as u32;
   }
 
-  read_all :: fn(filename: str) -> Result![String, str] {
-    #alias Result :: Result![String, str];
+  read_all :: fn(filename: str) -> Result!<String, str> {
+    #alias Result :: Result!<String, str>;
     file := fopen(filename.data, "r"c);
 
     if !file then 
-      return Result::Err("Couldn't open file");
+      return Result::Err("Couldnt open file");
 
     string: String;
     string.resize(1024);
@@ -74,10 +74,10 @@ impl File {
     return Result::Ok(string);
   }
   
-  read_bytes :: fn(filename: str) -> Result![u8[], str] {
-    #alias Result :: Result![u8[], str];
+  read_bytes :: fn(filename: str) -> Result!<u8[], str> {
+    #alias Result :: Result!<u8[], str>;
     file := fopen(filename.data, "r"c);
-    if !file then return Result::Err("Couldn't open file");
+    if !file then return Result::Err("Couldnt open file");
     
     bytes: u8[];
     bytes.resize(1024);
@@ -92,8 +92,8 @@ impl File {
     return Result::Ok(bytes);
   }
   
-  write_all :: fn(filename: str, data: str) -> Option![str] {
-    #alias Option :: Option![str];
+  write_all :: fn(filename: str, data: str) -> Option!<str> {
+    #alias Option :: Option!<str>;
     file := fopen(filename.data, "w"c);
     if !file {
       return Option::Some("Unable to open file");

@@ -1,6 +1,5 @@
 
-
-impl![_Some] Option![_Some] {
+impl!<_Some> Option!<_Some> {
   unwrap :: fn(self) -> _Some {
     if self.is_some {
       return self.s;

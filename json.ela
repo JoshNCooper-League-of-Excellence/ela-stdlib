@@ -16,8 +16,8 @@ JsonValue :: struct;
 
 // this causes a type error for some reason
 
-#alias JsonObject :: List![JsonKeyValuePair*];
-#alias JsonArray  :: List![JsonValue*];
+#alias JsonObject :: JsonKeyValuePair*[];
+#alias JsonArray  :: JsonValue*[];
 
 JsonKeyValuePair :: struct {
   key: u8*,
@@ -28,7 +28,7 @@ JsonValueUnion :: union {
   number: f64,
   boolean: bool,
   _string: u8*,
-  object: List![JsonKeyValuePair],
+  object: JsonKeyValuePair[],
   array: JsonArray,
 }
 
@@ -166,7 +166,7 @@ impl JsonValue {
     }
     return null; // or handle error
   }
-  as_object :: fn(self*) -> List![JsonKeyValuePair] {
+  as_object :: fn(self*) -> JsonKeyValuePair[] {
     if self.type == JsonValueType::Object {
       return self.data.object;
     }
@@ -321,7 +321,7 @@ json_serialize :: fn(object: void*, type: Type*) -> (s32, JsonValue*);
 json_serialize_struct :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
   val : JsonValue* = malloc(sizeof(JsonValue));
   val.type = JsonValueType::Object;
-  val.data.object = List![JsonKeyValuePair]{};
+  val.data.object = JsonKeyValuePair[].{};
   for field in type.fields {
     field_kvp: JsonKeyValuePair;
     field_kvp.key = strdup(field.name);

@@ -23,13 +23,13 @@ String :: struct {
 // .[0, 1, 2, 3] (or {0, 1, 2, 3})
 // it is stack allocated and does not need to be freed, nor
 // should it ever be held on to.
-Init_List :: struct![Value_Type] {
+Init_List :: struct!<Value_Type> {
   data:   Value_Type*,
   length: u64,
 }
 
 // A collection of items.
-List :: struct![Value_Type] {
+List :: struct!<Value_Type> {
   data:     Value_Type*,
   length:   u64,
   capacity: u64,
@@ -47,13 +47,13 @@ any :: struct {
 // A non-owning fat pointer. This should just be a view into a pointer, that tracks length.
 // very useful for efficiently passing arrays of data to functions for quick usage with a known lifetime,
 // iterating over subarrays, etc.
-Slice :: struct![Value_Type] {
+Slice :: struct!<Value_Type> {
   data: Value_Type*,
   length: u64,
 }
 
 
-// we can use this in place of Result![void, ...]
+// we can use this in place of Result!<void, ...>
 // when we have a function that returns nothing of value,
 // but we can't use void for result.
 
@@ -64,7 +64,7 @@ None :: struct {}
 RESULT_IS_ERR : u8 =  0;
 RESULT_IS_OK  : u8 =  1;
 
-Result :: struct![_Ok, _Err] {
+Result :: struct!<_Ok, _Err> {
   index: u8,
   #anon :: union {
     err:  _Err,
@@ -73,7 +73,7 @@ Result :: struct![_Ok, _Err] {
 }
 
 
-Option :: struct![_Some] {
+Option :: struct!<_Some> {
   #anon :: union {
     s: _Some
   },

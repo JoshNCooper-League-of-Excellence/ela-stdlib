@@ -11,20 +11,20 @@ Type :: struct;
   };
 
   Type :: struct {
-    id: s32,                                                // the integer ID used to identify this type.
-    name: u8*,                                         // the type's name.
-    size: u64,                                              // sizeof(T)
-    flags: u64,                                             // defined in reflection.ela and emit.cpp, the values of the flags.
-    fields: List![Field],                                   // get a list of struct fields, enum variants.
-    elements: fn*(u8*) -> List![Element],              // get a list of the Elements, which can be used to reflect on arrays.
-    element_type: Type*,                                    // the type this type has a pointer to, is an array of, etc.
+    id: s32,                                                   // the integer ID used to identify this type.
+    name: u8*,                                                 // the type's name.
+    size: u64,                                                 // sizeof(T)
+    flags: u64,                                                // defined in reflection.ela and emit.cpp, the values of the flags.
+    fields: Field[],                                           // get a list of struct fields, enum variants.
+    elements: fn*(u8*) -> Element[],                           // get a list of the Elements, which can be used to reflect on arrays.
+    element_type: Type*,                                       // the type this type has a pointer to, is an array of, etc.
   };
 
   impl Field {
-    set :: fn![T, T1](self*, target: T*, data: T1) {
+    set :: fn!<T, T1>(self*, target: T*, data: T1) {
       memcpy((target as u8*) + self.offset, (&data) as u8*, sizeof(T1));
     }
-    get :: fn![T](self*, source: T*) -> u8* {
+    get :: fn!<T>(self*, source: T*) -> u8* {
       return ((source) as u8*) + self.offset;
     }
   }
@@ -135,7 +135,7 @@ impl Type  {
 }
 
 impl any {
-  from :: fn![T](t: T*) -> #self {
+  from :: fn!<T>(t: T*) -> #self {
     #static type: Type*;
     if !type then type = typeof(T);
     return .{
@@ -144,11 +144,11 @@ impl any {
     }
   }
 
-  new :: fn![T, Alloc](t: T, alloc: Alloc) -> #self 
+  new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self 
   where Alloc is Allocator {
     #static type: Type*;
     if !type then type = typeof(T);
-    ptr : T* = alloc.allocate![T]();
+    ptr : T* = alloc.allocate!<T>();
     *ptr = t;
     return .{
       ptr: ptr,
@@ -158,7 +158,7 @@ impl any {
 
   // return the pointer behind this any, or if the type isn't matched,
   // return null.
-  cast :: fn![T](self*) -> T* {
+  cast :: fn!<T>(self*) -> T* {
     #static type: Type*;
     if !type then type = typeof(T);
     if type != self.type then return null;
@@ -168,7 +168,7 @@ impl any {
   // an unchecked version of the 'cast' method.
   // this will return junk data, or worse, if you pass in the wrong type to cast to.
   // use cast anywhere you can, it's much more type safe.
-  unwrap :: fn![T](self*) -> T {
+  unwrap :: fn!<T>(self*) -> T {
     return *(self.ptr as T*);
   }
 }

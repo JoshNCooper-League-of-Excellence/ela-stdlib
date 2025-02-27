@@ -110,7 +110,7 @@ impl Shader {
     }
   }
 
-  set :: fn![T](self*, name: str, v: T*) {
+  set :: fn!<T>(self*, name: str, v: T*) {
     switch typeof(T) {
       typeof(f32): {
         self.set_float(name, *(v as f32*));

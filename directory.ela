@@ -15,7 +15,7 @@ dirent :: struct {
 
 Directory :: struct {
   path: String,
-  files: List![String],
+  files: List!<String>,
 }
 
 impl Directory {
@@ -33,7 +33,7 @@ impl Directory {
       files : .{}
     };
 
-    files: List![String];
+    files: List!<String>;
     entry: void*;
     while entry = readdir(dir) {
       ent : dirent* = entry;

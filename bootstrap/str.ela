@@ -37,7 +37,7 @@ impl str {
     return true;
   }
   
-  slice :: fn(self*, range: Range) -> Slice![u8] {
+  slice :: fn(self*, range: Range) -> Slice!<u8> {
     start, end := (range.begin, range.end); 
     length := end - start;
 
@@ -53,8 +53,8 @@ impl str {
 }
 
 // This iterator is over the bytes.
-impl Iterable![u8] for str { 
-  iter :: fn(self*) -> Iter![u8] {
+impl Iterable!<u8> for str { 
+  iter :: fn(self*) -> Iter!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
@@ -88,7 +88,7 @@ impl Hash for str {
 }
 
 impl As_Char_Slice for str {
-  as_char_slice :: fn(self) -> Slice![u32] {
+  as_char_slice :: fn(self) -> Slice!<u32> {
     return .{
       data: self.data,
       length: self.length,
@@ -97,7 +97,7 @@ impl As_Char_Slice for str {
 }
 
 impl As_Byte_Slice for str {
-  as_byte_slice :: fn(self) -> Slice![u8] {
+  as_byte_slice :: fn(self) -> Slice!<u8> {
     return .{
       data: self.data,
       length: self.length

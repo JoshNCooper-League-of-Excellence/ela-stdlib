@@ -1,5 +1,5 @@
 
-impl![T] Clone for Slice![T] {
+impl!<T> Clone for Slice!<T> {
   clone :: fn(self) -> #self {
     data : T* = malloc(sizeof(T) * self.length);
     memcpy(data, self.data, self.length * sizeof(T));
@@ -10,7 +10,7 @@ impl![T] Clone for Slice![T] {
   }
 }
 
-impl![T] Slice![T] {
+impl!<T> Slice!<T> {
   from :: fn(data: T*, len: u32) -> #self => .{
     data: data,
     length: len,
@@ -22,7 +22,7 @@ impl![T] Slice![T] {
   
   // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
   // data available??
-  slice :: fn(self, range: Range) -> Slice![T] {
+  slice :: fn(self, range: Range) -> Slice!<T> {
     if range.begin < 0 then range.begin = 0;
 
     if range.end == -1 || range.end > self.length {
@@ -41,8 +41,8 @@ impl![T] Slice![T] {
   }
 }
 
-impl![T] Iterable![T] for Slice![T] {
-  iter :: fn(self*) -> Iter![T] {
+impl!<T> Iterable!<T> for Slice!<T> {
+  iter :: fn(self*) -> Iter!<T> {
     return .{
       ptr: self.data,
       end: self.data + self.length
@@ -50,7 +50,7 @@ impl![T] Iterable![T] for Slice![T] {
   }
 }
 
-impl As_Byte_Slice for Slice![u8] {
+impl As_Byte_Slice for Slice!<u8> {
   as_byte_slice :: fn(self) -> #self {
     return self;
   }

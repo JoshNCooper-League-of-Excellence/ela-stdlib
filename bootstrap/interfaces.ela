@@ -13,7 +13,7 @@ To_String    :: interface {
 
 // equivalent to an explicit cast operator overload in C++,
 // allow an object to be constructed from another.
-From        :: interface![T] {
+From        :: interface!<T> {
   // construct a self type from T.
   from :: fn(v: T) -> #self;
 }
@@ -24,12 +24,12 @@ Clone       :: interface {
   clone     :: fn(self) -> #self;
 }
 
-Init :: interface![Value_Type] {
-  init :: fn(init: Init_List![Value_Type]) -> #self;
+Init :: interface!<Value_Type> {
+  init :: fn(init: Init_List!<Value_Type>) -> #self;
 }
 
 // An object used to iterate over a collection of items, or any sequence.
-Enumerator   :: interface![Value_Type] {  
+Enumerator   :: interface!<Value_Type> {  
   // Return the current value this enumerator points to within the sequence it's iterating over.  
   current   :: fn(self) -> Value_Type;
   // Advance the enumerator by one step.
@@ -41,7 +41,7 @@ Enumerator   :: interface![Value_Type] {
 }
 
 // A collection or range of items that can be enumerated over, with a for loop, or some other means.
-Enumerable   :: interface![Enum, Value_Type] where Enum is Enumerator![Value_Type] { 
+Enumerable   :: interface!<Enum, Value_Type> where Enum is Enumerator!<Value_Type> { 
   // get the Enumerator object that was implemented for this type.
   enumerator      :: fn(self*) -> Enum;
 }
@@ -51,12 +51,12 @@ Enumerable   :: interface![Enum, Value_Type] where Enum is Enumerator![Value_Typ
 
 // It differs from Enumerator because it requires an incrementable piece of memory, so it must be a contiguous collection of data
 // represented by a chunk of memory that can be trivially traversed.
-Iter :: struct![Value_Type] {
+Iter :: struct!<Value_Type> {
   ptr: Value_Type*,  // Pointer to the current element in the collection.
   end: Value_Type*,  // Pointer to the end of the collection.
 }
 
-impl![Value_Type] Iter![Value_Type] {
+impl!<Value_Type> Iter!<Value_Type> {
   // Returns a pointer to the current element in the collection.
   current :: fn(self) -> Value_Type* => self.ptr;
 
@@ -73,13 +73,13 @@ impl![Value_Type] Iter![Value_Type] {
 
 // Iterable is a generic interface that represents a collection that can be iterated over.
 // It defines a single method, iter, which returns an iterator for the collection.
-Iterable :: interface![Value_Type] {
+Iterable :: interface!<Value_Type> {
   // Returns an iterator for the collection.
-  iter :: fn(self*) -> Iter![Value_Type];
+  iter :: fn(self*) -> Iter!<Value_Type>;
 }
 
 // Binary arithmetic operator overloads.
-Arithmetic :: interface![Right] {
+Arithmetic :: interface!<Right> {
   add       :: fn(self, right: Right) -> #self;   // '+' operator.
   sub       :: fn(self, right: Right) -> #self;   // '-' operator.
   mul       :: fn(self, right: Right) -> #self;   // '*' operator.
@@ -88,7 +88,7 @@ Arithmetic :: interface![Right] {
 }
 
 // Binary bitwise operator overloading.
-Bitwise :: interface![Right] {
+Bitwise :: interface!<Right> {
   shr       :: fn(self, right: Right) -> #self;   // '>>' operator.
   shl       :: fn(self, right: Right) -> #self;   // '<<' operator.
   xor       :: fn(self, right: Right) -> #self;   //  '^' operator.
@@ -102,7 +102,7 @@ Eq :: interface {
   neq :: fn(self, right: #self) -> bool;
 }
 
-Compare :: interface![Right] {
+Compare :: interface!<Right> {
   lt  :: fn(self, right: Right) -> bool;  // '<' operator.
   gt  :: fn(self, right: Right) -> bool;  // '>' operator.
 
@@ -110,25 +110,25 @@ Compare :: interface![Right] {
   gte :: fn(self, right: Right) -> bool;  // '>=' operator.
 }
 
-// Basic allocator interface. Coupled with most heap allocated structures, such as List![T] and str::
+// Basic allocator interface. Coupled with most heap allocated structures, such as List!<T> and str::
 Allocator :: interface {
-  allocate :: fn![T](self*) -> T*;
-  free :: fn![T](self*, ptr: T*);
-  allocate_array :: fn![T](self*, n: u64) -> T*;
-  resize :: fn![T](self*, ptr: T*, new_size: u64) -> T*;
-  copy :: fn![T](self*, ptr: T*, n: u64) -> T*;
+  allocate :: fn!<T>(self*) -> T*;
+  free :: fn!<T>(self*, ptr: T*);
+  allocate_array :: fn!<T>(self*, n: u64) -> T*;
+  resize :: fn!<T>(self*, ptr: T*, new_size: u64) -> T*;
+  copy :: fn!<T>(self*, ptr: T*, n: u64) -> T*;
 }
 
-As_Slice :: interface![T] {
-  as_slice :: fn(self, range: Range) -> Slice![T];
+As_Slice :: interface!<T> {
+  as_slice :: fn(self, range: Range) -> Slice!<T>;
 }
 
 As_Char_Slice :: interface {
-  as_char_slice :: fn(self) -> Slice![u32];
+  as_char_slice :: fn(self) -> Slice!<u32>;
 }
 
 As_Byte_Slice :: interface {
-  as_byte_slice :: fn(self) -> Slice![u8];
+  as_byte_slice :: fn(self) -> Slice!<u8>;
 }
 
 Deinit :: interface {
@@ -136,7 +136,7 @@ Deinit :: interface {
 }
 
 // just a free function version for those who might prefer a C like 'free' style api.
-deinit :: fn![T](t: T*) where T is Deinit {
+deinit :: fn!<T>(t: T*) where T is Deinit {
   t.deinit();
 }
 

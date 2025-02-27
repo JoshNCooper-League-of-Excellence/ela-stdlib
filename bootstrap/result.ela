@@ -1,5 +1,5 @@
 
-impl![_Ok, _Err] Result![_Ok, _Err] {
+impl!<_Ok, _Err> Result!<_Ok, _Err> {
   Ok :: fn(v: _Ok) -> #self {
     return .{
       index: RESULT_IS_OK,

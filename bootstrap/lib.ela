@@ -3,7 +3,7 @@
 #include "numeric.ela"; // impls for numeric types.
 #include "range.ela";
 #include "libc.ela";
-#include "memory.ela";
+
 #include "list.ela";
 #include "slice.ela";
 #include "str.ela";
@@ -20,14 +20,14 @@ assert :: fn(message: str, condition: bool) {
   }
 }
 
-assert_eq :: fn![T](message: str, a: T, b: T) where T is Is_Numeric | Eq {
+assert_eq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
   if a != b {
     printf("assertion failed: %s\n"c, message.data);
     exit(1);
   }
 }
 
-assert_neq :: fn![T](message: str, a: T, b: T) where T is Is_Numeric | Eq {
+assert_neq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
   if a == b {
     printf("assertion failed: %s\n"c, message.data);
     exit(1);
@@ -101,7 +101,7 @@ panic :: fn(msg: str) {
 }
 
 impl As_Char_Slice for u32 {
-  as_char_slice :: fn(self) -> Slice![u32] {
+  as_char_slice :: fn(self) -> Slice!<u32> {
     #static chars : char[2] = .[
       '\0', '\0'
     ];
@@ -114,7 +114,7 @@ impl As_Char_Slice for u32 {
 }
 
 impl As_Byte_Slice for u32 {
-  as_byte_slice :: fn(self) -> Slice![u8] {
+  as_byte_slice :: fn(self) -> Slice!<u8> {
     #static chars : u8[2] = .[
       '\0', '\0'
     ];

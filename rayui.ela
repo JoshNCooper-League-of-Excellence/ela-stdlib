@@ -164,7 +164,7 @@ impl Timer {
   }
 }
 
-Slider :: struct![T] {
+Slider :: struct!<T> {
   text: u8*,
   rect: Rectangle,
   style: Style,
@@ -175,7 +175,7 @@ Slider :: struct![T] {
   digits_to_show: s32,
 }
 
-impl![T] Slider![T] {
+impl!<T> Slider!<T> {
   adjust_slider_value :: fn(self*) {
     increment: T;
     if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
@@ -184,9 +184,9 @@ impl![T] Slider![T] {
       increment = (self.max_value - self.min_value) / 50;
     }
     if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
-      *self.value = clamp(*self.value + increment, min![T](self.min_value, self.max_value), max![T](self.min_value, self.max_value));
+      *self.value = clamp(*self.value + increment, min!<T>(self.min_value, self.max_value), max!<T>(self.min_value, self.max_value));
     } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
-      *self.value = clamp(*self.value - increment, min![T](self.min_value, self.max_value), max![T](self.min_value, self.max_value));
+      *self.value = clamp(*self.value - increment, min!<T>(self.min_value, self.max_value), max!<T>(self.min_value, self.max_value));
     }
 
     // Handle mouse input
@@ -202,7 +202,7 @@ impl![T] Slider![T] {
         self.held = false;
       } else {
         new_value := self.min_value + ((mouse_pos.x - self.rect.x) / self.rect.width) * (self.max_value - self.min_value);
-        *self.value = clamp(new_value, min![T](self.min_value, self.max_value), max![T](self.min_value, self.max_value));
+        *self.value = clamp(new_value, min!<T>(self.min_value, self.max_value), max!<T>(self.min_value, self.max_value));
       }
     }
   }

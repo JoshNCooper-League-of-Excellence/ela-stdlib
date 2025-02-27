@@ -33,19 +33,19 @@ impl Random {
   }
 }
 
-abs :: fn![T](v: T) -> T {
+abs :: fn!<T>(v: T) -> T {
   if v < 0 {
     return -v;
   }
   return v;
 }
 
-min :: fn![T](a: T, b: T) -> T {
+min :: fn!<T>(a: T, b: T) -> T {
   if a > b then return b;
   return a;
 }
 
-max :: fn![T](a: T, b: T) -> T {
+max :: fn!<T>(a: T, b: T) -> T {
   if a > b then return a;
   return b;
 }

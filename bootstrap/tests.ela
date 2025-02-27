@@ -2,7 +2,7 @@
 // We need to have a way for #import'ed files to purge out their #test functions, and any code behind an #ifdef TESTING {...}
 // Right now, if you include a library, you inherit all of it's testing, which is garbage. 
 #test test_List_push_at :: fn() {
-  array : List![s64];
+  array : s64[];
 
   {
     defer array.deinit();
@@ -19,7 +19,7 @@
 }
 
 #test test_List_pop :: fn() {
-  array : List![s64];
+  array : s64[];
 
   {
     defer array.deinit();
@@ -37,7 +37,7 @@
 }
 
 #test test_List_resize :: fn() {
-  array : List![s64];
+  array : s64[];
 
   {
     defer array.deinit();
@@ -53,7 +53,7 @@
 }
 
 #test test_List_shrink :: fn() {
-  array : List![s64];
+  array : s64[];
 
   {
     defer array.deinit();
@@ -75,8 +75,8 @@
 }
 
 #test test_List_clone :: fn() {
-  array : List![s64];
-  clone : List![s64];
+  array : s64[];
+  clone : s64[];
   {
     defer array.deinit();
     for i in 0..100 {
@@ -103,8 +103,8 @@
 }
 
 #test test_List_view :: fn() {
-  array : List![s64];
-  view  : List![s64];
+  array : s64[];
+  view  : s64[];
   {
     defer array.deinit();
     for i in 0..100 {
@@ -128,7 +128,7 @@
 }
 
 #test test_List_for_loop :: fn() {
-  array : List![s64];
+  array : s64[];
 
   // ! BUG: 
   // ! We have to call these explicitly before using a for loop, 
