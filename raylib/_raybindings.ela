@@ -16,7 +16,7 @@ Vector4 :: struct {
   z: f32,
   w: f32,
 };
-#alias Quaternion :: Vector4;
+alias Quaternion :: Vector4;
 Matrix :: struct {
   m0: f32,
   m4: f32,
@@ -61,14 +61,14 @@ Texture :: struct {
   mipmaps: s32,
   format: s32,
 };
-#alias Texture2D :: Texture;
-#alias TextureCubemap :: Texture;
+alias Texture2D :: Texture;
+alias TextureCubemap :: Texture;
 RenderTexture :: struct {
   id: u32,
   texture: Texture,
   depth: Texture,
 };
-#alias RenderTexture2D :: RenderTexture;
+alias RenderTexture2D :: RenderTexture;
 NPatchInfo :: struct {
   source: Rectangle,
   left: s32,
@@ -99,7 +99,7 @@ Camera3D :: struct {
   fovy: f32,
   projection: s32,
 };
-#alias Camera :: Camera3D;
+alias Camera :: Camera3D;
 Camera2D :: struct {
   offset: Vector2,
   target: Vector2,
@@ -592,10 +592,10 @@ NPatchLayout :: enum {
   NPATCH_THREE_PATCH_VERTICAL = 1,
   NPATCH_THREE_PATCH_HORIZONTAL = 2,
 };
-#alias LoadFileDataCallback :: fn*(u8 *, s32 *) -> u8 *;
-#alias SaveFileDataCallback :: fn*(u8 *, void *, s32) -> bool;
-#alias LoadFileTextCallback :: fn*(u8 *) -> u8 *;
-#alias SaveFileTextCallback :: fn*(u8 *, u8 *) -> bool;
+alias LoadFileDataCallback :: fn*(u8 *, s32 *) -> u8 *;
+alias SaveFileDataCallback :: fn*(u8 *, void *, s32) -> bool;
+alias LoadFileTextCallback :: fn*(u8 *) -> u8 *;
+alias SaveFileTextCallback :: fn*(u8 *, u8 *) -> bool;
 #foreign InitWindow :: fn(width: s32, height: s32, title: u8 *) -> void;
 #foreign CloseWindow :: fn() -> void;
 #foreign WindowShouldClose :: fn() -> bool;
@@ -707,7 +707,7 @@ NPatchLayout :: enum {
 #foreign MemAlloc :: fn(size: u32) -> void *;
 #foreign MemRealloc :: fn(ptr: void *, size: u32) -> void *;
 #foreign MemFree :: fn(ptr: void *) -> void;
-#alias TraceLogCallback :: fn*(s32, u8 *) -> void;
+alias TraceLogCallback :: fn*(s32, u8 *) -> void;
 #foreign SetTraceLogCallback :: fn(callback: TraceLogCallback) -> void;
 #foreign SetLoadFileDataCallback :: fn(callback: LoadFileDataCallback) -> void;
 #foreign SetSaveFileDataCallback :: fn(callback: SaveFileDataCallback) -> void;
@@ -1113,7 +1113,7 @@ NPatchLayout :: enum {
 #foreign GetRayCollisionMesh :: fn(ray: Ray, mesh: Mesh, transform: Matrix) -> RayCollision;
 #foreign GetRayCollisionTriangle :: fn(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3) -> RayCollision;
 #foreign GetRayCollisionQuad :: fn(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3, p4: Vector3) -> RayCollision;
-#alias AudioCallback :: fn*(void *, u32) -> void;
+alias AudioCallback :: fn*(void *, u32) -> void;
 #foreign InitAudioDevice :: fn() -> void;
 #foreign CloseAudioDevice :: fn() -> void;
 #foreign IsAudioDeviceReady :: fn() -> bool;

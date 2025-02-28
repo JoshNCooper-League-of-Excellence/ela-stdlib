@@ -26,4 +26,4 @@ impl!<T> Eq for Interned!<T> {
   }
 }
 
-#alias Interned_String :: Interned!<String>;
+alias Interned_String :: Interned!<String>;

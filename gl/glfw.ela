@@ -1,34 +1,34 @@
 #c_flags " -lglfw "
-#alias GLFWglproc :: fn*() -> void;
-#alias GLFWvkproc :: fn*() -> void;
+alias GLFWglproc :: fn*() -> void;
+alias GLFWvkproc :: fn*() -> void;
 
 GLFWmonitor :: struct;
 GLFWwindow :: struct;
 GLFWcursor :: struct;
 
-#alias GLFWallocatefun :: fn*(u64, void *) -> void *;
-#alias GLFWreallocatefun :: fn*(void *, u64, void *) -> void *;
-#alias GLFWdeallocatefun :: fn*(void *, void *) -> void;
-#alias GLFWerrorfun :: fn*(s32, u8 *) -> void;
-#alias GLFWwindowposfun :: fn*(GLFWwindow *, s32, s32) -> void;
-#alias GLFWwindowsizefun :: fn*(GLFWwindow *, s32, s32) -> void;
-#alias GLFWwindowclosefun :: fn*(GLFWwindow *) -> void;
-#alias GLFWwindowrefreshfun :: fn*(GLFWwindow *) -> void;
-#alias GLFWwindowfocusfun :: fn*(GLFWwindow *, s32) -> void;
-#alias GLFWwindowiconifyfun :: fn*(GLFWwindow *, s32) -> void;
-#alias GLFWwindowmaximizefun :: fn*(GLFWwindow *, s32) -> void;
-#alias GLFWframebuffersizefun :: fn*(GLFWwindow *, s32, s32) -> void;
-#alias GLFWwindowcontentscalefun :: fn*(GLFWwindow *, f32, f32) -> void;
-#alias GLFWmousebuttonfun :: fn*(GLFWwindow *, s32, s32, s32) -> void;
-#alias GLFWcursorposfun :: fn*(GLFWwindow *, f64, f64) -> void;
-#alias GLFWcursorenterfun :: fn*(GLFWwindow *, s32) -> void;
-#alias GLFWscrollfun :: fn*(GLFWwindow *, f64, f64) -> void;
-#alias GLFWkeyfun :: fn*(GLFWwindow *, s32, s32, s32, s32) -> void;
-#alias GLFWcharfun :: fn*(GLFWwindow *, u32) -> void;
-#alias GLFWcharmodsfun :: fn*(GLFWwindow *, u32, s32) -> void;
-#alias GLFWdropfun :: fn*(GLFWwindow *, s32, char *[]) -> void;
-#alias GLFWmonitorfun :: fn*(GLFWmonitor *, s32) -> void;
-#alias GLFWjoystickfun :: fn*(s32, s32) -> void;
+alias GLFWallocatefun :: fn*(u64, void *) -> void *;
+alias GLFWreallocatefun :: fn*(void *, u64, void *) -> void *;
+alias GLFWdeallocatefun :: fn*(void *, void *) -> void;
+alias GLFWerrorfun :: fn*(s32, u8 *) -> void;
+alias GLFWwindowposfun :: fn*(GLFWwindow *, s32, s32) -> void;
+alias GLFWwindowsizefun :: fn*(GLFWwindow *, s32, s32) -> void;
+alias GLFWwindowclosefun :: fn*(GLFWwindow *) -> void;
+alias GLFWwindowrefreshfun :: fn*(GLFWwindow *) -> void;
+alias GLFWwindowfocusfun :: fn*(GLFWwindow *, s32) -> void;
+alias GLFWwindowiconifyfun :: fn*(GLFWwindow *, s32) -> void;
+alias GLFWwindowmaximizefun :: fn*(GLFWwindow *, s32) -> void;
+alias GLFWframebuffersizefun :: fn*(GLFWwindow *, s32, s32) -> void;
+alias GLFWwindowcontentscalefun :: fn*(GLFWwindow *, f32, f32) -> void;
+alias GLFWmousebuttonfun :: fn*(GLFWwindow *, s32, s32, s32) -> void;
+alias GLFWcursorposfun :: fn*(GLFWwindow *, f64, f64) -> void;
+alias GLFWcursorenterfun :: fn*(GLFWwindow *, s32) -> void;
+alias GLFWscrollfun :: fn*(GLFWwindow *, f64, f64) -> void;
+alias GLFWkeyfun :: fn*(GLFWwindow *, s32, s32, s32, s32) -> void;
+alias GLFWcharfun :: fn*(GLFWwindow *, u32) -> void;
+alias GLFWcharmodsfun :: fn*(GLFWwindow *, u32, s32) -> void;
+alias GLFWdropfun :: fn*(GLFWwindow *, s32, char *[]) -> void;
+alias GLFWmonitorfun :: fn*(GLFWmonitor *, s32) -> void;
+alias GLFWjoystickfun :: fn*(s32, s32) -> void;
 GLFWvidmode :: struct {
   width: s32,
   height: s32,

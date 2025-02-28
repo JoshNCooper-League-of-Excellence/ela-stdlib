@@ -3,12 +3,6 @@
   AlignAllocations,   // if self flag is set, the allocator will fix alignment automatically when a misaligned allocation is found. Else it will naively allocate regardless of size.
 }
 
-impl ArenaFlags {
-  default :: fn() -> #self {
-    return #self::None;
-  }
-}
-
 // Super basic arena allocator, with a constructor that allocates a big block,
 // an allocate method that returns u8*, and a destructor that frees the block.
 Arena :: struct {

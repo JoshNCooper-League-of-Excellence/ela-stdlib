@@ -45,21 +45,21 @@
 #foreign glUniformMatrix4fv :: fn(location: s32, count, transpose: bool, value: f32*);
 
 
-#alias GLenum :: u32;
-#alias GLboolean :: u8;
-#alias GLbitfield :: u32;
-#alias GLvoid :: void;
-#alias GLbyte :: s8;
-#alias GLshort :: s16;
-#alias GLint :: s32;
-#alias GLubyte :: u8;
-#alias GLushort :: u16;
-#alias GLuint :: u32;
-#alias GLsizei :: s32;
-#alias GLfloat :: f32;
-#alias GLclampf :: f32;
-#alias GLdouble :: f64;
-#alias GLclampd :: f64;
+alias GLenum :: u32;
+alias GLboolean :: u8;
+alias GLbitfield :: u32;
+alias GLvoid :: void;
+alias GLbyte :: s8;
+alias GLshort :: s16;
+alias GLint :: s32;
+alias GLubyte :: u8;
+alias GLushort :: u16;
+alias GLuint :: u32;
+alias GLsizei :: s32;
+alias GLfloat :: f32;
+alias GLclampf :: f32;
+alias GLdouble :: f64;
+alias GLclampd :: f64;
 #foreign glClearIndex :: fn(c: GLfloat) -> void;
 #foreign glClearColor :: fn(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) -> void;
 #foreign glClear :: fn(mask: GLbitfield) -> void;
@@ -514,55 +514,55 @@
 #foreign glMultiTexCoord4ivARB :: fn(target: GLenum, v: GLint *) -> void;
 #foreign glMultiTexCoord4sARB :: fn(target: GLenum, s: GLshort, t: GLshort, r: GLshort, q: GLshort) -> void;
 #foreign glMultiTexCoord4svARB :: fn(target: GLenum, v: GLshort *) -> void;
-#alias khronos_int32_t :: s32;
-#alias khronos_uint32_t :: u32;
-#alias khronos_int64_t :: s64;
-#alias khronos_uint64_t :: u64;
-#alias khronos_int8_t :: s8;
-#alias khronos_uint8_t :: u8;
-#alias khronos_int16_t :: s16;
-#alias khronos_uint16_t :: u16;
-#alias khronos_intptr_t :: s64;
-#alias khronos_uintptr_t :: u64;
-#alias khronos_ssize_t :: s64;
-#alias khronos_usize_t :: u64;
-#alias khronos_float_t :: f32;
-#alias khronos_utime_nanoseconds_t :: khronos_uint64_t;
-#alias khronos_stime_nanoseconds_t :: khronos_int64_t;
+alias khronos_int32_t :: s32;
+alias khronos_uint32_t :: u32;
+alias khronos_int64_t :: s64;
+alias khronos_uint64_t :: u64;
+alias khronos_int8_t :: s8;
+alias khronos_uint8_t :: u8;
+alias khronos_int16_t :: s16;
+alias khronos_uint16_t :: u16;
+alias khronos_intptr_t :: s64;
+alias khronos_uintptr_t :: u64;
+alias khronos_ssize_t :: s64;
+alias khronos_usize_t :: u64;
+alias khronos_float_t :: f32;
+alias khronos_utime_nanoseconds_t :: khronos_uint64_t;
+alias khronos_stime_nanoseconds_t :: khronos_int64_t;
 khronos_boolean_enum_t :: enum {
   KHRONOS_FALSE = 0,
   KHRONOS_TRUE = 1,
   KHRONOS_BOOLEAN_ENUM_FORCE_SIZE = 2147483647,
 };
-#alias GLsizeiptr :: khronos_ssize_t;
-#alias GLintptr :: khronos_intptr_t;
-#alias GLchar :: u8;
-#alias GLhalf :: khronos_uint16_t;
+alias GLsizeiptr :: khronos_ssize_t;
+alias GLintptr :: khronos_intptr_t;
+alias GLchar :: u8;
+alias GLhalf :: khronos_uint16_t;
 __GLsync :: struct {
 };
-#alias GLsync :: __GLsync *;
-#alias GLuint64 :: khronos_uint64_t;
-#alias GLint64 :: khronos_int64_t;
-#alias GLDEBUGPROC :: fn*(GLenum, GLenum, GLuint, GLenum, GLsizei, GLchar *, void *) -> void;
-#alias GLuint64EXT :: khronos_uint64_t;
+alias GLsync :: __GLsync *;
+alias GLuint64 :: khronos_uint64_t;
+alias GLint64 :: khronos_int64_t;
+alias GLDEBUGPROC :: fn*(GLenum, GLenum, GLuint, GLenum, GLsizei, GLchar *, void *) -> void;
+alias GLuint64EXT :: khronos_uint64_t;
 _cl_context :: struct {
 };
 _cl_event :: struct {
 };
-#alias GLDEBUGPROCARB :: fn*(GLenum, GLenum, GLuint, GLenum, GLsizei, GLchar *, void *) -> void;
-#alias GLhalfARB :: khronos_uint16_t;
-#alias GLhandleARB :: u32;
-#alias GLcharARB :: u8;
-#alias GLsizeiptrARB :: khronos_ssize_t;
-#alias GLintptrARB :: khronos_intptr_t;
-#alias GLfixed :: khronos_int32_t;
-#alias GLDEBUGPROCAMD :: fn*(GLuint, GLenum, GLenum, GLsizei, GLchar *, void *) -> void;
-#alias GLint64EXT :: khronos_int64_t;
-#alias GLeglImageOES :: void *;
-#alias GLeglClientBufferEXT :: void *;
-#alias GLVULKANPROCNV :: fn*() -> void;
-#alias GLhalfNV :: u16;
-#alias GLvdpauSurfaceNV :: GLintptr;
+alias GLDEBUGPROCARB :: fn*(GLenum, GLenum, GLuint, GLenum, GLsizei, GLchar *, void *) -> void;
+alias GLhalfARB :: khronos_uint16_t;
+alias GLhandleARB :: u32;
+alias GLcharARB :: u8;
+alias GLsizeiptrARB :: khronos_ssize_t;
+alias GLintptrARB :: khronos_intptr_t;
+alias GLfixed :: khronos_int32_t;
+alias GLDEBUGPROCAMD :: fn*(GLuint, GLenum, GLenum, GLsizei, GLchar *, void *) -> void;
+alias GLint64EXT :: khronos_int64_t;
+alias GLeglImageOES :: void *;
+alias GLeglClientBufferEXT :: void *;
+alias GLVULKANPROCNV :: fn*() -> void;
+alias GLhalfNV :: u16;
+alias GLvdpauSurfaceNV :: GLintptr;
 #foreign glBlendEquationSeparateATI :: fn(modeRGB: GLenum, modeA: GLenum) -> void;
 
 GL :: enum {

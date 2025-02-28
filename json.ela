@@ -16,8 +16,8 @@ JsonValue :: struct;
 
 // this causes a type error for some reason
 
-#alias JsonObject :: JsonKeyValuePair*[];
-#alias JsonArray  :: JsonValue*[];
+alias JsonObject :: JsonKeyValuePair*[];
+alias JsonArray  :: JsonValue*[];
 
 JsonKeyValuePair :: struct {
   key: u8*,

@@ -1,5 +1,5 @@
 
-#alias char :: u32; // this represents a single UTF-8 scalar.
+alias char :: u32; // this represents a single UTF-8 scalar.
 
 // This is a string literal type. "..." will return this type. 
 // It's meant to be an immutable constant string.

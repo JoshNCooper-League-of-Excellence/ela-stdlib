@@ -34,7 +34,7 @@ assert_neq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
   }
 }
 
-#alias Panic_Handler :: fn *(str);
+alias Panic_Handler :: fn *(str);
 
 panic_handler: Panic_Handler;
 

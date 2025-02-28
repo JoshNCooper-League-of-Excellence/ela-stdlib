@@ -75,7 +75,7 @@ impl JsonLexer {
   }
 
   get_token :: fn(self*) -> Result!<JsonToken, String> {
-    #alias Result :: Result!<JsonToken, String>;
+    alias Result :: Result!<JsonToken, String>;
 
     token : JsonToken;
     token.type = JsonTokenType::Eof;

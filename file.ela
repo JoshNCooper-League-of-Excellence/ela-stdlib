@@ -1,7 +1,7 @@
 #import format;
 
 _IO_FILE :: struct;
-#alias FILE :: _IO_FILE;
+alias FILE :: _IO_FILE;
 
 EOF :: -1;
 
@@ -57,7 +57,7 @@ impl File {
   }
 
   read_all :: fn(filename: str) -> Result!<String, str> {
-    #alias Result :: Result!<String, str>;
+    alias Result :: Result!<String, str>;
     file := fopen(filename.data, "r"c);
 
     if !file then 
@@ -75,7 +75,7 @@ impl File {
   }
   
   read_bytes :: fn(filename: str) -> Result!<u8[], str> {
-    #alias Result :: Result!<u8[], str>;
+    alias Result :: Result!<u8[], str>;
     file := fopen(filename.data, "r"c);
     if !file then return Result::Err("Couldnt open file");
     
@@ -93,7 +93,7 @@ impl File {
   }
   
   write_all :: fn(filename: str, data: str) -> Option!<str> {
-    #alias Option :: Option!<str>;
+    alias Option :: Option!<str>;
     file := fopen(filename.data, "w"c);
     if !file {
       return Option::Some("Unable to open file");

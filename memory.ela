@@ -37,6 +37,7 @@
       while self.pointers.length {
         free(self.pointers.pop());
       }
+      self.pointers.deinit();
     }
   }
   impl Allocator for Tracking_Allocator {
