@@ -12,25 +12,26 @@
 #include "option.ela";
 #include "result.ela";
 
-
-assert :: fn(message: str, condition: bool) {
-  if !condition {
-    printf("assertion failed: %s\n"c, message.data);
-    exit(1);
+#ifndef FREESTANDING {
+  assert :: fn(message: str, condition: bool) {
+    if !condition {
+      printf("assertion failed: %s\n"c, message.data);
+      exit(1);
+    }
   }
-}
 
-assert_eq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
-  if a != b {
-    printf("assertion failed: %s\n"c, message.data);
-    exit(1);
+  assert_eq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
+    if a != b {
+      printf("assertion failed: %s\n"c, message.data);
+      exit(1);
+    }
   }
-}
 
-assert_neq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
-  if a == b {
-    printf("assertion failed: %s\n"c, message.data);
-    exit(1);
+  assert_neq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
+    if a == b {
+      printf("assertion failed: %s\n"c, message.data);
+      exit(1);
+    }
   }
 }
 

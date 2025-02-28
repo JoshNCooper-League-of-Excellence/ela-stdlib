@@ -10,6 +10,29 @@
   }
 }
 
+
+#ifndef FREESTANDING {
+  impl str {
+    starts_with :: fn(self*, prefix: u8*) -> bool {
+      prefix_len := strlen(prefix);
+      if self.length < prefix_len then return false;
+      for i in 0..prefix_len {
+        if self.data[i] != prefix[i] then return false;
+      }
+      return true;
+    }
+    
+    ends_with :: fn(self*, suffix: u8*) -> bool {
+      suffix_len := strlen(suffix);
+      if self.length < suffix_len then return false;
+      for i in 0..suffix_len {
+        if self.data[self.length - suffix_len + i] != suffix[i] then return false;
+      }
+      return true;
+    }
+  }
+}
+
 impl str {
   empty :: fn() -> #self {
     return .{};
@@ -17,24 +40,6 @@ impl str {
 
   subscript :: fn(self*, idx: s64) -> u8* {
     return &self.data[idx];
-  }
-  
-  starts_with :: fn(self*, prefix: u8*) -> bool {
-    prefix_len := strlen(prefix);
-    if self.length < prefix_len then return false;
-    for i in 0..prefix_len {
-      if self.data[i] != prefix[i] then return false;
-    }
-    return true;
-  }
-  
-  ends_with :: fn(self*, suffix: u8*) -> bool {
-    suffix_len := strlen(suffix);
-    if self.length < suffix_len then return false;
-    for i in 0..suffix_len {
-      if self.data[self.length - suffix_len + i] != suffix[i] then return false;
-    }
-    return true;
   }
   
   slice :: fn(self*, range: Range) -> Slice!<u8> {

@@ -1129,7 +1129,7 @@ alias AudioCallback :: fn*(void *, u32) -> void;
 #foreign UpdateSound :: fn(sound: Sound, data: void *, sampleCount: s32) -> void;
 #foreign UnloadWave :: fn(wave: Wave) -> void;
 #foreign UnloadSound :: fn(sound: Sound) -> void;
-#foreign UnloadSoundAlias :: fn(alias: Sound) -> void;
+#foreign UnloadSoundAlias :: fn(_alias: Sound) -> void;
 #foreign ExportWave :: fn(wave: Wave, fileName: u8 *) -> bool;
 #foreign ExportWaveAsCode :: fn(wave: Wave, fileName: u8 *) -> bool;
 #foreign PlaySound :: fn(sound: Sound) -> void;

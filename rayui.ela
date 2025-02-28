@@ -165,7 +165,7 @@ impl Timer {
 }
 
 Slider :: struct!<T> {
-  text: u8*,
+  text: String,
   rect: Rectangle,
   style: Style,
   min_value: T,
@@ -183,6 +183,7 @@ impl!<T> Slider!<T> {
     } else {
       increment = (self.max_value - self.min_value) / 50;
     }
+
     if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
       *self.value = clamp(*self.value + increment, min!<T>(self.min_value, self.max_value), max!<T>(self.min_value, self.max_value));
     } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
@@ -191,6 +192,7 @@ impl!<T> Slider!<T> {
 
     // Handle mouse input
     mouse_pos := GetMousePosition();
+
     if CheckCollisionPointRec(mouse_pos, self.rect) {
       if IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
         self.held = true;
@@ -208,7 +210,11 @@ impl!<T> Slider!<T> {
   }
 
   draw :: fn(self*) {
-    DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.background);
+    DrawRectangleV(
+      .{ x: self.rect.x, y: self.rect.y}, 
+      .{ x: self.rect.width, y: self.rect.height}, 
+      self.style.background
+    );
 
     v_f := (*self.value) as f32;
     min_f := self.min_value as f32;
@@ -216,26 +222,26 @@ impl!<T> Slider!<T> {
 
     slider_width : f32 = self.rect.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
 
-    slider_rect : Rectangle = .{
+    slider_rect := Rectangle.{
       x: self.rect.x,
       y: self.rect.y,
       width: slider_width,
       height: self.rect.height
     };
 
-    DrawRectangleV(Vector2.{ x: slider_rect.x, y: slider_rect.y}, Vector2.{ x: slider_rect.width, y: slider_rect.height}, self.style.foreground);
+    DrawRectangleV(.{ x: slider_rect.x, y: slider_rect.y}, .{ x: slider_rect.width, y: slider_rect.height}, self.style.foreground);
 
     DrawRectangleLines(self.rect.x as s32, self.rect.y as s32, self.rect.width as s32, self.rect.height as s32, self.style.highlighted);
 
     text_x := self.rect.x + (self.rect.width - MeasureText(self.text, self.style.font_size)) / 2;
     text_y := self.rect.y + (self.rect.height - self.style.font_size) / 2;
-    DrawText(self.text, text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
+    DrawText(self.text.data, text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
 
     value_text := to_string(*self.value);
     value_text[self.digits_to_show] = '\0';
-    value_text_x := text_x + MeasureText(self.text, self.style.font_size) + 10; // 10 pixels padding
-    DrawText(value_text, value_text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
-    free(value_text);
+    value_text_x := text_x + MeasureText(self.text.data, self.style.font_size) + 10; // 10 pixels padding
+    DrawText(value_text.data, value_text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
+    value_text.deinit();
 
     self.adjust_slider_value();
   }

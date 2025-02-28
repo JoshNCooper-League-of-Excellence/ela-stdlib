@@ -1,25 +1,27 @@
-Element :: struct;
-Type :: struct;
+Field :: struct {
+  name: u8*,
+  type: Type*,
+  size: u64,
+  offset: u64,
+  enum_value: s64,
+};
+
+Type :: struct {
+  id: s32,                                                   // the integer ID used to identify this type.
+  name: u8*,                                                 // the type's name.
+  size: u64,                                                 // sizeof(T)
+  flags: u64,                                                // defined in reflection.ela and emit.cpp, the values of the flags.
+  fields: Field[],                                           // get a list of struct fields, enum variants.
+  elements: fn*(u8*) -> Element[],                           // get a list of the Elements, which can be used to reflect on arrays.
+  element_type: Type*,                                       // the type this type has a pointer to, is an array of, etc.
+};
+
+Element :: struct {
+  data: u8*,
+  type: Type*,
+};
 
 #ifndef FREESTANDING {
-  Field :: struct {
-    name: u8*,
-    type: Type*,
-    size: u64,
-    offset: u64,
-    enum_value: s64,
-  };
-
-  Type :: struct {
-    id: s32,                                                   // the integer ID used to identify this type.
-    name: u8*,                                                 // the type's name.
-    size: u64,                                                 // sizeof(T)
-    flags: u64,                                                // defined in reflection.ela and emit.cpp, the values of the flags.
-    fields: Field[],                                           // get a list of struct fields, enum variants.
-    elements: fn*(u8*) -> Element[],                           // get a list of the Elements, which can be used to reflect on arrays.
-    element_type: Type*,                                       // the type this type has a pointer to, is an array of, etc.
-  };
-
   impl Field {
     set :: fn!<T, T1>(self*, target: T*, data: T1) {
       memcpy((target as u8*) + self.offset, (&data) as u8*, sizeof(T1));
@@ -28,13 +30,27 @@ Type :: struct;
       return ((source) as u8*) + self.offset;
     }
   }
+  _type_info: Type*[];
 
-  Element :: struct {
-    data: u8*,
-    type: Type*,
-  };
-
-  _type_info: Type*[];  
+  impl Type {
+    get_field :: fn(self*, name: u8*) -> Field* {
+      for *field in self.fields {
+        if strcmp(field.name, name) == 0 {
+          return field;
+        }
+      }
+      return null;
+    }
+    
+    offset :: fn(self*, member: str) -> u64 {
+      for field in self.fields {
+        if strncmp(field.name, member.data, member.length as s32) == 0  {
+          return field.offset;
+        }
+      }
+      return -1;
+  }
+  }
 }
 
 #flags TypeFlags :: enum {
@@ -115,23 +131,6 @@ impl Type  {
     return self.flags & TypeFlags::POINTER != 0;
   }
 
-  get_field :: fn(self*, name: u8*) -> Field* {
-    for *field in self.fields {
-      if strcmp(field.name, name) == 0 {
-        return field;
-      }
-    }
-    return null;
-  }
-  
-  offset :: fn(self*, member: str) -> u64 {
-    for field in self.fields {
-      if strncmp(field.name, member.data, member.length as s32) == 0  {
-        return field.offset;
-      }
-    }
-    return -1;
-  }
 }
 
 impl any {
@@ -140,18 +139,6 @@ impl any {
     if !type then type = typeof(T);
     return .{
       ptr: t,
-      type: type,
-    }
-  }
-
-  new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self 
-  where Alloc is Allocator {
-    #static type: Type*;
-    if !type then type = typeof(T);
-    ptr : T* = alloc.allocate!<T>();
-    *ptr = t;
-    return .{
-      ptr: ptr,
       type: type,
     }
   }
@@ -173,10 +160,25 @@ impl any {
   }
 }
 
-impl Deinit for any {
-    // this should only be used for an any created with any::new()
-  // clearly because it memcpy's it into place.
-  deinit :: fn(self*) {
-    free(self.ptr);
+#ifndef FREESTANDING {
+  impl any {
+    new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self 
+    where Alloc is Allocator {
+      #static type: Type*;
+      if !type then type = typeof(T);
+      ptr : T* = alloc.allocate!<T>();
+      *ptr = t;
+      return .{
+        ptr: ptr,
+        type: type,
+      }
+    }
+  }
+  impl Deinit for any {
+      // this should only be used for an any created with any::new()
+    // clearly because it memcpy's it into place.
+    deinit :: fn(self*) {
+      free(self.ptr);
+    }
   }
 }
