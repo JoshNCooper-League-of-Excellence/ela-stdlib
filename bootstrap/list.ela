@@ -184,12 +184,14 @@ impl!<Value_Type> Enumerator!<(u32, Value_Type)> for Indexed_Enumerator!<u32, Va
   }
 }
 
-impl!<Value_Type> List!<Value_Type> {
-  indexed :: fn(self) -> Indexed_Enumerator!<u32, Value_Type> => .{
-    slice: .{
-      data: self.data,
-      length: self.length
-    },
-    index: 0
-  };
+impl!<Value_Type> Enumerable!<Indexed_Enumerator!<u32, Value_Type>, (u32, Value_Type)> for List!<Value_Type> {
+  enumerator :: fn(self) -> Indexed_Enumerator!<u32, Value_Type> {
+    return .{
+      slice: .{
+        data: self.data,
+        length: self.length
+      },
+      index: 0
+    };
+  }
 }
