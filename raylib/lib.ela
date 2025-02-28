@@ -99,6 +99,10 @@ impl Vector2 {
   distance :: fn(self, other: #self) -> f32 {
     return sqrt((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)) as f32;
   }
+
+  random :: fn(scale: s32) -> #self {
+    return .{ x: GetRandomValue(-scale, scale) as f32, y: GetRandomValue(-scale, scale) as f32 };
+  }
 }
 
 impl Vector3 {

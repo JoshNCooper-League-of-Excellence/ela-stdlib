@@ -141,7 +141,9 @@ impl JsonLexer {
         self.position++;
         c = self.input[self.position];
       }
-      token.value = String::from_ptr(self.input.data + start, self.input.data + start + len);
+      token.value = String::from(Slice!<u8>.{
+        data: self.input.data + start, length: len
+      });
       token.type = JsonTokenType::Number;
       return Result::Ok(token);
       // operators
@@ -190,7 +192,10 @@ impl JsonLexer {
         c = self.input[self.position];
       }
       self.position++;
-      token.value = String::from_ptr(self.input.data + start, self.input.data + start + len);
+      token.value = String::from(Slice!<u8>.{
+        data: self.input.data + start,
+        length: len
+      });
       token.type = JsonTokenType::String;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "true"c, 4) == 0 {

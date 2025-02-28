@@ -5,10 +5,10 @@ Drop        :: interface {
   drop      :: fn(self*);
 }
 
-// Allow an object to be converted to a str
+// Allow an object to be converted to a String
 To_String    :: interface {
   // convert self to str::
-  to_string :: fn(self) -> str;
+  to_string :: fn(self) -> String;
 }
 
 // equivalent to an explicit cast operator overload in C++,
@@ -144,6 +144,5 @@ Hash :: interface {
   hash :: fn(self) -> u64;
 }
 
-Is_Pointer :: interface {}
 
 

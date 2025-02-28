@@ -150,6 +150,8 @@ impl!<T> Iterable!<T> for List!<T> {
 }
 
 impl!<T> List!<T> {
+  is_empty :: fn(self) -> bool => self.length == 0;
+  
   subscript :: fn(self*, idx: s64) -> T* {
     return &self.data[idx];
   }

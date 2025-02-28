@@ -1,162 +1,132 @@
 #import raylib;
 
-// * ########### BUILTIN UI HELPERS ############### //
-
-// * Style struct used for UI styling.
+// * used for UI styling.
 Style :: struct {
-  foreground: Color,
-  background: Color,
-  highlighted: Color,
-  font_size: s32,
-  use_jiggly_text: bool,
-  jiggle_intensity : f32,
-  jiggle_rate : f32,
+  foreground:         Color,
+  background:         Color,
+  highlighted:        Color,
+
+  font_size:          s32,
+
+  // TODO: probably don't do this here?
+  // It's just kind of a silly thing, we don't need to support that for everything.
+  // we should have some more extensible settings so you can achieve whatever you want rather simply.
+  use_jiggly_text:    bool,
+  jiggle_intensity:   f32,
+  jiggle_rate:        f32,
 }
 
 // * Measure the width of a jiggly text of 'text' and 'style'
-measure_jiggly_text :: fn(text: u8*, style: Style) -> f32 {
-  if !text then return 0.0;
-  length := strlen(text);
+measure_jiggly_text :: fn(text: String, style: Style) -> f32 {
+  if text.is_empty() then return 0.0;
   total_width: f32 = 0.0;
-  for i in 0..length {
+  for i in 0..text.length {
     total_width += style.font_size;
   }
   return total_width;
 }
 
 // * Draw wavy jiggly text.
-jiggly_text :: fn(text: u8*, rect: Rectangle, style: Style) {
-  
+jiggly_text :: fn(text: String, rect: Rectangle, style: Style) {
   time: f32 = GetTime() as f32;
-
-  length := 0;
-  if text then length = strlen(text);
-
   intensity := style.jiggle_intensity;
   rate := style.jiggle_rate;
-
-  for i in 0..length {
-    u8_x := rect.x + (i * style.font_size) as f32;
-    u8_y := rect.y + intensity * sin(rate * time + (i as f32));
-    temp : u8[2] = .[ text[i], '\0' as u8 ];
-    DrawText(temp as u8*, u8_x as s32, u8_y as s32, style.font_size, style.foreground);
+  for i in 0..text.length {
+    pos_x := rect.x + (i * style.font_size) as f32;
+    pos_y := rect.y + intensity * sin(rate * time + (i as f32));
+    temp : u8[2] = .[ 
+      text[i], 
+      '\0' as u8 
+    ];
+    DrawText(temp, pos_x as s32, pos_y as s32, style.font_size, style.foreground);
   }
 }
 
 // * Draw a button with that returns true for clicked, false for not clicked.
-button :: fn(text: u8*, rect: Rectangle, style: Style) -> bool {
-  position: Vector2 = .{ x: rect.x, y: rect.y};
-  size: Vector2 = .{ x: rect.width, y: rect.height};
+button :: fn(text: String, rect: Rectangle, style: Style) -> bool {
+  position: Vector2 = .{ 
+    x: rect.x, 
+    y: rect.y
+  };
+  
+  size: Vector2 = .{ 
+    x: rect.width, 
+    y: rect.height
+  };
 
   text_width : f32;
+
+  text_bytes := text.data;
+
   if style.use_jiggly_text {
     text_width = measure_jiggly_text(text, style);
   } else {
-    text_width = MeasureText(text, style.font_size);
+    text_width = MeasureText(text_bytes, style.font_size);
   }
 
   text_height : f32 = style.font_size;
-
   if text_width > rect.width {
     size.x = text_width;
     position.x = rect.x - (text_width - rect.width) / 2;
   }
 
-  new_rect : Rectangle = .{ x: position.x, y: position.y, width: size.x, height: size.y};
+  new_rect : Rectangle = .{ 
+    x: position.x, 
+    y: position.y, 
+    width: size.x, 
+    height: size.y
+  };
 
   text_x := position.x + (size.x - text_width) / 2;
   text_y := position.y + (size.y - text_height) / 2;
-
   mouse_over := CheckCollisionPointRec(GetMousePosition(), new_rect);
 
   if mouse_over {
     DrawRectangleV(position, size, style.highlighted);
-    if (IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT)) {
-    
-      return true;
-    }
+    if (IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT)) then return true;
   } else {
     DrawRectangleV(position, size, style.background);
   }
 
   if !style.use_jiggly_text {
-    DrawText(text, text_x as s32, text_y as s32, style.font_size, style.foreground);
+    DrawText(text_bytes, text_x as s32, text_y as s32, style.font_size, style.foreground);
   } else {
-    jiggly_text(text, .{ x: text_x, y: text_y, width: new_rect.width, height: new_rect.height}, style);
+    jiggly_text(
+      text, 
+      .{ 
+        x: text_x, 
+        y: text_y, 
+        width: new_rect.width, 
+        height: new_rect.height
+      },
+      style
+    );
   }
 
   return false;
 }
-
 
 // * Draw a button with a click callback.
 // * T* in the callback is a pointer to some of your state data, if you want to mutate it.
-// * Just pass use 'void' for generic argument && pass null if you don't want to use that.
-
-//! TODO: once we fix repro 63,
-//! make this generic, and take fn*(T*) so we don'thave to void cast our data in our callback
-button_pro :: fn(text: u8*, rect: Rectangle, style: Style, callback: fn* (void*) -> void, user_data : void*) -> bool {
-  
-  position: Vector2 = .{ x: rect.x, y: rect.y};
-  size: Vector2 = .{ x: rect.width, y: rect.height};
-
-  text_width : f32;
-  if style.use_jiggly_text {
-    text_width = measure_jiggly_text(text, style);
-  } else {
-    text_width = MeasureText(text, style.font_size);
+// * use 'button' if you don't want the callback system, or pass 'null, null' as the last two arguments.
+button_pro :: fn!<T>(text: String, rect: Rectangle, style: Style, callback: fn* (T*), user_data : T*) {
+  if button(text, rect, style) {
+    callback(user_data);
   }
-
-  text_height : f32 = style.font_size;
-
-  if text_width > rect.width {
-    size.x = text_width;
-    position.x = rect.x - (text_width - rect.width) / 2;
-  }
-
-  new_rect : Rectangle = .{ x: position.x, y: position.y, width: size.x, height: size.y};
-
-  text_x := position.x + (size.x - text_width) / 2;
-  text_y := position.y + (size.y - text_height) / 2;
-
-  mouse_over := CheckCollisionPointRec(GetMousePosition(), new_rect);
-
-  if mouse_over {
-    DrawRectangleV(position, size, style.highlighted);
-    if (IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT)) {
-      callback(user_data);
-      return true;
-    }
-  } else {
-    DrawRectangleV(position, size, style.background);
-  }
-
-  if !style.use_jiggly_text {
-    DrawText(text, text_x as s32, text_y as s32, style.font_size, style.foreground);
-  } else {
-    jiggly_text(text, .{ x: text_x, y: text_y, width: new_rect.width, height: new_rect.height}, style);
-  }
-
-  return false;
 }
 
-// *########### END BUILTIN UI HELPERS ############### */
 // ? A simple timer that can be used in update loops to get a tick every N seconds.
 // * interval: f32 = seconds between each tick.
 Timer :: struct {
   interval : f32,
-  // Returns true if the timer has exceeded the interval time relative to the last tick time,
   last_tick_time: f32,
 }
 
 impl Timer {
+  // * Returns true if the timer has exceeded the interval time relative to the last tick time,
   tick :: fn(self*) -> bool {
     now := GetTime();
-    if self.last_tick_time == 0 {
-      self.last_tick_time = now;
-      return true;
-    }
-    if now >= (self.last_tick_time + self.interval) {
+    if now >= (self.last_tick_time + self.interval) || self.last_tick_time == 0 {
       self.last_tick_time = now;
       return true;
     }
@@ -164,15 +134,19 @@ impl Timer {
   }
 }
 
-Slider :: struct!<T> {
+Slider :: struct!<T> where T is Is_Numerical {
   text: String,
   rect: Rectangle,
   style: Style,
+
+  // probably doesn't apply when this isn't limited to numbers?
+  digits_to_show: s32,
+
+  held : bool,
+
   min_value: T,
   max_value: T,
   value: T*,
-  held : bool,
-  digits_to_show: s32,
 }
 
 impl!<T> Slider!<T> {
@@ -208,7 +182,6 @@ impl!<T> Slider!<T> {
       }
     }
   }
-
   draw :: fn(self*) {
     DrawRectangleV(
       .{ x: self.rect.x, y: self.rect.y}, 
@@ -222,7 +195,7 @@ impl!<T> Slider!<T> {
 
     slider_width : f32 = self.rect.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
 
-    slider_rect := Rectangle.{
+    slider_rect : Rectangle = .{
       x: self.rect.x,
       y: self.rect.y,
       width: slider_width,
@@ -233,21 +206,25 @@ impl!<T> Slider!<T> {
 
     DrawRectangleLines(self.rect.x as s32, self.rect.y as s32, self.rect.width as s32, self.rect.height as s32, self.style.highlighted);
 
-    text_x := self.rect.x + (self.rect.width - MeasureText(self.text, self.style.font_size)) / 2;
+    text_x := self.rect.x + (self.rect.width - MeasureText(self.text.data, self.style.font_size)) / 2;
     text_y := self.rect.y + (self.rect.height - self.style.font_size) / 2;
+
     DrawText(self.text.data, text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
 
     value_text := to_string(*self.value);
     value_text[self.digits_to_show] = '\0';
+
     value_text_x := text_x + MeasureText(self.text.data, self.style.font_size) + 10; // 10 pixels padding
+
     DrawText(value_text.data, value_text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
+    
     value_text.deinit();
 
     self.adjust_slider_value();
   }
 }
 
-CheckButton :: struct {
+Check_Button :: struct {
   value: bool,
   rect: Rectangle,
   style: Style,
@@ -255,7 +232,7 @@ CheckButton :: struct {
   allow_hold : bool,
 }
 
-impl CheckButton {
+impl Check_Button {
   draw :: fn(self*) {
     if self.value {
       DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.highlighted);
@@ -292,7 +269,7 @@ impl CheckButton {
   }
 }
 
-DropDown :: struct {
+Drop_Down :: struct {
   options: u8*[],
   rect: Rectangle,
   style: Style,
@@ -304,9 +281,9 @@ DropDown :: struct {
   show_selected_option: bool,
 }
 
-impl DropDown {
+impl Drop_Down {
   draw :: fn(self*) {
-    // Draw the dropdown box
+    // Draw the Drop_Down box
     DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.background);
 
     if self.selected_index >= 0 && self.selected_index < self.options.length && self.show_selected_option {

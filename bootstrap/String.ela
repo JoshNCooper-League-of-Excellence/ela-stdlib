@@ -22,24 +22,23 @@
       return result;
     }
     
-    from :: fn(data: u8*) -> #self {
-      if !data then return .{};
-      len := strlen(data);
+    from :: fn!<T>(data: T) -> #self 
+    where T is As_Byte_Slice {
+      slice := data.as_byte_slice();
       return .{
-        data: strdup(data),
-        capacity: len,
-        length: len,
+        data: strdup(slice.data),
+        capacity: slice.length,
+        length: slice.length,
       };
     }
     
-    from_ptr :: fn(begin: u8*, end: u8*) -> #self {
-      self: #self;
-      self.length = end - begin;
-      self.capacity = self.length;
-      self.data = malloc(sizeof(u8) * self.length + 1);
-      memcpy(self.data, begin, self.length);
-      self.data[self.length] = 0;
-      return self;
+    from_ptr :: fn(data: u8*) -> #self {
+      length := strlen(data);
+      return .{
+        data: strdup(data),
+        capacity: length,
+        length: length,
+      };
     }
   }
 
@@ -129,6 +128,8 @@ impl String {
       length: self.length,
     }
   }
+
+  is_empty :: fn(self) -> bool => self.length == 0;
 
   empty :: fn() -> #self {
     return .{};
