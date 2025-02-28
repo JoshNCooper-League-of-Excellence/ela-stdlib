@@ -148,32 +148,32 @@ impl JsonLexer {
       return Result::Ok(token);
       // operators
     } else if c == ':' {
-      token.value = String::from(":"c);
+      token.value = String::from(":");
       token.type = JsonTokenType::Colon;
       self.position++;
       return Result::Ok(token);
     } else if c == '{' {
-      token.value = String::from("{"c);
+      token.value = String::from("{");
       token.type = JsonTokenType::LCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '}' {
-      token.value = String::from("}"c);
+      token.value = String::from("}");
       token.type = JsonTokenType::RCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '[' {
-      token.value = String::from("["c);
+      token.value = String::from("[");
       token.type = JsonTokenType::LBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ']' {
-      token.value = String::from("]"c);
+      token.value = String::from("]");
       token.type = JsonTokenType::RBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ',' {
-      token.value = String::from(","c);
+      token.value = String::from(",");
       token.type = JsonTokenType::Comma;
       self.position++;
       return Result::Ok(token);
@@ -199,17 +199,17 @@ impl JsonLexer {
       token.type = JsonTokenType::String;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "true"c, 4) == 0 {
-      token.value = String::from("true"c); 
+      token.value = String::from("true"); 
       token.type = JsonTokenType::True;
       self.position += 4;
       return Result::Ok(token);
     } else if self.position + 5 <= self.input.length && strncmp(self.input.data + self.position, "false"c, 5) == 0 {
-      token.value = String::from("false"c);
+      token.value = String::from("false");
       token.type = JsonTokenType::False;
       self.position += 5;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "null"c, 4) == 0 {
-      token.value = String::from("null"c);
+      token.value = String::from("null");
       token.type = JsonTokenType::Null;
       self.position += 4;
       return Result::Ok(token);
