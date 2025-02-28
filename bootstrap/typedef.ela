@@ -52,11 +52,6 @@ Slice :: struct!<Value_Type> {
   length: u64,
 }
 
-Indexed_Enumerator :: struct!<Index, Value_Type> {
-  slice: Slice!<Value_Type>,
-  index: u32,
-}
-
 
 // we can use this in place of Result!<void, ...>
 // when we have a function that returns nothing of value,

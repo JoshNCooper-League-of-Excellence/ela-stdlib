@@ -419,6 +419,8 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
         builder.append_then_free(to_string(value.ptr));
       } else if value.type.is_enum() {
         builder.append_then_free(to_string(value.unwrap!<s32>()));
+      } else if value.type.is_tuple() {
+        // TODO: we should have a way to reflect on tuples in a convenient fashion.
       } else {
         switch value.type {
           typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));  }

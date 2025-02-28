@@ -171,27 +171,3 @@ impl!<T> As_Slice!<T> for List!<T> {
     }
   }
 }
-
-impl!<Value_Type> Enumerator!<(u32, Value_Type)> for Indexed_Enumerator!<u32, Value_Type> {
-  current :: fn(self) -> (u32, Value_Type) {
-    return (self.index, slice.data[self.index]);
-  }
-  next :: fn(self*) -> void {
-    self.index++;
-  }
-  done :: fn(self) -> bool {
-    return self.index >= self.slice.length;
-  }
-}
-
-impl!<Value_Type> Enumerable!<Indexed_Enumerator!<u32, Value_Type>, (u32, Value_Type)> for List!<Value_Type> {
-  enumerator :: fn(self) -> Indexed_Enumerator!<u32, Value_Type> {
-    return .{
-      slice: .{
-        data: self.data,
-        length: self.length
-      },
-      index: 0
-    };
-  }
-}
