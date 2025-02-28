@@ -25,25 +25,24 @@ impl Directory {
     return strdup(buffer) as u8*;
   }
 
-  open :: fn(path: u8*) -> Directory {
-    dir := opendir(path);
+  open :: fn!<T>(path: T) -> Option!<Directory> where T is As_Byte_Slice {
+    dir := opendir(path.as_byte_slice().data);
+    if !dir => Option!<Directory>::None();
 
-    if !dir then return .{ 
-      path: String::from(path),
-      files : .{}
-    };
-
-    files: List!<String>;
+    files: String[];
     entry: void*;
     while entry = readdir(dir) {
       ent : dirent* = entry;
-      files.push(String::from(ent.d_name as u8*));
+      files.push(String::from_ptr(ent.d_name as u8*));
     }
 
     closedir(dir);
-    return .{path: String::from(path), files: files};
-  }
 
+    return Option!<Directory>::Ok(.{
+      path: String::from(path), 
+      files: files
+    });
+  }
 }
 
 impl Deinit for Directory {
