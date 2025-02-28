@@ -103,6 +103,13 @@ impl Vector2 {
   random :: fn(scale: s32) -> #self {
     return .{ x: GetRandomValue(-scale, scale) as f32, y: GetRandomValue(-scale, scale) as f32 };
   }
+
+  clamp :: fn(self, min: #self, max: #self) -> #self {
+    return .{
+      x: clamp(self.x, min.x, max.x) as f32,
+      y: clamp(self.y, min.y, max.y) as f32
+    };
+  }
 }
 
 impl Vector3 {

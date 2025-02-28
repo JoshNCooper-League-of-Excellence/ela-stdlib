@@ -209,6 +209,7 @@ Format :: interface {
     new :: fn() -> #self* {
       self : #self* =  malloc(sizeof(String_Builder_Block));
       self.data = calloc(sizeof(u8), STRING_BUILDER_BLOCK_MAX_LEN);
+      self.length = 0;
       self.next = null;
       return self;
     }
@@ -276,41 +277,41 @@ Format :: interface {
 
     append :: fn!<T>(self*, value: T) where T is As_Byte_Slice {
       slice := value.as_byte_slice();
-
-      if slice.length == 0 
-                then return;
-      
-      if !self.root { 
-        self.root = String_Builder_Block::new();
-        self.current = self.root;
+  
+      if slice.length <= 0 then return;
+  
+      if !self.root {
+          self.root = String_Builder_Block::new();
+          self.current = self.root;
       }
-      
+  
       slice_index := 0;
       length := slice.length;
-
+  
       if length == 1 && slice.data[0] == '\0' then return;
-
       remaining := STRING_BUILDER_BLOCK_MAX_LEN - self.current.length;
-
+  
       while length > 0 {
-        // Simple append, no overflow
-        if length <= remaining {
-          memcpy(self.current.data + self.current.length, slice.data + slice_index, length);
-          self.current.length += length;
-          break;
-        } 
 
-        // Append with overflow
-        memcpy(self.current.data + self.current.length, slice.data + slice_index, remaining);
-        self.current.length += remaining;
-        slice_index += remaining;
-        length -= remaining;
-        self.current.next = String_Builder_Block::new();
-        self.current = self.current.next;
-        remaining = STRING_BUILDER_BLOCK_MAX_LEN;
+          // Simple append, no overflow
+          if length <= remaining {
+            memcpy(self.current.data + self.current.length, slice.data, length);
+            self.current.length += length;
+            break;
+          }
+  
+          // Append with overflow
+          if self.current.data != null && slice.data != null {
+              memcpy(self.current.data + self.current.length, slice.data + slice_index, remaining);
+              self.current.length += remaining;
+          }
+          slice_index += remaining;
+          length -= remaining;
+          self.current.next = String_Builder_Block::new();
+          self.current = self.current.next;
+          remaining = STRING_BUILDER_BLOCK_MAX_LEN;
       }
     }
-
 
     // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
     // this is helpful for doing a builder.append_then_free(some_allocating_function());
