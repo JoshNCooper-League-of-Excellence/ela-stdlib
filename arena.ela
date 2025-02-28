@@ -1,6 +1,6 @@
 #flags ArenaFlags :: enum {
   None,               // default.
-  AlignAllocations,   // if self flag is set, the allocator will fix alignment automatically when a misaligned allocation is found. Else it will naively allocate regardless of size.
+  Align,              // if self flag is set, the allocator will fix alignment automatically when a misaligned allocation is found. Else it will naively allocate regardless of size.
 }
 
 // Super basic arena allocator, with a constructor that allocates a big block,
@@ -50,7 +50,7 @@ impl Arena {
     }
     
     aligned_ptr := self.ptr;
-    if self.flags & ArenaFlags::AlignAllocations != 0 {
+    if self.flags & ArenaFlags::Align != 0 {
       aligned_ptr = (self.ptr + self.alignment - 1) & ~(self.alignment - 1);
     }
     
