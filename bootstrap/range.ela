@@ -51,3 +51,12 @@ impl!<Value_Type> Enumerable!<Range_Enumerator!<Value_Type>, Value_Type> for Ran
     };
   }
 }
+
+impl!<Value_Type> Eq for Range_Base!<Value_Type> {
+  eq :: fn(self, right: #self) -> bool {
+    return self.begin == right.begin && self.end == right.end;
+  }
+  neq :: fn(self, right: #self) -> bool {
+    return self.begin != right.begin || self.end != right.end;
+  }
+}

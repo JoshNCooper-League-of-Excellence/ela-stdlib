@@ -180,13 +180,19 @@ Format_Options :: struct {
 }
 
 impl Format_Options {
-
   default :: fn() -> #self => .{
     digits_after_decimal: 2,
     indented: false,
     quote_strings: false,
   };
   
+  current :: fn() -> #self* {
+    #static current: #self* = null;
+    if !current {
+      current = new(#self::default());
+    }
+    return &current;
+  }
 }
 
 Format :: interface {
@@ -362,22 +368,38 @@ to_string :: fn!<T>(value: T) -> String {
     }
   }
 
+  format_buffer: u8[255];
+  format_buffer_length: u8;
 
   if type == typeof(u8) {
-    format = "%c";
+    format_buffer[0] = '%'
+    format_buffer[1] = 'c'
+    format_buffer_length = 2;
   } else if type.is_integral() {
     format = "%lld";
+    format_buffer[0] = '%' 
+    format_buffer[1] = 'l'
+    format_buffer[2] = 'l'
+    format_buffer[3] = 'd'
+    format_buffer_length = 4;
   } else if type.is_float() {
-    format = "%.2lf";               //  * using to_string has a trade off of less control for slight convenience. Oh well! use snprintf instead.
+    if type == typeof(f32) {
+      format_buffer_length = sprintf(format_buffer, "%%.%df"c, Format_Options::current().digits_after_decimal);
+    } else {
+      format_buffer_length = sprintf(format_buffer, "%%.%dlf"c, Format_Options::current().digits_after_decimal);
+    }
   } else if type.is_string() {
-    format = "%s";
+    format_buffer[0] = '%'
+    format_buffer[1] = 's'
+    format_buffer_length = 2;
   } else if type.is_pointer() {
-    format = "%p";
+    format_buffer[0] = '%'
+    format_buffer[1] = 'p'
+    format_buffer_length = 2;
   } else {
-    format = "(unsupported type)";  // * do we throw an error here? format = null?
+    return .{};
   }
-
-  snprintf(buffer, 64 * sizeof(u8), format.data, value);
+  snprintf(buffer, 64 * sizeof(u8), format_buffer, value);
   return String::from_ptr(buffer);
 }
 
@@ -390,6 +412,82 @@ impl Format for s8 {
   }
 }
 
+format_struct :: fn(value: any, builder: String_Builder*, options: Format_Options) {
+  builder.append(Slice!<u8>::from(value.type.name, strlen(value.type.name)));
+  builder.append(" {");
+  
+  if options.indented {
+    builder.append("\n");
+  }
+
+  for field in value.type.fields {
+    if options.indented {
+      builder.append("  ");
+    }
+
+    field_any := any.{
+      type: field.type,
+      ptr: field.get(value.ptr),
+    };
+  
+    builder.append(" ");
+    builder.append(Slice!<u8>::from(field.name, strlen(field.name)));
+    builder.append(": ");
+
+    if field_any.ptr == null {
+      builder.append("null");
+    } else if field_any.type == typeof(u8*) {
+      builder.append(String::from_ptr(field_any.unwrap!<u8*>()));
+    } else if field_any.type.is_pointer() {
+      builder.append_then_free(to_string(value.ptr));
+    } else if field_any.type.is_enum() {
+      builder.append_then_free(to_string(field_any.unwrap!<s32>()));
+    } else if field_any.type == typeof(String)  { 
+      if options.quote_strings 
+        then builder.append("\"");
+      builder.append(*(field_any.ptr as String*));
+      if options.quote_strings 
+        then builder.append("\"");
+    } else if field_any.type == typeof(str) { 
+      if options.quote_strings 
+        then builder.append("\"");
+      builder.append_then_free((*(field_any.ptr as str*)).as_string());   
+      if options.quote_strings 
+        then builder.append("\"");
+    } else if field_any.type.is_struct() {
+      // ! BUG: this freaking explodes.
+      // format_struct(field_any, &builder, options);
+    } else {
+      switch field_any.type {
+        typeof(u8):      { builder.append_then_free(to_string(field_any.unwrap!<u8>()));  }
+        typeof(u16):     { builder.append_then_free(to_string(field_any.unwrap!<u16>())); }
+        typeof(u32):     { builder.append_then_free(to_string(field_any.unwrap!<u32>())); }
+        typeof(u64):     { builder.append_then_free(to_string(field_any.unwrap!<u64>())); }
+
+        typeof(s8):      { builder.append_then_free(to_string(field_any.unwrap!<s8>()));  }
+        typeof(s16):     { builder.append_then_free(to_string(field_any.unwrap!<s16>())); }
+        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
+        typeof(s64):     { builder.append_then_free(to_string(field_any.unwrap!<s64>())); }
+
+        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
+
+        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
+        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
+        typeof(f64):     { builder.append_then_free(to_string(field_any.unwrap!<f64>()));  }
+
+        typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
+      }
+    } 
+    
+    if options.indented {
+      builder.append("\n");
+    } else {
+      builder.append(" ");
+    }
+  }
+
+  builder.append("}");
+}
 
 format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> String {
   if fmt.length == 0 {
@@ -419,34 +517,30 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
         builder.append_then_free(to_string(value.ptr));
       } else if value.type.is_enum() {
         builder.append_then_free(to_string(value.unwrap!<s32>()));
-      } else if value.type.is_tuple() {
-        // TODO: we should have a way to reflect on tuples in a convenient fashion.
+      } else if value.type.is_struct() || value.type.is_tuple() {
+        format_struct(value, &builder, options);
       } else {
         switch value.type {
-          typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));  }
-          typeof(u16):     { builder.append_then_free(to_string(value.unwrap!<u16>())); }
-          typeof(u32):     { builder.append_then_free(to_string(value.unwrap!<u32>())); }
-          typeof(u64):     { builder.append_then_free(to_string(value.unwrap!<u64>())); }
+          typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));        }
+          typeof(u16):     { builder.append_then_free(to_string(value.unwrap!<u16>()));       }
+          typeof(u32):     { builder.append_then_free(to_string(value.unwrap!<u32>()));       }
+          typeof(u64):     { builder.append_then_free(to_string(value.unwrap!<u64>()));       }
 
-          typeof(s8):      { builder.append_then_free(to_string(value.unwrap!<s8>()));  }
-          typeof(s16):     { builder.append_then_free(to_string(value.unwrap!<s16>())); }
-          typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>())); }
-          typeof(s64):     { builder.append_then_free(to_string(value.unwrap!<s64>())); }
+          typeof(s8):      { builder.append_then_free(to_string(value.unwrap!<s8>()));        }
+          typeof(s16):     { builder.append_then_free(to_string(value.unwrap!<s16>()));       }
+          typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>()));       }
+          typeof(s64):     { builder.append_then_free(to_string(value.unwrap!<s64>()));       }
 
-          typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>())); }
+          typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>()));       }
 
-          typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));    }
-          typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));  }
-          typeof(f64):     { builder.append_then_free(to_string(value.unwrap!<f64>()));  }
+          typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));       }
+          typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));       }
+          typeof(f64):     { builder.append_then_free(to_string(value.unwrap!<f64>()));       }
 
-          typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>())); }
+          typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>()));      }
 
-          typeof(String):  {
-            string := *(value.ptr as String*);
-            // printf("%s\n"c, string.data);
-            builder.append(string);
-          }
-          typeof(str):     { builder.append_then_free((*(value.ptr as str*)).as_string());   }
+          typeof(String):  { builder.append(*(value.ptr as String*));                         }
+          typeof(str):     { builder.append_then_free((*(value.ptr as str*)).as_string());    }
         }
       }
       value_index++;
@@ -460,20 +554,19 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
 }
 
 #static print :: fn!<T>(message: T) {
-  formatted := format("%", .[any::from(&message)], Format_Options::default());
+  formatted := format("%", .[any::from(&message)], *Format_Options::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
 #static println :: fn!<T>(message: T) {
-  formatted := format("%", .[any::from(&message)], Format_Options::default());
+  formatted := format("%", .[any::from(&message)], *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
-// format, print, and deinit a String via `format` function.
 #static printlnf :: fn(fmt: str, list: Init_List!<any>) {
-  formatted := format(fmt, list, Format_Options::default());
+  formatted := format(fmt, list, *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
@@ -485,7 +578,6 @@ impl String_Builder {
     formatted.deinit();
   }
 }
-
 
 UTF8_Enumerator :: struct {
   slice: Slice!<u8>,
