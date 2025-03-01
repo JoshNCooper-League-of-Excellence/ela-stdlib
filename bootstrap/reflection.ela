@@ -162,10 +162,8 @@ impl any {
 
 #ifndef FREESTANDING {
   impl any {
-    new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self 
-    where Alloc is Allocator {
-      #static type: Type*;
-      if !type then type = typeof(T);
+    new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self where Alloc is Allocator {
+      type := typeof(T);
       ptr : T* = alloc.allocate!<T>();
       *ptr = t;
       return .{

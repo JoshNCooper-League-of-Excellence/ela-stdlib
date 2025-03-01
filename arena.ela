@@ -64,7 +64,7 @@ impl Arena {
     }
     
     result := self.memory + aligned_ptr;
-    self.ptr = aligned_ptr + size;
+    self.ptr += aligned_ptr + size;
     return result;
   }
 
