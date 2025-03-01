@@ -173,8 +173,8 @@ impl!<Value_Type> Enumerator!<(u32, Value_Type)> for Indexed_Enumerator!<Value_T
   }
 }
 
-impl!<Value_Type> Enumerable!<Indexed_Enumerator!<Value_Type>, (u32, Value_Type)> for Value_Type[] {
-  enumerator :: fn(self*) -> Indexed_Enumerator!<Value_Type> {
+impl!<Value_Type> Value_Type[] {
+  indexed :: fn(self*) -> Indexed_Enumerator!<Value_Type> {
     return .{
       index: 0,
       slice: .{
