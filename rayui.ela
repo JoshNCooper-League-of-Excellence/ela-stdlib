@@ -1,4 +1,4 @@
-#import raylib;
+import raylib;
 
 // * used for UI styling.
 Style :: struct {

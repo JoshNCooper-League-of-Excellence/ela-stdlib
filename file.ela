@@ -1,4 +1,4 @@
-#import format;
+import format;
 
 _IO_FILE :: struct;
 alias FILE :: _IO_FILE;

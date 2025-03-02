@@ -1,5 +1,5 @@
 // TODO:
-// We need to have a way for #import'ed files to purge out their #test functions, and any code behind an #ifdef TESTING {...}
+// We need to have a way for import'ed files to purge out their #test functions, and any code behind an #ifdef TESTING {...}
 // Right now, if you include a library, you inherit all of it's testing, which is garbage. 
 #test test_List_push_at :: fn() {
   array : s64[];

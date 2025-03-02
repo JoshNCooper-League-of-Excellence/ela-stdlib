@@ -1,5 +1,4 @@
 #ifndef FREESTANDING  {
-
   mem_zero :: fn!<T>(ptr: T*, count: u64) {
     memset(ptr, 0, sizeof(T) * count);
   }
