@@ -187,10 +187,11 @@ impl Format_Options {
   };
   
   current :: fn() -> #self* {
-    #static current: #self* = null;
-    if !current {
-      current = new(#self::default());
-    }
+    #static current := Format_Options.{
+      digits_after_decimal: 2,
+      indented: false,
+      quote_strings: false,
+    };
     return &current;
   }
 }
