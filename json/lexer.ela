@@ -1,4 +1,4 @@
-import file::*;
+import fs::*;
 import fmt::*;
 
 JsonTokenType :: enum {

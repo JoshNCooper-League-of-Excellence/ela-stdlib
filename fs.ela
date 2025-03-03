@@ -1,0 +1,285 @@
+import fmt::*;
+
+EOF :: -1;
+_IO_FILE :: struct;
+alias FILE :: _IO_FILE;
+
+Time_Spec :: struct {
+  tv_sec: s64,
+  tv_nsec: s64,
+};
+
+Stat :: struct {
+  st_dev: u64,
+  st_ino: u64,
+  st_nlink: u64,
+  st_mode: u32,
+  st_uid: u32,
+  st_gid: u32,
+  __pad0: s32,
+  st_rdev: u64,
+  st_size: u64,
+  st_blksize: s64,
+  st_blocks: s64,
+  st_atim: Time_Spec,
+  st_mtim: Time_Spec,
+  st_ctim: Time_Spec,
+  __glibc_reserved: s64[3],
+};
+
+#foreign fstat :: fn(fd: s32, stat: Stat *) -> s32;
+#foreign fileno :: fn(file: FILE*) -> s32;
+
+
+/* Idk the validity of these methods, just written by chatgpt */
+impl Stat {
+  new :: fn!<T>(path: T) -> Option!<#self> where T is As_Byte_Slice {
+    file := fopen(path.as_byte_slice().data, "r"c);
+
+    if !file {
+      fclose(file); // probably not needed?
+      return Option!<#self>::None();
+    }
+
+    stat: #self;
+    fd := fileno(file);
+
+    if fd == -1 {
+      fclose(file);
+      return Option!<#self>::None();
+    }
+
+    fstat(fd, &stat);
+    fclose(file);
+    return Option!<#self>::Some(stat);
+  }
+
+  is_dir :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0x4000;
+  }
+  
+  is_file :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0x8000;
+  }
+  
+  is_symlink :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0xA000;
+  }
+  
+  is_block_device :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0x6000;
+  }
+  
+  is_char_device :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0x2000;
+  }
+  
+  is_fifo :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0x1000;
+  }
+  
+  is_socket :: fn(self*) -> bool {
+      return (self.st_mode & 0xF000) == 0xC000;
+  }
+}
+
+SeekPosition :: enum {
+  // Seek from beginning of file.
+  Begin,
+  // Seek from current position.
+  Current,
+  // Seek from end of file.
+  End,
+}
+
+#foreign fread :: fn(ptr: void *, size: u64, count: u64, stream: FILE *) -> u64;
+#foreign fwrite :: fn(ptr: void *, size: u64, count: u64, stream: FILE *) -> u64;
+#foreign fseek :: fn(stream: FILE *, offset: s64, origin: s32) -> s32;
+#foreign ftell :: fn(stream: FILE *) -> s64;
+#foreign rewind :: fn(stream: FILE *) -> void;
+#foreign fopen :: fn(fname: u8 *, flags: u8 *) -> FILE *;
+#foreign fclose :: fn(file: FILE *) -> void;
+#foreign fgetc :: fn(file: FILE *) -> s8;
+#foreign putc :: fn(ch: u8, file: FILE *) -> void;
+#foreign fprintf :: fn(stream: FILE *, format: u8 *, ...) -> s32;
+#foreign fflush :: fn(f: FILE *);
+
+
+// TODO: add a way to do Binary stuff.
+#flags FileOpenFlags :: enum {
+  Read,
+  Write,
+}
+
+impl FileOpenFlags {
+  // Used to convert our flag enum to a str for fopen/fclose etc.
+  // this does not ever need to be freed.
+  as_str :: fn(self) -> u8* {
+    if self == FileOpenFlags::Read {
+      return "r"c;
+    } else if self == FileOpenFlags::Write {
+      return "w"c;
+    } else if self == FileOpenFlags::Read | FileOpenFlags::Write {
+      return "rw"c;
+    } else {
+      panic("unexpected file flags passed to a file api function");
+      return null;
+    }
+  }
+}
+
+File :: struct {
+  fd: FILE*,
+}
+
+impl File {
+  open :: fn!<T>(path: T, flags: FileOpenFlags) -> #self where T is As_Byte_Slice {
+    slice := path.as_byte_slice();
+    self: #self;
+    self.fd = fopen(slice.data, flags.as_str());
+    return self;
+  }
+}
+
+impl File {
+  flush :: fn(self*) {
+    fflush(self.fd);
+  }
+
+  close :: fn(self*) -> void {
+    fflush(self.fd);
+    fclose(self.fd);
+    self.fd = null;
+  }
+
+  length :: fn(file: FILE*) -> u32 {
+    original_pos := ftell(file);
+    fseek(file, 0, SeekPosition::End);
+    len := ftell(file);
+    fseek(file, original_pos, SeekPosition::Current);
+    return len as u32;
+  }
+
+  read_all :: fn(filename: str) -> Result!<String, str> {
+    alias Result :: Result!<String, str>;
+    file := fopen(filename.data, "r"c);
+
+    if !file then 
+      return Result::Err("Couldnt open file");
+
+    string: String;
+    string.resize(1024);
+    while {
+      c := fgetc(file);
+      if c == EOF then break;
+      string.push(c);
+    }
+    fclose(file);
+    return Result::Ok(string);
+  }
+  
+  read_bytes :: fn(filename: str) -> Result!<u8[], str> {
+    alias Result :: Result!<u8[], str>;
+    file := fopen(filename.data, "r"c);
+    if !file then return Result::Err("Couldnt open file");
+    
+    bytes: u8[];
+    bytes.resize(1024);
+
+    while {
+      c := fgetc(file);
+      if c == EOF then break;
+      bytes.push(c);
+    }
+    
+    fclose(file);
+    return Result::Ok(bytes);
+  }
+  
+  write_all :: fn(filename: str, data: str) -> Option!<str> {
+    alias Option :: Option!<str>;
+    file := fopen(filename.data, "w"c);
+    if !file {
+      return Option::Some("Unable to open file");
+    }
+    fwrite(data.data, sizeof(u8), data.length, file);
+    fclose(file);
+    return Option::None();
+  }
+}
+
+impl Deinit for File {
+  deinit :: fn(self*) {
+    self.close();
+  }
+}
+
+impl File {
+  stat :: fn(self*) -> Option!<Stat> {
+    alias Option :: Option!<Stat>;
+    stat: Stat;
+    if fstat(fileno(self.fd), &stat) != 0 {
+      return Option::None();
+    }
+    return Option::Some(stat);
+  }
+}
+
+
+#export DIR :: struct;
+#foreign getcwd :: fn(buf: u8*, size: u64) -> u8*;
+
+dirent :: struct {
+  d_ino: u64,
+  d_off: u64,
+  d_reclen: u16,
+  d_type: u8,
+  d_name: u8[256],
+}
+
+#foreign opendir :: fn(name: u8 *) -> DIR*;
+#foreign readdir :: fn(dir: DIR*) -> dirent*;
+#foreign closedir :: fn(dir: void*) -> s32;
+
+Directory :: struct {
+  path: String,
+  entries: List!<String>,
+}
+
+impl Directory {
+  current :: fn() -> u8* {
+    buffer: u8[256];
+    getcwd(buffer, 256);
+    return strdup(buffer) as u8*;
+  }
+
+  open :: fn!<T>(path: T) -> Option!<Directory> where T is As_Byte_Slice {
+    dir := opendir(path.as_byte_slice().data);
+    if !dir => Option!<Directory>::None();
+
+    entries: String[];
+    entry: void*;
+
+    while entry = readdir(dir) {
+      ent : dirent* = entry;
+      entries.push(String::from_ptr(ent.d_name as u8*));
+    }
+
+    closedir(dir);
+
+    return Option!<Directory>::Some(.{
+      path: String::from(path), 
+      entries: entries
+    });
+  }
+}
+
+impl Deinit for Directory {
+  deinit :: fn(self*) {
+    self.path.deinit();
+    for path in self.entries {
+      path.deinit();
+    }
+    self.entries.deinit();
+  }
+}

@@ -1,22 +1,32 @@
 
 impl!<_Some> Option!<_Some> {
+  is_some :: fn(self) -> bool {
+    return self.has_value;
+  }
+
+  is_none :: fn(self) -> bool {
+    return !self.has_value;
+  }
+
   unwrap :: fn(self) -> _Some {
-    if self.is_some {
+    if self.has_value {
       return self.s;
     } else {
+      default: _Some;
       panic("unwrapped a 'none' option");
-      return .{};
+      return default;
     }
   }
+
   Some :: fn(v: _Some) -> #self {
     return .{
       s: v,
-      is_some: true
+      has_value: true
     };
   }
   None :: fn() -> #self {
     return .{
-      is_some: false
+      has_value: false
     }
   }
 }

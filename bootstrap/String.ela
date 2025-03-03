@@ -40,7 +40,9 @@
         length: length,
       };
     }
+
   }
+
 
   /* 
     These are the 'List' like functions for dynamic strings.
@@ -138,14 +140,7 @@ impl String {
   subscript :: fn(self*, idx: s64) -> u8* {
     return &self.data[idx];
   }
-  
-  eq :: fn(self*, other: #self) -> bool {
-    if self.length != other.length then return false;
-    for idx in 0..self.length {
-      if (*self)[idx] != other[idx] then return false;
-    }
-    return true;
-  }
+
 
   front :: fn(self*) -> u8 {
     if self.length == 0 then return '\0' as u8;
@@ -155,6 +150,19 @@ impl String {
   back :: fn(self*) -> u8 {
     if self.length == 0 then return '\0' as u8;
     return self.data[self.length - 1];
+  }
+}
+
+impl Eq for String {
+  eq :: fn(self, other: #self) -> bool {
+    if self.length != other.length then return false;
+    for idx in 0..self.length {
+      if self[idx] != other[idx] then return false;
+    }
+    return true;
+  }
+  neq :: fn(self, other: #self) -> bool {
+    return !self.eq(other);
   }
 }
 

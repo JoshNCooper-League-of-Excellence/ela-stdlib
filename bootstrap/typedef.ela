@@ -76,5 +76,5 @@ Option :: struct!<_Some> {
   #anon :: union {
     s: _Some
   },
-  is_some: bool,
+  has_value: bool,
 }
