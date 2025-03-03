@@ -56,7 +56,7 @@
     }
     resize :: fn!<T>(self*, ptr: T*, new_size: u64) -> T* {
       if !self.pointers.contains(ptr) {
-        panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
+      panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
       }
       ptr := realloc(ptr, sizeof(T) * new_size) as T*;
       self.pointers.push(ptr);
