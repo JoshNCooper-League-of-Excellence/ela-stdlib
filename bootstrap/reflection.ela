@@ -135,18 +135,15 @@ impl Type  {
 
 impl any {
   from :: fn!<T>(t: T*) -> #self {
-    #static type: Type*;
-    if !type then type = typeof(T);
     return .{
       ptr: t,
-      type: type,
+      type: typeof(T),
     }
   }
 
   // return the pointer behind this any, or if the type isn't matched,
   // return null.
   cast :: fn!<T>(self*) -> T* {
-    #static type: Type*;
     if !type then type = typeof(T);
     if type != self.type then return null;
     return self.ptr as T*;
@@ -163,12 +160,11 @@ impl any {
 #ifndef FREESTANDING {
   impl any {
     new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self where Alloc is Allocator {
-      type := typeof(T);
       ptr : T* = alloc.allocate!<T>();
       *ptr = t;
       return .{
         ptr: ptr,
-        type: type,
+        type: typeof(T),
       }
     }
   }

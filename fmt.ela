@@ -466,21 +466,23 @@ format_struct :: fn(value: any, builder: String_Builder*, options: Format_Option
         typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
       }
     } 
-    
+
+    builder.append(",");
+
     if options.indented {
       builder.append("\n");
     } else {
       builder.append(" ");
     }
+
   }
 
   builder.append("}");
 }
 
 format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> String {
-  if fmt.length == 0 {
+  if fmt.length == 0 then
     return .{};
-  }
 
   builder: String_Builder;
 
@@ -552,19 +554,19 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
   return builder.get_string();
 }
 
-#static print :: fn!<T>(message: T) {
+print :: fn!<T>(message: T) {
   formatted := format("%", .[any::from(&message)], *Format_Options::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
-#static println :: fn!<T>(message: T) {
+println :: fn!<T>(message: T) {
   formatted := format("%", .[any::from(&message)], *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
-#static printlnf :: fn(fmt: str, list: Init_List!<any>) {
+printlnf :: fn(fmt: str, list: Init_List!<any>) {
   formatted := format(fmt, list, *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
@@ -614,103 +616,6 @@ impl String_Builder {
     bytes := utf8_encode(ch);
     for byte in bytes {
       self.append_byte(byte);
-    }
-  }
-}
-
-#region FORMAT_FOR_INTEGERS {
-  impl Format for s8 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%d"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for s16 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%d"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for s32 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%d"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for s64 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%ld"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for u8 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%d"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for u16 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%d"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for u32 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%d"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-
-  impl Format for u64 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      buffer: u8[36];
-      len := snprintf(buffer, 36, "%ld"c, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-}
-
-#region FORMAT_FOR_FLOATS {
-  impl Format for f32 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      MAX_LEN :: 1024;
-      buffer: u8[MAX_LEN];
-      len := snprintf(buffer, MAX_LEN, "%%.%df"c, options.digits_after_decimal);
-      snprintf(buffer, MAX_LEN, buffer, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
-    }
-  }
-  impl Format for f64 {
-    format :: fn(self, builder: String_Builder*, options: Format_Options) {
-      MAX_LEN :: 1024;
-      buffer: u8[MAX_LEN];
-      len := snprintf(buffer, MAX_LEN, "%%.%dlf"c, options.digits_after_decimal);
-      snprintf(buffer, MAX_LEN, buffer, self);
-      buffer[len] = '\0';
-      builder.append(Slice!<u8>::from(buffer, len));
     }
   }
 }

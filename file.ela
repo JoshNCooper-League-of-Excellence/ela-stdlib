@@ -1,4 +1,4 @@
-import format;
+import fmt::*;
 
 _IO_FILE :: struct;
 alias FILE :: _IO_FILE;
