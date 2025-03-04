@@ -9,13 +9,8 @@ panic :: fn(msg: str);
     */
     subarray :: fn(self, range: Range) -> #self {
       len := range.end - range.begin;
-      new_data := self.allocator.allocate(sizeof(T) * len);
-      
-      if !new_data 
-        then panic("Failed to allocate in subarray");
-
-      self.allocator.copy(new_data, self.data + range.begin, sizeof(T) * len);
-
+      new_data := malloc(sizeof(T) * len);
+      memcpy(new_data, self.data + range.begin, sizeof(T) * len);
       return .{
         data: new_data,
         length: len,
@@ -35,7 +30,7 @@ panic :: fn(msg: str);
         self.length = new_capacity; 
       }
       self.capacity = new_capacity;
-      self.data = self.allocator.resize(self.data, sizeof(T), self.capacity);
+      self.data = realloc(self.data, sizeof(T) * self.capacity);
     }
     /* 
       Initalize the array to a specific length, and zero initialize the data.
