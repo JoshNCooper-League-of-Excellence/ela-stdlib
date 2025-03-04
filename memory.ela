@@ -62,13 +62,14 @@
       if !self.pointers.contains(ptr) {
         panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
       }
-      ptr := realloc(ptr, element_size * new_size);
-      self.pointers.push(ptr);
-      return ptr;
+      
+      pointer := realloc(ptr, element_size * new_size);
+      self.pointers.push(pointer);
+      return pointer;
     }
 
     copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
-      new_ptr : T* = self.allocate_array(n);
+      new_ptr := self.allocate_array(element_size, n);
       memcpy(new_ptr, ptr, n * element_size);
       self.pointers.push(new_ptr);
       return new_ptr;
