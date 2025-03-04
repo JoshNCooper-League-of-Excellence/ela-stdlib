@@ -133,6 +133,7 @@ panic :: fn(msg: str);
       self: #self;
       self.resize(init.length);
       memcpy(self.data, init.data, sizeof(T) * init.length);
+      self.length = init.length;
       return self;
     }
   }
