@@ -33,6 +33,7 @@ List :: struct!<Value_Type> {
   data:     Value_Type*,
   length:   u64,
   capacity: u64,
+  // allocator: Dyn_Allocator,
 }
 
 Type :: struct;

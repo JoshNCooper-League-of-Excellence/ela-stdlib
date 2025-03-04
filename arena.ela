@@ -75,7 +75,7 @@ impl Allocator for Arena {
     return self.alloc(size);
   }
   free :: fn(self*, ptr: void*) {
-    return null;
+    
   }
   allocate_array :: fn(self*, size: u64, n: u64) -> void* {
     return self.alloc(size * n);

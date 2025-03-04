@@ -1,0 +1,59 @@
+// This is a 'dyn' because we don't support dynamic dispatch interfaces yet.
+// This is soon to come, but we want to model our standard library around it too,
+// so this is a nice placeholder.
+Dyn_Allocator :: struct {
+  instance:         void  *,
+  p_allocate:       fn * (void*, u64) -> void*,
+  p_free:           fn * (void*, void*),
+  p_allocate_array: fn * (void*, u64, u64) -> void*,
+  p_resize:         fn * (void*, void*, u64, u64) -> void*,
+  p_copy:           fn * (void*, void*, u64, u64) -> void*,
+}
+
+impl Dyn_Allocator {
+  new :: fn!<T>(t: T*) -> #self where T is Allocator {
+    // we do this to mock a call but not output the code of actually calling it at runtime.
+    // this is due to a bug that is plaguing our shiz currently.
+    typeof(t.free(null));
+    typeof(t.allocate(0));
+    typeof(t.allocate_array(0, 0));
+    typeof(t.copy(null, 1, 0));
+    typeof(t.resize(null, 1, 0));
+
+    return .{
+      instance: t,
+      p_allocate:       &T::allocate,
+      p_free:           &T::free,
+      p_allocate_array: &T::allocate_array,
+      p_resize:         &T::resize,
+      p_copy:           &T::copy,
+    };
+  }
+}
+
+impl Dyn_Allocator {
+  allocate :: fn(self*, size: u64) -> void* {
+    p_allocate := self.p_allocate;
+    return p_allocate(self.instance, size);
+  }
+
+  free :: fn(self*, ptr: void*) {
+    p_free := self.p_free;
+    p_free(self.instance, ptr);
+  }
+
+  allocate_array :: fn(self*, size: u64, n: u64) -> void* {
+    p_allocate_array := self.p_allocate_array;
+    return p_allocate_array(self.instance, size, n);
+  }
+
+  resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
+    p_resize := self.p_resize;
+    return p_resize(self.instance, ptr, element_size, new_size);
+  }
+
+  copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+    p_copy := self.p_copy;
+    return p_copy(self.instance, ptr, element_size, n);
+  }
+}
