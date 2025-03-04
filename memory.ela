@@ -17,7 +17,7 @@
     resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
       return realloc(ptr, element_size * new_size);
     }
-    copy :: fn!(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+    copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
       newptr := self.allocate_array(n);
       memcpy(newptr, ptr, n * element_size);
       return newptr;
@@ -67,7 +67,7 @@
       return ptr;
     }
 
-    copy :: fn!(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+    copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
       new_ptr : T* = self.allocate_array(n);
       memcpy(new_ptr, ptr, n * element_size);
       self.pointers.push(new_ptr);
