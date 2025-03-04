@@ -12,13 +12,13 @@
       free(ptr);
     }
     allocate_array :: fn(self*, size: u64, n: u64) -> void* {
-      return calloc(size * n);
+      return calloc(size, n);
     }
     resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
       return realloc(ptr, element_size * new_size);
     }
     copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
-      newptr := self.allocate_array(n);
+      newptr := self.allocate_array(element_size, n);
       memcpy(newptr, ptr, n * element_size);
       return newptr;
     }
@@ -53,7 +53,7 @@
     }
 
     allocate_array :: fn(self*, size: u64, n: u64) -> void* {
-      ptr := calloc(size * n);
+      ptr := calloc(size, n);
       self.pointers.push(ptr);
       return ptr;
     }
