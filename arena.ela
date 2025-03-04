@@ -71,25 +71,22 @@ impl Arena {
 }
 
 impl Allocator for Arena {
-  
-  allocate :: fn!<T>(self*) -> T* {
-    return self.alloc(sizeof(T));
+  allocate :: fn(self*, size: u64) -> void* {
+    return self.alloc(size);
   }
-  allocate_array :: fn!<T>(self*, n: u64) -> T* {
-    return self.alloc(sizeof(T) * n);
+  free :: fn(self*, ptr: void*) {
+    return null;
   }
-
-  // these do nothing in our arena.
-  // maybe we could provide resize and just blindly reallocate a whole new chunk?
-  // i have no idea how we'd track that though
-  free :: fn!<T>(self*, ptr: T*) {}
-  resize :: fn!<T>(self*, ptr: T*, new_size: u64) -> T* {
-    // not sure how we'd do this without knowing how big that allocation used to be.
+  allocate_array :: fn(self*, size: u64, n: u64) -> void* {
+    return self.alloc(size * n);
   }
-
-  copy :: fn!<T>(self*, ptr: T*, n: u64) -> T* {
-    new_ptr := self.alloc(sizeof(T) * n);
+  resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
+    return null;
+  }
+  copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+    new_ptr := self.alloc(element_size * n);
     memcpy(new_ptr, ptr, n);
     return new_ptr;
+
   }
 }

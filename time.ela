@@ -1,5 +1,6 @@
 
 #foreign time :: fn(value: void*) -> s32;
+
 timespec_t :: struct {
   tv_sec: s64,
   tv_nsec: s64,

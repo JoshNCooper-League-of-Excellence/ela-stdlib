@@ -3,22 +3,23 @@
     memset(ptr, 0, sizeof(T) * count);
   }
   Libc_Allocator :: struct {}
+
   impl Allocator for Libc_Allocator {
-    allocate :: fn!<T>(self*) -> T* {
-      return malloc(sizeof(T)) as T*;
+    allocate :: fn(self*, size: u64) -> void* {
+      return malloc(size);
     }
-    free :: fn!<T>(self*, ptr: T*) {
+    free :: fn(self*, ptr: void*) {
       free(ptr);
     }
-    allocate_array :: fn!<T>(self*, n: u64) -> T* {
-      return calloc(sizeof(T) * n) as T*;
+    allocate_array :: fn(self*, size: u64, n: u64) -> void* {
+      return calloc(size * n);
     }
-    resize :: fn!<T>(self*, ptr: T*, new_size: u64) -> T* {
-      return realloc(ptr, sizeof(T) * new_size) as T*;
+    resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
+      return realloc(ptr, element_size * new_size);
     }
-    copy :: fn!<T>(self*, ptr: T*, n: u64) -> T* {
-      newptr : T* = self.allocate_array!<T>(n);
-      memcpy(newptr, ptr, n * sizeof(T));
+    copy :: fn!(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+      newptr := self.allocate_array(n);
+      memcpy(newptr, ptr, n * element_size);
       return newptr;
     }
   }
@@ -40,31 +41,35 @@
     }
   }
   impl Allocator for Tracking_Allocator {
-    allocate :: fn!<T>(self*) -> T* {
-      ptr := malloc(sizeof(T)) as T*;
+    allocate :: fn(self*, size: u64) -> void* {
+      ptr := malloc(size);
       self.pointers.push(ptr);
       return ptr;
     }
-    free :: fn!<T>(self*, ptr: T*) {
+
+    free :: fn(self*, ptr: void*) {
       self.pointers.remove(ptr);
       free(ptr);
     }
-    allocate_array :: fn!<T>(self*, n: u64) -> T* {
-      ptr := calloc(sizeof(T) * n) as T*;
+
+    allocate_array :: fn(self*, size: u64, n: u64) -> void* {
+      ptr := calloc(size * n);
       self.pointers.push(ptr);
       return ptr;
     }
-    resize :: fn!<T>(self*, ptr: T*, new_size: u64) -> T* {
+
+    resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
       if !self.pointers.contains(ptr) {
-      panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
+        panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
       }
-      ptr := realloc(ptr, sizeof(T) * new_size) as T*;
+      ptr := realloc(ptr, element_size * new_size);
       self.pointers.push(ptr);
       return ptr;
     }
-    copy :: fn!<T>(self*, ptr: T*, n: u64) -> T* {
-      new_ptr : T* = self.allocate_array!<T>(n);
-      memcpy(new_ptr, ptr, n * sizeof(T));
+
+    copy :: fn!(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+      new_ptr : T* = self.allocate_array(n);
+      memcpy(new_ptr, ptr, n * element_size);
       self.pointers.push(new_ptr);
       return new_ptr;
     }
