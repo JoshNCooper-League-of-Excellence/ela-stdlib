@@ -5,7 +5,7 @@
   * very barebones, very cobbled together and missing a ton of crap.s
 */
 
-import math;
+import math::*;
 #c_flags " -lm "
 
 Vec4 :: union {
