@@ -8,7 +8,7 @@ import math::*;
 
 #ifdef RAYLIB_LINK_SHARED {
   #print "Linking against raylib dynamically."
-  #c_flags " -L/usr/local/lib/ela/raylib/libraylib.so -lm "
+  #c_flags " -fPIC -L/usr/local/lib/ela/raylib/libraylib.so -lm "
 } else {
   #print "Linking against raylib statically."
   #c_flags " /usr/local/lib/ela/raylib/libraylib.a -lm "
