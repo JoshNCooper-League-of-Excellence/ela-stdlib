@@ -1,0 +1,25 @@
+#include "lib.ela";
+
+#test test_main :: fn() {
+  InitWindow(800, 600, "Привет"c);
+
+  SetTargetFPS(60);
+  // draw some frames. it's hard to test, but youl know if this fails.
+  mut x := 0;
+
+  for i in 0..600 {
+    if WindowShouldClose() then return;
+    BeginDrawing();
+      ClearBackground(Color::random(100));
+      DrawRectangle(350, 250, 100, 100, Color::random(255));
+
+      remaining := (600.0 - x as f32) / 60.0;
+      buffer: u8[512];
+      sprintf(buffer, "%.2f seconds remain\n"c, remaining);
+      DrawText(buffer, 300, 250, 24, Color::random(255));
+
+    EndDrawing();
+    x = i;
+  }
+  assert_eq("failed to complete drawing 1000 frames", x, 599)
+}

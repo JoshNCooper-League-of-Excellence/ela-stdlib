@@ -1,6 +1,6 @@
 import math::*;
 
-#include "_raybindings.ela";
+#include "raylib.ela";
 
 // NOTE:
 // If you use static libraries in your .ela library, you should provide that dependency in your lib/ dir, and just link against it as such.
