@@ -10,10 +10,9 @@
   }
 }
 
-
 #ifndef FREESTANDING {
   impl str {
-    starts_with :: fn(self*, prefix: u8*) -> bool {
+    starts_with :: fn(*mut self, prefix: c_string) -> bool {
       prefix_len := strlen(prefix);
       if self.length < prefix_len then return false;
       for i in 0..prefix_len {
@@ -22,7 +21,7 @@
       return true;
     }
     
-    ends_with :: fn(self*, suffix: u8*) -> bool {
+    ends_with :: fn(*mut self, suffix: c_string) -> bool {
       suffix_len := strlen(suffix);
       if self.length < suffix_len then return false;
       for i in 0..suffix_len {
@@ -40,12 +39,12 @@ impl str {
     return .{};
   }
 
-  subscript :: fn(self*, idx: s64) -> u8* {
-    return &self.data[idx];
+  subscript :: fn(*mut self, idx: s64) -> c_string {
+    return &mut self.data[idx];
   }
   
-  slice :: fn(self*, range: Range) -> Slice!<u8> {
-    start, end := (range.begin, range.end); 
+  slice :: fn(*mut self, range: Range) -> Slice!<u8> {
+    start, end := (range.begin, range.end);
     length := end - start;
 
     if start < 0 || length < 0 || start + length > self.length {
@@ -61,9 +60,9 @@ impl str {
 
 // This iterator is over the bytes.
 impl Iterable!<u8> for str { 
-  iter :: fn(self*) -> Iter!<u8> {
+  iter :: fn(*mut self) -> Basic_Iter!<u8> {
     return .{
-      ptr: self.data,
+      ptr: self.data as *mut u8,
       end: self.data + self.length,
     }
   }

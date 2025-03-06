@@ -74,7 +74,7 @@ impl JsonLexer {
     return format("%:%:%", .[any::from(&self.file), any::from(&line), any::from(&column)], Format_Options::default(),)
   }
 
-  get_token :: fn(self*) -> Result!<JsonToken, String> {
+  get_token :: fn(*mut self) -> Result!<JsonToken, String> {
     alias Result :: Result!<JsonToken, String>;
 
     token : JsonToken;
@@ -218,13 +218,13 @@ impl JsonLexer {
     }
   }
 
-  ensure_buffer_is_full :: fn(self*) {
+  ensure_buffer_is_full :: fn(*mut self) {
     while self.lookahead_buffer.length < 8 {
       self.lookahead_buffer.push(self.get_token().unwrap());
     }
   }
 
-  eat :: fn(self*) -> JsonToken {
+  eat :: fn(*mut self) -> JsonToken {
     self.ensure_buffer_is_full();
     token := self.lookahead_buffer[0];
     for i in 0..self.lookahead_buffer.length - 1 {
@@ -234,12 +234,12 @@ impl JsonLexer {
     return token;
   }
 
-  peek :: fn(self*) -> JsonToken {
+  peek :: fn(*mut self) -> JsonToken {
     self.ensure_buffer_is_full();
     return self.lookahead_buffer[0];
   }
 
-  expect_types :: fn(self*, types: Init_List!<s32>) -> Result!<JsonToken, String> {
+  expect_types :: fn(*mut self, types: Init_List!<s32>) -> Result!<JsonToken, String> {
     token := self.peek();
 
     // this should never happen.
@@ -277,7 +277,7 @@ impl JsonLexer {
     return Result!<JsonToken, String>::Err(error);
   }
 
-  expect_type :: fn(self*, type: s32) -> Result!<JsonToken, String> {
+  expect_type :: fn(*mut self, type: s32) -> Result!<JsonToken, String> {
     // TODO: it's much cheaper if we just check this, instead of making list lol.
     // saves a stack alloc and a function call.
     return self.expect_types(.[type]);

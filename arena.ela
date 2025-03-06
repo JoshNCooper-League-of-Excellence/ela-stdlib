@@ -15,7 +15,7 @@ Arena :: struct {
 }
 
 impl Deinit for Arena {
-  deinit :: fn(self*) {
+  deinit :: fn(*mut self) {
     if self.next then self.next.deinit();
     free(self.memory);
     self.memory = null;
@@ -33,7 +33,7 @@ impl Arena {
     }
   }
 
-  alloc :: fn(self*, size: u64) -> u8* {
+  alloc :: fn(*mut self, size: u64) -> u8* {
     if size == 0 {
       return null;
     }
@@ -71,19 +71,19 @@ impl Arena {
 }
 
 impl Allocator for Arena {
-  allocate :: fn(self*, size: u64) -> void* {
+  allocate :: fn(*mut self, size: u64) -> void* {
     return self.alloc(size);
   }
-  free :: fn(self*, ptr: void*) {
+  free :: fn(*mut self, ptr: void*) {
     
   }
-  allocate_array :: fn(self*, size: u64, n: u64) -> void* {
+  allocate_array :: fn(*mut self, size: u64, n: u64) -> void* {
     return self.alloc(size * n);
   }
-  resize :: fn(self*, ptr: void*, element_size: u64, new_size: u64) -> void* {
+  resize :: fn(*mut self, ptr: void*, element_size: u64, new_size: u64) -> void* {
     return null;
   }
-  copy :: fn(self*, ptr: void*, element_size: u64, n: u64) -> void* {
+  copy :: fn(*mut self, ptr: void*, element_size: u64, n: u64) -> void* {
     new_ptr := self.alloc(element_size * n);
     memcpy(new_ptr, ptr, n);
     return new_ptr;

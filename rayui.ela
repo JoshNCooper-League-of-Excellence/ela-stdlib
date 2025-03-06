@@ -125,7 +125,7 @@ Timer :: struct {
 
 impl Timer {
   // * Returns true if the timer has exceeded the interval time relative to the last tick time,
-  tick :: fn(self*) -> bool {
+  tick :: fn(*mut self) -> bool {
     now := GetTime();
     if now >= (self.last_tick_time + self.interval) || self.last_tick_time == 0 {
       self.last_tick_time = now;
@@ -151,7 +151,7 @@ Slider :: struct!<T>  {
 }
 
 impl!<T> Slider!<T> {
-  adjust_slider_value :: fn(self*) {
+  adjust_slider_value :: fn(*mut self) {
     increment: T;
     if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
       increment = (self.max_value - self.min_value) / 100;
@@ -183,7 +183,7 @@ impl!<T> Slider!<T> {
       }
     }
   }
-  draw :: fn(self*) {
+  draw :: fn(*mut self) {
     DrawRectangleV(
       .{ x: self.rect.x, y: self.rect.y}, 
       .{ x: self.rect.width, y: self.rect.height}, 
@@ -234,7 +234,7 @@ Check_Button :: struct {
 }
 
 impl Check_Button {
-  draw :: fn(self*) {
+  draw :: fn(*mut self) {
     if self.value {
       DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.highlighted);
     } else {
@@ -283,7 +283,7 @@ Drop_Down :: struct {
 }
 
 impl Drop_Down {
-  draw :: fn(self*) {
+  draw :: fn(*mut self) {
     // Draw the Drop_Down box
     DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.background);
 

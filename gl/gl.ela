@@ -1,5 +1,3 @@
-
-
 #c_flags "-lGLEW -lGL -lglfw -lm"
 
 #foreign glewInit :: fn() -> bool;
@@ -12,17 +10,6 @@
 #foreign glVertexAttribPointer :: fn(index: s32, size: s64, type: s32, normalized: bool, stride: s64, pointer: void*);
 #foreign glVertexAttribIPointer :: fn(index: s32, size: s32, type: s32, stride: s64, pointer: void*);
 #foreign glVertexAttribDivisor :: fn(index: u32, divisor: u32);
-// #foreign glDrawArrays :: fn(mode: u32, first, count);
-// #foreign glClearColor :: fn(red: f32, green: f32, blue: f32, alpha: f32);
-// #foreign glClear :: fn(mask: u32);
-// #foreign glGetError :: fn() -> s32;
-
-
-// #foreign glViewport :: fn(x: s32, y: s32, width: s32, height: s32);
-// #foreign glEnable :: fn(cap: s32);
-// #foreign glDisable :: fn(cap: s32);
-// #foreign glIsEnabled :: fn(cap: s32) -> bool;
-
 
 #foreign glCreateShader :: fn(type: u32) -> u32;
 #foreign glShaderSource :: fn(shader: u32, count: s32, s: u8**, length: s32*);
@@ -43,7 +30,6 @@
 #foreign glUniform2fv :: fn(location: s32, count, value: f32*);
 #foreign glUniform1f :: fn(location: s32, v0: f32);
 #foreign glUniformMatrix4fv :: fn(location: s32, count, transpose: bool, value: f32*);
-
 
 alias GLenum :: u32;
 alias GLboolean :: u8;

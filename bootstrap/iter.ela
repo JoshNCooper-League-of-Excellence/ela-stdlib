@@ -1,0 +1,43 @@
+
+/*
+  a generic iterator, can be used for 'for' loops, such as
+  `for i in <my_object> {}`
+  where my_object implements either Iterable!<T> (which just indicates we can be converted into an iterator)
+  or my_object implements Iter!<> where it is an iterator itself.
+*/
+Iter :: interface!<Value_Type> {
+  next :: fn(*mut self) -> Option!<Value_Type>;
+}
+
+/* 
+  A basic iterator, can be used as a general purpose way to iterate over
+  collections that are implemented as contiguous chunks of memory, and 
+  a pointer just needs to be incremented until an end point to fully traverse it.
+*/
+Basic_Iter :: struct!<Value_Type> {
+  ptr: *mut Value_Type,  // Pointer to the current element in the collection.
+  end: *const Value_Type,  // Pointer to the end of the collection.
+}
+
+impl!<Value_Type> Iter!<*mut Value_Type> for Basic_Iter!<Value_Type> {
+  alias Option :: Option!<*mut Value_Type>;
+
+  // Advances the iterator to the next element in the collection.
+  next :: fn(*mut self) -> Option {
+    if self.ptr >= self.end {
+      return Option::None();
+    }
+    value := Option::Some(self.ptr);
+    self.ptr++;
+    return value;
+  }
+}
+
+/* 
+  Iterable is a generic interface that represents a collection that can be iterated over.
+  It defines a single method, iter, which returns an iterator for the collection.
+*/
+Iterable :: interface!<Value_Type> {
+  // Returns an iterator for the collection.
+  iter :: fn(*mut self) -> Iter!<Value_Type>;
+}

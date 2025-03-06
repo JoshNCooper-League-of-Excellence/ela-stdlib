@@ -36,9 +36,9 @@
 
     /* Multibyte sequence. We assume valid sequences appear more
         frequently than invalid ones. */
-    max_length : u32;
-    min_code_point: u32;
-    code_point: u32;
+    mut max_length : u32;
+    mut min_code_point: u32;
+    mut code_point: u32;
 
     byte_0 := sequence[0];
 
@@ -184,18 +184,18 @@ impl Format_Options {
     quote_strings: false,
   };
   
-  current :: fn() -> #self* {
+  current :: fn() -> *mut #self {
     #static current := Format_Options.{
       digits_after_decimal: 2,
       indented: false,
       quote_strings: false,
     };
-    return &current;
+    return &mut current;
   }
 }
 
 Format :: interface {
-  format :: fn(self, builder: String_Builder*, options: Format_Options);
+  format :: fn(self, builder: *mut String_Builder, options: Format_Options);
 }
 
 // T!his seems pretty chunky,
@@ -204,14 +204,14 @@ Format :: interface {
 STRING_BUILDER_BLOCK_MAX_LEN :: 8192;
 
 String_Builder_Block :: struct {
-  data: u8*,
+  data: *mut u8,
   length: u64,
-  next: String_Builder_Block*,
+  next: *mut String_Builder_Block,
 }
 
 impl String_Builder_Block {
-  new :: fn() -> #self* {
-    self : #self* =  malloc(sizeof(String_Builder_Block));
+  new :: fn() -> *mut #self {
+    self : *mut #self =  malloc(sizeof(String_Builder_Block));
     self.data = calloc(sizeof(u8), STRING_BUILDER_BLOCK_MAX_LEN);
     self.length = 0;
     self.next = null;
@@ -220,7 +220,7 @@ impl String_Builder_Block {
 }
 
 impl Deinit for String_Builder_Block {
-  deinit :: fn(self*) {
+  deinit :: fn(*mut self) {
     if self.data then free(self.data);
     if self.next { 
       self.next.deinit();
@@ -233,12 +233,12 @@ impl Deinit for String_Builder_Block {
 }
 
 String_Builder :: struct {
-  root: String_Builder_Block*,
-  current: String_Builder_Block*,
+  root:    *mut String_Builder_Block,
+  current: *mut String_Builder_Block,
 }
 
 impl Deinit for String_Builder {
-  deinit :: fn(self*) {
+  deinit :: fn(*mut self) {
     if self.root then self.root.deinit();
     self.root = null;
     self.current = null;
@@ -247,13 +247,13 @@ impl Deinit for String_Builder {
 
 impl String_Builder {
   // just here for 'clarity' xd
-  clear :: fn(self*) {
+  clear :: fn(*mut self) {
     self.deinit();
   }
 
-  length :: fn(self*) -> u64 {
+  length :: fn(*mut self) -> u64 {
     if !self.root then return 0;
-    current := self.root;
+    mut current := self.root;
     len: u64;
     while current {
       len += current.length;
@@ -262,11 +262,11 @@ impl String_Builder {
     return len;
   }
 
-  get_string :: fn(self*) -> String {
+  get_string :: fn(*mut self) -> String {
     length := self.length();
-    data : u8* = malloc(sizeof(u8) * length + 1);
+    data : *mut u8 = malloc(sizeof(u8) * length + 1);
     data[length] = '\0'; // Null-terminate the final str
-    current := self.root;
+    mut current := self.root;
     offset := 0;
     while current {
       memcpy(data + offset, current.data, current.length);
@@ -279,7 +279,7 @@ impl String_Builder {
     };
   }
 
-  append :: fn!<T>(self*, value: T) where T is As_Byte_Slice {
+  append :: fn!<T>(*mut self, value: T) where T is As_Byte_Slice {
     slice := value.as_byte_slice();
 
     if slice.length <= 0 then return;
@@ -293,39 +293,38 @@ impl String_Builder {
     length := slice.length;
 
     if length == 1 && slice.data[0] == '\0' then return;
-    remaining := STRING_BUILDER_BLOCK_MAX_LEN - self.current.length;
+    mut remaining := STRING_BUILDER_BLOCK_MAX_LEN - self.current.length;
 
     while length > 0 {
+      // Simple append, no overflow
+      if length <= remaining {
+        memcpy(self.current.data + self.current.length, slice.data, length);
+        self.current.length += length;
+        break;
+      }
 
-        // Simple append, no overflow
-        if length <= remaining {
-          memcpy(self.current.data + self.current.length, slice.data, length);
-          self.current.length += length;
-          break;
-        }
-
-        // Append with overflow
-        if self.current.data != null && slice.data != null {
-            memcpy(self.current.data + self.current.length, slice.data + slice_index, remaining);
-            self.current.length += remaining;
-        }
-        slice_index += remaining;
-        length -= remaining;
-        self.current.next = String_Builder_Block::new();
-        self.current = self.current.next;
-        remaining = STRING_BUILDER_BLOCK_MAX_LEN;
+      // Append with overflow
+      if self.current.data != null && slice.data != null {
+          memcpy(self.current.data + self.current.length, slice.data + slice_index, remaining);
+          self.current.length += remaining;
+      }
+      slice_index += remaining;
+      length -= remaining;
+      self.current.next = String_Builder_Block::new();
+      self.current = self.current.next;
+      remaining = STRING_BUILDER_BLOCK_MAX_LEN;
     }
   }
 
   // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
   // this is helpful for doing a builder.append_then_free(some_allocating_function());
   // so you don't leak.
-  append_then_free :: fn!<T>(self*, value: T) where T is Deinit {
+  append_then_free :: fn!<T>(*mut self, value: T) where T is Deinit {
     self.append!<T>(value);
     value.deinit();
   }
 
-  append_byte :: fn(self*, ch: u8) {
+  append_byte :: fn(*mut self, ch: u8) {
     if !self.root {
       self.root = String_Builder_Block::new();
       self.current = self.root;
@@ -342,9 +341,8 @@ impl String_Builder {
 }
 
 to_string :: fn!<T>(value: T) -> String {
-  buffer: u8[64];
   type := typeof(T);
-  format : str;
+  mut format : str;
 
   if type.is_bool() {
     if value {
@@ -362,8 +360,8 @@ to_string :: fn!<T>(value: T) -> String {
     }
   }
 
-  format_buffer: u8[255];
-  format_buffer_length: u8;
+  mut format_buffer: u8[255];
+  mut format_buffer_length: u8;
 
   if type.is_pointer() {
     format_buffer[0] = '%'
@@ -374,7 +372,6 @@ to_string :: fn!<T>(value: T) -> String {
     format_buffer[1] = 'c'
     format_buffer_length = 2;
   } else if type.is_integral() {
-    format = "%lld";
     format_buffer[0] = '%' 
     format_buffer[1] = 'l'
     format_buffer[2] = 'l'
@@ -386,22 +383,19 @@ to_string :: fn!<T>(value: T) -> String {
     } else {
       format_buffer_length = sprintf(format_buffer, "%%.%dlf"c, Format_Options::current().digits_after_decimal);
     }
-  } else if type.is_string() {
-    format_buffer[0] = '%'
-    format_buffer[1] = 's'
-    format_buffer_length = 2;
   } else {
     return .{};
   }
   
+  buffer: u8[1024]; // this is wayyy over allocated, but it's not a big deal.
   snprintf(buffer, 64 * sizeof(u8), format_buffer, value);
   return String::from_ptr(buffer);
 }
 
-format_struct :: fn(value: any, builder: String_Builder*, options: Format_Options) {
+format_struct :: fn(value: any, mut builder: *mut String_Builder, options: Format_Options) {
   builder.append(Slice!<u8>::from(value.type.name, strlen(value.type.name)));
   builder.append(" {");
-  
+
   if options.indented {
     builder.append("\n");
   }
@@ -422,8 +416,8 @@ format_struct :: fn(value: any, builder: String_Builder*, options: Format_Option
 
     if field_any.ptr == null {
       builder.append("null");
-    } else if field_any.type == typeof(u8*) {
-      builder.append(String::from_ptr(field_any.unwrap!<u8*>()));
+    } else if field_any.type == typeof(c_string) {
+      builder.append(String::from_ptr(field_any.unwrap!<*const u8>()));
     } else if field_any.type.is_pointer() {
       builder.append_then_free(to_string(value.ptr));
     } else if field_any.type.is_enum() {
@@ -431,17 +425,17 @@ format_struct :: fn(value: any, builder: String_Builder*, options: Format_Option
     } else if field_any.type == typeof(String)  { 
       if options.quote_strings 
         then builder.append("\"");
-      builder.append(*(field_any.ptr as String*));
+      builder.append(*(field_any.ptr as *const String));
       if options.quote_strings 
         then builder.append("\"");
     } else if field_any.type == typeof(str) { 
       if options.quote_strings 
         then builder.append("\"");
-      builder.append_then_free((*(field_any.ptr as str*)).as_string());   
+      builder.append_then_free((*(field_any.ptr as *const str)).as_string());   
       if options.quote_strings 
         then builder.append("\"");
     } else if field_any.type.is_struct() {
-      // ! BUG: this freaking explodes.
+      // ! this just blows up and explodes.
       // format_struct(field_any, &builder, options);
     } else {
       switch field_any.type {
@@ -462,6 +456,7 @@ format_struct :: fn(value: any, builder: String_Builder*, options: Format_Option
         typeof(f64):     { builder.append_then_free(to_string(field_any.unwrap!<f64>()));  }
 
         typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
+        else: { builder.append("(invalid type)") }
       }
     } 
 
@@ -499,8 +494,8 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
       value := list.data[value_index];
       if value.ptr == null {
         builder.append("null");
-      } else if value.type == typeof(u8*) {
-        builder.append(String::from_ptr(value.unwrap!<u8*>()));
+      } else if value.type == typeof(c_string) {
+        builder.append(String::from_ptr(value.unwrap!<*const u8>()));
       } else if value.type.is_pointer() {
         builder.append_then_free(to_string(value.ptr));
       } else if value.type.is_enum() {
@@ -509,7 +504,7 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
         if options.quote_strings 
           then builder.append("\"");
 
-        builder.append(*(value.ptr as String*));
+        builder.append(*(value.ptr as *const String));
 
         if options.quote_strings 
           then builder.append("\"");
@@ -518,12 +513,12 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
         if options.quote_strings 
           then builder.append("\"");
 
-        builder.append_then_free((*(value.ptr as str*)).as_string());   
+        builder.append_then_free((*(value.ptr as *const str)).as_string());   
 
         if options.quote_strings 
           then builder.append("\"");
       } else if value.type.is_struct() || value.type.is_tuple() {
-        format_struct(value, &builder, options);
+        format_struct(value, &mut builder, options);
       } else {
         switch value.type {
           typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));        }
@@ -553,13 +548,13 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
 }
 
 print :: fn!<T>(message: T) {
-  formatted := format("%", .[any::from(&message)], *Format_Options::current());
+  formatted := format("%", .[any::from(&mut message)], *Format_Options::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
 println :: fn!<T>(message: T) {
-  formatted := format("%", .[any::from(&message)], *Format_Options::current());
+  formatted := format("%", .[any::from(&mut message)], *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
@@ -571,46 +566,50 @@ printlnf :: fn(fmt: str, list: Init_List!<any>) {
 }
 
 impl String_Builder {
-  appendf :: fn(self*, fmt: str, values: Init_List!<any>, options: Format_Options) {
+  appendf :: fn(*mut self, fmt: str, values: Init_List!<any>, options: Format_Options) {
     formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();
   }
 }
 
-UTF8_Enumerator :: struct {
-  slice: Slice!<u8>,
-  position: u32,
-  current_char: u32,
-}
 
-impl Enumerator!<u32> for UTF8_Enumerator {
-  current   :: fn(self) -> u32 {
-    return self.current_char;
-  }
-  next      :: fn(self*) -> void {
-    subslice := self.slice.slice(self.position as s32 .. (self.position+4) as s32);
-    ch, advance := utf8_to_code_point(subslice);
-    self.position += advance;
-    self.current_char = ch;
-  }
-  done      :: fn(self) -> bool {
-    return self.position >= self.slice.length;
-  }
-}
+/* 
+  ! this needs to be rewritten for Iter!<>
+*/
+// UTF8_Enumerator :: struct {
+//   slice: Slice!<u8>,
+//   position: u32,
+//   current_char: u32,
+// }
 
-impl String {
-  chars :: fn(self) -> UTF8_Enumerator {
-    return .{
-      slice: self.as_byte_slice(),
-      position: 0,
-      current_char: '\0',
-    }
-  }
-}
+// impl Enumerator!<u32> for UTF8_Enumerator {
+//   current   :: fn(self) -> u32 {
+//     return self.current_char;
+//   }
+//   next      :: fn(*mut self) -> void {
+//     subslice := self.slice.slice(self.position as s32 .. (self.position+4) as s32);
+//     ch, advance := utf8_to_code_point(subslice);
+//     self.position += advance;
+//     self.current_char = ch;
+//   }
+//   done      :: fn(self) -> bool {
+//     return self.position >= self.slice.length;
+//   }
+// }
+
+// impl String {
+//   chars :: fn(self) -> UTF8_Enumerator {
+//     return .{
+//       slice: self.as_byte_slice(),
+//       position: 0,
+//       current_char: '\0',
+//     }
+//   }
+// }
 
 impl String_Builder {
-  append_utf8 :: fn(self*, ch: u32) {
+  append_utf8 :: fn(*mut self, ch: u32) {
     bytes := utf8_encode(ch);
     for byte in bytes {
       self.append_byte(byte);

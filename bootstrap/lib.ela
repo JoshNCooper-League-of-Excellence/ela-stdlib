@@ -1,36 +1,55 @@
-#include "typedef.ela"
+// all of your basic types.
+#include "typedef.ela";
+// many more basic types, mainly interfaces.
 #include "interfaces.ela";
-#include "numeric.ela"; // impls for numeric types.
-#include "range.ela";
-#include "libc.ela";
-
-#include "list.ela";
-#include "slice.ela";
-
-#include "str.ela";
-#include "String.ela";
-#include "reflection.ela";
+// Option!<T>
 #include "option.ela";
+// Result!<Ok, Err>
 #include "result.ela";
+// Iter<T> and Iterable<T>
+#include "iter.ela";
+// impls for numeric types, mostly marker interfaces.
+#include "numeric.ela"; 
+// Range_Base!<T> and Range, Range_s32... etc.
+#include "range.ela";
+// a few libc functions that are used in most programs.
+#include "libc.ela";
+// List<T> aka T[].
+#include "list.ela";
+// Slice!<T> and Slice_Mut!<T>, views over memory.
+#include "slice.ela";
+// str, the default type of a string literal.
+#include "str.ela";
+// String, heap allocated string.
+#include "String.ela";
+// generic utilities for reflection
+#include "reflection.ela";
+
 
 #ifndef FREESTANDING {
   assert :: fn(message: str, condition: bool) {
     if !condition {
-      printf("assertion failed: %s\n"c, message.data);
+      printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
       exit(1);
     }
   }
 
   assert_eq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
     if a != b {
-      printf("assertion failed: %s\n"c, message.data);
+      // TODO: we should have a better way to do this.
+      // I don't want to import format here, probably should just have an 'assert' library.
+      printf("\033[1;34mnumerical condition\033[0m :: \033[1;31m%d\033[0m == \033[1;31m%d\033[0m\n"c, a, b);
+      printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
       exit(1);
     }
   }
 
   assert_neq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
     if a == b {
-      printf("assertion failed: %s\n"c, message.data);
+      // TODO: we should have a better way to do this.
+      // I don't want to import format here, probably should just have an 'assert' library.
+      printf("numerical condition :: \033[1;31m%d\033[0m==\033[1;31m%d\033[0m\n"c, a, b);
+      printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
       exit(1);
     }
   }
@@ -38,7 +57,7 @@
 
 alias Panic_Handler :: fn *(str);
 
-panic_handler: Panic_Handler;
+mut panic_handler: Panic_Handler;
 
 set_panic_handler :: fn(handler: Panic_Handler) {
   panic_handler = handler;
@@ -54,7 +73,7 @@ panic :: fn(msg: str) {
     } else {
       panic_handler = fn(msg: str) {
         // idk, segfault on panic?
-        n : s32 * = null;
+        n : *mut s32 = null;
         *n = 10;
       }
     }
@@ -64,18 +83,21 @@ panic :: fn(msg: str) {
 
 #ifdef FREESTANDING  {
   Env :: struct {
-    m_args: str*,
+    m_args: *const str,
     length: u64,
   };
   impl Env {
-    current :: fn() -> #self* {
+    current :: fn() -> *mut #self {
       #static self: #self;
-      return &self;
+      return &mut self;
     }
-    args :: fn(self*) -> (str*, u64) {
-      return (self.m_args, self.length);
+    args :: fn(*const self) -> Slice!<str> {
+      return .{
+        data: self.m_args,
+        length: self.length,
+      }
     }
-    initialize :: fn(argc: s32, argv: str*) {
+    initialize :: fn(argc: s32, argv: *const str) {
       self := #self::current();
       self.m_args = argv;
       self.length = argc;
@@ -86,17 +108,20 @@ panic :: fn(msg: str) {
     m_args: str[],
   };
   impl Env {
-    current :: fn() -> #self* {
+    current :: fn() -> *const #self {
       #static self: #self;
-      return &self;
+      return &const self;
     }
     args :: fn() -> str[] {
       return #self::current().m_args.clone();
     }
-    initialize :: fn(argc: s32, argv: str*) {
+    initialize :: fn(argc: s32, argv: *const c_string) {
       self := #self::current();
       for i in 0..argc {
-        self.m_args.push(argv[i]);
+        self.m_args.push(.{
+          data: argv[i],
+          length: strlen(argv[i])
+        });
       }
     }
   }
@@ -149,38 +174,9 @@ impl As_Byte_Slice for u32 {
     };
   */
 
-  new :: fn!<T>(initial_value: T) -> T* {
-    ptr: T* = malloc(sizeof(T));
+  new :: fn!<T>(initial_value: T) -> *mut T {
+    ptr: *mut T = malloc(sizeof(T));
     *ptr = initial_value;
     return ptr;
-  }
-}
-
-Indexed_Enumerator :: struct!<Value_Type> {
-  slice: Slice!<Value_Type>,
-  index: u32,
-}
-
-impl!<Value_Type> Enumerator!<(u32, Value_Type)> for Indexed_Enumerator!<Value_Type> {
-  current :: fn(self) -> (u32, Value_Type) {
-    return (self.index, self.slice.data[self.index]);
-  }
-  done :: fn(self) -> bool {
-    return self.index >= self.slice.length;
-  }
-  next :: fn(self*) -> void { 
-    self.index++;
-  }
-}
-
-impl!<Value_Type> Value_Type[] {
-  indexed :: fn(self*) -> Indexed_Enumerator!<Value_Type> {
-    return .{
-      index: 0,
-      slice: .{
-        data: self.data,
-        length: self.length
-      },
-    };
   }
 }

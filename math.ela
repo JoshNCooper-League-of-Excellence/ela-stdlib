@@ -50,12 +50,12 @@ max :: fn!<T>(a: T, b: T) -> T {
   return b;
 }
 
-clamp :: fn(v: f64, min, max) -> f64 {
+clamp :: fn(v: f64, min: f64, max: f64) -> f64 {
   if v < min then return min;
   if v > max then return max;
   return v;
 }
 
-lerp :: fn(a: f32, b, t) -> f32 {
+lerp :: fn(a: f32, b: f32, t: f32) -> f32 {
   return (a * (1.0 - t)) + (b * t);
 }

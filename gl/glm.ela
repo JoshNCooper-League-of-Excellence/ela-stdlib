@@ -19,7 +19,7 @@ Vec4 :: union {
 }
 
 impl Vec4 {
-  sqr_mag :: fn(self*) -> f32 {
+  sqr_mag :: fn(*mut self) -> f32 {
     return self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w;
   }
   one :: fn() -> #self {
@@ -48,7 +48,7 @@ impl Vec3 {
   }
 
 
-  sqr_mag :: fn(self*) -> f32 {
+  sqr_mag :: fn(*mut self) -> f32 {
     return self.x * self.x + self.y * self.y + self.z * self.z;
   }
   one :: fn() -> #self {
@@ -113,7 +113,7 @@ Vec2 :: union {
 }
 
 impl Vec2 {
-  sqr_mag :: fn(self*) -> f32 {
+  sqr_mag :: fn(*mut self) -> f32 {
     return self.x * self.x + self.y * self.y;
   }
   one :: fn() -> #self {
@@ -122,7 +122,7 @@ impl Vec2 {
   zero  :: fn() -> #self {
     return .{ x: 0.0, y: 0.0 };
   }
-  normalize :: fn(self*) -> #self {
+  normalize :: fn(*mut self) -> #self {
     mag: f32 = sqrt(self.x * self.x + self.y * self.y) as f32;
     return .{ x: self.x / mag, y: self.y / mag };
   }
@@ -162,7 +162,7 @@ impl Mat4 {
     };
   }
 
-  scale :: fn(self*, factor: f32) -> #self {
+  scale :: fn(*mut self, factor: f32) -> #self {
     matrix: #self;
     matrix.M00 = self.M00 * factor;
     matrix.M01 = self.M01 * factor;
@@ -183,7 +183,7 @@ impl Mat4 {
     return matrix;
   }
 
-  normalize :: fn(self*) -> #self {
+  normalize :: fn(*mut self) -> #self {
     mag: f32 = sqrt(self.M00 * self.M00 + self.M01 * self.M01 + self.M02 * self.M02 + self.M03 * self.M03 +
                    self.M10 * self.M10 + self.M11 * self.M11 + self.M12 * self.M12 + self.M13 * self.M13 +
                    self.M20 * self.M20 + self.M21 * self.M21 + self.M22 * self.M22 + self.M23 * self.M23 +
@@ -191,7 +191,7 @@ impl Mat4 {
     return self.scale(1.0 / mag);
   }
 
-  determinant :: fn(self*) -> f32 {
+  determinant :: fn(*mut self) -> f32 {
     r0: f32 = self.M00 * (self.M11 * (self.M22 * self.M33 - self.M23 * self.M32) - self.M12 * (self.M21 * self.M33 - self.M23 * self.M31) + self.M13 * (self.M21 * self.M32 - self.M22 * self.M31));
     r1: f32 = self.M01 * (self.M10 * (self.M22 * self.M33 - self.M23 * self.M32) - self.M12 * (self.M20 * self.M33 - self.M23 * self.M30) + self.M13 * (self.M20 * self.M32 - self.M22 * self.M30));
     r2: f32 = self.M02 * (self.M10 * (self.M21 * self.M33 - self.M23 * self.M31) - self.M11 * (self.M20 * self.M33 - self.M23 * self.M30) + self.M13 * (self.M20 * self.M31 - self.M21 * self.M30));

@@ -1,4 +1,5 @@
-
+// forward declare panic.
+panic :: fn(msg: str);
 impl!<_Some> Option!<_Some> {
   is_some :: fn(self) -> bool {
     return self.has_value;

@@ -2,7 +2,7 @@
 #ifndef FREESTANDING {
   
   impl String {
-    replace :: fn(self*, old: u8*, replacement: u8*) -> str {
+    replace :: fn(*mut self, old: c_string, replacement: c_string) -> str {
       old_len := strlen(old);
       new_len := strlen(replacement);
       result : str = .{};
@@ -32,7 +32,7 @@
       };
     }
     
-    from_ptr :: fn(data: u8*) -> #self {
+    from_ptr :: fn(data: c_string) -> #self {
       length := strlen(data);
       return .{
         data: strdup(data),
@@ -48,14 +48,14 @@
     These are the 'List' like functions for dynamic strings.
   */
   impl String {
-    resize :: fn(self*, new_size: u64) {
+    resize :: fn(*mut self, new_size: u64) {
       if new_size < self.length then self.length = new_size;
       self.capacity = new_size;
       self.data = realloc(self.data, new_size * sizeof(u8) + 1);
       self.data[self.length] = 0; // Maintain null terminator
     }
     
-    push :: fn(self*, ch: u8) {
+    push :: fn(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
       if self.length + 1 >= self.capacity {
       self.resize(self.capacity * 3 + 1);
@@ -65,14 +65,14 @@
       self.data[self.length] = '\0';
     }
 
-    pop :: fn(self*) -> u8 {
+    pop :: fn(*mut self) -> u8 {
       if self.length == 0 then return '\0' as u8;
       ch := self.data[--self.length];
       self.data[self.length] = '\0';
       return ch;
     }
 
-    pop_front :: fn(self*) -> u8 {
+    pop_front :: fn(*mut self) -> u8 {
       if self.length == 0 then return '\0' as u8;
       ch := self.data[0];
       memmove(self.data, self.data + 1, self.length - 1);
@@ -81,7 +81,7 @@
       return ch;
     }
 
-    push_front :: fn(self*, ch: u8) {
+    push_front :: fn(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
       if self.length + 1 >= self.capacity {
       self.resize(self.capacity * 3);
@@ -94,14 +94,14 @@
   }
 
   impl Deinit for String {
-    deinit :: fn(self*) {
+    deinit :: fn(*mut self) {
       free(self.data);
       self.length = 0;
     }
   }
     
   impl String {
-    starts_with :: fn(self*, prefix: u8*) -> bool {
+    starts_with :: fn(*mut self, prefix: c_string) -> bool {
       prefix_len := strlen(prefix);
       if self.length < prefix_len then return false;
       for i in 0..prefix_len {
@@ -110,7 +110,7 @@
       return true;
     }
     
-    ends_with :: fn(self*, suffix: u8*) -> bool {
+    ends_with :: fn(*mut self, suffix: c_string) -> bool {
       suffix_len := strlen(suffix);
       if self.length < suffix_len then return false;
       for i in 0..suffix_len {
@@ -137,17 +137,17 @@ impl String {
     return .{};
   }
   
-  subscript :: fn(self*, idx: s64) -> u8* {
-    return &self.data[idx];
+  subscript :: fn(*mut self, idx: s64) -> c_string {
+    return &mut self.data[idx];
   }
 
 
-  front :: fn(self*) -> u8 {
+  front :: fn(*mut self) -> u8 {
     if self.length == 0 then return '\0' as u8;
     return self.data[0];
   }
 
-  back :: fn(self*) -> u8 {
+  back :: fn(*mut self) -> u8 {
     if self.length == 0 then return '\0' as u8;
     return self.data[self.length - 1];
   }
@@ -167,7 +167,7 @@ impl Eq for String {
 }
 
 impl Iterable!<u8> for String { 
-  iter :: fn(self*) -> Iter!<u8> {
+  iter :: fn(*mut self) -> Basic_Iter!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
@@ -179,7 +179,7 @@ impl As_Char_Slice for String {
   as_char_slice :: fn(self) -> Slice!<u32> {
     return .{
       data: self.data,
-      length: self.length / 4, // we do this because we're reinterpreting a u8* as a u32* which effectively packs it and quarters the "length"
+      length: self.length / 4, // we do this because we're reinterpreting a c_string as a u32* which effectively packs it and quarters the "length"
     }
   }
 }

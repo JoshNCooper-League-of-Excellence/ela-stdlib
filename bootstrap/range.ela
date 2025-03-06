@@ -24,26 +24,26 @@ impl!<T> Range_Base!<T> {
   }
 }
 
-Range_Enumerator :: struct!<Value_Type> where Value_Type is Eq | Is_Numeric {
+Range_Iter :: struct!<Value_Type> where Value_Type is Eq | Is_Numeric {
   begin: Value_Type,
   end:   Value_Type,
   idx:   Value_Type,
 }
 
-impl!<Value_Type> Enumerator!<Value_Type> for Range_Enumerator!<Value_Type>  {
-  current   :: fn(self) -> Value_Type {
-    return self.idx;
-  }
-  next      :: fn(self*) {
+impl!<Value_Type> Iter!<Value_Type> for Range_Iter!<Value_Type>  {
+  alias Option :: Option!<Value_Type>;
+  next :: fn(*mut self) -> Option {
+    value := Option::Some(self.idx);
+    if self.idx >= self.end {
+      return Option::None();
+    }
     self.idx++;
-  };
-  done      :: fn(self) -> bool {
-    return self.idx >= self.end;
+    return value;
   }
 }
 
-impl!<Value_Type> Enumerable!<Range_Enumerator!<Value_Type>, Value_Type> for Range_Base!<Value_Type>  {
-  enumerator :: fn(self*) -> Range_Enumerator!<Value_Type> {
+impl!<Value_Type> Iterable!<Value_Type> for Range_Base!<Value_Type> {
+  iter :: fn(*mut self) -> Range_Iter!<Value_Type> {
     return .{
       begin: self.begin,
       end:   self.end,

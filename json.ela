@@ -38,7 +38,7 @@ JsonValue :: struct {
 }
 
 impl JsonValue {
-  to_string :: fn(self*) -> u8* {
+  to_string :: fn(*mut self) -> u8* {
     builder: String_Builder;
     defer builder.deinit();
   
@@ -76,11 +76,11 @@ impl JsonValue {
     } else if self.type == JsonValueType::Number {
       builder.append_then_free(to_string(self.data.number));
     } else if self.type == JsonValueType::String {
-      quote := any::new(&"\"");
+      quote := any::new("\"");
       defer quote.deinit();
       builder.append_then_free("%%%" .[
         quote,
-        any::from(&self.data._string),
+        any::from(&mut self.data._string),
         quote
       ]);
     } else if self.type == JsonValueType::Boolean {
@@ -97,7 +97,7 @@ impl JsonValue {
   
     return builder.get_string();
   }
-  destroy :: fn(self*) {
+  destroy :: fn(*mut self) {
     if self.type == JsonValueType::Object {
       for kvp in self.data.object {
         free(kvp.value);
@@ -113,7 +113,7 @@ impl JsonValue {
     }
   }
 
-  get :: fn(self*, key: u8*) -> JsonValue* {
+  get :: fn(*mut self, key: u8*) -> JsonValue* {
     if self.type != JsonValueType::Object {
       return null;
     }
@@ -125,7 +125,7 @@ impl JsonValue {
     return null;
   }
 
-  at :: fn(self*, index: s32) -> JsonValue* {
+  at :: fn(*mut self, index: s32) -> JsonValue* {
     if self.type != JsonValueType::Array {
       return null;
     }
@@ -136,49 +136,49 @@ impl JsonValue {
     return arr[index];
   }
 
-  is_number :: fn(self*) -> bool {
+  is_number :: fn(*mut self) -> bool {
     return self.type == JsonValueType::Number;
   }
-  is_string :: fn(self*) -> bool {
+  is_string :: fn(*mut self) -> bool {
     return self.type == JsonValueType::String;
   }
-  is_object :: fn(self*) -> bool {
+  is_object :: fn(*mut self) -> bool {
     return self.type == JsonValueType::Object;
   }
-  is_array :: fn(self*) -> bool {
+  is_array :: fn(*mut self) -> bool {
     return self.type == JsonValueType::Array;
   }
-  is_boolean :: fn(self*) -> bool {
+  is_boolean :: fn(*mut self) -> bool {
     return self.type == JsonValueType::Boolean;
   }
-  is_null :: fn(self*) -> bool {
+  is_null :: fn(*mut self) -> bool {
     return self.type == JsonValueType::Null;
   }
-  as_number :: fn(self*) -> f64 {
+  as_number :: fn(*mut self) -> f64 {
     if self.type == JsonValueType::Number {
       return self.data.number;
     }
     return 0.0; // or handle error
   }
-  as_string :: fn(self*) -> u8* {
+  as_string :: fn(*mut self) -> u8* {
     if self.type == JsonValueType::String {
       return self.data._string;
     }
     return null; // or handle error
   }
-  as_object :: fn(self*) -> JsonKeyValuePair[] {
+  as_object :: fn(*mut self) -> JsonKeyValuePair[] {
     if self.type == JsonValueType::Object {
       return self.data.object;
     }
     return .{}; // or handle error
   }
-  as_array :: fn(self*) -> JsonArray {
+  as_array :: fn(*mut self) -> JsonArray {
     if self.type == JsonValueType::Array {
       return self.data.array;
     }
     return .{}; // or handle error
   }
-  as_boolean :: fn(self*) -> bool {
+  as_boolean :: fn(*mut self) -> bool {
     if self.type == JsonValueType::Boolean {
       return self.data.boolean;
     }
@@ -272,12 +272,12 @@ json_parse_file :: fn(file: u8*) -> (s32, JsonValue*) {
     return (JsonError::ERROR, null);
   }
   lexer := JsonLexer::create(file, data);
-  return json_parse(&lexer);
+  return json_parse(&mut lexer);
 }
 
 json_parse_string :: fn(s: str) -> (s32, JsonValue*) {
   lexer := JsonLexer::create(":<loaded from string>:", s);
-  return json_parse(&lexer);
+  return json_parse(&mut lexer);
 }
 json_serialize_scalar :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
   val : JsonValue* = malloc(sizeof(JsonValue));
@@ -312,7 +312,7 @@ json_serialize_scalar :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
     val.data.boolean = *(object as bool*);
     return (JsonError::SUCCESS, val);
   }
-  set_json_error(format("Unsupported type :: %", {any::from(&type.name)}))
+  set_json_error(format("Unsupported type :: %", {any::from(&mut type.name)}))
   return (JsonError::ERROR, null);
 }
 
@@ -364,7 +364,7 @@ json_serialize :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
   } else if Type::is_array(type) {
     return json_serialize_array(object, type);
   }
-  set_json_error(format("Unsupported type :: '%'", {any::from(&type.name)}));
+  set_json_error(format("Unsupported type :: '%'", {any::from(&mut type.name)}));
   return (JsonError::ERROR, null);
 }
 
@@ -374,7 +374,7 @@ json_deserialize_struct :: fn(val: JsonValue*, object: void*, type: Type*) -> Js
   for json_field in val.data.object {
     struct_field := Type::get_field(type, json_field.key);
     if !struct_field {
-      set_json_error(format("Could not find field % in type %", {any::from(&json_field.key), any::from(&type.name)}))
+      set_json_error(format("Could not find field % in type %", {any::from(&mut json_field.key), any::from(&mut type.name)}))
       return JsonError::ERROR;
     }
     err := json_deserialize(json_field.value, object as u8* + struct_field.offset, struct_field.type);
@@ -450,7 +450,7 @@ json_deserialize_scalar :: fn(val: JsonValue*, object: void*, type: Type*) -> Js
   } else if (Type::is_string(type)) {
     *(object as u8**) = val.as_string();
   } else {
-    set_json_error(format("Unable to deserialize into type %", {any::from(&type.name)}));
+    set_json_error(format("Unable to deserialize into type %", {any::from(&mut type.name)}));
     return JsonError::ERROR;
   }
   return .{};
@@ -462,14 +462,14 @@ json_deserialize :: fn(val: JsonValue*, object: void*, type: Type*) -> JsonError
       *(object as u8**) = val.as_string();
       return .{};
     } else {
-      set_json_error(format("Type mismatch: u8* to %", {any::from(&type.name)}));
+      set_json_error(format("Type mismatch: u8* to %", {any::from(&mut type.name)}));
       return JsonError::ERROR;
     }
   } else if val.is_object() {
     if Type::is_struct(type) {
       return json_deserialize_struct(val, object, type);
     } else {
-      set_json_error(format("Type mismatch: object to %", {any::from(&type.name)}));
+      set_json_error(format("Type mismatch: object to %", {any::from(&mut type.name)}));
       return JsonError::ERROR;
     }
   } else if val.is_array() {

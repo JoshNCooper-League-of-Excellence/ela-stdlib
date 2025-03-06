@@ -1,9 +1,12 @@
-
-// forward declare panic.
 panic :: fn(msg: str);
 
 #ifndef FREESTANDING {
-  impl!<T> List!<T> {
+  impl!<T> T[] {
+    /*  
+      Is the list empty. 
+    */
+    is_empty :: fn(self) -> bool => self.length == 0;
+
     /* 
       Copy out a sub array. use as_slice if you want a borrowed, un-owning view into the array at a specific range.
     */
@@ -17,6 +20,7 @@ panic :: fn(msg: str);
         capacity: len,
       }
     }
+    
     /* 
       You should probably not call this function, and you do not need to for normal push operations.
       In the case you want to shrink your array, you can pass in array.length or whatever you want to shrink to,
@@ -24,7 +28,7 @@ panic :: fn(msg: str);
       you can also 'reserve' memory by calling this, with a large value which will force allocate that much but not fill the array.
       use 'initialize' if you want to fill the array up to that size. 
     */
-    resize :: fn(self*, new_capacity: u64) {
+    resize :: fn(*mut self, new_capacity: u64) {
       // Truncating.
       if new_capacity < self.capacity && new_capacity < self.length {
         self.length = new_capacity; 
@@ -32,22 +36,23 @@ panic :: fn(msg: str);
       self.capacity = new_capacity;
       self.data = realloc(self.data, sizeof(T) * self.capacity);
     }
+    
     /* 
       Initalize the array to a specific length, and zero initialize the data.
       useful to create a dynamic of at least num_to_fill length, and have all the elements be valid data.
       Do not use this on an array that is already full of your data, unless you want to zero it out and reset to 
       a specific new size. 
     */
-    initialize :: fn(self*, num_to_fill: u64) {
+    initialize :: fn(*mut self, num_to_fill: u64) {
       self.resize(num_to_fill);
       memset(self.data, 0, sizeof(T) * self.capacity);
       self.length = num_to_fill;
     }
-
+    
     /* 
       push an element to the array. this will, of course, expand the array if needed.
     */
-    push :: fn(self*, v: T) {
+    push :: fn(*mut self, v: T) {
       if self.length + 1 >= self.capacity {
         if self.capacity == 0 then self.capacity = 4;
         self.resize(self.capacity * 2);
@@ -55,20 +60,20 @@ panic :: fn(msg: str);
       self.data[self.length] = v;
       self.length++;
     }
-
+    
     /* 
       pop an element from the back of the array. this will never deallocate.
     */
-    pop :: fn(self*) -> T {
+    pop :: fn(*mut self) -> T {
       value := self.data[self.length - 1];
       self.length -= 1;
       return value;
     }
-
+    
     /*
       push an element to the front of the array. again, of course, this will expand the array and allocate if needed.
     */
-    push_front :: fn(self*, v: T) {
+    push_front :: fn(*mut self, v: T) {
       if self.length + 1 >= self.capacity {
 
       if self.capacity == 0 then self.capacity = 4;
@@ -84,7 +89,7 @@ panic :: fn(msg: str);
     /* 
       pop an element from the front of the array. again, this will never de-allocate the old memory it used.
     */
-    pop_front :: fn(self*) -> T {
+    pop_front :: fn(*mut self) -> T {
       value := self.data[0];
       memmove(self.data, self.data + 1, sizeof(T) * (self.length - 1));
       self.length -= 1;
@@ -92,20 +97,20 @@ panic :: fn(msg: str);
     }
   }
 
-  impl!<T> Deinit for List!<T> {
+  impl!<T> Deinit for T[] {
 
     /* 
       This does not actually deinit any of members in the list. 
       it just empties the list by freeing the memory used to store the elements.
     */
-    deinit :: fn(self*) {
+    deinit :: fn(*mut self) {
       free(self.data);
       self.data = null;
       self.length = 0;
     }
   }
 
-  impl!<T> Clone for List!<T> {
+  impl!<T> Clone for T[] {
     /* 
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
@@ -120,7 +125,7 @@ panic :: fn(msg: str);
     } 
   }
 
-  impl!<T> Init!<T> for List!<T> {
+  impl!<T> Init!<T> for T[] {
     /* 
       construct the list from an initializer list. 
       This is sure to change, but for now, you do have to do the obnoxious:
@@ -138,7 +143,7 @@ panic :: fn(msg: str);
     }
   }
 
-  impl!<T> List!<T>  {
+  impl!<T> T[]  {
     /* 
       Check if the list contains an item. This uses the `a == b` operator, so this is only valid
       on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
@@ -158,7 +163,7 @@ panic :: fn(msg: str);
       erase the first element from the list that == value;
       this doesn't deallocate the old memory.
     */
-    remove :: fn(self*, value: T) -> bool {
+    remove :: fn(*mut self, value: T) -> bool {
       for idx in 0..self.length {
         if self.data[idx] == value {
           memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
@@ -171,8 +176,8 @@ panic :: fn(msg: str);
   }
 }
 
-impl!<T> Iterable!<T> for List!<T> {
-  /* 
+impl!<T> Iterable!<T> for T[] {
+  /*
     Get an iterator to the list.
     the 
       `for .. in ...` 
@@ -183,31 +188,26 @@ impl!<T> Iterable!<T> for List!<T> {
     or whatever.
 
     of course, this is always a view into the list, and holding on to this outside of the 
-    guaranteed lifetime of the List!<T> is inherently unsafe.
+    guaranteed lifetime of the T[] is inherently unsafe.
   */
-  iter :: fn(self*) -> Iter!<T> {
+  iter :: fn(*mut self) -> Basic_Iter!<T> {
     return .{
       ptr: self.data,
-      end: (self.data + self.length) as T*,
+      end: (self.data + self.length) as *const T,
     }
   }
 }
 
-impl!<T> List!<T> {
-  /*  
-    Is the list empty. 
-  */
-  is_empty :: fn(self) -> bool => self.length == 0;
-
+impl!<T> Subscript!<T> for T[] {
   /*  
     Access/Mutate an element at idx 
   */
-  subscript :: fn(self*, idx: s64) -> T* {
-    return &self.data[idx];
+  subscript :: fn(*mut self, idx: u64) -> *mut T {
+    return &mut self.data[idx];
   }
 }
 
-impl!<T> As_Slice!<T> for List!<T> {
+impl!<T> As_Slice!<T> for T[] {
   /* 
     Take a `slice` or a view into the array, without taking any ownership of the memory we are viewing into.
   */
@@ -219,19 +219,18 @@ impl!<T> As_Slice!<T> for List!<T> {
   }
 }
 
-
 #ifndef FREESTANDING {
-  impl!<T> List!<T> {
-    alias Ordering_Predicate :: fn * (T*, T*) -> bool;
+  impl!<T> T[] {
+    alias Ordering_Predicate :: fn * (*const T, *const T) -> bool;
 
     /* 
       return a new list with the order specified by the predicate.
     */
     order_by :: fn(self, predicate: Ordering_Predicate) -> T[] {
-      new_list := self.clone();
+      mut new_list := self.clone();
       for i in 0..new_list.length {
         for j in (i+1)..new_list.length {
-          if predicate(&new_list.data[i], &new_list.data[j]) {
+          if predicate(&const new_list.data[i], &const new_list.data[j]) {
             temp := new_list.data[i];
             new_list.data[i] = new_list[j];
             new_list.data[j] = temp;

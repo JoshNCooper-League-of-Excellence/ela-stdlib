@@ -1,12 +1,12 @@
 
-#foreign time :: fn(value: void*) -> s32;
+#foreign time :: fn(value: *const void) -> s32;
 
 timespec_t :: struct {
   tv_sec: s64,
   tv_nsec: s64,
 }
 
-#foreign clock_gettime :: fn(clock_id: s32, tp: timespec_t*) -> s32;
+#foreign clock_gettime :: fn(clock_id: s32, tp: *mut timespec_t) -> s32;
 
 tm_t :: struct {
   tm_sec: s32,
@@ -20,7 +20,7 @@ tm_t :: struct {
   tm_isdst: s32,
 }
 
-#foreign localtime_r :: fn(timep: s64*, result: tm_t*) -> tm_t*;
+#foreign localtime_r :: fn(timep: *const s64, result: *mut tm_t) -> *mut tm_t;
 
 Timing :: struct;
 
@@ -28,7 +28,7 @@ impl Timing {
   // returns the timespec_t for the current time since epoch.
   get_timespec_since_epoch :: fn() -> timespec_t {
     ts: timespec_t;
-    clock_gettime(0, &ts);
+    clock_gettime(0, &mut ts);
     return ts;
   }
   
@@ -72,7 +72,7 @@ impl Timing {
     ts := #self::get_timespec_since_epoch();
     time_t: s64 = ts.tv_sec;
     tm: tm_t;
-    localtime_r(&time_t, &tm);
+    localtime_r(&const time_t, &mut tm);
     buffer: u8[64];
     length := snprintf(buffer, 64, "%04d-%02d-%02d %02d:%02d:%02d"c,
              tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
