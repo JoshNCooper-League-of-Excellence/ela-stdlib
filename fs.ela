@@ -217,7 +217,7 @@ impl Deinit for File {
 impl File {
   stat :: fn(*mut self) -> Option!<Stat> {
     alias Option :: Option!<Stat>;
-    stat: Stat;
+    mut stat: Stat;
     if fstat(fileno(self.fd), &mut stat) != 0 {
       return Option::None();
     }

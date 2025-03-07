@@ -27,7 +27,7 @@ Timing :: struct;
 impl Timing {
   // returns the timespec_t for the current time since epoch.
   get_timespec_since_epoch :: fn() -> timespec_t {
-    ts: timespec_t;
+    mut ts: timespec_t;
     clock_gettime(0, &mut ts);
     return ts;
   }
@@ -71,7 +71,7 @@ impl Timing {
   date_time :: fn() -> String {
     ts := #self::get_timespec_since_epoch();
     time_t: s64 = ts.tv_sec;
-    tm: tm_t;
+    mut tm: tm_t;
     localtime_r(&const time_t, &mut tm);
     mut buffer: u8[64];
     length := snprintf(buffer, 64, "%04d-%02d-%02d %02d:%02d:%02d"c,

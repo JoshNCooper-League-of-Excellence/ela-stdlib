@@ -185,7 +185,7 @@ impl Format_Options {
   };
   
   current :: fn() -> *mut #self {
-    #static current := Format_Options.{
+    #static mut current := Format_Options.{
       digits_after_decimal: 2,
       indented: false,
       quote_strings: false,
@@ -477,7 +477,7 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
   if fmt.length == 0 then
     return .{};
 
-  builder: String_Builder;
+  mut builder: String_Builder;
 
   defer builder.deinit();
   
@@ -548,13 +548,13 @@ format :: fn(fmt : str, list: Init_List!<any>, options: Format_Options) -> Strin
 }
 
 print :: fn!<T>(message: T) {
-  formatted := format("%", .[any::from(&mut message)], *Format_Options::current());
+  formatted := format("%", .[any::from((&const message) as *mut T)], *Format_Options::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
 println :: fn!<T>(message: T) {
-  formatted := format("%", .[any::from(&mut message)], *Format_Options::current());
+  formatted := format("%", .[any::from((&const message) as *mut T)], *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }

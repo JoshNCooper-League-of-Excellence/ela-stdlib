@@ -1,4 +1,3 @@
-
 /*
   a generic iterator, can be used for 'for' loops, such as
   `for i in <my_object> {}`
