@@ -28,14 +28,14 @@ String :: struct {
 // .[0, 1, 2, 3] (or {0, 1, 2, 3})
 // it is stack allocated and does not need to be freed, nor
 // should it ever be held on to.
-Init_List :: struct!<Value_Type> {
-  data:   *const Value_Type,
+Init_List :: struct!<V> {
+  data:   *const V,
   length: u64,
 }
 
 // A collection of items.
-List :: struct!<Value_Type> {
-  data:     *mut Value_Type,
+List :: struct!<V> {
+  data:     *mut V,
   length:   u64,
   capacity: u64,
   // allocator: Dyn_Allocator,
@@ -52,18 +52,18 @@ any :: struct {
 // A non-owning fat pointer. This should just be a view into a pointer, that tracks length.
 // very useful for efficiently passing arrays of data to functions for quick usage with a known lifetime,
 // iterating over subarrays, etc.
-Slice :: struct!<Value_Type> {
-  data:  *const Value_Type,
+Slice :: struct!<V> {
+  data:  *const V,
   length: u64,
 }
 
-Slice_Mut :: struct!<Value_Type> {
-  data:  *mut Value_Type,
+Slice_Mut :: struct!<V> {
+  data:  *mut V,
   length: u64,
 }
 
 // kind of a "Unit" type, just an empty struct.
-alias None :: ();
+alias Unit :: ();
 
 RESULT_IS_ERR : u8 =  0;
 RESULT_IS_OK  : u8 =  1;

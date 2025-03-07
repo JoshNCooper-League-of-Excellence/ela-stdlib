@@ -24,8 +24,8 @@ Clone       :: interface {
   clone     :: fn(self) -> #self;
 }
 
-Init :: interface!<Value_Type> {
-  init :: fn(init: Init_List!<Value_Type>) -> #self;
+Init :: interface!<V> {
+  init :: fn(init: Init_List!<V>) -> #self;
 }
 
 // Binary arithmetic operator overloads.

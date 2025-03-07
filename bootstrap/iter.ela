@@ -5,8 +5,8 @@
   where my_object implements either Iterable!<T> (which just indicates we can be converted into an iterator)
   or my_object implements Iter!<> where it is an iterator itself.
 */
-Iter :: interface!<Value_Type> {
-  next :: fn(*mut self) -> Option!<Value_Type>;
+Iter :: interface!<V> {
+  next :: fn(*mut self) -> Option!<V>;
 }
 
 /* 
@@ -14,14 +14,13 @@ Iter :: interface!<Value_Type> {
   collections that are implemented as contiguous chunks of memory, and 
   a pointer just needs to be incremented until an end point to fully traverse it.
 */
-Basic_Iter :: struct!<Value_Type> {
-  ptr: *mut Value_Type,  // Pointer to the current element in the collection.
-  end: *const Value_Type,  // Pointer to the end of the collection.
+Basic_Iter :: struct!<V> {
+  ptr: *mut V,  // Pointer to the current element in the collection.
+  end: *const V,  // Pointer to the end of the collection.
 }
 
-impl!<Value_Type> Iter!<*mut Value_Type> for Basic_Iter!<Value_Type> {
-  alias Option :: Option!<*mut Value_Type>;
-
+impl!<V> Iter!<*mut V> for Basic_Iter!<V> {
+  alias Option :: Option!<*mut V>;
   // Advances the iterator to the next element in the collection.
   next :: fn(*mut self) -> Option {
     if self.ptr >= self.end {
@@ -37,7 +36,26 @@ impl!<Value_Type> Iter!<*mut Value_Type> for Basic_Iter!<Value_Type> {
   Iterable is a generic interface that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
 */
-Iterable :: interface!<Value_Type> {
+Iterable :: interface!<V> {
   // Returns an iterator for the collection.
-  iter :: fn(*mut self) -> Iter!<Value_Type>;
+  iter :: fn(*mut self) -> Iter!<V>;
 }
+
+Enumerate :: struct!<V, I> where I is Iter!<V> {
+  idx: u64,
+  iterator: I,
+}
+
+impl!<V, I> Iter!<V> for Enumerate!<V, I> {
+  next :: fn(*mut self) -> Option!<(u64, V)> {
+    index := self.idx;
+    self.idx++;
+    next := self.iterator.next();
+    if next.has_value {
+      return Option!<(u64, V)>::Some((index, next.unwrap()));
+    } else {
+      return Option!<(u64, V)>::None();
+    }
+  }
+}
+

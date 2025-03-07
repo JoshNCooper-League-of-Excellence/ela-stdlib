@@ -1,9 +1,9 @@
 
 // TODO: add reverse ranges?
 
-Range_Base :: struct!<Value_Type> where Value_Type is Eq | Is_Numeric {
-  begin: Value_Type,
-  end:   Value_Type,
+Range_Base :: struct!<V> where V is Eq | Is_Numeric {
+  begin: V,
+  end:   V,
 }
 
 alias Range_s8  :: Range_Base!<s8>;
@@ -24,14 +24,14 @@ impl!<T> Range_Base!<T> {
   }
 }
 
-Range_Iter :: struct!<Value_Type> where Value_Type is Eq | Is_Numeric {
-  begin: Value_Type,
-  end:   Value_Type,
-  idx:   Value_Type,
+Range_Iter :: struct!<V> where V is Eq | Is_Numeric {
+  begin: V,
+  end:   V,
+  idx:   V,
 }
 
-impl!<Value_Type> Iter!<Value_Type> for Range_Iter!<Value_Type>  {
-  alias Option :: Option!<Value_Type>;
+impl!<V> Iter!<V> for Range_Iter!<V>  {
+  alias Option :: Option!<V>;
   next :: fn(*mut self) -> Option {
     value := Option::Some(self.idx);
     if self.idx >= self.end {
@@ -42,8 +42,8 @@ impl!<Value_Type> Iter!<Value_Type> for Range_Iter!<Value_Type>  {
   }
 }
 
-impl!<Value_Type> Iterable!<Value_Type> for Range_Base!<Value_Type> {
-  iter :: fn(*mut self) -> Range_Iter!<Value_Type> {
+impl!<V> Iterable!<V> for Range_Base!<V> {
+  iter :: fn(*mut self) -> Range_Iter!<V> {
     return .{
       begin: self.begin,
       end:   self.end,
@@ -52,7 +52,7 @@ impl!<Value_Type> Iterable!<Value_Type> for Range_Base!<Value_Type> {
   }
 }
 
-impl!<Value_Type> Eq for Range_Base!<Value_Type> {
+impl!<V> Eq for Range_Base!<V> {
   eq :: fn(self, right: #self) -> bool {
     return self.begin == right.begin && self.end == right.end;
   }
