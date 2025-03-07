@@ -2,10 +2,10 @@
 #ifndef FREESTANDING {
   
   impl String {
-    replace :: fn(*mut self, old: c_string, replacement: c_string) -> str {
+    replace :: fn(*mut self, old: c_string, replacement: c_string) -> String {
       old_len := strlen(old);
       new_len := strlen(replacement);
-      result : str = .{};
+      mut result : String = .{};
       for i in 0..self.length {
         if strncmp(self.data + i, old, old_len) == 0 {
           result.data = realloc(result.data, result.length + new_len + 1);

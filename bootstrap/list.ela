@@ -135,7 +135,7 @@ panic :: fn(msg: str);
       of course, this allocates.
     */
     init :: fn(init: Init_List!<T>) -> #self {
-      self: #self;
+      mut self: #self;
       self.resize(init.length);
       memcpy(self.data, init.data, sizeof(T) * init.length);
       self.length = init.length;

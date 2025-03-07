@@ -211,7 +211,7 @@ String_Builder_Block :: struct {
 
 impl String_Builder_Block {
   new :: fn() -> *mut #self {
-    self : *mut #self =  malloc(sizeof(String_Builder_Block));
+    mut self : *mut #self =  malloc(sizeof(String_Builder_Block));
     self.data = calloc(sizeof(u8), STRING_BUILDER_BLOCK_MAX_LEN);
     self.length = 0;
     self.next = null;
