@@ -84,7 +84,7 @@ impl Eq for str {
 
 impl Hash for str {
 	hash :: fn(self) -> u64 {
-		hash : u64 = 0xCBF29CE484222325;
+		mut hash : u64 = 0xCBF29CE484222325;
 		for byte in self {
 			hash ^= byte;
 			hash *= 0x100000001B3;
