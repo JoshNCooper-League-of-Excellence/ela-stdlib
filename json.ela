@@ -312,7 +312,8 @@ json_serialize_scalar :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
     val.data.boolean = *(object as bool*);
     return (JsonError::SUCCESS, val);
   }
-  set_json_error(format("Unsupported type :: %", {any::from(&mut type.name)}))
+  set_json_error(format("Unsupported type :: %", (type.name,)));
+
   return (JsonError::ERROR, null);
 }
 
