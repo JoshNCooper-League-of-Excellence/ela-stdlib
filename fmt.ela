@@ -518,18 +518,7 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
         ptr: field.get(&const tuple),
       };
 
-      if value.type.is_struct() || value.type.is_tuple() {
-        printf("struct\n"c);
-        format_struct(value, &mut builder, options);
-      } else if value.ptr == null {
-        builder.append("null");
-      } else if value.type == typeof(c_str) {
-        builder.append(String::from_ptr(value.unwrap!<*const u8>()));
-      } else if value.type.is_pointer() {
-        builder.append_then_free(to_string(value.ptr));
-      } else if value.type.is_enum() {
-        builder.append_then_free(to_string(value.unwrap!<s32>()));
-      } else if value.type == typeof(String)  { 
+      if value.type == typeof(String)  { 
         if options.quote_strings 
           then builder.append("\"");
 
@@ -546,6 +535,17 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
 
         if options.quote_strings 
           then builder.append("\"");
+      } else if value.type.is_struct() || value.type.is_tuple() {
+        printf("struct\n"c);
+        format_struct(value, &mut builder, options);
+      } else if value.ptr == null {
+        builder.append("null");
+      } else if value.type == typeof(c_str) {
+        builder.append(String::from_ptr(value.unwrap!<*const u8>()));
+      } else if value.type.is_pointer() {
+        builder.append_then_free(to_string(value.ptr));
+      } else if value.type.is_enum() {
+        builder.append_then_free(to_string(value.unwrap!<s32>()));
       } else {
         switch value.type {
           typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));        }
