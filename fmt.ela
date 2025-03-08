@@ -399,7 +399,7 @@ to_string :: fn!<T>(value: T) -> String {
   return String::from_ptr(buffer);
 }
 
-format_struct :: fn(value: any, mut builder: *mut String_Builder, options: Format_Options) {
+format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
   builder.append(Slice!<u8>::from(value.type.name, strlen(value.type.name)));
   builder.append(" {");
 
@@ -442,8 +442,7 @@ format_struct :: fn(value: any, mut builder: *mut String_Builder, options: Forma
       if options.quote_strings 
         then builder.append("\"");
     } else if field_any.type.is_struct() {
-      // ! this just blows up and explodes.
-      // format_struct(field_any, &builder, options);
+      // format_struct(field_any, builder, options);
     } else {
       switch field_any.type {
         typeof(u8):      { builder.append_then_free(to_string(field_any.unwrap!<u8>()));  }
@@ -484,7 +483,6 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
   if fmt.length == 0 then
     return .{};
 
-
   mut builder: String_Builder;
 
   defer builder.deinit();
@@ -508,14 +506,22 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
       continue;
     }
 
-    if (*fmt.data) == '%' {
+    if (*fmt.data) == '%' && value_index >= fields.length {
+      panic("too few data arguments provided to 'format'");
+    }
+
+    if (*fmt.data) == '%' && value_index < fields.length {
       field := fields[value_index];
+
       value :any = .{ 
         type: field.type,
         ptr: field.get(&const tuple),
       };
-        
-      if value.ptr == null {
+
+      if value.type.is_struct() || value.type.is_tuple() {
+        printf("struct\n"c);
+        format_struct(value, &mut builder, options);
+      } else if value.ptr == null {
         builder.append("null");
       } else if value.type == typeof(c_str) {
         builder.append(String::from_ptr(value.unwrap!<*const u8>()));
@@ -540,8 +546,6 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
 
         if options.quote_strings 
           then builder.append("\"");
-      } else if value.type.is_struct() || value.type.is_tuple() {
-        format_struct(value, &mut builder, options);
       } else {
         switch value.type {
           typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));        }
