@@ -361,34 +361,42 @@ to_string :: fn!<T>(value: T) -> String {
   }
 
   mut format_buffer: u8[255];
-  mut format_buffer_length: u8;
 
   if type.is_pointer() {
-    format_buffer[0] = '%'
-    format_buffer[1] = 'p'
-    format_buffer_length = 2;
+    printf("pointer\n"c);
+    format_buffer[0] = '%';
+    format_buffer[1] = 'p';
+    format_buffer[2] = '\0';
   } else if type == typeof(u8) {
-    format_buffer[0] = '%'
-    format_buffer[1] = 'c'
-    format_buffer_length = 2;
-  } else if type.is_integral() {
-    format_buffer[0] = '%' 
-    format_buffer[1] = 'l'
-    format_buffer[2] = 'l'
-    format_buffer[3] = 'd'
-    format_buffer_length = 4;
-  } else if type.is_float() {
-    if type == typeof(f32) {
-      format_buffer_length = sprintf(format_buffer, "%%.%df"c, Format_Options::current().digits_after_decimal);
-    } else {
-      format_buffer_length = sprintf(format_buffer, "%%.%dlf"c, Format_Options::current().digits_after_decimal);
+    printf("u8\n"c);
+    format_buffer[0] = '%';
+    format_buffer[1] = 'c';
+    format_buffer[2] = '\0';
+  } else if type.is_signed() || type.is_unsigned() {
+    string := switch type {
+      typeof(s16) => "%d",
+      typeof(s32) => "%d",
+      typeof(s64) => "%ld",
+      typeof(u8) =>  "%u",
+      typeof(u16) => "%u",
+      typeof(u32) => "%u",
+      typeof(u64) => "%lu",
+    };
+    mut i := 0;
+    for ch in string {
+      format_buffer[i] = ch;
+      i++;
     }
+  } else if type == typeof(f32) {
+    sprintf(format_buffer, "%%.%df"c, Format_Options::current().digits_after_decimal);
+  } else if type == typeof(f64) {
+    sprintf(format_buffer, "%%.%dlf"c, Format_Options::current().digits_after_decimal);
   } else {
     return .{};
   }
   
   buffer: u8[1024]; // this is wayyy over allocated, but it's not a big deal.
-  snprintf(buffer, 64 * sizeof(u8), format_buffer, value);
+  snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
   return String::from_ptr(buffer);
 }
 
@@ -456,8 +464,8 @@ format_struct :: fn(value: any, mut builder: *mut String_Builder, options: Forma
         typeof(f64):     { builder.append_then_free(to_string(field_any.unwrap!<f64>()));  }
 
         typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
-        else: { builder.append("(invalid type)") }
-      }
+        else: { builder.append("(invalid type)"); }
+      };
     } 
 
     builder.append(",");
