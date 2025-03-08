@@ -31,3 +31,17 @@ impl!<_Some> Option!<_Some> {
     }
   }
 }
+
+// This can be inferred, but 
+// This only works with an expected type, such as an argument, 
+// typed declaration, etc.
+Some :: fn!<T>(t: T) -> Option!<T> {
+  return Option!<T>::Some(t);
+}
+
+// This can be inferred, but 
+// This only works with an expected type, such as an argument, 
+// typed declaration, etc.
+None :: fn!<T>() -> T {
+  return T::None();
+}

@@ -101,7 +101,7 @@ SeekPosition :: enum {
 #foreign fclose :: fn(file: *mut FILE) -> void;
 #foreign fgetc :: fn(file: *mut FILE) -> s8;
 #foreign putc :: fn(ch: u8, file: *mut FILE) -> void;
-#foreign fprintf :: fn(stream: *mut FILE, format: c_string, ...) -> s32;
+#foreign fprintf :: fn(stream: *mut FILE, format: c_str, ...) -> s32;
 #foreign fflush :: fn(f: *const FILE);
 
 
@@ -114,7 +114,7 @@ SeekPosition :: enum {
 impl FileOpenFlags {
   // Used to convert our flag enum to a str for fopen/fclose etc.
   // this does not ever need to be freed.
-  as_str :: fn(self) -> c_string {
+  as_str :: fn(self) -> c_str {
     if self == FileOpenFlags::Read {
       return "r"c;
     } else if self == FileOpenFlags::Write {
@@ -226,7 +226,7 @@ impl File {
 }
 
 #export DIR :: struct;
-#foreign getcwd :: fn(buf: c_string, size: u64) -> c_string;
+#foreign getcwd :: fn(buf: c_str, size: u64) -> c_str;
 
 dirent :: struct {
   d_ino: u64,

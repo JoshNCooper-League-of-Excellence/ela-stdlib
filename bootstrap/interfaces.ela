@@ -1,3 +1,5 @@
+
+
 // Run a cleanup procedure implicitly when an object goes out of scope.
 // Absolutely equivalent to a C++ Destructor.
 // This could be called explicitly on pointers, but it's not reccomended.

@@ -71,7 +71,7 @@ impl JsonLexer {
   get_location_string :: fn(self) -> String {
     column := self.position - self.line_start;
     line := self.cur_line + 1;
-    return format("%:%:%", .[any::from(&self.file), any::from(&line), any::from(&column)], Format_Options::default(),)
+    return format("%:%:%", (self.file, line, column), Format_Options::default());
   }
 
   get_token :: fn(*mut self) -> Result!<JsonToken, String> {

@@ -1,8 +1,7 @@
 
 alias char :: u32; // this represents a single UTF-8 scalar.
 
-alias c_string :: *const u8;
-
+alias c_str :: *const u8;
 
 Type :: struct;
 
@@ -11,7 +10,7 @@ Type :: struct;
 
 // to get a 'u8*' literal, use `"..."c` the little `c` postfix.                              ^
 str :: struct {
-  data:    c_string,
+  data:    c_str,
   length:  u64,
 }
 
@@ -50,7 +49,7 @@ any :: struct {
 };
 
 // A non-owning fat pointer. This should just be a view into a pointer, that tracks length.
-// very useful for efficiently passing arrays of data to functions for quick usage with a known lifetime,
+// very useful for efficiently passing arrays of data to functions for quick usage with a known (temporary)lifetime,
 // iterating over subarrays, etc.
 Slice :: struct!<V> {
   data:  *const V,
@@ -62,8 +61,6 @@ Slice_Mut :: struct!<V> {
   length: u64,
 }
 
-// kind of a "Unit" type, just an empty struct.
-alias Unit :: ();
 
 RESULT_IS_ERR : u8 =  0;
 RESULT_IS_OK  : u8 =  1;

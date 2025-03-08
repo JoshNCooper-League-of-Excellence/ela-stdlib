@@ -1,5 +1,5 @@
 Field :: struct {
-  name: c_string,
+  name: c_str,
   type: *const Type,
   size: u64,
   offset: u64,
@@ -8,7 +8,7 @@ Field :: struct {
 
 Type :: struct {
   id: s32,                                                   // the integer ID used to identify this type.
-  name: c_string,                                                 // the type's name.
+  name: c_str,                                                 // the type's name.
   size: u64,                                                 // sizeof(T)
   flags: u64,                                                // defined in reflection.ela and emit.cpp, the values of the flags.
   fields: Field[],                                           // get a list of struct fields, enum variants.
@@ -34,7 +34,7 @@ Element :: struct {
   _type_info: *const Type[];
 
   impl Type {
-    get_field :: fn(*mut self, name: c_string) -> *mut Field {
+    get_field :: fn(*mut self, name: c_str) -> *mut Field {
       for *field in self.fields {
         if strcmp(field.name, name) == 0 {
           return field;

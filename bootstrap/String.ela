@@ -2,7 +2,7 @@
 #ifndef FREESTANDING {
   
   impl String {
-    replace :: fn(*mut self, old: c_string, replacement: c_string) -> String {
+    replace :: fn(*mut self, old: c_str, replacement: c_str) -> String {
       old_len := strlen(old);
       new_len := strlen(replacement);
       mut result : String = .{};
@@ -32,7 +32,7 @@
       };
     }
     
-    from_ptr :: fn(data: c_string) -> #self {
+    from_ptr :: fn(data: c_str) -> #self {
       length := strlen(data);
       return .{
         data: strdup(data),
@@ -101,7 +101,7 @@
   }
     
   impl String {
-    starts_with :: fn(*mut self, prefix: c_string) -> bool {
+    starts_with :: fn(*mut self, prefix: c_str) -> bool {
       prefix_len := strlen(prefix);
       if self.length < prefix_len then return false;
       for i in 0..prefix_len {
@@ -110,7 +110,7 @@
       return true;
     }
     
-    ends_with :: fn(*mut self, suffix: c_string) -> bool {
+    ends_with :: fn(*mut self, suffix: c_str) -> bool {
       suffix_len := strlen(suffix);
       if self.length < suffix_len then return false;
       for i in 0..suffix_len {
@@ -137,7 +137,7 @@ impl String {
     return .{};
   }
   
-  subscript :: fn(*mut self, idx: s64) -> c_string {
+  subscript :: fn(*mut self, idx: s64) -> c_str {
     return &mut self.data[idx];
   }
 
@@ -179,7 +179,7 @@ impl As_Char_Slice for String {
   as_char_slice :: fn(self) -> Slice!<u32> {
     return .{
       data: self.data,
-      length: self.length / 4, // we do this because we're reinterpreting a c_string as a u32* which effectively packs it and quarters the "length"
+      length: self.length / 4, // we do this because we're reinterpreting a c_str as a u32* which effectively packs it and quarters the "length"
     }
   }
 }
