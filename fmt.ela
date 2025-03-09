@@ -489,15 +489,11 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
   
   value_index := 0;
 
-  fields := typeof(tuple).fields.order_by(fn(a: *const Field, b: *const Field) -> bool {
-    return a.offset < b.offset;
-  });
+  fields := typeof(Tuple).fields;
 
   if fields.is_empty() {
     return String::from("()");
   }  
-
-  defer fields.deinit();
 
   while *fmt.data {
     if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
@@ -575,26 +571,26 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
 }
 
 print :: fn!<T>(message: T) {
-  formatted := format("%", (message,), *Format_Options::current());
+  mut formatted := format("%", (message,), *Format_Options::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
 println :: fn!<T>(message: T) {
-  formatted := format("%", (message,), *Format_Options::current());
+  mut formatted := format("%", (message,), *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple is Is_Tuple {
-  formatted := format(fmt, tuple, *Format_Options::current());
+  mut formatted := format(fmt, tuple, *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 impl String_Builder {
   appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple is Is_Tuple{
-    formatted := format(fmt, values, options);
+    mut formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();
   }

@@ -23,10 +23,10 @@ Element :: struct {
 
 #ifndef FREESTANDING {
   impl Field {
-    set :: fn!<T, T1>(*mut self, target: *mut T, data: T1) {
+    set :: fn!<T, T1>(*const self, target: *mut T, data: T1) {
       memcpy((target as *mut u8) + self.offset, (&const data) as *const u8, sizeof(T1));
     }
-    get :: fn!<T>(*mut self, source: *const T) -> *mut u8 {
+    get :: fn!<T>(*const self, source: *const T) -> *mut u8 {
       return ((source) as *mut u8) + self.offset;
     }
   }
@@ -143,7 +143,7 @@ impl any {
 
   // return the pointer behind this any, or if the type isn't matched,
   // return null.
-  cast :: fn!<T>(*mut self) -> *mut T {
+  cast :: fn!<T>(*const self) -> *mut T {
     if !type then type = typeof(T);
     if type != self.type then return null;
     return self.ptr as *mut T;
@@ -152,7 +152,7 @@ impl any {
   // an unchecked version of the 'cast' method.
   // this will return junk data, or worse, if you pass in the wrong type to cast to.
   // use cast anywhere you can, it's much more type safe.
-  unwrap :: fn!<T>(*mut self) -> T {
+  unwrap :: fn!<T>(*const self) -> T {
     return *(self.ptr as *const T);
   }
 }
