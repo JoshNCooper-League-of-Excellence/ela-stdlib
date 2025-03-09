@@ -104,7 +104,7 @@
 
   utf8_decode :: fn!<T>(data: T) -> u32[] where T is As_Char_Slice {
     slice := data.as_byte_slice();
-    output: u32[];
+    mut output: u32[];
     index := 0;
     while index < slice.length {
       subslice := slice.slice(index..index+4);
@@ -116,7 +116,7 @@
   }
 
   utf8_encode :: fn(code_point: u32) -> u8[] {
-    output: u8[];
+    mut output: u8[];
     if code_point <= 0x7F {
       output.push(code_point as u8);
       return output;
@@ -318,7 +318,7 @@ impl String_Builder {
   // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
   // this is helpful for doing a builder.append_then_free(some_allocating_function());
   // so you don't leak.
-  append_then_free :: fn!<T>(*mut self, value: T) where T is Deinit {
+  append_then_free :: fn!<T>(*mut self, mut value: T) where T is Deinit {
     self.append!<T>(value);
     value.deinit();
   }
@@ -412,7 +412,7 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
       builder.append("  ");
     }
 
-    field_any := any.{
+    mut field_any := any.{
       type: field.type,
       ptr: field.get(value.ptr),
     };
@@ -610,7 +610,7 @@ impl String_Builder {
 }
 
 /* 
-  ! this needs to be rewritten for Iter!<>
+  ! this needs to be rewritten for Iterator!<>
 */
 UTF8_Iter :: struct {
   slice: Slice!<u8>,
@@ -618,7 +618,7 @@ UTF8_Iter :: struct {
   current_char: u32,
 }
 
-impl Iter!<u32> for UTF8_Iter {
+impl Iterator!<u32> for UTF8_Iter {
   next :: fn(*mut self) -> Option!<u32> {
     if self.position >= self.slice.length {
       return Option!<u32>::None();

@@ -167,7 +167,7 @@ impl File {
     if !file then 
       return Result::Err("Couldnt open file");
 
-    string: String;
+    mut string: String;
     string.resize(1024);
     while {
       c := fgetc(file);
@@ -183,7 +183,7 @@ impl File {
     file := fopen(filename.data, "r"c);
     if !file then return Result::Err("Couldnt open file");
     
-    bytes: u8[];
+    mut bytes: u8[];
     bytes.resize(1024);
 
     while {

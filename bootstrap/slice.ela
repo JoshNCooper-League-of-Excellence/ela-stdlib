@@ -12,14 +12,19 @@
   }
 }
 
+impl!<T> Subscript!<T> for Slice!<T> {
+  subscript :: fn(*const self, idx: u64) -> *const T {
+    return &const self.data[idx];
+  }
+  subscript_mut :: fn(*mut self, idx: u64) -> *mut T {
+    return &mut self.data[idx];
+  }
+}
+
 impl!<T> Slice!<T> {
   from :: fn(data: *const T, len: u32) -> #self => .{
     data: data,
     length: len,
-  }
-
-  subscript :: fn(*const self, idx: u32) -> *const T {
-    return &const self.data[idx];
   }
   
   // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
@@ -44,7 +49,14 @@ impl!<T> Slice!<T> {
 }
 
 impl!<T> Iterable!<T> for Slice!<T> {
-  iter :: fn(*mut self) -> Basic_Iter!<T> {
+  iter :: fn(*const self) -> Iter!<T> {
+    return .{
+      ptr: self.data as *mut T,
+      end: self.data + self.length
+    }
+  }
+
+  iter_mut :: fn(*mut self) -> Iter!<*mut T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length

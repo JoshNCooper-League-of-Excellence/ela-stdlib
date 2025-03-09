@@ -190,19 +190,29 @@ impl!<T> Iterable!<T> for T[] {
     of course, this is always a view into the list, and holding on to this outside of the 
     guaranteed lifetime of the T[] is inherently unsafe.
   */
-  iter :: fn(*mut self) -> Basic_Iter!<T> {
+  iter :: fn(*const self) -> Iter!<T> {
     return .{
       ptr: self.data,
       end: (self.data + self.length) as *const T,
     }
   }
+
+  /* 
+    Get a mutable iterator.
+  */
+  iter_mut :: fn(*mut self) -> Iter!<*mut T> {
+    return .{
+      ptr: self.data,
+      end: (self.data + self.length),
+    }
+  }
 }
 
 impl!<T> Subscript!<T> for T[] {
-  /*  
-    Access/Mutate an element at idx 
-  */
-  subscript :: fn(*mut self, idx: u64) -> *mut T {
+  subscript :: fn(*const self, idx: u64) -> *const T {
+    return &const self.data[idx];
+  }
+  subscript_mut :: fn(*mut self, idx: u64) -> *mut T {
     return &mut self.data[idx];
   }
 }

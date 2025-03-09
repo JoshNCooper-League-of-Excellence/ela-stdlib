@@ -6,7 +6,7 @@
 #include "option.ela";
 // Result!<Ok, Err>
 #include "result.ela";
-// Iter<T> and Iterable<T>
+// Iterator<T> and Iterable<T>
 #include "iter.ela";
 // impls for numeric types, mostly marker interfaces.
 #include "numeric.ela"; 

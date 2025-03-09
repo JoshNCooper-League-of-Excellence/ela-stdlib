@@ -34,7 +34,7 @@ Element :: struct {
   _type_info: *const Type[];
 
   impl Type {
-    get_field :: fn(*mut self, name: c_str) -> *mut Field {
+    get_field :: fn(*mut self, name: c_str) -> *const Field {
       for *field in self.fields {
         if strcmp(field.name, name) == 0 {
           return field;
@@ -71,28 +71,28 @@ Element :: struct {
 }
 
 impl Type  {
-  is_signed :: fn(*mut self) -> bool {
+  is_signed :: fn(*const self) -> bool {
     return self.flags & TypeFlags::SIGNED != 0;
   }
 
-  is_unsigned :: fn(*mut self) -> bool {
+  is_unsigned :: fn(*const self) -> bool {
     return self.flags & TypeFlags::UNSIGNED != 0;
   }
 
-  has_no_extension :: fn(*mut self) -> bool {
+  has_no_extension :: fn(*const self) -> bool {
     return self.flags & TypeFlags::POINTER == 0 &&
           self.flags & TypeFlags::ARRAY == 0;
   }
 
-  is_array :: fn(*mut self) -> bool {
+  is_array :: fn(*const self) -> bool {
     return self.flags & TypeFlags::ARRAY != 0;
   }
 
-  is_string :: fn(*mut self) -> bool {
+  is_string :: fn(*const self) -> bool {
     return self.flags & TypeFlags::STRING != 0;
   }
 
-  is_scalar :: fn(*mut self) -> bool {
+  is_scalar :: fn(*const self) -> bool {
     return Type::has_no_extension(self) &&
           (self.flags & TypeFlags::INTEGER != 0 ||
             self.flags & TypeFlags::FLOAT != 0   ||
@@ -100,35 +100,35 @@ impl Type  {
             self.flags & TypeFlags::STRING != 0);
   }
 
-  is_struct :: fn(*mut self) -> bool {
+  is_struct :: fn(*const self) -> bool {
     return self.flags & TypeFlags::STRUCT != 0;
   }
 
-  is_enum :: fn(*mut self) -> bool {
+  is_enum :: fn(*const self) -> bool {
     return self.flags & TypeFlags::ENUM != 0;
   }
 
-  is_integral :: fn(*mut self) -> bool {
+  is_integral :: fn(*const self) -> bool {
     return self.flags & TypeFlags::INTEGER != 0;
   }
 
-  is_float :: fn(*mut self) -> bool {
+  is_float :: fn(*const self) -> bool {
     return self.flags & TypeFlags::FLOAT != 0;
   }
 
-  is_bool :: fn(*mut self) -> bool {
+  is_bool :: fn(*const self) -> bool {
     return self.flags & TypeFlags::BOOL != 0;
   }
 
-  is_tuple :: fn(*mut self) -> bool {
+  is_tuple :: fn(*const self) -> bool {
     return self.flags & TypeFlags::TUPLE != 0;
   }
 
-  is_function :: fn(*mut self) -> bool {
+  is_function :: fn(*const self) -> bool {
     return self.flags & TypeFlags::FUNCTION != 0;
   }
 
-  is_pointer :: fn(*mut self) -> bool {
+  is_pointer :: fn(*const self) -> bool {
     return self.flags & TypeFlags::POINTER != 0;
   }
 }

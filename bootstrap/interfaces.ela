@@ -63,7 +63,8 @@ Compare :: interface!<Right> {
 }
 
 Subscript :: interface!<T> {
-  subscript :: fn(*mut self, index: u64) -> *mut T;
+  subscript :: fn(*const self, index: u64) -> *const T;
+  subscript_mut :: fn(*mut self, index: u64) -> *mut T;
 }
 
 Allocator :: interface {

@@ -32,6 +32,15 @@
   }
 }
 
+impl Subscript!<u8> for str {
+  subscript :: fn(*const self, idx: u64) -> *const u8 {
+    return &const self.data[idx];
+  }
+  subscript_mut :: fn(*mut self, idx: u64) -> *mut u8 {
+    return &mut self.data[idx];
+  }
+}
+
 impl str {
   is_empty :: fn(self) -> bool => self.length == 0;
 
@@ -39,10 +48,6 @@ impl str {
     return .{};
   }
 
-  subscript :: fn(*mut self, idx: s64) -> c_str {
-    return &mut self.data[idx];
-  }
-  
   slice :: fn(*mut self, range: Range) -> Slice!<u8> {
     start, end := (range.begin, range.end);
     length := end - start;
@@ -60,7 +65,13 @@ impl str {
 
 // This iterator is over the bytes.
 impl Iterable!<u8> for str { 
-  iter :: fn(*mut self) -> Basic_Iter!<u8> {
+  iter :: fn(*const self) -> Iter!<u8> {
+    return .{
+      ptr: self.data as *mut u8,
+      end: self.data + self.length,
+    }
+  }
+  iter_mut :: fn(*mut self) -> IterMut!<*mut u8> {
     return .{
       ptr: self.data as *mut u8,
       end: self.data + self.length,

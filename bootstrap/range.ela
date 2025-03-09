@@ -24,13 +24,18 @@ impl!<T> Range_Base!<T> {
   }
 }
 
-Range_Iter :: struct!<V> where V is Eq | Is_Numeric {
+RangeIter :: struct!<V> where V is Eq | Is_Numeric {
   begin: V,
   end:   V,
   idx:   V,
 }
 
-impl!<V> Iter!<V> for Range_Iter!<V>  {
+RangeIterMut :: struct!<V> where V is Is_Mut_Pointer {
+  idx:   V,
+  end:   V, // it sucks but this has to be *mut 
+}
+
+impl!<V> Iterator!<V> for RangeIter!<V>  {
   alias Option :: Option!<V>;
   next :: fn(*mut self) -> Option {
     value := Option::Some(self.idx);
@@ -42,12 +47,31 @@ impl!<V> Iter!<V> for Range_Iter!<V>  {
   }
 }
 
+impl!<V> Iterator!<V> for RangeIterMut!<V>  {
+  alias Option :: Option!<V>;
+  next :: fn(*mut self) -> Option {
+    value := Option::Some(self.idx);
+    if *self.idx >= *self.end {
+      return Option::None();
+    }
+    self.idx++;
+    return value;
+  }
+}
+
 impl!<V> Iterable!<V> for Range_Base!<V> {
-  iter :: fn(*mut self) -> Range_Iter!<V> {
+  iter :: fn(*const self) -> RangeIter!<V> {
     return .{
       begin: self.begin,
       end:   self.end,
       idx:          0,
+    };
+  }
+
+  iter_mut :: fn(*mut self) -> RangeIterMut!<*mut V> {
+    return .{
+      idx:   &mut self.begin,
+      end:   &mut self.end,
     };
   }
 }
