@@ -76,7 +76,10 @@ Allocator :: interface {
 }
 
 Deinit :: interface {
-  deinit :: fn(*mut self);
+  // Albeit strange, this is declared const because you do not want to have to declare things like
+  // a local String as mutable just because you release it.
+  // it's counter intuitive, because we actually do modify it, but it's just a QOL thing.
+  deinit :: fn(*const self);
 }
 // just a free function version for those who might prefer a C like 'free' style api.
 deinit :: fn!<T>(t: *const T) where T is Deinit {

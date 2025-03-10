@@ -171,7 +171,7 @@ impl any {
   impl Deinit for any {
       // this should only be used for an any created with any::new()
     // clearly because it memcpy's it into place.
-    deinit :: fn(*mut self) {
+    deinit :: fn(*const self) {
       free(self.ptr);
     }
   }

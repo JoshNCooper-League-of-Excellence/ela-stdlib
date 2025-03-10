@@ -146,10 +146,9 @@ impl File {
     fflush(self.fd);
   }
 
-  close :: fn(*mut self) -> void {
+  close :: fn(*const self) -> void {
     fflush(self.fd);
     fclose(self.fd);
-    self.fd = null;
   }
 
   length :: fn(file: *mut FILE) -> u32 {
@@ -209,7 +208,7 @@ impl File {
 }
 
 impl Deinit for File {
-  deinit :: fn(*mut self) {
+  deinit :: fn(*const self) {
     self.close();
   }
 }
@@ -274,7 +273,7 @@ impl Directory {
 }
 
 impl Deinit for Directory {
-  deinit :: fn(*mut self) {
+  deinit :: fn(*const self) {
     self.path.deinit();
     for path in self.entries {
       path.deinit();

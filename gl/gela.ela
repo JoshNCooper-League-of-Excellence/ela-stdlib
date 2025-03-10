@@ -138,7 +138,7 @@ impl Shader {
 }
 
 impl Deinit for Shader {
-  deinit :: fn(*mut self) {
+  deinit :: fn(*const self) {
     glDeleteProgram(self.handle);
   }
 }

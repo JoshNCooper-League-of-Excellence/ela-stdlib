@@ -94,9 +94,8 @@
   }
 
   impl Deinit for String {
-    deinit :: fn(*mut self) {
+    deinit :: fn(*const self) {
       free(self.data);
-      self.length = 0;
     }
   }
     

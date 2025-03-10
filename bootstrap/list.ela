@@ -103,10 +103,8 @@ panic :: fn(msg: str);
       This does not actually deinit any of members in the list. 
       it just empties the list by freeing the memory used to store the elements.
     */
-    deinit :: fn(*mut self) {
+    deinit :: fn(*const self) {
       free(self.data);
-      self.data = null;
-      self.length = 0;
     }
   }
 

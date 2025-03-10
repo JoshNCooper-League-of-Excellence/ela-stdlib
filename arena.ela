@@ -15,10 +15,10 @@ Arena :: struct {
 }
 
 impl Deinit for Arena {
-  deinit :: fn(*mut self) {
+  deinit :: fn(*const self) {
     if self.next then self.next.deinit();
     free(self.memory);
-    self.memory = null;
+    (self as *mut #self).memory = null;
   }
 }
 
