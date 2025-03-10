@@ -30,7 +30,7 @@ RangeIter :: struct!<V> where V is Eq | Is_Numeric {
   idx:   V,
 }
 
-RangeIterMut :: struct!<V> where V is Is_Mut_Pointer {
+RangeIterMut :: struct!<V> where V is IsMutPointer {
   idx:   V,
   end:   V, // it sucks but this has to be *mut 
 }

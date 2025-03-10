@@ -577,14 +577,14 @@ println :: fn!<T>(message: T) {
   formatted.deinit();
 }
 
-printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple is Is_Tuple {
+printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple is IsTuple {
   mut formatted := format(fmt, tuple, *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 impl String_Builder {
-  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple is Is_Tuple{
+  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple is IsTuple{
     mut formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();
