@@ -30,10 +30,6 @@
   #foreign strcat :: fn(dest: *const u8, src: *const u8) -> *mut u8;
   #foreign strncat :: fn(dest: *const u8, src: *const u8, n: u64) -> *mut u8;
 
-  #foreign strtol :: fn(s: *const u8, endptr: ***const u8, base: s32) -> s64;
-  #foreign strtoul :: fn(s: *const u8, endptr: ***const u8, base: s32) -> u64;
-  #foreign strtod :: fn(s: *const u8, endptr: ***const u8) -> f64;
-
   #foreign atoi :: fn(v: *const u8) -> s32;
   #foreign atof :: fn(v: *const u8) -> f64;
 

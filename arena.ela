@@ -8,10 +8,10 @@
 Arena :: struct {
   ptr: u64,
   size: u64,
-  memory: u8*,
+  memory: *mut u8,
   flags: ArenaFlags,
   alignment: u64,
-  next: Arena*,
+  next: *mut Arena,
 }
 
 impl Deinit for Arena {
@@ -28,12 +28,12 @@ impl Arena {
       size: size,
       flags: flags,
       memory: calloc(sizeof(u8), size),
-      alignment: sizeof(void*),
+      alignment: sizeof(*const void),
       next: null,
     }
   }
 
-  alloc :: fn(*mut self, size: u64) -> u8* {
+  alloc :: fn(*mut self, size: u64) -> *mut u8 {
     if size == 0 {
       return null;
     }
@@ -49,7 +49,7 @@ impl Arena {
       panic(.{ data: buffer, length: len });
     }
     
-    aligned_ptr := self.ptr;
+    mut aligned_ptr := self.ptr;
     if self.flags & ArenaFlags::Align != 0 {
       aligned_ptr = (self.ptr + self.alignment - 1) & ~(self.alignment - 1);
     }
@@ -58,7 +58,7 @@ impl Arena {
     
     if oom  {
       if !self.next {
-        self.next = new(#self::new(self.size, self.flags))
+        self.next = new(#self::new(self.size, self.flags));
       }
       return self.next.alloc(size);
     }
@@ -71,19 +71,20 @@ impl Arena {
 }
 
 impl Allocator for Arena {
-  allocate :: fn(*mut self, size: u64) -> void* {
+  allocate :: fn(*mut self, size: u64) -> *mut void {
     return self.alloc(size);
   }
-  free :: fn(*mut self, ptr: void*) {
-    
-  }
-  allocate_array :: fn(*mut self, size: u64, n: u64) -> void* {
+  free :: fn(*mut self, ptr: *mut void) {}
+
+  allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void {
     return self.alloc(size * n);
   }
-  resize :: fn(*mut self, ptr: void*, element_size: u64, new_size: u64) -> void* {
+
+  resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
     return null;
   }
-  copy :: fn(*mut self, ptr: void*, element_size: u64, n: u64) -> void* {
+
+  copy :: fn(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
     new_ptr := self.alloc(element_size * n);
     memcpy(new_ptr, ptr, n);
     return new_ptr;

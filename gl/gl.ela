@@ -1,36 +1,35 @@
 #c_flags "-lGLEW -lGL -lglfw -lm"
 
 #foreign glewInit :: fn() -> bool;
-#foreign glGenVertexArrays :: fn(n: s32, arrays: u32*);
+#foreign glGenVertexArrays :: fn(n: s32, arrays: *const u32);
 #foreign glBindVertexArray :: fn(array: s32);
-#foreign glGenBuffers :: fn(n_buf: s32, buf: u32*);
+#foreign glGenBuffers :: fn(n_buf: s32, buf: *const u32);
 #foreign glBindBuffer :: fn(type: s32, buf: u32);
-#foreign glBufferData :: fn(target: s32, size: s64, data: void*, usage: s32);
+#foreign glBufferData :: fn(target: s32, size: s64, data: *const void, usage: s32);
 #foreign glEnableVertexAttribArray :: fn(index: s32);
-#foreign glVertexAttribPointer :: fn(index: s32, size: s64, type: s32, normalized: bool, stride: s64, pointer: void*);
-#foreign glVertexAttribIPointer :: fn(index: s32, size: s32, type: s32, stride: s64, pointer: void*);
+#foreign glVertexAttribPointer :: fn(index: s32, size: s64, type: s32, normalized: bool, stride: s64, pointer: *const void);
+#foreign glVertexAttribIPointer :: fn(index: s32, size: s32, type: s32, stride: s64, pointer: *const void);
 #foreign glVertexAttribDivisor :: fn(index: u32, divisor: u32);
 
 #foreign glCreateShader :: fn(type: u32) -> u32;
-#foreign glShaderSource :: fn(shader: u32, count: s32, s: u8**, length: s32*);
+#foreign glShaderSource :: fn(shader: u32, count: s32, s: *const *const u8, length: *const s32);
 #foreign glCompileShader :: fn(shader: u32);
-#foreign glGetShaderiv :: fn(shader: u32, pname, params: s32*);
-#foreign glGetShaderInfoLog :: fn(shader: u32, maxLength: s32, length: s32*, infoLog: u8*);
+#foreign glGetShaderiv :: fn(shader: u32, pname: u32, params: *const s32);
+#foreign glGetShaderInfoLog :: fn(shader: u32, maxLength: s32, length: *const s32, infoLog: *const u8);
 #foreign glCreateProgram :: fn() -> u32;
-#foreign glAttachShader :: fn(program: u32, shader);
+#foreign glAttachShader :: fn(program: u32, shader: u32);
 #foreign glLinkProgram :: fn(program: u32);
-#foreign glGetProgramiv :: fn(program: u32, pname, params: s32*);
-#foreign glGetProgramInfoLog :: fn(program: u32, maxLength: s32, length: s32*, infoLog: u8*);
+#foreign glGetProgramiv :: fn(program: u32, pname: u32, params: *const s32);
+#foreign glGetProgramInfoLog :: fn(program: u32, maxLength: s32, length: *const s32, infoLog: *const u8);
 #foreign glUseProgram :: fn(program: u32);
 #foreign glDeleteShader :: fn(shader: s32);
 #foreign glDeleteProgram :: fn(shader: s32);
-#foreign glGetUniformLocation :: fn(program: u32, name: u8*) -> s32;
-#foreign glUniform4fv :: fn(location: s32, count, value: f32*);
-#foreign glUniform3fv :: fn(location: s32, count, value: f32*);
-#foreign glUniform2fv :: fn(location: s32, count, value: f32*);
+#foreign glGetUniformLocation :: fn(program: u32, name: *const u8) -> s32;
+#foreign glUniform4fv :: fn(location: s32, count: s32, value: *const f32);
+#foreign glUniform3fv :: fn(location: s32, count: s32, value: *const f32);
+#foreign glUniform2fv :: fn(location: s32, count: s32, value: *const f32);
 #foreign glUniform1f :: fn(location: s32, v0: f32);
-#foreign glUniformMatrix4fv :: fn(location: s32, count, transpose: bool, value: f32*);
-
+#foreign glUniformMatrix4fv :: fn(location: s32, count: s32, transpose: bool, value: *const f32);
 alias GLenum :: u32;
 alias GLboolean :: u8;
 alias GLbitfield :: u32;
@@ -61,13 +60,13 @@ alias GLclampd :: f64;
 #foreign glLineStipple :: fn(factor: GLint, pattern: GLushort) -> void;
 #foreign glPolygonMode :: fn(face: GLenum, mode: GLenum) -> void;
 #foreign glPolygonOffset :: fn(factor: GLfloat, units: GLfloat) -> void;
-#foreign glPolygonStipple :: fn(mask: GLubyte *) -> void;
-#foreign glGetPolygonStipple :: fn(mask: GLubyte *) -> void;
+#foreign glPolygonStipple :: fn(mask: *const GLubyte) -> void;
+#foreign glGetPolygonStipple :: fn(mask: *mut GLubyte) -> void;
 #foreign glEdgeFlag :: fn(flag: GLboolean) -> void;
-#foreign glEdgeFlagv :: fn(flag: GLboolean *) -> void;
+#foreign glEdgeFlagv :: fn(flag: *const GLboolean) -> void;
 #foreign glScissor :: fn(x: GLint, y: GLint, width: GLsizei, height: GLsizei) -> void;
-#foreign glClipPlane :: fn(plane: GLenum, equation: GLdouble *) -> void;
-#foreign glGetClipPlane :: fn(plane: GLenum, equation: GLdouble *) -> void;
+#foreign glClipPlane :: fn(plane: GLenum, equation: *const GLdouble) -> void;
+#foreign glGetClipPlane :: fn(plane: GLenum, equation: *mut GLdouble) -> void;
 #foreign glDrawBuffer :: fn(mode: GLenum) -> void;
 #foreign glReadBuffer :: fn(mode: GLenum) -> void;
 #foreign glEnable :: fn(cap: GLenum) -> void;
@@ -75,17 +74,17 @@ alias GLclampd :: f64;
 #foreign glIsEnabled :: fn(cap: GLenum) -> GLboolean;
 #foreign glEnableClientState :: fn(cap: GLenum) -> void;
 #foreign glDisableClientState :: fn(cap: GLenum) -> void;
-#foreign glGetBooleanv :: fn(pname: GLenum, params: GLboolean *) -> void;
-#foreign glGetDoublev :: fn(pname: GLenum, params: GLdouble *) -> void;
-#foreign glGetFloatv :: fn(pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetIntegerv :: fn(pname: GLenum, params: GLint *) -> void;
+#foreign glGetBooleanv :: fn(pname: GLenum, params: *mut GLboolean) -> void;
+#foreign glGetDoublev :: fn(pname: GLenum, params: *mut GLdouble) -> void;
+#foreign glGetFloatv :: fn(pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetIntegerv :: fn(pname: GLenum, params: *mut GLint) -> void;
 #foreign glPushAttrib :: fn(mask: GLbitfield) -> void;
 #foreign glPopAttrib :: fn() -> void;
 #foreign glPushClientAttrib :: fn(mask: GLbitfield) -> void;
 #foreign glPopClientAttrib :: fn() -> void;
 #foreign glRenderMode :: fn(mode: GLenum) -> GLint;
 #foreign glGetError :: fn() -> GLenum;
-#foreign glGetString :: fn(name: GLenum) -> GLubyte *;
+#foreign glGetString :: fn(name: GLenum) -> *const GLubyte;
 #foreign glFinish :: fn() -> void;
 #foreign glFlush :: fn() -> void;
 #foreign glHint :: fn(target: GLenum, mode: GLenum) -> void;
@@ -102,10 +101,10 @@ alias GLclampd :: f64;
 #foreign glPushMatrix :: fn() -> void;
 #foreign glPopMatrix :: fn() -> void;
 #foreign glLoadIdentity :: fn() -> void;
-#foreign glLoadMatrixd :: fn(m: GLdouble *) -> void;
-#foreign glLoadMatrixf :: fn(m: GLfloat *) -> void;
-#foreign glMultMatrixd :: fn(m: GLdouble *) -> void;
-#foreign glMultMatrixf :: fn(m: GLfloat *) -> void;
+#foreign glLoadMatrixd :: fn(m: *const GLdouble) -> void;
+#foreign glLoadMatrixf :: fn(m: *const GLfloat) -> void;
+#foreign glMultMatrixd :: fn(m: *const GLdouble) -> void;
+#foreign glMultMatrixf :: fn(m: *const GLfloat) -> void;
 #foreign glRotated :: fn(angle: GLdouble, x: GLdouble, y: GLdouble, z: GLdouble) -> void;
 #foreign glRotatef :: fn(angle: GLfloat, x: GLfloat, y: GLfloat, z: GLfloat) -> void;
 #foreign glScaled :: fn(x: GLdouble, y: GLdouble, z: GLdouble) -> void;
@@ -118,7 +117,7 @@ alias GLclampd :: f64;
 #foreign glNewList :: fn(list: GLuint, mode: GLenum) -> void;
 #foreign glEndList :: fn() -> void;
 #foreign glCallList :: fn(list: GLuint) -> void;
-#foreign glCallLists :: fn(n: GLsizei, type: GLenum, lists: GLvoid *) -> void;
+#foreign glCallLists :: fn(n: GLsizei, type: GLenum, lists: *const GLvoid) -> void;
 #foreign glListBase :: fn(base: GLuint) -> void;
 #foreign glBegin :: fn(mode: GLenum) -> void;
 #foreign glEnd :: fn() -> void;
@@ -134,38 +133,38 @@ alias GLclampd :: f64;
 #foreign glVertex4f :: fn(x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat) -> void;
 #foreign glVertex4i :: fn(x: GLint, y: GLint, z: GLint, w: GLint) -> void;
 #foreign glVertex4s :: fn(x: GLshort, y: GLshort, z: GLshort, w: GLshort) -> void;
-#foreign glVertex2dv :: fn(v: GLdouble *) -> void;
-#foreign glVertex2fv :: fn(v: GLfloat *) -> void;
-#foreign glVertex2iv :: fn(v: GLint *) -> void;
-#foreign glVertex2sv :: fn(v: GLshort *) -> void;
-#foreign glVertex3dv :: fn(v: GLdouble *) -> void;
-#foreign glVertex3fv :: fn(v: GLfloat *) -> void;
-#foreign glVertex3iv :: fn(v: GLint *) -> void;
-#foreign glVertex3sv :: fn(v: GLshort *) -> void;
-#foreign glVertex4dv :: fn(v: GLdouble *) -> void;
-#foreign glVertex4fv :: fn(v: GLfloat *) -> void;
-#foreign glVertex4iv :: fn(v: GLint *) -> void;
-#foreign glVertex4sv :: fn(v: GLshort *) -> void;
+#foreign glVertex2dv :: fn(v: *const GLdouble) -> void;
+#foreign glVertex2fv :: fn(v: *const GLfloat) -> void;
+#foreign glVertex2iv :: fn(v: *const GLint) -> void;
+#foreign glVertex2sv :: fn(v: *const GLshort) -> void;
+#foreign glVertex3dv :: fn(v: *const GLdouble) -> void;
+#foreign glVertex3fv :: fn(v: *const GLfloat) -> void;
+#foreign glVertex3iv :: fn(v: *const GLint) -> void;
+#foreign glVertex3sv :: fn(v: *const GLshort) -> void;
+#foreign glVertex4dv :: fn(v: *const GLdouble) -> void;
+#foreign glVertex4fv :: fn(v: *const GLfloat) -> void;
+#foreign glVertex4iv :: fn(v: *const GLint) -> void;
+#foreign glVertex4sv :: fn(v: *const GLshort) -> void;
 #foreign glNormal3b :: fn(nx: GLbyte, ny: GLbyte, nz: GLbyte) -> void;
 #foreign glNormal3d :: fn(nx: GLdouble, ny: GLdouble, nz: GLdouble) -> void;
 #foreign glNormal3f :: fn(nx: GLfloat, ny: GLfloat, nz: GLfloat) -> void;
 #foreign glNormal3i :: fn(nx: GLint, ny: GLint, nz: GLint) -> void;
 #foreign glNormal3s :: fn(nx: GLshort, ny: GLshort, nz: GLshort) -> void;
-#foreign glNormal3bv :: fn(v: GLbyte *) -> void;
-#foreign glNormal3dv :: fn(v: GLdouble *) -> void;
-#foreign glNormal3fv :: fn(v: GLfloat *) -> void;
-#foreign glNormal3iv :: fn(v: GLint *) -> void;
-#foreign glNormal3sv :: fn(v: GLshort *) -> void;
+#foreign glNormal3bv :: fn(v: *const GLbyte) -> void;
+#foreign glNormal3dv :: fn(v: *const GLdouble) -> void;
+#foreign glNormal3fv :: fn(v: *const GLfloat) -> void;
+#foreign glNormal3iv :: fn(v: *const GLint) -> void;
+#foreign glNormal3sv :: fn(v: *const GLshort) -> void;
 #foreign glIndexd :: fn(c: GLdouble) -> void;
 #foreign glIndexf :: fn(c: GLfloat) -> void;
 #foreign glIndexi :: fn(c: GLint) -> void;
 #foreign glIndexs :: fn(c: GLshort) -> void;
 #foreign glIndexub :: fn(c: GLubyte) -> void;
-#foreign glIndexdv :: fn(c: GLdouble *) -> void;
-#foreign glIndexfv :: fn(c: GLfloat *) -> void;
-#foreign glIndexiv :: fn(c: GLint *) -> void;
-#foreign glIndexsv :: fn(c: GLshort *) -> void;
-#foreign glIndexubv :: fn(c: GLubyte *) -> void;
+#foreign glIndexdv :: fn(c: *const GLdouble) -> void;
+#foreign glIndexfv :: fn(c: *const GLfloat) -> void;
+#foreign glIndexiv :: fn(c: *const GLint) -> void;
+#foreign glIndexsv :: fn(c: *const GLshort) -> void;
+#foreign glIndexubv :: fn(c: *const GLubyte) -> void;
 #foreign glColor3b :: fn(red: GLbyte, green: GLbyte, blue: GLbyte) -> void;
 #foreign glColor3d :: fn(red: GLdouble, green: GLdouble, blue: GLdouble) -> void;
 #foreign glColor3f :: fn(red: GLfloat, green: GLfloat, blue: GLfloat) -> void;
@@ -182,22 +181,22 @@ alias GLclampd :: f64;
 #foreign glColor4ub :: fn(red: GLubyte, green: GLubyte, blue: GLubyte, alpha: GLubyte) -> void;
 #foreign glColor4ui :: fn(red: GLuint, green: GLuint, blue: GLuint, alpha: GLuint) -> void;
 #foreign glColor4us :: fn(red: GLushort, green: GLushort, blue: GLushort, alpha: GLushort) -> void;
-#foreign glColor3bv :: fn(v: GLbyte *) -> void;
-#foreign glColor3dv :: fn(v: GLdouble *) -> void;
-#foreign glColor3fv :: fn(v: GLfloat *) -> void;
-#foreign glColor3iv :: fn(v: GLint *) -> void;
-#foreign glColor3sv :: fn(v: GLshort *) -> void;
-#foreign glColor3ubv :: fn(v: GLubyte *) -> void;
-#foreign glColor3uiv :: fn(v: GLuint *) -> void;
-#foreign glColor3usv :: fn(v: GLushort *) -> void;
-#foreign glColor4bv :: fn(v: GLbyte *) -> void;
-#foreign glColor4dv :: fn(v: GLdouble *) -> void;
-#foreign glColor4fv :: fn(v: GLfloat *) -> void;
-#foreign glColor4iv :: fn(v: GLint *) -> void;
-#foreign glColor4sv :: fn(v: GLshort *) -> void;
-#foreign glColor4ubv :: fn(v: GLubyte *) -> void;
-#foreign glColor4uiv :: fn(v: GLuint *) -> void;
-#foreign glColor4usv :: fn(v: GLushort *) -> void;
+#foreign glColor3bv :: fn(v: *const GLbyte) -> void;
+#foreign glColor3dv :: fn(v: *const GLdouble) -> void;
+#foreign glColor3fv :: fn(v: *const GLfloat) -> void;
+#foreign glColor3iv :: fn(v: *const GLint) -> void;
+#foreign glColor3sv :: fn(v: *const GLshort) -> void;
+#foreign glColor3ubv :: fn(v: *const GLubyte) -> void;
+#foreign glColor3uiv :: fn(v: *const GLuint) -> void;
+#foreign glColor3usv :: fn(v: *const GLushort) -> void;
+#foreign glColor4bv :: fn(v: *const GLbyte) -> void;
+#foreign glColor4dv :: fn(v: *const GLdouble) -> void;
+#foreign glColor4fv :: fn(v: *const GLfloat) -> void;
+#foreign glColor4iv :: fn(v: *const GLint) -> void;
+#foreign glColor4sv :: fn(v: *const GLshort) -> void;
+#foreign glColor4ubv :: fn(v: *const GLubyte) -> void;
+#foreign glColor4uiv :: fn(v: *const GLuint) -> void;
+#foreign glColor4usv :: fn(v: *const GLushort) -> void;
 #foreign glTexCoord1d :: fn(s: GLdouble) -> void;
 #foreign glTexCoord1f :: fn(s: GLfloat) -> void;
 #foreign glTexCoord1i :: fn(s: GLint) -> void;
@@ -214,22 +213,22 @@ alias GLclampd :: f64;
 #foreign glTexCoord4f :: fn(s: GLfloat, t: GLfloat, r: GLfloat, q: GLfloat) -> void;
 #foreign glTexCoord4i :: fn(s: GLint, t: GLint, r: GLint, q: GLint) -> void;
 #foreign glTexCoord4s :: fn(s: GLshort, t: GLshort, r: GLshort, q: GLshort) -> void;
-#foreign glTexCoord1dv :: fn(v: GLdouble *) -> void;
-#foreign glTexCoord1fv :: fn(v: GLfloat *) -> void;
-#foreign glTexCoord1iv :: fn(v: GLint *) -> void;
-#foreign glTexCoord1sv :: fn(v: GLshort *) -> void;
-#foreign glTexCoord2dv :: fn(v: GLdouble *) -> void;
-#foreign glTexCoord2fv :: fn(v: GLfloat *) -> void;
-#foreign glTexCoord2iv :: fn(v: GLint *) -> void;
-#foreign glTexCoord2sv :: fn(v: GLshort *) -> void;
-#foreign glTexCoord3dv :: fn(v: GLdouble *) -> void;
-#foreign glTexCoord3fv :: fn(v: GLfloat *) -> void;
-#foreign glTexCoord3iv :: fn(v: GLint *) -> void;
-#foreign glTexCoord3sv :: fn(v: GLshort *) -> void;
-#foreign glTexCoord4dv :: fn(v: GLdouble *) -> void;
-#foreign glTexCoord4fv :: fn(v: GLfloat *) -> void;
-#foreign glTexCoord4iv :: fn(v: GLint *) -> void;
-#foreign glTexCoord4sv :: fn(v: GLshort *) -> void;
+#foreign glTexCoord1dv :: fn(v: *const GLdouble) -> void;
+#foreign glTexCoord1fv :: fn(v: *const GLfloat) -> void;
+#foreign glTexCoord1iv :: fn(v: *const GLint) -> void;
+#foreign glTexCoord1sv :: fn(v: *const GLshort) -> void;
+#foreign glTexCoord2dv :: fn(v: *const GLdouble) -> void;
+#foreign glTexCoord2fv :: fn(v: *const GLfloat) -> void;
+#foreign glTexCoord2iv :: fn(v: *const GLint) -> void;
+#foreign glTexCoord2sv :: fn(v: *const GLshort) -> void;
+#foreign glTexCoord3dv :: fn(v: *const GLdouble) -> void;
+#foreign glTexCoord3fv :: fn(v: *const GLfloat) -> void;
+#foreign glTexCoord3iv :: fn(v: *const GLint) -> void;
+#foreign glTexCoord3sv :: fn(v: *const GLshort) -> void;
+#foreign glTexCoord4dv :: fn(v: *const GLdouble) -> void;
+#foreign glTexCoord4fv :: fn(v: *const GLfloat) -> void;
+#foreign glTexCoord4iv :: fn(v: *const GLint) -> void;
+#foreign glTexCoord4sv :: fn(v: *const GLshort) -> void;
 #foreign glRasterPos2d :: fn(x: GLdouble, y: GLdouble) -> void;
 #foreign glRasterPos2f :: fn(x: GLfloat, y: GLfloat) -> void;
 #foreign glRasterPos2i :: fn(x: GLint, y: GLint) -> void;
@@ -242,69 +241,69 @@ alias GLclampd :: f64;
 #foreign glRasterPos4f :: fn(x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat) -> void;
 #foreign glRasterPos4i :: fn(x: GLint, y: GLint, z: GLint, w: GLint) -> void;
 #foreign glRasterPos4s :: fn(x: GLshort, y: GLshort, z: GLshort, w: GLshort) -> void;
-#foreign glRasterPos2dv :: fn(v: GLdouble *) -> void;
-#foreign glRasterPos2fv :: fn(v: GLfloat *) -> void;
-#foreign glRasterPos2iv :: fn(v: GLint *) -> void;
-#foreign glRasterPos2sv :: fn(v: GLshort *) -> void;
-#foreign glRasterPos3dv :: fn(v: GLdouble *) -> void;
-#foreign glRasterPos3fv :: fn(v: GLfloat *) -> void;
-#foreign glRasterPos3iv :: fn(v: GLint *) -> void;
-#foreign glRasterPos3sv :: fn(v: GLshort *) -> void;
-#foreign glRasterPos4dv :: fn(v: GLdouble *) -> void;
-#foreign glRasterPos4fv :: fn(v: GLfloat *) -> void;
-#foreign glRasterPos4iv :: fn(v: GLint *) -> void;
-#foreign glRasterPos4sv :: fn(v: GLshort *) -> void;
+#foreign glRasterPos2dv :: fn(v: *const GLdouble) -> void;
+#foreign glRasterPos2fv :: fn(v: *const GLfloat) -> void;
+#foreign glRasterPos2iv :: fn(v: *const GLint) -> void;
+#foreign glRasterPos2sv :: fn(v: *const GLshort) -> void;
+#foreign glRasterPos3dv :: fn(v: *const GLdouble) -> void;
+#foreign glRasterPos3fv :: fn(v: *const GLfloat) -> void;
+#foreign glRasterPos3iv :: fn(v: *const GLint) -> void;
+#foreign glRasterPos3sv :: fn(v: *const GLshort) -> void;
+#foreign glRasterPos4dv :: fn(v: *const GLdouble) -> void;
+#foreign glRasterPos4fv :: fn(v: *const GLfloat) -> void;
+#foreign glRasterPos4iv :: fn(v: *const GLint) -> void;
+#foreign glRasterPos4sv :: fn(v: *const GLshort) -> void;
 #foreign glRectd :: fn(x1: GLdouble, y1: GLdouble, x2: GLdouble, y2: GLdouble) -> void;
 #foreign glRectf :: fn(x1: GLfloat, y1: GLfloat, x2: GLfloat, y2: GLfloat) -> void;
 #foreign glRecti :: fn(x1: GLint, y1: GLint, x2: GLint, y2: GLint) -> void;
 #foreign glRects :: fn(x1: GLshort, y1: GLshort, x2: GLshort, y2: GLshort) -> void;
-#foreign glRectdv :: fn(v1: GLdouble *, v2: GLdouble *) -> void;
-#foreign glRectfv :: fn(v1: GLfloat *, v2: GLfloat *) -> void;
-#foreign glRectiv :: fn(v1: GLint *, v2: GLint *) -> void;
-#foreign glRectsv :: fn(v1: GLshort *, v2: GLshort *) -> void;
-#foreign glVertexPointer :: fn(size: GLint, type: GLenum, stride: GLsizei, ptr: GLvoid *) -> void;
-#foreign glNormalPointer :: fn(type: GLenum, stride: GLsizei, ptr: GLvoid *) -> void;
-#foreign glColorPointer :: fn(size: GLint, type: GLenum, stride: GLsizei, ptr: GLvoid *) -> void;
-#foreign glIndexPointer :: fn(type: GLenum, stride: GLsizei, ptr: GLvoid *) -> void;
-#foreign glTexCoordPointer :: fn(size: GLint, type: GLenum, stride: GLsizei, ptr: GLvoid *) -> void;
-#foreign glEdgeFlagPointer :: fn(stride: GLsizei, ptr: GLvoid *) -> void;
-#foreign glGetPointerv :: fn(pname: GLenum, params: GLvoid * *) -> void;
+#foreign glRectdv :: fn(v1: *const GLdouble, v2: *const GLdouble) -> void;
+#foreign glRectfv :: fn(v1: *const GLfloat, v2: *const GLfloat) -> void;
+#foreign glRectiv :: fn(v1: *const GLint, v2: *const GLint) -> void;
+#foreign glRectsv :: fn(v1: *const GLshort, v2: *const GLshort) -> void;
+#foreign glVertexPointer :: fn(size: GLint, type: GLenum, stride: GLsizei, ptr: *const GLvoid) -> void;
+#foreign glNormalPointer :: fn(type: GLenum, stride: GLsizei, ptr: *const GLvoid) -> void;
+#foreign glColorPointer :: fn(size: GLint, type: GLenum, stride: GLsizei, ptr: *const GLvoid) -> void;
+#foreign glIndexPointer :: fn(type: GLenum, stride: GLsizei, ptr: *const GLvoid) -> void;
+#foreign glTexCoordPointer :: fn(size: GLint, type: GLenum, stride: GLsizei, ptr: *const GLvoid) -> void;
+#foreign glEdgeFlagPointer :: fn(stride: GLsizei, ptr: *const GLvoid) -> void;
+#foreign glGetPointerv :: fn(pname: GLenum, params: *mut *mut GLvoid) -> void;
 #foreign glArrayElement :: fn(i: GLint) -> void;
 #foreign glDrawArrays :: fn(mode: GLenum, first: GLint, count: GLsizei) -> void;
-#foreign glDrawElements :: fn(mode: GLenum, count: GLsizei, type: GLenum, indices: GLvoid *) -> void;
-#foreign glInterleavedArrays :: fn(format: GLenum, stride: GLsizei, pointer: GLvoid *) -> void;
+#foreign glDrawElements :: fn(mode: GLenum, count: GLsizei, type: GLenum, indices: *const GLvoid) -> void;
+#foreign glInterleavedArrays :: fn(format: GLenum, stride: GLsizei, pointer: *const GLvoid) -> void;
 #foreign glShadeModel :: fn(mode: GLenum) -> void;
 #foreign glLightf :: fn(light: GLenum, pname: GLenum, param: GLfloat) -> void;
 #foreign glLighti :: fn(light: GLenum, pname: GLenum, param: GLint) -> void;
-#foreign glLightfv :: fn(light: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glLightiv :: fn(light: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glGetLightfv :: fn(light: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetLightiv :: fn(light: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glLightfv :: fn(light: GLenum, pname: GLenum, params: *const GLfloat) -> void;
+#foreign glLightiv :: fn(light: GLenum, pname: GLenum, params: *const GLint) -> void;
+#foreign glGetLightfv :: fn(light: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetLightiv :: fn(light: GLenum, pname: GLenum, params: *mut GLint) -> void;
 #foreign glLightModelf :: fn(pname: GLenum, param: GLfloat) -> void;
 #foreign glLightModeli :: fn(pname: GLenum, param: GLint) -> void;
-#foreign glLightModelfv :: fn(pname: GLenum, params: GLfloat *) -> void;
-#foreign glLightModeliv :: fn(pname: GLenum, params: GLint *) -> void;
+#foreign glLightModelfv :: fn(pname: GLenum, params: *const GLfloat) -> void;
+#foreign glLightModeliv :: fn(pname: GLenum, params: *const GLint) -> void;
 #foreign glMaterialf :: fn(face: GLenum, pname: GLenum, param: GLfloat) -> void;
 #foreign glMateriali :: fn(face: GLenum, pname: GLenum, param: GLint) -> void;
-#foreign glMaterialfv :: fn(face: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glMaterialiv :: fn(face: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glGetMaterialfv :: fn(face: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetMaterialiv :: fn(face: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glMaterialfv :: fn(face: GLenum, pname: GLenum, params: *const GLfloat) -> void;
+#foreign glMaterialiv :: fn(face: GLenum, pname: GLenum, params: *const GLint) -> void;
+#foreign glGetMaterialfv :: fn(face: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetMaterialiv :: fn(face: GLenum, pname: GLenum, params: *mut GLint) -> void;
 #foreign glColorMaterial :: fn(face: GLenum, mode: GLenum) -> void;
 #foreign glPixelZoom :: fn(xfactor: GLfloat, yfactor: GLfloat) -> void;
 #foreign glPixelStoref :: fn(pname: GLenum, param: GLfloat) -> void;
 #foreign glPixelStorei :: fn(pname: GLenum, param: GLint) -> void;
 #foreign glPixelTransferf :: fn(pname: GLenum, param: GLfloat) -> void;
 #foreign glPixelTransferi :: fn(pname: GLenum, param: GLint) -> void;
-#foreign glPixelMapfv :: fn(map: GLenum, mapsize: GLsizei, values: GLfloat *) -> void;
-#foreign glPixelMapuiv :: fn(map: GLenum, mapsize: GLsizei, values: GLuint *) -> void;
-#foreign glPixelMapusv :: fn(map: GLenum, mapsize: GLsizei, values: GLushort *) -> void;
-#foreign glGetPixelMapfv :: fn(map: GLenum, values: GLfloat *) -> void;
-#foreign glGetPixelMapuiv :: fn(map: GLenum, values: GLuint *) -> void;
-#foreign glGetPixelMapusv :: fn(map: GLenum, values: GLushort *) -> void;
-#foreign glBitmap :: fn(width: GLsizei, height: GLsizei, xorig: GLfloat, yorig: GLfloat, xmove: GLfloat, ymove: GLfloat, bitmap: GLubyte *) -> void;
-#foreign glReadPixels :: fn(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
-#foreign glDrawPixels :: fn(width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
+#foreign glPixelMapfv :: fn(map: GLenum, mapsize: GLsizei, values: *const GLfloat) -> void;
+#foreign glPixelMapuiv :: fn(map: GLenum, mapsize: GLsizei, values: *const GLuint) -> void;
+#foreign glPixelMapusv :: fn(map: GLenum, mapsize: GLsizei, values: *const GLushort) -> void;
+#foreign glGetPixelMapfv :: fn(map: GLenum, values: *mut GLfloat) -> void;
+#foreign glGetPixelMapuiv :: fn(map: GLenum, values: *mut GLuint) -> void;
+#foreign glGetPixelMapusv :: fn(map: GLenum, values: *mut GLushort) -> void;
+#foreign glBitmap :: fn(width: GLsizei, height: GLsizei, xorig: GLfloat, yorig: GLfloat, xmove: GLfloat, ymove: GLfloat, bitmap: *const GLubyte) -> void;
+#foreign glReadPixels :: fn(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: *mut GLvoid) -> void;
+#foreign glDrawPixels :: fn(width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
 #foreign glCopyPixels :: fn(x: GLint, y: GLint, width: GLsizei, height: GLsizei, type: GLenum) -> void;
 #foreign glStencilFunc :: fn(func: GLenum, ref: GLint, mask: GLuint) -> void;
 #foreign glStencilMask :: fn(mask: GLuint) -> void;
@@ -313,56 +312,56 @@ alias GLclampd :: f64;
 #foreign glTexGend :: fn(coord: GLenum, pname: GLenum, param: GLdouble) -> void;
 #foreign glTexGenf :: fn(coord: GLenum, pname: GLenum, param: GLfloat) -> void;
 #foreign glTexGeni :: fn(coord: GLenum, pname: GLenum, param: GLint) -> void;
-#foreign glTexGendv :: fn(coord: GLenum, pname: GLenum, params: GLdouble *) -> void;
-#foreign glTexGenfv :: fn(coord: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glTexGeniv :: fn(coord: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glGetTexGendv :: fn(coord: GLenum, pname: GLenum, params: GLdouble *) -> void;
-#foreign glGetTexGenfv :: fn(coord: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetTexGeniv :: fn(coord: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glTexGendv :: fn(coord: GLenum, pname: GLenum, params: *const GLdouble) -> void;
+#foreign glTexGenfv :: fn(coord: GLenum, pname: GLenum, params: *const GLfloat) -> void;
+#foreign glTexGeniv :: fn(coord: GLenum, pname: GLenum, params: *const GLint) -> void;
+#foreign glGetTexGendv :: fn(coord: GLenum, pname: GLenum, params: *mut GLdouble) -> void;
+#foreign glGetTexGenfv :: fn(coord: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetTexGeniv :: fn(coord: GLenum, pname: GLenum, params: *mut GLint) -> void;
 #foreign glTexEnvf :: fn(target: GLenum, pname: GLenum, param: GLfloat) -> void;
 #foreign glTexEnvi :: fn(target: GLenum, pname: GLenum, param: GLint) -> void;
-#foreign glTexEnvfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glTexEnviv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glGetTexEnvfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetTexEnviv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glTexEnvfv :: fn(target: GLenum, pname: GLenum, params: *const GLfloat) -> void;
+#foreign glTexEnviv :: fn(target: GLenum, pname: GLenum, params: *const GLint) -> void;
+#foreign glGetTexEnvfv :: fn(target: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetTexEnviv :: fn(target: GLenum, pname: GLenum, params: *mut GLint) -> void;
 #foreign glTexParameterf :: fn(target: GLenum, pname: GLenum, param: GLfloat) -> void;
 #foreign glTexParameteri :: fn(target: GLenum, pname: GLenum, param: GLint) -> void;
-#foreign glTexParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glTexParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glGetTexParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetTexParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glGetTexLevelParameterfv :: fn(target: GLenum, level: GLint, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetTexLevelParameteriv :: fn(target: GLenum, level: GLint, pname: GLenum, params: GLint *) -> void;
-#foreign glTexImage1D :: fn(target: GLenum, level: GLint, internalFormat: GLint, width: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
-#foreign glTexImage2D :: fn(target: GLenum, level: GLint, internalFormat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
-#foreign glGetTexImage :: fn(target: GLenum, level: GLint, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
-#foreign glGenTextures :: fn(n: GLsizei, textures: GLuint *) -> void;
-#foreign glDeleteTextures :: fn(n: GLsizei, textures: GLuint *) -> void;
+#foreign glTexParameterfv :: fn(target: GLenum, pname: GLenum, params: *const GLfloat) -> void;
+#foreign glTexParameteriv :: fn(target: GLenum, pname: GLenum, params: *const GLint) -> void;
+#foreign glGetTexParameterfv :: fn(target: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetTexParameteriv :: fn(target: GLenum, pname: GLenum, params: *mut GLint) -> void;
+#foreign glGetTexLevelParameterfv :: fn(target: GLenum, level: GLint, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetTexLevelParameteriv :: fn(target: GLenum, level: GLint, pname: GLenum, params: *mut GLint) -> void;
+#foreign glTexImage1D :: fn(target: GLenum, level: GLint, internalFormat: GLint, width: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
+#foreign glTexImage2D :: fn(target: GLenum, level: GLint, internalFormat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
+#foreign glGetTexImage :: fn(target: GLenum, level: GLint, format: GLenum, type: GLenum, pixels: *mut GLvoid) -> void;
+#foreign glGenTextures :: fn(n: GLsizei, textures: *mut GLuint) -> void;
+#foreign glDeleteTextures :: fn(n: GLsizei, textures: *const GLuint) -> void;
 #foreign glBindTexture :: fn(target: GLenum, texture: GLuint) -> void;
-#foreign glPrioritizeTextures :: fn(n: GLsizei, textures: GLuint *, priorities: GLclampf *) -> void;
-#foreign glAreTexturesResident :: fn(n: GLsizei, textures: GLuint *, residences: GLboolean *) -> GLboolean;
+#foreign glPrioritizeTextures :: fn(n: GLsizei, textures: *const GLuint, priorities: *const GLclampf) -> void;
+#foreign glAreTexturesResident :: fn(n: GLsizei, textures: *const GLuint, residences: *mut GLboolean) -> GLboolean;
 #foreign glIsTexture :: fn(texture: GLuint) -> GLboolean;
-#foreign glTexSubImage1D :: fn(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
-#foreign glTexSubImage2D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
+#foreign glTexSubImage1D :: fn(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
+#foreign glTexSubImage2D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
 #foreign glCopyTexImage1D :: fn(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, border: GLint) -> void;
 #foreign glCopyTexImage2D :: fn(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint) -> void;
 #foreign glCopyTexSubImage1D :: fn(target: GLenum, level: GLint, xoffset: GLint, x: GLint, y: GLint, width: GLsizei) -> void;
 #foreign glCopyTexSubImage2D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei) -> void;
-#foreign glMap1d :: fn(target: GLenum, u1: GLdouble, u2: GLdouble, stride: GLint, order: GLint, points: GLdouble *) -> void;
-#foreign glMap1f :: fn(target: GLenum, u1: GLfloat, u2: GLfloat, stride: GLint, order: GLint, points: GLfloat *) -> void;
-#foreign glMap2d :: fn(target: GLenum, u1: GLdouble, u2: GLdouble, ustride: GLint, uorder: GLint, v1: GLdouble, v2: GLdouble, vstride: GLint, vorder: GLint, points: GLdouble *) -> void;
-#foreign glMap2f :: fn(target: GLenum, u1: GLfloat, u2: GLfloat, ustride: GLint, uorder: GLint, v1: GLfloat, v2: GLfloat, vstride: GLint, vorder: GLint, points: GLfloat *) -> void;
-#foreign glGetMapdv :: fn(target: GLenum, query: GLenum, v: GLdouble *) -> void;
-#foreign glGetMapfv :: fn(target: GLenum, query: GLenum, v: GLfloat *) -> void;
-#foreign glGetMapiv :: fn(target: GLenum, query: GLenum, v: GLint *) -> void;
+#foreign glMap1d :: fn(target: GLenum, u1: GLdouble, u2: GLdouble, stride: GLint, order: GLint, points: *const GLdouble) -> void;
+#foreign glMap1f :: fn(target: GLenum, u1: GLfloat, u2: GLfloat, stride: GLint, order: GLint, points: *const GLfloat) -> void;
+#foreign glMap2d :: fn(target: GLenum, u1: GLdouble, u2: GLdouble, ustride: GLint, uorder: GLint, v1: GLdouble, v2: GLdouble, vstride: GLint, vorder: GLint, points: *const GLdouble) -> void;
+#foreign glMap2f :: fn(target: GLenum, u1: GLfloat, u2: GLfloat, ustride: GLint, uorder: GLint, v1: GLfloat, v2: GLfloat, vstride: GLint, vorder: GLint, points: *const GLfloat) -> void;
+#foreign glGetMapdv :: fn(target: GLenum, query: GLenum, v: *mut GLdouble) -> void;
+#foreign glGetMapfv :: fn(target: GLenum, query: GLenum, v: *mut GLfloat) -> void;
+#foreign glGetMapiv :: fn(target: GLenum, query: GLenum, v: *mut GLint) -> void;
 #foreign glEvalCoord1d :: fn(u: GLdouble) -> void;
 #foreign glEvalCoord1f :: fn(u: GLfloat) -> void;
-#foreign glEvalCoord1dv :: fn(u: GLdouble *) -> void;
-#foreign glEvalCoord1fv :: fn(u: GLfloat *) -> void;
+#foreign glEvalCoord1dv :: fn(u: *const GLdouble) -> void;
+#foreign glEvalCoord1fv :: fn(u: *const GLfloat) -> void;
 #foreign glEvalCoord2d :: fn(u: GLdouble, v: GLdouble) -> void;
 #foreign glEvalCoord2f :: fn(u: GLfloat, v: GLfloat) -> void;
-#foreign glEvalCoord2dv :: fn(u: GLdouble *) -> void;
-#foreign glEvalCoord2fv :: fn(u: GLfloat *) -> void;
+#foreign glEvalCoord2dv :: fn(u: *const GLdouble) -> void;
+#foreign glEvalCoord2fv :: fn(u: *const GLfloat) -> void;
 #foreign glMapGrid1d :: fn(un: GLint, u1: GLdouble, u2: GLdouble) -> void;
 #foreign glMapGrid1f :: fn(un: GLint, u1: GLfloat, u2: GLfloat) -> void;
 #foreign glMapGrid2d :: fn(un: GLint, u1: GLdouble, u2: GLdouble, vn: GLint, v1: GLdouble, v2: GLdouble) -> void;
@@ -373,855 +372,144 @@ alias GLclampd :: f64;
 #foreign glEvalMesh2 :: fn(mode: GLenum, i1: GLint, i2: GLint, j1: GLint, j2: GLint) -> void;
 #foreign glFogf :: fn(pname: GLenum, param: GLfloat) -> void;
 #foreign glFogi :: fn(pname: GLenum, param: GLint) -> void;
-#foreign glFogfv :: fn(pname: GLenum, params: GLfloat *) -> void;
-#foreign glFogiv :: fn(pname: GLenum, params: GLint *) -> void;
-#foreign glFeedbackBuffer :: fn(size: GLsizei, type: GLenum, buffer: GLfloat *) -> void;
+#foreign glFogfv :: fn(pname: GLenum, params: *const GLfloat) -> void;
+#foreign glFogiv :: fn(pname: GLenum, params: *const GLint) -> void;
+#foreign glFeedbackBuffer :: fn(size: GLsizei, type: GLenum, buffer: *mut GLfloat) -> void;
 #foreign glPassThrough :: fn(token: GLfloat) -> void;
-#foreign glSelectBuffer :: fn(size: GLsizei, buffer: GLuint *) -> void;
+#foreign glSelectBuffer :: fn(size: GLsizei, buffer: *mut GLuint) -> void;
 #foreign glInitNames :: fn() -> void;
 #foreign glLoadName :: fn(name: GLuint) -> void;
 #foreign glPushName :: fn(name: GLuint) -> void;
 #foreign glPopName :: fn() -> void;
-#foreign glDrawRangeElements :: fn(mode: GLenum, start: GLuint, end: GLuint, count: GLsizei, type: GLenum, indices: GLvoid *) -> void;
-#foreign glTexImage3D :: fn(target: GLenum, level: GLint, internalFormat: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
-#foreign glTexSubImage3D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type: GLenum, pixels: GLvoid *) -> void;
+#foreign glDrawRangeElements :: fn(mode: GLenum, start: GLuint, end: GLuint, count: GLsizei, type: GLenum, indices: *const GLvoid) -> void;
+#foreign glTexImage3D :: fn(target: GLenum, level: GLint, internalFormat: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
+#foreign glTexSubImage3D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type: GLenum, pixels: *const GLvoid) -> void;
 #foreign glCopyTexSubImage3D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei) -> void;
-#foreign glColorTable :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, format: GLenum, type: GLenum, table: GLvoid *) -> void;
-#foreign glColorSubTable :: fn(target: GLenum, start: GLsizei, count: GLsizei, format: GLenum, type: GLenum, data: GLvoid *) -> void;
-#foreign glColorTableParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glColorTableParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
+alias PFNGLDRAWRANGEELEMENTSPROC :: fn*(GLenum, GLuint, GLuint, GLsizei, GLenum, *const GLvoid) -> void;
+alias PFNGLTEXIMAGE3DPROC :: fn*(GLenum, GLint, GLint, GLsizei, GLsizei, GLsizei, GLint, GLenum, GLenum, *const GLvoid) -> void;
+alias PFNGLTEXSUBIMAGE3DPROC :: fn*(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLenum, *const GLvoid) -> void;
+alias PFNGLCOPYTEXSUBIMAGE3DPROC :: fn*(GLenum, GLint, GLint, GLint, GLint, GLint, GLint, GLsizei, GLsizei) -> void;
+#foreign glColorTable :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, format: GLenum, type: GLenum, table: *const GLvoid) -> void;
+#foreign glColorSubTable :: fn(target: GLenum, start: GLsizei, count: GLsizei, format: GLenum, type: GLenum, data: *const GLvoid) -> void;
+#foreign glColorTableParameteriv :: fn(target: GLenum, pname: GLenum, params: *const GLint) -> void;
+#foreign glColorTableParameterfv :: fn(target: GLenum, pname: GLenum, params: *const GLfloat) -> void;
 #foreign glCopyColorSubTable :: fn(target: GLenum, start: GLsizei, x: GLint, y: GLint, width: GLsizei) -> void;
 #foreign glCopyColorTable :: fn(target: GLenum, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei) -> void;
-#foreign glGetColorTable :: fn(target: GLenum, format: GLenum, type: GLenum, table: GLvoid *) -> void;
-#foreign glGetColorTableParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetColorTableParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glGetColorTable :: fn(target: GLenum, format: GLenum, type: GLenum, table: *mut GLvoid) -> void;
+#foreign glGetColorTableParameterfv :: fn(target: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetColorTableParameteriv :: fn(target: GLenum, pname: GLenum, params: *mut GLint) -> void;
 #foreign glBlendEquation :: fn(mode: GLenum) -> void;
 #foreign glBlendColor :: fn(red: GLclampf, green: GLclampf, blue: GLclampf, alpha: GLclampf) -> void;
 #foreign glHistogram :: fn(target: GLenum, width: GLsizei, internalformat: GLenum, sink: GLboolean) -> void;
 #foreign glResetHistogram :: fn(target: GLenum) -> void;
-#foreign glGetHistogram :: fn(target: GLenum, reset: GLboolean, format: GLenum, type: GLenum, values: GLvoid *) -> void;
-#foreign glGetHistogramParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetHistogramParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glGetHistogram :: fn(target: GLenum, reset: GLboolean, format: GLenum, type: GLenum, values: *mut GLvoid) -> void;
+#foreign glGetHistogramParameterfv :: fn(target: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetHistogramParameteriv :: fn(target: GLenum, pname: GLenum, params: *mut GLint) -> void;
 #foreign glMinmax :: fn(target: GLenum, internalformat: GLenum, sink: GLboolean) -> void;
 #foreign glResetMinmax :: fn(target: GLenum) -> void;
-#foreign glGetMinmax :: fn(target: GLenum, reset: GLboolean, format: GLenum, types: GLenum, values: GLvoid *) -> void;
-#foreign glGetMinmaxParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetMinmaxParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glConvolutionFilter1D :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, format: GLenum, type: GLenum, image: GLvoid *) -> void;
-#foreign glConvolutionFilter2D :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, image: GLvoid *) -> void;
+#foreign glGetMinmax :: fn(target: GLenum, reset: GLboolean, format: GLenum, types: GLenum, values: *mut GLvoid) -> void;
+#foreign glGetMinmaxParameterfv :: fn(target: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetMinmaxParameteriv :: fn(target: GLenum, pname: GLenum, params: *mut GLint) -> void;
+#foreign glConvolutionFilter1D :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, format: GLenum, type: GLenum, image: *const GLvoid) -> void;
+#foreign glConvolutionFilter2D :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, image: *const GLvoid) -> void;
 #foreign glConvolutionParameterf :: fn(target: GLenum, pname: GLenum, params: GLfloat) -> void;
-#foreign glConvolutionParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
+#foreign glConvolutionParameterfv :: fn(target: GLenum, pname: GLenum, params: *const GLfloat) -> void;
 #foreign glConvolutionParameteri :: fn(target: GLenum, pname: GLenum, params: GLint) -> void;
-#foreign glConvolutionParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
+#foreign glConvolutionParameteriv :: fn(target: GLenum, pname: GLenum, params: *const GLint) -> void;
 #foreign glCopyConvolutionFilter1D :: fn(target: GLenum, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei) -> void;
 #foreign glCopyConvolutionFilter2D :: fn(target: GLenum, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei) -> void;
-#foreign glGetConvolutionFilter :: fn(target: GLenum, format: GLenum, type: GLenum, image: GLvoid *) -> void;
-#foreign glGetConvolutionParameterfv :: fn(target: GLenum, pname: GLenum, params: GLfloat *) -> void;
-#foreign glGetConvolutionParameteriv :: fn(target: GLenum, pname: GLenum, params: GLint *) -> void;
-#foreign glSeparableFilter2D :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, row: GLvoid *, column: GLvoid *) -> void;
-#foreign glGetSeparableFilter :: fn(target: GLenum, format: GLenum, type: GLenum, row: GLvoid *, column: GLvoid *, span: GLvoid *) -> void;
+#foreign glGetConvolutionFilter :: fn(target: GLenum, format: GLenum, type: GLenum, image: *mut GLvoid) -> void;
+#foreign glGetConvolutionParameterfv :: fn(target: GLenum, pname: GLenum, params: *mut GLfloat) -> void;
+#foreign glGetConvolutionParameteriv :: fn(target: GLenum, pname: GLenum, params: *mut GLint) -> void;
+#foreign glSeparableFilter2D :: fn(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, row: *const GLvoid, column: *const GLvoid) -> void;
+#foreign glGetSeparableFilter :: fn(target: GLenum, format: GLenum, type: GLenum, row: *mut GLvoid, column: *mut GLvoid, span: *mut GLvoid) -> void;
 #foreign glActiveTexture :: fn(texture: GLenum) -> void;
 #foreign glClientActiveTexture :: fn(texture: GLenum) -> void;
-#foreign glCompressedTexImage1D :: fn(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, border: GLint, imageSize: GLsizei, data: GLvoid *) -> void;
-#foreign glCompressedTexImage2D :: fn(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, border: GLint, imageSize: GLsizei, data: GLvoid *) -> void;
-#foreign glCompressedTexImage3D :: fn(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, imageSize: GLsizei, data: GLvoid *) -> void;
-#foreign glCompressedTexSubImage1D :: fn(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, imageSize: GLsizei, data: GLvoid *) -> void;
-#foreign glCompressedTexSubImage2D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: GLvoid *) -> void;
-#foreign glCompressedTexSubImage3D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, imageSize: GLsizei, data: GLvoid *) -> void;
-#foreign glGetCompressedTexImage :: fn(target: GLenum, lod: GLint, img: GLvoid *) -> void;
+#foreign glCompressedTexImage1D :: fn(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, border: GLint, imageSize: GLsizei, data: *const GLvoid) -> void;
+#foreign glCompressedTexImage2D :: fn(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, border: GLint, imageSize: GLsizei, data: *const GLvoid) -> void;
+#foreign glCompressedTexImage3D :: fn(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, imageSize: GLsizei, data: *const GLvoid) -> void;
+#foreign glCompressedTexSubImage1D :: fn(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, imageSize: GLsizei, data: *const GLvoid) -> void;
+#foreign glCompressedTexSubImage2D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: *const GLvoid) -> void;
+#foreign glCompressedTexSubImage3D :: fn(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, imageSize: GLsizei, data: *const GLvoid) -> void;
+#foreign glGetCompressedTexImage :: fn(target: GLenum, lod: GLint, img: *mut GLvoid) -> void;
 #foreign glMultiTexCoord1d :: fn(target: GLenum, s: GLdouble) -> void;
-#foreign glMultiTexCoord1dv :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord1dv :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord1f :: fn(target: GLenum, s: GLfloat) -> void;
-#foreign glMultiTexCoord1fv :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord1fv :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord1i :: fn(target: GLenum, s: GLint) -> void;
-#foreign glMultiTexCoord1iv :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord1iv :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord1s :: fn(target: GLenum, s: GLshort) -> void;
-#foreign glMultiTexCoord1sv :: fn(target: GLenum, v: GLshort *) -> void;
+#foreign glMultiTexCoord1sv :: fn(target: GLenum, v: *const GLshort) -> void;
 #foreign glMultiTexCoord2d :: fn(target: GLenum, s: GLdouble, t: GLdouble) -> void;
-#foreign glMultiTexCoord2dv :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord2dv :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord2f :: fn(target: GLenum, s: GLfloat, t: GLfloat) -> void;
-#foreign glMultiTexCoord2fv :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord2fv :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord2i :: fn(target: GLenum, s: GLint, t: GLint) -> void;
-#foreign glMultiTexCoord2iv :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord2iv :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord2s :: fn(target: GLenum, s: GLshort, t: GLshort) -> void;
-#foreign glMultiTexCoord2sv :: fn(target: GLenum, v: GLshort *) -> void;
+#foreign glMultiTexCoord2sv :: fn(target: GLenum, v: *const GLshort) -> void;
 #foreign glMultiTexCoord3d :: fn(target: GLenum, s: GLdouble, t: GLdouble, r: GLdouble) -> void;
-#foreign glMultiTexCoord3dv :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord3dv :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord3f :: fn(target: GLenum, s: GLfloat, t: GLfloat, r: GLfloat) -> void;
-#foreign glMultiTexCoord3fv :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord3fv :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord3i :: fn(target: GLenum, s: GLint, t: GLint, r: GLint) -> void;
-#foreign glMultiTexCoord3iv :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord3iv :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord3s :: fn(target: GLenum, s: GLshort, t: GLshort, r: GLshort) -> void;
-#foreign glMultiTexCoord3sv :: fn(target: GLenum, v: GLshort *) -> void;
+#foreign glMultiTexCoord3sv :: fn(target: GLenum, v: *const GLshort) -> void;
 #foreign glMultiTexCoord4d :: fn(target: GLenum, s: GLdouble, t: GLdouble, r: GLdouble, q: GLdouble) -> void;
-#foreign glMultiTexCoord4dv :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord4dv :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord4f :: fn(target: GLenum, s: GLfloat, t: GLfloat, r: GLfloat, q: GLfloat) -> void;
-#foreign glMultiTexCoord4fv :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord4fv :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord4i :: fn(target: GLenum, s: GLint, t: GLint, r: GLint, q: GLint) -> void;
-#foreign glMultiTexCoord4iv :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord4iv :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord4s :: fn(target: GLenum, s: GLshort, t: GLshort, r: GLshort, q: GLshort) -> void;
-#foreign glMultiTexCoord4sv :: fn(target: GLenum, v: GLshort *) -> void;
-#foreign glLoadTransposeMatrixd :: fn(m: GLdouble*) -> void;
-#foreign glLoadTransposeMatrixf :: fn(m: GLfloat*) -> void;
-#foreign glMultTransposeMatrixd :: fn(m: GLdouble*) -> void;
-#foreign glMultTransposeMatrixf :: fn(m: GLfloat*) -> void;
+#foreign glMultiTexCoord4sv :: fn(target: GLenum, v: *const GLshort) -> void;
+#foreign glLoadTransposeMatrixd :: fn(m: *const GLdouble) -> void;
+#foreign glLoadTransposeMatrixf :: fn(m: *const GLfloat) -> void;
+#foreign glMultTransposeMatrixd :: fn(m: *const GLdouble) -> void;
+#foreign glMultTransposeMatrixf :: fn(m: *const GLfloat) -> void;
 #foreign glSampleCoverage :: fn(value: GLclampf, invert: GLboolean) -> void;
+alias PFNGLACTIVETEXTUREPROC :: fn*(GLenum) -> void;
+alias PFNGLSAMPLECOVERAGEPROC :: fn*(GLclampf, GLboolean) -> void;
+alias PFNGLCOMPRESSEDTEXIMAGE3DPROC :: fn*(GLenum, GLint, GLenum, GLsizei, GLsizei, GLsizei, GLint, GLsizei, *const GLvoid) -> void;
+alias PFNGLCOMPRESSEDTEXIMAGE2DPROC :: fn*(GLenum, GLint, GLenum, GLsizei, GLsizei, GLint, GLsizei, *const GLvoid) -> void;
+alias PFNGLCOMPRESSEDTEXIMAGE1DPROC :: fn*(GLenum, GLint, GLenum, GLsizei, GLint, GLsizei, *const GLvoid) -> void;
+alias PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC :: fn*(GLenum, GLint, GLint, GLint, GLint, GLsizei, GLsizei, GLsizei, GLenum, GLsizei, *const GLvoid) -> void;
+alias PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC :: fn*(GLenum, GLint, GLint, GLint, GLsizei, GLsizei, GLenum, GLsizei, *const GLvoid) -> void;
+alias PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC :: fn*(GLenum, GLint, GLint, GLsizei, GLenum, GLsizei, *const GLvoid) -> void;
+alias PFNGLGETCOMPRESSEDTEXIMAGEPROC :: fn*(GLenum, GLint, *mut GLvoid) -> void;
 #foreign glActiveTextureARB :: fn(texture: GLenum) -> void;
 #foreign glClientActiveTextureARB :: fn(texture: GLenum) -> void;
 #foreign glMultiTexCoord1dARB :: fn(target: GLenum, s: GLdouble) -> void;
-#foreign glMultiTexCoord1dvARB :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord1dvARB :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord1fARB :: fn(target: GLenum, s: GLfloat) -> void;
-#foreign glMultiTexCoord1fvARB :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord1fvARB :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord1iARB :: fn(target: GLenum, s: GLint) -> void;
-#foreign glMultiTexCoord1ivARB :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord1ivARB :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord1sARB :: fn(target: GLenum, s: GLshort) -> void;
-#foreign glMultiTexCoord1svARB :: fn(target: GLenum, v: GLshort *) -> void;
+#foreign glMultiTexCoord1svARB :: fn(target: GLenum, v: *const GLshort) -> void;
 #foreign glMultiTexCoord2dARB :: fn(target: GLenum, s: GLdouble, t: GLdouble) -> void;
-#foreign glMultiTexCoord2dvARB :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord2dvARB :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord2fARB :: fn(target: GLenum, s: GLfloat, t: GLfloat) -> void;
-#foreign glMultiTexCoord2fvARB :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord2fvARB :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord2iARB :: fn(target: GLenum, s: GLint, t: GLint) -> void;
-#foreign glMultiTexCoord2ivARB :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord2ivARB :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord2sARB :: fn(target: GLenum, s: GLshort, t: GLshort) -> void;
-#foreign glMultiTexCoord2svARB :: fn(target: GLenum, v: GLshort *) -> void;
+#foreign glMultiTexCoord2svARB :: fn(target: GLenum, v: *const GLshort) -> void;
 #foreign glMultiTexCoord3dARB :: fn(target: GLenum, s: GLdouble, t: GLdouble, r: GLdouble) -> void;
-#foreign glMultiTexCoord3dvARB :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord3dvARB :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord3fARB :: fn(target: GLenum, s: GLfloat, t: GLfloat, r: GLfloat) -> void;
-#foreign glMultiTexCoord3fvARB :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord3fvARB :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord3iARB :: fn(target: GLenum, s: GLint, t: GLint, r: GLint) -> void;
-#foreign glMultiTexCoord3ivARB :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord3ivARB :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord3sARB :: fn(target: GLenum, s: GLshort, t: GLshort, r: GLshort) -> void;
-#foreign glMultiTexCoord3svARB :: fn(target: GLenum, v: GLshort *) -> void;
+#foreign glMultiTexCoord3svARB :: fn(target: GLenum, v: *const GLshort) -> void;
 #foreign glMultiTexCoord4dARB :: fn(target: GLenum, s: GLdouble, t: GLdouble, r: GLdouble, q: GLdouble) -> void;
-#foreign glMultiTexCoord4dvARB :: fn(target: GLenum, v: GLdouble *) -> void;
+#foreign glMultiTexCoord4dvARB :: fn(target: GLenum, v: *const GLdouble) -> void;
 #foreign glMultiTexCoord4fARB :: fn(target: GLenum, s: GLfloat, t: GLfloat, r: GLfloat, q: GLfloat) -> void;
-#foreign glMultiTexCoord4fvARB :: fn(target: GLenum, v: GLfloat *) -> void;
+#foreign glMultiTexCoord4fvARB :: fn(target: GLenum, v: *const GLfloat) -> void;
 #foreign glMultiTexCoord4iARB :: fn(target: GLenum, s: GLint, t: GLint, r: GLint, q: GLint) -> void;
-#foreign glMultiTexCoord4ivARB :: fn(target: GLenum, v: GLint *) -> void;
+#foreign glMultiTexCoord4ivARB :: fn(target: GLenum, v: *const GLint) -> void;
 #foreign glMultiTexCoord4sARB :: fn(target: GLenum, s: GLshort, t: GLshort, r: GLshort, q: GLshort) -> void;
-#foreign glMultiTexCoord4svARB :: fn(target: GLenum, v: GLshort *) -> void;
-alias khronos_int32_t :: s32;
-alias khronos_uint32_t :: u32;
-alias khronos_int64_t :: s64;
-alias khronos_uint64_t :: u64;
-alias khronos_int8_t :: s8;
-alias khronos_uint8_t :: u8;
-alias khronos_int16_t :: s16;
-alias khronos_uint16_t :: u16;
-alias khronos_intptr_t :: s64;
-alias khronos_uintptr_t :: u64;
-alias khronos_ssize_t :: s64;
-alias khronos_usize_t :: u64;
-alias khronos_float_t :: f32;
-alias khronos_utime_nanoseconds_t :: khronos_uint64_t;
-alias khronos_stime_nanoseconds_t :: khronos_int64_t;
-khronos_boolean_enum_t :: enum {
-  KHRONOS_FALSE = 0,
-  KHRONOS_TRUE = 1,
-  KHRONOS_BOOLEAN_ENUM_FORCE_SIZE = 2147483647,
-};
-alias GLsizeiptr :: khronos_ssize_t;
-alias GLintptr :: khronos_intptr_t;
-alias GLchar :: u8;
-alias GLhalf :: khronos_uint16_t;
-__GLsync :: struct {
-};
-alias GLsync :: __GLsync *;
-alias GLuint64 :: khronos_uint64_t;
-alias GLint64 :: khronos_int64_t;
-alias GLDEBUGPROC :: fn*(GLenum, GLenum, GLuint, GLenum, GLsizei, GLchar *, void *) -> void;
-alias GLuint64EXT :: khronos_uint64_t;
-_cl_context :: struct {
-};
-_cl_event :: struct {
-};
-alias GLDEBUGPROCARB :: fn*(GLenum, GLenum, GLuint, GLenum, GLsizei, GLchar *, void *) -> void;
-alias GLhalfARB :: khronos_uint16_t;
-alias GLhandleARB :: u32;
-alias GLcharARB :: u8;
-alias GLsizeiptrARB :: khronos_ssize_t;
-alias GLintptrARB :: khronos_intptr_t;
-alias GLfixed :: khronos_int32_t;
-alias GLDEBUGPROCAMD :: fn*(GLuint, GLenum, GLenum, GLsizei, GLchar *, void *) -> void;
-alias GLint64EXT :: khronos_int64_t;
-alias GLeglImageOES :: void *;
-alias GLeglClientBufferEXT :: void *;
-alias GLVULKANPROCNV :: fn*() -> void;
-alias GLhalfNV :: u16;
-alias GLvdpauSurfaceNV :: GLintptr;
-#foreign glBlendEquationSeparateATI :: fn(modeRGB: GLenum, modeA: GLenum) -> void;
+#foreign glMultiTexCoord4svARB :: fn(target: GLenum, v: *const GLshort) -> void;
 
-GL :: enum {
- STATIC_DRAW = 35044,
- ARRAY_BUFFER = 34962,
- INFO_LOG_LENGTH = 35716,
- COMPILE_STATUS = 35713,
- LINK_STATUS = 35714,
- VERTEX_SHADER = 35633,
- FRAGMENT_SHADER = 35632,
- ZERO = 0,
- FALSE = 0,
- LOGIC_OP = 0x0BF1,
- NONE = 0,
- TEXTURE_COMPONENTS = 0x1003,
- NO_ERROR = 0,
- POINTS = 0x0000,
- CURRENT_BIT = 0x00000001,
- TRUE = 1,
- ONE = 1,
- CLIENT_PIXEL_STORE_BIT = 0x00000001,
- LINES = 0x0001,
- LINE_LOOP = 0x0002,
- POINT_BIT = 0x00000002,
- CLIENT_VERTEX_ARRAY_BIT = 0x00000002,
- LINE_STRIP = 0x0003,
- LINE_BIT = 0x00000004,
- TRIANGLES = 0x0004,
- TRIANGLE_STRIP = 0x0005,
- TRIANGLE_FAN = 0x0006,
- QUADS = 0x0007,
- QUAD_STRIP = 0x0008,
- POLYGON_BIT = 0x00000008,
- POLYGON = 0x0009,
- POLYGON_STIPPLE_BIT = 0x00000010,
- PIXEL_MODE_BIT = 0x00000020,
- LIGHTING_BIT = 0x00000040,
- FOG_BIT = 0x00000080,
- DEPTH_BUFFER_BIT = 0x00000100,
- ACCUM = 0x0100,
- LOAD = 0x0101,
- RETURN = 0x0102,
- GL_MULT = 0x0103,
- GL_ADD = 0x0104,
- NEVER = 0x0200,
- ACCUM_BUFFER_BIT = 0x00000200,
- GL_LESS = 0x0201,
- GL_EQUAL = 0x0202,
- GL_LEQUAL = 0x0203,
- GL_GREATER = 0x0204,
- GL_NOTEQUAL = 0x0205,
- GEQUAL = 0x0206,
- ALWAYS = 0x0207,
- SRC_COLOR = 0x0300,
- ONE_MINUS_SRC_COLOR = 0x0301,
- SRC_ALPHA = 0x0302,
- ONE_MINUS_SRC_ALPHA = 0x0303,
- DST_ALPHA = 0x0304,
- ONE_MINUS_DST_ALPHA = 0x0305,
- DST_COLOR = 0x0306,
- ONE_MINUS_DST_COLOR = 0x0307,
- SRC_ALPHA_SATURATE = 0x0308,
- STENCIL_BUFFER_BIT = 0x00000400,
- FRONT_LEFT = 0x0400,
- FRONT_RIGHT = 0x0401,
- BACK_LEFT = 0x0402,
- BACK_RIGHT = 0x0403,
- FRONT = 0x0404,
- BACK = 0x0405,
- LEFT = 0x0406,
- RIGHT = 0x0407,
- FRONT_AND_BACK = 0x0408,
- AUX0 = 0x0409,
- AUX1 = 0x040A,
- AUX2 = 0x040B,
- AUX3 = 0x040C,
- INVALID_ENUM = 0x0500,
- INVALID_VALUE = 0x0501,
- INVALID_OPERATION = 0x0502,
- STACK_OVERFLOW = 0x0503,
- STACK_UNDERFLOW = 0x0504,
- OUT_OF_MEMORY = 0x0505,
- _2D = 0x0600,                  // These are a special case where we actually had to change the name of the GL identifier. Sucks
- _3D = 0x0601,                  // These are a special case where we actually had to change the name of the GL identifier. Sucks
- _3D_COLOR = 0x0602,            // These are a special case where we actually had to change the name of the GL identifier. Sucks
- _3D_COLOR_TEXTURE = 0x0603,    // These are a special case where we actually had to change the name of the GL identifier. Sucks
- _4D_COLOR_TEXTURE = 0x0604,    // These are a special case where we actually had to change the name of the GL identifier. Sucks
- PASS_THROUGH_TOKEN = 0x0700,
- POINT_TOKEN = 0x0701,
- LINE_TOKEN = 0x0702,
- POLYGON_TOKEN = 0x0703,
- BITMAP_TOKEN = 0x0704,
- DRAW_PIXEL_TOKEN = 0x0705,
- COPY_PIXEL_TOKEN = 0x0706,
- LINE_RESET_TOKEN = 0x0707,
- EXP = 0x0800,
- VIEWPORT_BIT = 0x00000800,
- EXP2 = 0x0801,
- CW = 0x0900,
- CCW = 0x0901,
- COEFF = 0x0A00,
- ORDER = 0x0A01,
- DOMAIN = 0x0A02,
- CURRENT_COLOR = 0x0B00,
- CURRENT_INDEX = 0x0B01,
- CURRENT_NORMAL = 0x0B02,
- CURRENT_TEXTURE_COORDS = 0x0B03,
- CURRENT_RASTER_COLOR = 0x0B04,
- CURRENT_RASTER_INDEX = 0x0B05,
- CURRENT_RASTER_TEXTURE_COORDS = 0x0B06,
- CURRENT_RASTER_POSITION = 0x0B07,
- CURRENT_RASTER_POSITION_VALID = 0x0B08,
- CURRENT_RASTER_DISTANCE = 0x0B09,
- POINT_SMOOTH = 0x0B10,
- POINT_SIZE = 0x0B11,
- POINT_SIZE_RANGE = 0x0B12,
- POINT_SIZE_GRANULARITY = 0x0B13,
- LINE_SMOOTH = 0x0B20,
- LINE_WIDTH = 0x0B21,
- LINE_WIDTH_RANGE = 0x0B22,
- LINE_WIDTH_GRANULARITY = 0x0B23,
- LINE_STIPPLE = 0x0B24,
- LINE_STIPPLE_PATTERN = 0x0B25,
- LINE_STIPPLE_REPEAT = 0x0B26,
- LIST_MODE = 0x0B30,
- MAX_LIST_NESTING = 0x0B31,
- LIST_BASE = 0x0B32,
- LIST_INDEX = 0x0B33,
- POLYGON_MODE = 0x0B40,
- POLYGON_SMOOTH = 0x0B41,
- POLYGON_STIPPLE = 0x0B42,
- EDGE_FLAG = 0x0B43,
- CULL_FACE = 0x0B44,
- CULL_FACE_MODE = 0x0B45,
- FRONT_FACE = 0x0B46,
- LIGHTING = 0x0B50,
- LIGHT_MODEL_LOCAL_VIEWER = 0x0B51,
- LIGHT_MODEL_TWO_SIDE = 0x0B52,
- LIGHT_MODEL_AMBIENT = 0x0B53,
- SHADE_MODEL = 0x0B54,
- COLOR_MATERIAL_FACE = 0x0B55,
- COLOR_MATERIAL_PARAMETER = 0x0B56,
- COLOR_MATERIAL = 0x0B57,
- FOG = 0x0B60,
- FOG_INDEX = 0x0B61,
- FOG_DENSITY = 0x0B62,
- FOG_START = 0x0B63,
- FOG_END = 0x0B64,
- FOG_MODE = 0x0B65,
- FOG_COLOR = 0x0B66,
- DEPTH_RANGE = 0x0B70,
- DEPTH_TEST = 0x0B71,
- DEPTH_WRITEMASK = 0x0B72,
- DEPTH_CLEAR_VALUE = 0x0B73,
- DEPTH_FUNC = 0x0B74,
- ACCUM_CLEAR_VALUE = 0x0B80,
- STENCIL_TEST = 0x0B90,
- STENCIL_CLEAR_VALUE = 0x0B91,
- STENCIL_FUNC = 0x0B92,
- STENCIL_VALUE_MASK = 0x0B93,
- STENCIL_FAIL = 0x0B94,
- STENCIL_PASS_DEPTH_FAIL = 0x0B95,
- STENCIL_PASS_DEPTH_PASS = 0x0B96,
- STENCIL_REF = 0x0B97,
- STENCIL_WRITEMASK = 0x0B98,
- MATRIX_MODE = 0x0BA0,
- NORMALIZE = 0x0BA1,
- VIEWPORT = 0x0BA2,
- MODELVIEW_STACK_DEPTH = 0x0BA3,
- PROJECTION_STACK_DEPTH = 0x0BA4,
- TEXTURE_STACK_DEPTH = 0x0BA5,
- MODELVIEW_MATRIX = 0x0BA6,
- PROJECTION_MATRIX = 0x0BA7,
- TEXTURE_MATRIX = 0x0BA8,
- ATTRIB_STACK_DEPTH = 0x0BB0,
- CLIENT_ATTRIB_STACK_DEPTH = 0x0BB1,
- ALPHA_TEST = 0x0BC0,
- ALPHA_TEST_FUNC = 0x0BC1,
- ALPHA_TEST_REF = 0x0BC2,
- DITHER = 0x0BD0,
- BLEND_DST = 0x0BE0,
- BLEND_SRC = 0x0BE1,
- BLEND = 0x0BE2,
- LOGIC_OP_MODE = 0x0BF0,
- INDEX_LOGIC_OP = 0x0BF1,
- COLOR_LOGIC_OP = 0x0BF2,
- AUX_BUFFERS = 0x0C00,
- DRAW_BUFFER = 0x0C01,
- READ_BUFFER = 0x0C02,
- SCISSOR_BOX = 0x0C10,
- SCISSOR_TEST = 0x0C11,
- INDEX_CLEAR_VALUE = 0x0C20,
- INDEX_WRITEMASK = 0x0C21,
- COLOR_CLEAR_VALUE = 0x0C22,
- COLOR_WRITEMASK = 0x0C23,
- INDEX_MODE = 0x0C30,
- RGBA_MODE = 0x0C31,
- DOUBLEBUFFER = 0x0C32,
- STEREO = 0x0C33,
- RENDER_MODE = 0x0C40,
- PERSPECTIVE_CORRECTION_HINT = 0x0C50,
- POINT_SMOOTH_HINT = 0x0C51,
- LINE_SMOOTH_HINT = 0x0C52,
- POLYGON_SMOOTH_HINT = 0x0C53,
- FOG_HINT = 0x0C54,
- TEXTURE_GEN_S = 0x0C60,
- TEXTURE_GEN_T = 0x0C61,
- TEXTURE_GEN_R = 0x0C62,
- TEXTURE_GEN_Q = 0x0C63,
- PIXEL_MAP_I_TO_I = 0x0C70,
- PIXEL_MAP_S_TO_S = 0x0C71,
- PIXEL_MAP_I_TO_R = 0x0C72,
- PIXEL_MAP_I_TO_G = 0x0C73,
- PIXEL_MAP_I_TO_B = 0x0C74,
- PIXEL_MAP_I_TO_A = 0x0C75,
- PIXEL_MAP_R_TO_R = 0x0C76,
- PIXEL_MAP_G_TO_G = 0x0C77,
- PIXEL_MAP_B_TO_B = 0x0C78,
- PIXEL_MAP_A_TO_A = 0x0C79,
- PIXEL_MAP_I_TO_I_SIZE = 0x0CB0,
- PIXEL_MAP_S_TO_S_SIZE = 0x0CB1,
- PIXEL_MAP_I_TO_R_SIZE = 0x0CB2,
- PIXEL_MAP_I_TO_G_SIZE = 0x0CB3,
- PIXEL_MAP_I_TO_B_SIZE = 0x0CB4,
- PIXEL_MAP_I_TO_A_SIZE = 0x0CB5,
- PIXEL_MAP_R_TO_R_SIZE = 0x0CB6,
- PIXEL_MAP_G_TO_G_SIZE = 0x0CB7,
- PIXEL_MAP_B_TO_B_SIZE = 0x0CB8,
- PIXEL_MAP_A_TO_A_SIZE = 0x0CB9,
- UNPACK_SWAP_BYTES = 0x0CF0,
- UNPACK_LSB_FIRST = 0x0CF1,
- UNPACK_ROW_LENGTH = 0x0CF2,
- UNPACK_SKIP_ROWS = 0x0CF3,
- UNPACK_SKIP_PIXELS = 0x0CF4,
- UNPACK_ALIGNMENT = 0x0CF5,
- PACK_SWAP_BYTES = 0x0D00,
- PACK_LSB_FIRST = 0x0D01,
- PACK_ROW_LENGTH = 0x0D02,
- PACK_SKIP_ROWS = 0x0D03,
- PACK_SKIP_PIXELS = 0x0D04,
- PACK_ALIGNMENT = 0x0D05,
- MAP_COLOR = 0x0D10,
- MAP_STENCIL = 0x0D11,
- INDEX_SHIFT = 0x0D12,
- INDEX_OFFSET = 0x0D13,
- RED_SCALE = 0x0D14,
- RED_BIAS = 0x0D15,
- ZOOM_X = 0x0D16,
- ZOOM_Y = 0x0D17,
- GREEN_SCALE = 0x0D18,
- GREEN_BIAS = 0x0D19,
- BLUE_SCALE = 0x0D1A,
- BLUE_BIAS = 0x0D1B,
- ALPHA_SCALE = 0x0D1C,
- ALPHA_BIAS = 0x0D1D,
- DEPTH_SCALE = 0x0D1E,
- DEPTH_BIAS = 0x0D1F,
- MAX_EVAL_ORDER = 0x0D30,
- MAX_LIGHTS = 0x0D31,
- MAX_CLIP_PLANES = 0x0D32,
- MAX_TEXTURE_SIZE = 0x0D33,
- MAX_PIXEL_MAP_TABLE = 0x0D34,
- MAX_ATTRIB_STACK_DEPTH = 0x0D35,
- MAX_MODELVIEW_STACK_DEPTH = 0x0D36,
- MAX_NAME_STACK_DEPTH = 0x0D37,
- MAX_PROJECTION_STACK_DEPTH = 0x0D38,
- MAX_TEXTURE_STACK_DEPTH = 0x0D39,
- MAX_VIEWPORT_DIMS = 0x0D3A,
- MAX_CLIENT_ATTRIB_STACK_DEPTH = 0x0D3B,
- SUBPIXEL_BITS = 0x0D50,
- INDEX_BITS = 0x0D51,
- RED_BITS = 0x0D52,
- GREEN_BITS = 0x0D53,
- BLUE_BITS = 0x0D54,
- ALPHA_BITS = 0x0D55,
- DEPTH_BITS = 0x0D56,
- STENCIL_BITS = 0x0D57,
- ACCUM_RED_BITS = 0x0D58,
- ACCUM_GREEN_BITS = 0x0D59,
- ACCUM_BLUE_BITS = 0x0D5A,
- ACCUM_ALPHA_BITS = 0x0D5B,
- NAME_STACK_DEPTH = 0x0D70,
- AUTO_NORMAL = 0x0D80,
- MAP1_COLOR_4 = 0x0D90,
- MAP1_INDEX = 0x0D91,
- MAP1_NORMAL = 0x0D92,
- MAP1_TEXTURE_COORD_1 = 0x0D93,
- MAP1_TEXTURE_COORD_2 = 0x0D94,
- MAP1_TEXTURE_COORD_3 = 0x0D95,
- MAP1_TEXTURE_COORD_4 = 0x0D96,
- MAP1_VERTEX_3 = 0x0D97,
- MAP1_VERTEX_4 = 0x0D98,
- MAP2_COLOR_4 = 0x0DB0,
- MAP2_INDEX = 0x0DB1,
- MAP2_NORMAL = 0x0DB2,
- MAP2_TEXTURE_COORD_1 = 0x0DB3,
- MAP2_TEXTURE_COORD_2 = 0x0DB4,
- MAP2_TEXTURE_COORD_3 = 0x0DB5,
- MAP2_TEXTURE_COORD_4 = 0x0DB6,
- MAP2_VERTEX_3 = 0x0DB7,
- MAP2_VERTEX_4 = 0x0DB8,
- MAP1_GRID_DOMAIN = 0x0DD0,
- MAP1_GRID_SEGMENTS = 0x0DD1,
- MAP2_GRID_DOMAIN = 0x0DD2,
- MAP2_GRID_SEGMENTS = 0x0DD3,
- TEXTURE_1D = 0x0DE0,
- TEXTURE_2D = 0x0DE1,
- FEEDBACK_BUFFER_POINTER = 0x0DF0,
- FEEDBACK_BUFFER_SIZE = 0x0DF1,
- FEEDBACK_BUFFER_TYPE = 0x0DF2,
- SELECTION_BUFFER_POINTER = 0x0DF3,
- SELECTION_BUFFER_SIZE = 0x0DF4,
- TEXTURE_WIDTH = 0x1000,
- TRANSFORM_BIT = 0x00001000,
- TEXTURE_HEIGHT = 0x1001,
- TEXTURE_INTERNAL_FORMAT = 0x1003,
- TEXTURE_BORDER_COLOR = 0x1004,
- TEXTURE_BORDER = 0x1005,
- DONT_CARE = 0x1100,
- FASTEST = 0x1101,
- NICEST = 0x1102,
- AMBIENT = 0x1200,
- DIFFUSE = 0x1201,
- SPECULAR = 0x1202,
- POSITION = 0x1203,
- SPOT_DIRECTION = 0x1204,
- SPOT_EXPONENT = 0x1205,
- SPOT_CUTOFF = 0x1206,
- CONSTANT_ATTENUATION = 0x1207,
- LINEAR_ATTENUATION = 0x1208,
- QUADRATIC_ATTENUATION = 0x1209,
- COMPILE = 0x1300,
- COMPILE_AND_EXECUTE = 0x1301,
- BYTE = 0x1400,
- UNSIGNED_BYTE = 0x1401,
- SHORT = 0x1402,
- UNSIGNED_SHORT = 0x1403,
- INT = 0x1404,
- UNSIGNED_INT = 0x1405,
- FLOAT = 0x1406,
- TWO_BYTES = 0x1407,
- THREE_BYTES = 0x1408,
- FOUR_BYTES = 0x1409,
- DOUBLE = 0x140A,
- CLEAR = 0x1500,
- AND = 0x1501,
- AND_REVERSE = 0x1502,
- COPY = 0x1503,
- AND_INVERTED = 0x1504,
- NOOP = 0x1505,
- XOR = 0x1506,
- OR = 0x1507,
- NOR = 0x1508,
- EQUIV = 0x1509,
- INVERT = 0x150A,
- OR_REVERSE = 0x150B,
- COPY_INVERTED = 0x150C,
- OR_INVERTED = 0x150D,
- NAND = 0x150E,
- SET = 0x150F,
- EMISSION = 0x1600,
- SHININESS = 0x1601,
- AMBIENT_AND_DIFFUSE = 0x1602,
- COLOR_INDEXES = 0x1603,
- MODELVIEW = 0x1700,
- PROJECTION = 0x1701,
- TEXTURE = 0x1702,
- COLOR = 0x1800,
- DEPTH = 0x1801,
- STENCIL = 0x1802,
- COLOR_INDEX = 0x1900,
- STENCIL_INDEX = 0x1901,
- DEPTH_COMPONENT = 0x1902,
- RED = 0x1903,
- GREEN = 0x1904,
- BLUE = 0x1905,
- ALPHA = 0x1906,
- RGB = 0x1907,
- RGBA = 0x1908,
- LUMINANCE = 0x1909,
- LUMINANCE_ALPHA = 0x190A,
- BITMAP = 0x1A00,
- POINT = 0x1B00,
- LINE = 0x1B01,
- FILL = 0x1B02,
- RENDER = 0x1C00,
- FEEDBACK = 0x1C01,
- SELECT = 0x1C02,
- FLAT = 0x1D00,
- SMOOTH = 0x1D01,
- KEEP = 0x1E00,
- REPLACE = 0x1E01,
- INCR = 0x1E02,
- DECR = 0x1E03,
- VENDOR = 0x1F00,
- RENDERER = 0x1F01,
- VERSION = 0x1F02,
- EXTENSIONS = 0x1F03,
- ENABLE_BIT = 0x00002000,
- S = 0x2000,
- T = 0x2001,
- R = 0x2002,
- Q = 0x2003,
- MODULATE = 0x2100,
- DECAL = 0x2101,
- TEXTURE_ENV_MODE = 0x2200,
- TEXTURE_ENV_COLOR = 0x2201,
- TEXTURE_ENV = 0x2300,
- EYE_LINEAR = 0x2400,
- OBJECT_LINEAR = 0x2401,
- SPHERE_MAP = 0x2402,
- TEXTURE_GEN_MODE = 0x2500,
- OBJECT_PLANE = 0x2501,
- EYE_PLANE = 0x2502,
- NEAREST = 0x2600,
- LINEAR = 0x2601,
- NEAREST_MIPMAP_NEAREST = 0x2700,
- LINEAR_MIPMAP_NEAREST = 0x2701,
- NEAREST_MIPMAP_LINEAR = 0x2702,
- LINEAR_MIPMAP_LINEAR = 0x2703,
- TEXTURE_MAG_FILTER = 0x2800,
- TEXTURE_MIN_FILTER = 0x2801,
- TEXTURE_WRAP_S = 0x2802,
- TEXTURE_WRAP_T = 0x2803,
- CLAMP = 0x2900,
- REPEAT = 0x2901,
- POLYGON_OFFSET_UNITS = 0x2A00,
- POLYGON_OFFSET_POINT = 0x2A01,
- POLYGON_OFFSET_LINE = 0x2A02,
- R3_G3_B2 = 0x2A10,
- V2F = 0x2A20,
- V3F = 0x2A21,
- C4UB_V2F = 0x2A22,
- C4UB_V3F = 0x2A23,
- C3F_V3F = 0x2A24,
- N3F_V3F = 0x2A25,
- C4F_N3F_V3F = 0x2A26,
- T2F_V3F = 0x2A27,
- T4F_V4F = 0x2A28,
- T2F_C4UB_V3F = 0x2A29,
- T2F_C3F_V3F = 0x2A2A,
- T2F_N3F_V3F = 0x2A2B,
- T2F_C4F_N3F_V3F = 0x2A2C,
- T4F_C4F_N3F_V4F = 0x2A2D,
- CLIP_PLANE0 = 0x3000,
- CLIP_PLANE1 = 0x3001,
- CLIP_PLANE2 = 0x3002,
- CLIP_PLANE3 = 0x3003,
- CLIP_PLANE4 = 0x3004,
- CLIP_PLANE5 = 0x3005,
- LIGHT0 = 0x4000,
- COLOR_BUFFER_BIT = 0x00004000,
- LIGHT1 = 0x4001,
- LIGHT2 = 0x4002,
- LIGHT3 = 0x4003,
- LIGHT4 = 0x4004,
- LIGHT5 = 0x4005,
- LIGHT6 = 0x4006,
- LIGHT7 = 0x4007,
- HINT_BIT = 0x00008000,
- POLYGON_OFFSET_FILL = 0x8037,
- POLYGON_OFFSET_FACTOR = 0x8038,
- ALPHA4 = 0x803B,
- ALPHA8 = 0x803C,
- ALPHA12 = 0x803D,
- ALPHA16 = 0x803E,
- LUMINANCE4 = 0x803F,
- LUMINANCE8 = 0x8040,
- LUMINANCE12 = 0x8041,
- LUMINANCE16 = 0x8042,
- LUMINANCE4_ALPHA4 = 0x8043,
- LUMINANCE6_ALPHA2 = 0x8044,
- LUMINANCE8_ALPHA8 = 0x8045,
- LUMINANCE12_ALPHA4 = 0x8046,
- LUMINANCE12_ALPHA12 = 0x8047,
- LUMINANCE16_ALPHA16 = 0x8048,
- INTENSITY = 0x8049,
- INTENSITY4 = 0x804A,
- INTENSITY8 = 0x804B,
- INTENSITY12 = 0x804C,
- INTENSITY16 = 0x804D,
- RGB4 = 0x804F,
- RGB5 = 0x8050,
- RGB8 = 0x8051,
- RGB10 = 0x8052,
- RGB12 = 0x8053,
- RGB16 = 0x8054,
- RGBA2 = 0x8055,
- RGBA4 = 0x8056,
- RGB5_A1 = 0x8057,
- RGBA8 = 0x8058,
- RGB10_A2 = 0x8059,
- RGBA12 = 0x805A,
- RGBA16 = 0x805B,
- TEXTURE_RED_SIZE = 0x805C,
- TEXTURE_GREEN_SIZE = 0x805D,
- TEXTURE_BLUE_SIZE = 0x805E,
- TEXTURE_ALPHA_SIZE = 0x805F,
- TEXTURE_LUMINANCE_SIZE = 0x8060,
- TEXTURE_INTENSITY_SIZE = 0x8061,
- PROXY_TEXTURE_1D = 0x8063,
- PROXY_TEXTURE_2D = 0x8064,
- TEXTURE_PRIORITY = 0x8066,
- TEXTURE_RESIDENT = 0x8067,
- TEXTURE_BINDING_1D = 0x8068,
- TEXTURE_BINDING_2D = 0x8069,
- VERTEX_ARRAY = 0x8074,
- NORMAL_ARRAY = 0x8075,
- COLOR_ARRAY = 0x8076,
- INDEX_ARRAY = 0x8077,
- TEXTURE_COORD_ARRAY = 0x8078,
- EDGE_FLAG_ARRAY = 0x8079,
- VERTEX_ARRAY_SIZE = 0x807A,
- VERTEX_ARRAY_TYPE = 0x807B,
- VERTEX_ARRAY_STRIDE = 0x807C,
- NORMAL_ARRAY_TYPE = 0x807E,
- NORMAL_ARRAY_STRIDE = 0x807F,
- COLOR_ARRAY_SIZE = 0x8081,
- COLOR_ARRAY_TYPE = 0x8082,
- COLOR_ARRAY_STRIDE = 0x8083,
- INDEX_ARRAY_TYPE = 0x8085,
- INDEX_ARRAY_STRIDE = 0x8086,
- TEXTURE_COORD_ARRAY_SIZE = 0x8088,
- TEXTURE_COORD_ARRAY_TYPE = 0x8089,
- TEXTURE_COORD_ARRAY_STRIDE = 0x808A,
- EDGE_FLAG_ARRAY_STRIDE = 0x808C,
- VERTEX_ARRAY_POINTER = 0x808E,
- NORMAL_ARRAY_POINTER = 0x808F,
- COLOR_ARRAY_POINTER = 0x8090,
- INDEX_ARRAY_POINTER = 0x8091,
- TEXTURE_COORD_ARRAY_POINTER = 0x8092,
- EDGE_FLAG_ARRAY_POINTER = 0x8093,
- COLOR_INDEX1_EXT = 0x80E2,
- COLOR_INDEX2_EXT = 0x80E3,
- COLOR_INDEX4_EXT = 0x80E4,
- COLOR_INDEX8_EXT = 0x80E5,
- COLOR_INDEX12_EXT = 0x80E6,
- COLOR_INDEX16_EXT = 0x80E7,
- EVAL_BIT = 0x00010000,
- LIST_BIT = 0x00020000,
- TEXTURE_BIT = 0x00040000,
- SCISSOR_BIT = 0x00080000,
- ALL_ATTRIB_BITS = 0x000fffff,
- CLIENT_ALL_ATTRIB_BITS =0xffffffff,
-}
-
-GLKeyPress :: enum {
-  Released = 0,
-  Pressed = 1,
-  Repeating = 2,
-}
-
-GLKey :: enum {
-  UNKNOWN = -1,
-  SPACE = 32,
-  APOSTROPHE = 39,
-  COMMA = 44,
-  MINUS = 45,
-  PERIOD = 46,
-  SLASH = 47,
-  D0 = 48,
-  D1 = 49,
-  D2 = 50,
-  D3 = 51,
-  D4 = 52,
-  D5 = 53,
-  D6 = 54,
-  D7 = 55,
-  D8 = 56,
-  D9 = 57,
-  SEMICOLON = 59,
-  EQUAL = 61,
-  A = 65,
-  B = 66,
-  C = 67,
-  D = 68,
-  E = 69,
-  F = 70,
-  G = 71,
-  H = 72,
-  I = 73,
-  J = 74,
-  K = 75,
-  L = 76,
-  M = 77,
-  N = 78,
-  O = 79,
-  P = 80,
-  Q = 81,
-  R = 82,
-  S = 83,
-  T = 84,
-  U = 85,
-  V = 86,
-  W = 87,
-  X = 88,
-  Y = 89,
-  Z = 90,
-  LEFT_BRACKET = 91,
-  BACKSLASH = 92,
-  RIGHT_BRACKET = 93,
-  GRAVE_ACCENT = 96,
-  WORLD_1 = 161,
-  WORLD_2 = 162,
-  ESCAPE = 256,
-  ENTER = 257,
-  TAB = 258,
-  BACKSPACE = 259,
-  INSERT = 260,
-  DELETE = 261,
-  RIGHT = 262,
-  LEFT = 263,
-  DOWN = 264,
-  UP = 265,
-  PAGE_UP = 266,
-  PAGE_DOWN = 267,
-  HOME = 268,
-  END = 269,
-  CAPS_LOCK = 280,
-  SCROLL_LOCK = 281,
-  NUM_LOCK = 282,
-  PRINT_SCREEN = 283,
-  PAUSE = 284,
-  F1 = 290,
-  F2 = 291,
-  F3 = 292,
-  F4 = 293,
-  F5 = 294,
-  F6 = 295,
-  F7 = 296,
-  F8 = 297,
-  F9 = 298,
-  F10 = 299,
-  F11 = 300,
-  F12 = 301,
-  F13 = 302,
-  F14 = 303,
-  F15 = 304,
-  F16 = 305,
-  F17 = 306,
-  F18 = 307,
-  F19 = 308,
-  F20 = 309,
-  F21 = 310,
-  F22 = 311,
-  F23 = 312,
-  F24 = 313,
-  F25 = 314,
-  KP_0 = 320,
-  KP_1 = 321,
-  KP_2 = 322,
-  KP_3 = 323,
-  KP_4 = 324,
-  KP_5 = 325,
-  KP_6 = 326,
-  KP_7 = 327,
-  KP_8 = 328,
-  KP_9 = 329,
-  KP_DECIMAL = 330,
-  KP_DIVIDE = 331,
-  KP_MULTIPLY = 332,
-  KP_SUBTRACT = 333,
-  KP_ADD = 334,
-  KP_ENTER = 335,
-  KP_EQUAL = 336,
-  LEFT_SHIFT = 340,
-  LEFT_CONTROL = 341,
-  LEFT_ALT = 342,
-  LEFT_SUPER = 343,
-  RIGHT_SHIFT = 344,
-  RIGHT_CONTROL = 345,
-  RIGHT_ALT = 346,
-  RIGHT_SUPER = 347,
-  MENU = 348,
-  LAST = 348,
-}

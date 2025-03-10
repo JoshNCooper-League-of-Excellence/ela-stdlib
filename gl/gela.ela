@@ -3,18 +3,18 @@ Shader :: struct {
 }
 
 impl Shader {
-  compile :: fn(kind: u32, source: u8*) -> u32 {
+  compile :: fn(kind: u32, source: c_str) -> u32 {
     shader: u32 = glCreateShader(kind);
-    glShaderSource(shader, 1, &source, null);
+    glShaderSource(shader, 1, &const source, null);
     glCompileShader(shader);
 
-    success: s32;
-    glGetShaderiv(shader, GL::COMPILE_STATUS, &success);
+    mut success: s32;
+    glGetShaderiv(shader, GL::COMPILE_STATUS, &mut success);
     if success == 0 {
-      length: s32;
-      glGetShaderiv(shader, GL::INFO_LOG_LENGTH, &length);
-      info_log: u8* = malloc(sizeof(u8*) * length);
-      glGetShaderInfoLog(shader, length, &length, info_log);
+      mut length: s32;
+      glGetShaderiv(shader, GL::INFO_LOG_LENGTH, &const length);
+      info_log: c_str = malloc(sizeof(c_str) * length);
+      glGetShaderInfoLog(shader, length, &mut length, info_log);
       printf("Shader compilation failed: %s\n"c, info_log);
       free(info_log);
       return 0;
@@ -22,7 +22,7 @@ impl Shader {
     return shader;
   }
 
-  compile_program :: fn(vert_source: u8*, frag_source: u8*) -> u32 {
+  compile_program :: fn(vert_source: c_str, frag_source: c_str) -> u32 {
     vertex_shader: u32 = Shader::compile(GL::VERTEX_SHADER, vert_source);
     fragment_shader: u32 = Shader::compile(GL::FRAGMENT_SHADER, frag_source);
 
@@ -35,13 +35,13 @@ impl Shader {
     glAttachShader(program, fragment_shader);
     glLinkProgram(program);
 
-    success: s32;
-    glGetProgramiv(program, GL::LINK_STATUS, &success);
+    mut success: s32;
+    glGetProgramiv(program, GL::LINK_STATUS, &mut success);
     if success == 0 {
-      length: s32;
-      glGetProgramiv(program, GL::INFO_LOG_LENGTH, &length);
-      info_log: u8* = malloc(sizeof(u8*) * length);
-      glGetProgramInfoLog(program, length, &length, info_log);
+      mut length: s32;
+      glGetProgramiv(program, GL::INFO_LOG_LENGTH, &mut length);
+      info_log: c_str = malloc(sizeof(c_str) * length);
+      glGetProgramInfoLog(program, length, &mut length, info_log);
       printf("Program linking failed: %s\n"c, info_log);
       free(info_log);
       return 0 as u32;
@@ -60,42 +60,42 @@ impl Shader {
   }
   
   create :: fn(vertexSource: String, fragSource: String) -> #self {
-    v: #self;
-    v.handle = #self::compile_program(vertexSource.data, fragSource.data);
-    return v;
+    return .{
+      handle: #self::compile_program(vertexSource.data, fragSource.data),
+    };
   }
 
-  set_mat4 :: fn(*mut self, name: str, v: Mat4*) {
+  set_mat4 :: fn(*mut self, name: str, v: *const Mat4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniformMatrix4fv(index, 1, false, v.values as f32*);
+      glUniformMatrix4fv(index, 1, false, v.values);
     } else {
       printf("failed to get uniform : %s\n"c, name.data);
     }
   }
   
-  set_vec4 :: fn(*mut self, name: str, v: Vec4*) {
+  set_vec4 :: fn(*mut self, name: str, v: *const Vec4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniform4fv(index, 1, v.values as f32*);
+      glUniform4fv(index, 1, v.values);
     } else {
       printf("failed to get uniform : %s\n"c, name.data);
     }
   }
   
-  set_vec3 :: fn(*mut self, name: str, v: Vec3*) {
+  set_vec3 :: fn(*mut self, name: str, v: *const Vec3) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniform3fv(index, 1, v.values as f32*);
+      glUniform3fv(index, 1, v.values);
     } else {
       printf("failed to get uniform : %s\n"c, name.data);
     }
   }
   
-  set_vec2 :: fn(*mut self, name: str, v: Vec2*) {
+  set_vec2 :: fn(*mut self, name: str, v: *const Vec2) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniform2fv(index, 1, v.values as f32*);
+      glUniform2fv(index, 1, v.values);
     } else {
       printf("failed to get uniform : %s\n"c, name.data);
     }
@@ -110,30 +110,30 @@ impl Shader {
     }
   }
 
-  set :: fn!<T>(*mut self, name: str, v: T*) {
+  set :: fn!<T>(*mut self, name: str, v: T) {
     switch typeof(T) {
       typeof(f32): {
-        self.set_float(name, *(v as f32*));
+        self.set_float(name, *((&const v) as *const f32));
         return;
       }
       typeof(Vec2): {
-        self.set_vec2(name, v as Vec2*);
+        self.set_vec2(name, (&const v) as *const Vec2);
         return;
       }
       typeof(Vec3): {
-        self.set_vec3(name, v as Vec3*);
+        self.set_vec3(name, (&const v) as *const Vec3);
         return;
       }
       typeof(Vec4): {
-        self.set_vec4(name, v as Vec4*);
+        self.set_vec4(name, (&const v) as *const Vec4);
         return;
       }
       typeof(Mat4): {
-        self.set_mat4(name, v as Mat4*);
+        self.set_mat4(name, (&const v) as *const Mat4);
         return;
       }
     }
-    printf("incompatible type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n");
+    printf("incompatible type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n"c);
   }
 }
 
@@ -144,12 +144,12 @@ impl Deinit for Shader {
 }
 
 Window :: struct {
-  handle: GLFWwindow*
+  handle: *mut GLFWwindow
 }
 
 impl Window {
   create :: fn(width: s32, height: s32, title: str) -> #self {
-    self: #self;
+    mut self: #self;
     
     if !glfwInit() {
       printf("Failed to initialize glfw\n"c);
@@ -188,8 +188,7 @@ impl Window {
     glClear(flags);
   }
 
-
-  set_key_callback :: fn(*mut self, callback: fn*(GLFWwindow*, s32, s32, s32, s32)) {
+  set_key_callback :: fn(*mut self, callback: fn*(*mut GLFWwindow, s32, s32, s32, s32)) {
     glfwSetKeyCallback(self.handle, callback);
   }
 }
@@ -207,7 +206,7 @@ Camera :: struct {
 }
 
 impl Camera {
-  new :: fn(up: Vec3, fov: f32, aspect, near, far) -> #self {
+  new :: fn(up: Vec3, fov: f32, aspect: f32, near: f32, far: f32) -> #self {
     return .{
       position: Vec3::zero(),
       target:   Vec3::zero(),

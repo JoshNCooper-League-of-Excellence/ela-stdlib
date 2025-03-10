@@ -165,7 +165,7 @@ ModelAnimation :: struct {
   boneCount: s32,
   frameCount: s32,
   bones: *const BoneInfo,
-  framePoses: **const Transform,
+  framePoses: *const *const Transform,
   name: u8[32],
 };
 Ray :: struct {
@@ -235,7 +235,7 @@ VrStereoConfig :: struct {
 FilePathList :: struct {
   capacity: u32,
   count: u32,
-  paths: **const u8,
+  paths: *const *const u8,
 };
 AutomationEvent :: struct {
   frame: u32,
@@ -996,7 +996,7 @@ alias SaveFileTextCallback :: fn*(*const u8, *const u8) -> bool;
 #foreign LoadFontFromMemory :: fn(fileType: *const u8, fileData: *const u8, dataSize: s32, fontSize: s32, codepoints: *const s32, codepointCount: s32) -> Font;
 #foreign IsFontValid :: fn(font: Font) -> bool;
 #foreign LoadFontData :: fn(fileData: *const u8, dataSize: s32, fontSize: s32, codepoints: *const s32, codepointCount: s32, type: s32) -> *const GlyphInfo;
-#foreign GenImageFontAtlas :: fn(glyphs: *const GlyphInfo, glyphRecs: **const Rectangle, glyphCount: s32, fontSize: s32, padding: s32, packMethod: s32) -> Image;
+#foreign GenImageFontAtlas :: fn(glyphs: *const GlyphInfo, glyphRecs: *const *const Rectangle, glyphCount: s32, fontSize: s32, padding: s32, packMethod: s32) -> Image;
 #foreign UnloadFontData :: fn(glyphs: *const GlyphInfo, glyphCount: s32) -> void;
 #foreign UnloadFont :: fn(font: Font) -> void;
 #foreign ExportFontAsCode :: fn(font: Font, fileName: *const u8) -> bool;
@@ -1028,8 +1028,8 @@ alias SaveFileTextCallback :: fn*(*const u8, *const u8) -> bool;
 #foreign TextSubtext :: fn(text: *const u8, position: s32, length: s32) -> *const u8;
 #foreign TextReplace :: fn(text: *const u8, replace: *const u8, by: *const u8) -> *const u8;
 #foreign TextInsert :: fn(text: *const u8, insert: *const u8, position: s32) -> *const u8;
-#foreign TextJoin :: fn(textList: **const u8, count: s32, delimiter: *const u8) -> *const u8;
-#foreign TextSplit :: fn(text: *const u8, delimiter: u8, count: *const s32) -> **const u8;
+#foreign TextJoin :: fn(textList: *const *const u8, count: s32, delimiter: *const u8) -> *const u8;
+#foreign TextSplit :: fn(text: *const u8, delimiter: u8, count: *const s32) -> *const *const u8;
 #foreign TextAppend :: fn(text: *const u8, append: *const u8, position: *const s32) -> void;
 #foreign TextFindIndex :: fn(text: *const u8, find: *const u8) -> s32;
 #foreign TextToUpper :: fn(text: *const u8) -> *const u8;
