@@ -2,6 +2,14 @@ panic :: fn(msg: str);
 
 #ifndef FREESTANDING {
   impl!<T> T[] {
+
+    clear :: fn(*mut self) {
+      free(self.data);
+      self.capacity = 0;
+      self.data = null;
+      self.length = 0;
+    }
+
     /*  
       Is the list empty. 
     */

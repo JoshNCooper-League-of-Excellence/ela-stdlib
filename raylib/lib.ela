@@ -43,6 +43,7 @@ impl Color {
 }
 
 impl Vector2 {
+
   zero :: fn() -> #self {
     return .{ x: 0.0, y: 0.0 };
   }
@@ -113,6 +114,10 @@ impl Vector2 {
 }
 
 impl Vector3 {
+  new :: fn(x: f32, y: f32, z: f32) -> #self {
+    return .{ x: x, y: y, z: z };
+  }
+  
   zero :: fn() -> #self {
     return .{ x: 0.0, y: 0.0, z: 0.0 };
   }
@@ -181,6 +186,10 @@ impl Vector3 {
 }
 
 impl Vector4 {
+  new :: fn(x: f32, y: f32, z: f32, w: f32) -> #self {
+    return .{ x: x, y: y, z: z, w: w };
+  }
+
   zero :: fn() -> #self {
     return .{ x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
   }
@@ -201,8 +210,8 @@ impl Vector4 {
     return .{ x: self.x - other.x, y: self.y - other.y, z: self.z - other.z, w: self.w - other.w };
   }
 
-  mul :: fn(self, scalar: f32) -> #self {
-    return .{ x: self.x * scalar, y: self.y * scalar, z: self.z * scalar, w: self.w * scalar };
+  mul :: fn(self, other: #self) -> #self {
+    return QuaternionMultiply(self, other);
   }
 
   div :: fn(self, scalar: f32) -> #self {
@@ -236,6 +245,25 @@ impl Vector4 {
 
   distance :: fn(self, other: #self) -> f32 {
     return sqrt((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y) + (self.z - other.z) * (self.z - other.z) + (self.w - other.w) * (self.w - other.w)) as f32;
+  }
+}
+
+
+impl Quaternion {
+  from_euler :: fn(x: f32, y: f32, z: f32) -> #self {
+    cx := cos(x * 0.5) as f32;
+    cy := cos(y * 0.5) as f32;
+    cz := cos(z * 0.5) as f32;
+    sx := sin(x * 0.5) as f32;
+    sy := sin(y * 0.5) as f32;
+    sz := sin(z * 0.5) as f32;
+
+    return .{
+      x: sx * cy * cz - cx * sy * sz,
+      y: cx * sy * cz + sx * cy * sz,
+      z: cx * cy * sz - sx * sy * cz,
+      w: cx * cy * cz + sx * sy * sz,
+    };
   }
 }
 
