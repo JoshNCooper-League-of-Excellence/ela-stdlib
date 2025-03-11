@@ -520,12 +520,10 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
       } else if value.type == typeof(str) { 
         if options.quote_strings 
           then builder.append("\"");
-
         builder.append_then_free((*(value.ptr as *const str)).as_string());   
-
         if options.quote_strings 
           then builder.append("\"");
-      } else if !value.type.is_pointer() && value.type.is_struct() || value.type.is_tuple() {
+      } else if !value.type.is_pointer() && (value.type.is_struct() || value.type.is_tuple()) {
         format_struct(value, &mut builder, options);
       } else if value.ptr == null {
         builder.append("null");
