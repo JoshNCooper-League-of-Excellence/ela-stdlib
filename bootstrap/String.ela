@@ -98,7 +98,7 @@
       free(self.data);
     }
   }
-    
+
   impl String {
     starts_with :: fn(*mut self, prefix: c_str) -> bool {
       prefix_len := strlen(prefix);
@@ -175,7 +175,7 @@ impl Iterable!<u8> for String {
       end: self.data + self.length,
     }
   }
-  iter_mut :: fn(*mut self) -> Iter!<*mut u8> {
+  iter_mut :: fn(*mut self) -> Iter!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,

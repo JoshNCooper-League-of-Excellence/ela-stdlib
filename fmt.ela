@@ -357,12 +357,10 @@ to_string :: fn!<T>(value: T) -> String {
   mut format_buffer: u8[255];
 
   if type.is_pointer() {
-    printf("pointer\n"c);
     format_buffer[0] = '%';
     format_buffer[1] = 'p';
     format_buffer[2] = '\0';
   } else if type == typeof(u8) {
-    printf("u8\n"c);
     format_buffer[0] = '%';
     format_buffer[1] = 'c';
     format_buffer[2] = '\0';
@@ -509,6 +507,7 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
         ptr: field.get(&const tuple),
       };
 
+
       if value.type == typeof(String)  { 
         if options.quote_strings 
           then builder.append("\"");
@@ -526,8 +525,7 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
 
         if options.quote_strings 
           then builder.append("\"");
-      } else if value.type.is_struct() || value.type.is_tuple() {
-        printf("struct\n"c);
+      } else if !value.type.is_pointer() && value.type.is_struct() || value.type.is_tuple() {
         format_struct(value, &mut builder, options);
       } else if value.ptr == null {
         builder.append("null");

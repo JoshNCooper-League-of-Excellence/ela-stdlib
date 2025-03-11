@@ -198,10 +198,10 @@ impl!<T> Iterable!<T> for T[] {
   /* 
     Get a mutable iterator.
   */
-  iter_mut :: fn(*mut self) -> Iter!<*mut T> {
+  iter_mut :: fn(*mut self) -> IterMut!<T> {
     return .{
       ptr: self.data,
-      end: (self.data + self.length),
+      end: self.data + self.length,
     }
   }
 }

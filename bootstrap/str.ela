@@ -71,10 +71,10 @@ impl Iterable!<u8> for str {
       end: self.data + self.length,
     }
   }
-  iter_mut :: fn(*mut self) -> IterMut!<*mut u8> {
+  iter_mut :: fn(*mut self) -> IterMut!<u8> {
     return .{
       ptr: self.data as *mut u8,
-      end: self.data + self.length,
+      end: (self.data + self.length),
     }
   }
 }

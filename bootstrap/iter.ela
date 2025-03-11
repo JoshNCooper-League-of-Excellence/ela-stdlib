@@ -34,14 +34,14 @@ IterMut :: struct!<V> {
   end: *const V,  // Pointer to the end of the collection.
 }
 
-impl!<V> Iterator!<*const V> for Iter!<V> {
-  alias Option :: Option!<*const V>;
+impl!<V> Iterator!<V> for Iter!<V> {
+  alias Option :: Option!<V>;
   // Advances the iterator to the next element in the collection.
   next :: fn(*mut self) -> Option {
     if self.ptr >= self.end {
       return Option::None();
     }
-    value := Option::Some(self.ptr);
+    value := Option::Some(*self.ptr);
     self.ptr++;
     return value;
   }
@@ -67,10 +67,8 @@ impl!<V> Iterator!<*mut V> for IterMut!<V> {
 Iterable :: interface!<V> {
   // Returns an iterator for the collection.
   iter :: fn(*const self) -> Iterator!<V>;
-  iter_mut :: fn(*mut self) -> Iterator!<*mut V>;
+  iter_mut :: fn(*mut self) -> Iterator!<V>;
 }
-
-
 
 Enumerate :: struct!<V, I> where I is Iterator!<V> {
   idx: u64,

@@ -56,7 +56,7 @@ impl!<T> Iterable!<T> for Slice!<T> {
     }
   }
 
-  iter_mut :: fn(*mut self) -> Iter!<*mut T> {
+  iter_mut :: fn(*mut self) -> Iter!<T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length
