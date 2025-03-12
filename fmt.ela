@@ -219,7 +219,7 @@ impl String_Builder_Block {
 }
 
 impl Deinit for String_Builder_Block {
-  deinit :: fn(*const self) {
+  deinit :: fn(*mut self) {
     if self.data then free(self.data);
     if self.next { 
       self.next.deinit();
@@ -234,7 +234,7 @@ String_Builder :: struct {
 }
 
 impl Deinit for String_Builder {
-  deinit :: fn(*const self) {
+  deinit :: fn(*mut self) {
     if self.root then self.root.deinit();
   }
 }

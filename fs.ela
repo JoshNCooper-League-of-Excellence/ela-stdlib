@@ -208,7 +208,7 @@ impl File {
 }
 
 impl Deinit for File {
-  deinit :: fn(*const self) {
+  deinit :: fn(*mut self) {
     self.close();
   }
 }
@@ -273,7 +273,7 @@ impl Directory {
 }
 
 impl Deinit for Directory {
-  deinit :: fn(*const self) {
+  deinit :: fn(*mut self) {
     self.path.deinit();
     for path in self.entries {
       path.deinit();

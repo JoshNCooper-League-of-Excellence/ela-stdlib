@@ -15,7 +15,7 @@ Arena :: struct {
 }
 
 impl Deinit for Arena {
-  deinit :: fn(*const self) {
+  deinit :: fn(*mut self) {
     if self.next then self.next.deinit();
     free(self.memory);
     (self as *mut #self).memory = null;

@@ -116,7 +116,7 @@ panic :: fn(msg: str) {
       return #self::current().m_args.clone();
     }
     initialize :: fn(argc: s32, argv: *const c_str) {
-      self := #self::current();
+      mut self := #self::current() as *mut #self;
       for i in 0..argc {
         self.m_args.push(.{
           data: argv[i],

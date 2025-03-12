@@ -33,7 +33,7 @@
     pointers: *mut void[],
   }
   impl Deinit for Tracking_Allocator {
-    deinit :: fn(*const self) {
+    deinit :: fn(*mut self) {
       while self.pointers.length {
         free(self.pointers.pop());
       }

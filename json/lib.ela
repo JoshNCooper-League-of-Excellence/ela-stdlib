@@ -28,7 +28,7 @@
 // }
 
 // impl Deinit for JsonValue {
-//   deinit :: fn(*const self) {
+//   deinit :: fn(*mut self) {
 //     switch self.type {
 //       JsonValueType::Object: {
 //         for key, value in self.data.object {
