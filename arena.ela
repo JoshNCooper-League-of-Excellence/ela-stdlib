@@ -12,7 +12,7 @@ Arena :: struct {
   flags: ArenaFlags,
   alignment: u64,
   next: *mut Arena,
-}
+} 
 
 impl Deinit for Arena {
   deinit :: fn(*mut self) {
