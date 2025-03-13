@@ -251,19 +251,7 @@ impl Vector4 {
 
 impl Quaternion {
   from_euler :: fn(x: f32, y: f32, z: f32) -> #self {
-    cx := cos(x * 0.5) as f32;
-    cy := cos(y * 0.5) as f32;
-    cz := cos(z * 0.5) as f32;
-    sx := sin(x * 0.5) as f32;
-    sy := sin(y * 0.5) as f32;
-    sz := sin(z * 0.5) as f32;
-
-    return .{
-      x: sx * cy * cz - cx * sy * sz,
-      y: cx * sy * cz + sx * cy * sz,
-      z: cx * cy * sz - sx * sy * cz,
-      w: cx * cy * cz + sx * sy * sz,
-    };
+    return QuaternionFromEuler(x, y, z);
   }
 }
 

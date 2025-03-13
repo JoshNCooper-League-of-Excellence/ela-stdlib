@@ -472,6 +472,10 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
   builder.append("}");
 }
 
+format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options) {
+  
+}
+
 format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String {
   if fmt.length == 0 then
     return .{};

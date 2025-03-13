@@ -60,6 +60,7 @@ Font :: struct {
   recs: *const Rectangle,
   glyphs: *const GlyphInfo,
 };
+
 Camera3D :: struct {
   position: Vector3,
   target: Vector3,
@@ -69,6 +70,7 @@ Camera3D :: struct {
 };
 
 alias Camera :: Camera3D;
+
 Camera2D :: struct {
   offset: Vector2,
   target: Vector2,
@@ -1150,3 +1152,6 @@ alias AudioCallback :: fn*(*const void, u32) -> void;
 #foreign DetachAudioStreamProcessor :: fn(stream: AudioStream, processor: AudioCallback) -> void;
 #foreign AttachAudioMixedProcessor :: fn(processor: AudioCallback) -> void;
 #foreign DetachAudioMixedProcessor :: fn(processor: AudioCallback) -> void;
+
+
+#foreign rlSetClipPlanes :: fn(near: f64, far: f64);
