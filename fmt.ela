@@ -424,50 +424,7 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
     builder.append(Slice!<u8>::from(field.name, strlen(field.name)));
     builder.append(": ");
 
-    if field_any.ptr == null {
-      builder.append("null");
-    } else if field_any.type == typeof(c_str) {
-      builder.append(String::from_ptr(field_any.unwrap!<*const u8>()));
-    } else if field_any.type.is_pointer() {
-      builder.append_then_free(to_string(value.ptr));
-    } else if field_any.type.is_enum() {
-      builder.append_then_free(to_string(field_any.unwrap!<s32>()));
-    } else if field_any.type == typeof(String)  {
-      if options.quote_strings
-        then builder.append("\"");
-      builder.append(*(field_any.ptr as *const String));
-      if options.quote_strings
-        then builder.append("\"");
-    } else if field_any.type == typeof(str) {
-      if options.quote_strings
-        then builder.append("\"");
-      builder.append_then_free((*(field_any.ptr as *const str)).as_string());
-      if options.quote_strings
-        then builder.append("\"");
-    } else if field_any.type.is_struct() {
-      // format_struct(field_any, builder, options);
-    } else {
-      switch field_any.type {
-        typeof(u8):      { builder.append_then_free(to_string(field_any.unwrap!<u8>()));  }
-        typeof(u16):     { builder.append_then_free(to_string(field_any.unwrap!<u16>())); }
-        typeof(u32):     { builder.append_then_free(to_string(field_any.unwrap!<u32>())); }
-        typeof(u64):     { builder.append_then_free(to_string(field_any.unwrap!<u64>())); }
-
-        typeof(s8):      { builder.append_then_free(to_string(field_any.unwrap!<s8>()));  }
-        typeof(s16):     { builder.append_then_free(to_string(field_any.unwrap!<s16>())); }
-        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
-        typeof(s64):     { builder.append_then_free(to_string(field_any.unwrap!<s64>())); }
-
-        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
-
-        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
-        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
-        typeof(f64):     { builder.append_then_free(to_string(field_any.unwrap!<f64>()));  }
-
-        typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
-        else: { builder.append("(invalid type)"); }
-      };
-    }
+    format_any(field_any, builder, options);
 
     builder.append(",");
 
@@ -491,50 +448,7 @@ format_tuple :: fn(value: any, builder: *mut String_Builder, options: Format_Opt
       ptr: field.get(value.ptr),
     };
 
-    if field_any.ptr == null {
-      builder.append("null");
-    } else if field_any.type == typeof(c_str) {
-      builder.append(String::from_ptr(field_any.unwrap!<*const u8>()));
-    } else if field_any.type.is_pointer() {
-      builder.append_then_free(to_string(value.ptr));
-    } else if field_any.type.is_enum() {
-      builder.append_then_free(to_string(field_any.unwrap!<s32>()));
-    } else if field_any.type == typeof(String)  {
-      if options.quote_strings
-        then builder.append("\"");
-      builder.append(*(field_any.ptr as *const String));
-      if options.quote_strings
-        then builder.append("\"");
-    } else if field_any.type == typeof(str) {
-      if options.quote_strings
-        then builder.append("\"");
-      builder.append_then_free((*(field_any.ptr as *const str)).as_string());
-      if options.quote_strings
-        then builder.append("\"");
-    } else if field_any.type.is_struct() {
-      // format_struct(field_any, builder, options);
-    } else {
-      switch field_any.type {
-        typeof(u8):      { builder.append_then_free(to_string(field_any.unwrap!<u8>()));  }
-        typeof(u16):     { builder.append_then_free(to_string(field_any.unwrap!<u16>())); }
-        typeof(u32):     { builder.append_then_free(to_string(field_any.unwrap!<u32>())); }
-        typeof(u64):     { builder.append_then_free(to_string(field_any.unwrap!<u64>())); }
-
-        typeof(s8):      { builder.append_then_free(to_string(field_any.unwrap!<s8>()));  }
-        typeof(s16):     { builder.append_then_free(to_string(field_any.unwrap!<s16>())); }
-        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
-        typeof(s64):     { builder.append_then_free(to_string(field_any.unwrap!<s64>())); }
-
-        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
-
-        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
-        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
-        typeof(f64):     { builder.append_then_free(to_string(field_any.unwrap!<f64>()));  }
-
-        typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
-        else: { builder.append("(invalid type)"); }
-      };
-    }
+    format_any(field_any, builder, options);
 
     if i != value.type.fields.length - 1 {
       builder.append(", ");
