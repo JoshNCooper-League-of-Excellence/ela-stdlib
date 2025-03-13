@@ -6,16 +6,58 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
       ok: v,
     };
   }
+
   Err :: fn(v: _Err) -> #self {
     return .{
       index: RESULT_IS_ERR,
       err: v
     }
   }
+
   unwrap :: fn(self) -> _Ok {
     if self.index == RESULT_IS_ERR {
       panic("called 'unwrap' on an Err result");
     }
     return self.ok;
+  }
+
+
+  is_ok :: fn(self) -> bool {
+    return self.index == RESULT_IS_OK;
+  }
+
+  is_err :: fn(self) -> bool {
+    return self.index == RESULT_IS_ERR;
+  }
+
+  // we can use this to propagate the error/ok into a new result type,
+  // to create a hierarchy
+
+  // for example
+  /* 
+      getter :: fn(..) -> Result!<(), String> ... // this function returns a Result that has a String for an error.
+
+      other :: fn(..) -> Result!<s32, String> ... // this also returns a result that has a string for an error, but
+      they don't match. so,
+
+      in other:
+
+      other :: fn(..) -> Result!<s32, String> {
+        result := getter();
+
+        if result.is_err() {
+          return result.propagate(); // this coerces the Result!<(), String> into Result!<s32, String>
+        }
+
+      }
+  */
+  propagate :: fn!<NewErrorT>(self) -> NewErrorT {
+    return NewErrorT::Err(self.err);
+  }
+
+  // this does the same thing as propagate, but it just does it for the ok.
+  // I don't know good names for these, so obviously suggestions are welcome
+  coerce :: fn!<NewOkT>(self) -> NewOkT {
+    return NewErrorT::Ok(self.ok);
   }
 }

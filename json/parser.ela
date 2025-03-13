@@ -1,0 +1,130 @@
+
+alias ParseResult :: Result!<*mut JsonValue, String>;
+
+parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
+  mut token_result := lexer.expect_types(.[
+    JsonTokenType::LBracket,
+    JsonTokenType::LCurly,
+    JsonTokenType::Number,
+    JsonTokenType::String,
+    JsonTokenType::True,
+    JsonTokenType::False,
+    JsonTokenType::Null,
+  ]);
+
+  if token_result.is_err()
+    then return token_result.propagate();
+
+  value : *mut JsonValue = new(.{
+    type: JsonValueType::Invalid,
+  });
+
+  mut token := token_result.unwrap();
+
+  switch token.type {
+    JsonTokenType::LBracket: {
+      value.type = JsonValueType::Array;
+      value.array = .{};
+
+      peek_result := lexer.peek_token();
+      if peek_result.is_err()
+        then return peek_result.propagate();
+
+      peek_token := peek_result.unwrap();
+      if peek_token.type == JsonTokenType::RBracket {
+        lexer.eat();
+        return ParseResult::Ok(value);
+      }
+
+      while token.type != JsonTokenType::RBracket {
+        value_result := parse(lexer);
+        if value_result.is_err()
+          then return value_result.propagate();
+
+        value.array.push(value_result.unwrap());
+
+        token_result = lexer.expect_types(.[
+          JsonTokenType::RBracket, 
+          JsonTokenType::Comma
+        ]);
+        if token_result.is_err()
+          then return token_result.propagate();
+        token = token_result.unwrap();
+      }
+    }
+    JsonTokenType::LCurly: {
+      value.type = JsonValueType::Object;
+      value.object = .{};
+
+      token_result = lexer.peek_token();
+      if token_result.type == JsonTokenType::RCurly {
+        lexer.eat();
+        return ParseResult::Ok(value);
+      }
+
+      token = token_result.unwrap();
+      while token.type != JsonTokenType::RCurly {
+        
+        token_result = lexer.expect_type(JsonTokenType::String);
+        if token_result.is_err() 
+          then return token_result.propagate();
+        
+        key_token := token_result.unwrap();
+
+        token_result = lexer.expect_type(JsonTokenType::Colon);
+        if token_result.is_err() 
+          then return token_result.propagate();
+
+        value_result := parse(lexer);
+        if value_result.is_err() 
+          then return value_result.propagate();
+        
+        val := value_result.unwrap();
+
+        value.object.push(.{key: key_token.value, value: val});
+
+        token_result = lexer.expect_types(.[
+          JsonTokenType::RCurly, 
+          JsonTokenType::Comma
+        ]);
+
+        if token_result.is_err() 
+          then return token_result.propagate();
+
+        token = token_result.unwrap();
+      }
+    }
+  }
+  
+  if token.type == JsonTokenType::Number {
+    value.type = JsonValueType::Number;
+    value.number = atof(token.value);
+  } else if token.type == JsonTokenType::String {
+    value.type = JsonValueType::String;
+    value.string = token.value;
+  } else if token.type == JsonTokenType::True {
+    value.type = JsonValueType::Boolean;
+    value.boolean = true;
+  } else if token.type == JsonTokenType::False {
+    value.type = JsonValueType::Boolean;
+    value.boolean = false;
+  } else if token.type == JsonTokenType::Null {
+    value.type = JsonValueType::Null;
+  }
+  return (JsonError::SUCCESS, value);
+}
+
+parse_file :: fn(file: str) -> ParseResult {
+  result := File::read_all(file);
+  if result.is_err() {
+    return result.propagate();
+  }
+
+  mut lexer := JsonLexer::create(file, result.unwrap());
+  return parse(&mut lexer);
+}
+
+parse_string :: fn(s: str) -> ParseResult {
+  mut lexer := JsonLexer::create(":<loaded from string>:", s);
+  return parse(&mut lexer);
+}

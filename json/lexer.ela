@@ -77,7 +77,7 @@ impl JsonLexer {
   get_token :: fn(*mut self) -> Result!<JsonToken, String> {
     alias Result :: Result!<JsonToken, String>;
 
-    token : JsonToken;
+    mut token : JsonToken;
     token.type = JsonTokenType::Eof;
     token.column = self.position - self.line_start;
     token.line = self.cur_line + 1;
@@ -87,7 +87,7 @@ impl JsonLexer {
     }
 
     // TODO: handle UTF8.
-    c : u8 = self.input[self.position];
+    mut c := self.input[self.position];
 
     // whitespace
     // TODO: this should handle tabs, no? perhaps isspace does that.
@@ -113,7 +113,8 @@ impl JsonLexer {
     if c == '/' {
       self.position++;
       if self.position >= self.input.length {
-        location := self.get_location_string();
+        mut location := self.get_location_string();
+        defer location.deinit();
         return Result::Err(format("at \"%\" unexpected end of input %", (location, c), Format_Options::default(),))
       }
       c = self.input[self.position];
@@ -192,10 +193,12 @@ impl JsonLexer {
         c = self.input[self.position];
       }
       self.position++;
-      token.value = String::from(Slice!<u8>.{
-        data: self.input.data + start,
+
+      token.value = .{
+        data: strndup(self.input.data + start, len),
         length: len
-      });
+      };
+
       token.type = JsonTokenType::String;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "true"c, 4) == 0 {
@@ -258,7 +261,7 @@ impl JsonLexer {
       }
     }
 
-    builder: String_Builder;
+    mut builder: String_Builder;
     defer builder.deinit();
 
     for i in 0..types.length {
@@ -270,7 +273,7 @@ impl JsonLexer {
     error := format("at: \"%:%:%\" :: unexpected token, expected \"%\", got \"%\"", (
         self.file, token.line, token.column,
         types_string,
-        json_token_type_names[token.type]
+        json_token_type_names.data[token.type]
       ),
       Format_Options::default(),
     );

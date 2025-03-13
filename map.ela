@@ -95,6 +95,16 @@ impl!<Key, Value> Map!<Key, Value> where Key is Hash {
   }
 }
 
+impl!<Key, Value> Deinit for Map!<Key, Value> {
+  deinit :: fn(*mut self) {
+    for bucket in self.buckets {
+      bucket.deinit();
+    }
+    self.buckets.deinit();
+    self.length = 0;
+  }
+}
+
 MapIter :: struct!<Key, Value> {
   map: *const Map!<Key, Value>,
   bucket_index: u64,
