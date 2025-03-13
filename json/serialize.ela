@@ -1,3 +1,4 @@
+
 json_serialize_scalar :: fn(object: void*, type: Type*) -> (s32, JsonValue*) {
   val : JsonValue* = malloc(sizeof(JsonValue));
   if Type::is_float(type) {
