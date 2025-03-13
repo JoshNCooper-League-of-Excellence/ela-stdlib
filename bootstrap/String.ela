@@ -168,7 +168,7 @@ impl Eq for String {
   }
 }
 
-impl Iterable!<u8> for String { 
+impl Iterable for String { 
   iter :: fn(*const self) -> Iter!<u8> {
     return .{
       ptr: self.data,
@@ -198,5 +198,12 @@ impl As_Byte_Slice for String {
       data: self.data,
       length: self.length
     }
+  }
+}
+
+
+impl Hash for String {
+  hash :: fn(self) -> u64 {
+    return self.as_str().hash();
   }
 }

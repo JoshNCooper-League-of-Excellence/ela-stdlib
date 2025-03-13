@@ -1,0 +1,157 @@
+/* 
+  Since @Cooper-Pilot's hashmap implementation got lost from the git,
+  this is just a reallly crappy hashmap I had chat gpt write pretty quickly.
+
+  This should be replaced with one that is made with attention to detail and performaance in mind.
+*/
+
+Map :: struct!<Key, Value> {
+  buckets: (Key, Value)[][],
+  length: u64,
+}
+
+impl!<Key, Value> Map!<Key, Value> where Key is Hash {
+  alias Pair :: (Key, Value);
+  new :: fn() -> #self {
+    INITIAL_CAPACITY :: 16;
+    mut buckets: List!<List!<Pair>>;
+    buckets.initialize(INITIAL_CAPACITY);
+    return .{
+      buckets: buckets,
+      length: 0,
+    };
+  }
+
+  insert :: fn(*mut self, key: Key, value: Value) {
+    if self.buckets.length == 0 {
+      self.buckets.initialize(16);
+    }
+
+    idx := key.hash() % self.buckets.length;
+    for pair in self.buckets[idx].iter_mut() {
+      if pair.0 == key {
+        pair.1 = value;
+        return;
+      }
+    }
+    self.buckets[idx].push((key, value));
+    self.length += 1;
+  }
+
+  get :: fn(*const self, search_key: Key) -> Option!<Value> {
+    if self.buckets.length == 0 {
+      return None();
+    }
+
+    idx := search_key.hash() % self.buckets.length;
+
+    for pair in self.buckets[idx].iter() {
+      if pair.0 == search_key then
+        return Some(pair.1);
+    }
+
+    return None();
+  }
+  
+  get_mut :: fn(*mut self, search_key: Key) -> Option!<*mut Value> {
+    if self.buckets.length == 0 {
+      return None();
+    }
+
+    idx := search_key.hash() % self.buckets.length;
+
+    for pair in self.buckets[idx].iter() {
+      if pair.0 == search_key then
+        return Some(&mut pair.1);
+    }
+
+    return None();
+  }
+
+  remove :: fn(*mut self, key: Key) -> bool {
+    if self.buckets.length == 0 {
+      return false;
+    }
+    idx := key.hash() % self.buckets.length;
+    for i in 0..self.buckets[idx].length {
+      if self.buckets[idx][i].0 == key {
+        self.buckets[idx].remove_at(i);
+        self.length -= 1;
+        return true;
+      }
+    }
+    return false;
+  }
+
+  contains :: fn(*const self, key: Key) -> bool {
+    return self.get(key).is_some();
+  }
+
+  clear :: fn(*mut self) {
+    for bucket in self.buckets.iter_mut() {
+      bucket.clear();
+    }
+    self.length = 0;
+  }
+}
+
+MapIter :: struct!<Key, Value> {
+  map: *const Map!<Key, Value>,
+  bucket_index: u64,
+  pair_index: u64,
+}
+
+MapIterMut :: struct!<Key, Value> {
+  map: *const Map!<Key, Value>,
+  bucket_index: u64,
+  pair_index: u64,
+}
+
+impl!<Key, Value> Iterator!<(Key, Value)> for MapIter!<Key, Value> {
+  next :: fn(*mut self) -> Option!<(Key, Value)> {
+    while self.bucket_index < self.map.buckets.length {
+      if self.pair_index < self.map.buckets[self.bucket_index].length {
+        pair := self.map.buckets[self.bucket_index][self.pair_index];
+        self.pair_index += 1;
+        return Some(pair);
+      } else {
+        self.bucket_index += 1;
+        self.pair_index = 0;
+      }
+    }
+    return None();
+  }
+}
+
+impl!<Key, Value> Iterator!<*mut (Key, Value)> for MapIterMut!<Key, Value> {
+  next :: fn(*mut self) -> Option!<*mut (Key, Value)> {
+    while self.bucket_index < self.map.buckets.length {
+      if self.pair_index < self.map.buckets[self.bucket_index].length {
+        self.pair_index += 1;
+        return Some(&mut self.map.buckets[self.bucket_index][self.pair_index-1]);
+      } else {
+        self.bucket_index += 1;
+        self.pair_index = 0;
+      }
+    }
+    return None();
+  }
+}
+
+impl!<Key, Value> Iterable for Map!<Key, Value> {
+  iter :: fn(*const self) -> MapIter!<Key, Value> {
+    return .{
+      map: self,
+      bucket_index: 0,
+      pair_index: 0,
+    };
+  }
+
+  iter_mut :: fn(*mut self) -> MapIterMut!<Key, Value> {
+    return .{
+      map: self
+      bucket_index: 0,
+      pair_index: 0,
+    };
+  }
+}

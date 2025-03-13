@@ -63,7 +63,7 @@
       index++;
       byte := sequence[index];
       max_length -= 1;
-      
+
       if max_length == 0
         then break;
 
@@ -182,7 +182,7 @@ impl Format_Options {
     indented: false,
     quote_strings: false,
   };
-  
+
   current :: fn() -> *mut #self {
     #static mut current := Format_Options.{
       digits_after_decimal: 2,
@@ -221,11 +221,11 @@ impl String_Builder_Block {
 impl Deinit for String_Builder_Block {
   deinit :: fn(*mut self) {
     if self.data then free(self.data);
-    if self.next { 
+    if self.next {
       self.next.deinit();
       free(self.next);
     }
-  } 
+  }
 }
 
 String_Builder :: struct {
@@ -386,7 +386,7 @@ to_string :: fn!<T>(value: T) -> String {
   } else {
     return .{};
   }
-  
+
   buffer: u8[1024]; // this is wayyy over allocated, but it's not a big deal.
   snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
   return String::from_ptr(buffer);
@@ -394,6 +394,14 @@ to_string :: fn!<T>(value: T) -> String {
 
 format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
 format_any :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
+
+/*
+  ! Massive TODO/BUG!
+  ! @Cooper-Pilot
+  We need to figure out why doing these kind of 'mutually recursive' functions,
+  such as the various formatters, causes a crazy blow-up in the dependency emitter.
+*/
+
 format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
   builder.append(Slice!<u8>::from(value.type.name, strlen(value.type.name)));
   builder.append(" {");
@@ -411,7 +419,7 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
       type: field.type,
       ptr: field.get(value.ptr),
     };
-  
+
     builder.append(" ");
     builder.append(Slice!<u8>::from(field.name, strlen(field.name)));
     builder.append(": ");
@@ -424,17 +432,17 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
       builder.append_then_free(to_string(value.ptr));
     } else if field_any.type.is_enum() {
       builder.append_then_free(to_string(field_any.unwrap!<s32>()));
-    } else if field_any.type == typeof(String)  { 
-      if options.quote_strings 
+    } else if field_any.type == typeof(String)  {
+      if options.quote_strings
         then builder.append("\"");
       builder.append(*(field_any.ptr as *const String));
-      if options.quote_strings 
+      if options.quote_strings
         then builder.append("\"");
-    } else if field_any.type == typeof(str) { 
-      if options.quote_strings 
+    } else if field_any.type == typeof(str) {
+      if options.quote_strings
         then builder.append("\"");
-      builder.append_then_free((*(field_any.ptr as *const str)).as_string());   
-      if options.quote_strings 
+      builder.append_then_free((*(field_any.ptr as *const str)).as_string());
+      if options.quote_strings
         then builder.append("\"");
     } else if field_any.type.is_struct() {
       // format_struct(field_any, builder, options);
@@ -459,7 +467,7 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
         typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
         else: { builder.append("(invalid type)"); }
       };
-    } 
+    }
 
     builder.append(",");
 
@@ -474,29 +482,91 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
   builder.append("}");
 }
 
-format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+format_tuple :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+  builder.append("(");
+  for i in 0..value.type.fields.length {
+    field := value.type.fields[i];
+    mut field_any := any.{
+      type: field.type,
+      ptr: field.get(value.ptr),
+    };
 
-  if value.type == typeof(String)  { 
-    if options.quote_strings 
+    if field_any.ptr == null {
+      builder.append("null");
+    } else if field_any.type == typeof(c_str) {
+      builder.append(String::from_ptr(field_any.unwrap!<*const u8>()));
+    } else if field_any.type.is_pointer() {
+      builder.append_then_free(to_string(value.ptr));
+    } else if field_any.type.is_enum() {
+      builder.append_then_free(to_string(field_any.unwrap!<s32>()));
+    } else if field_any.type == typeof(String)  {
+      if options.quote_strings
+        then builder.append("\"");
+      builder.append(*(field_any.ptr as *const String));
+      if options.quote_strings
+        then builder.append("\"");
+    } else if field_any.type == typeof(str) {
+      if options.quote_strings
+        then builder.append("\"");
+      builder.append_then_free((*(field_any.ptr as *const str)).as_string());
+      if options.quote_strings
+        then builder.append("\"");
+    } else if field_any.type.is_struct() {
+      // format_struct(field_any, builder, options);
+    } else {
+      switch field_any.type {
+        typeof(u8):      { builder.append_then_free(to_string(field_any.unwrap!<u8>()));  }
+        typeof(u16):     { builder.append_then_free(to_string(field_any.unwrap!<u16>())); }
+        typeof(u32):     { builder.append_then_free(to_string(field_any.unwrap!<u32>())); }
+        typeof(u64):     { builder.append_then_free(to_string(field_any.unwrap!<u64>())); }
+
+        typeof(s8):      { builder.append_then_free(to_string(field_any.unwrap!<s8>()));  }
+        typeof(s16):     { builder.append_then_free(to_string(field_any.unwrap!<s16>())); }
+        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
+        typeof(s64):     { builder.append_then_free(to_string(field_any.unwrap!<s64>())); }
+
+        typeof(s32):     { builder.append_then_free(to_string(field_any.unwrap!<s32>())); }
+
+        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
+        typeof(f32):     { builder.append_then_free(to_string(field_any.unwrap!<f32>()));  }
+        typeof(f64):     { builder.append_then_free(to_string(field_any.unwrap!<f64>()));  }
+
+        typeof(bool):    { builder.append_then_free(to_string(field_any.unwrap!<bool>())); }
+        else: { builder.append("(invalid type)"); }
+      };
+    }
+
+    if i != value.type.fields.length - 1 {
+      builder.append(", ");
+    }
+  }
+  builder.append(")");
+}
+
+format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+  if value.type == typeof(String)  {
+    if options.quote_strings
       then builder.append("\"");
     builder.append(*(value.ptr as *const String));
-    if options.quote_strings 
+    if options.quote_strings
       then builder.append("\"");
-  } else if value.type == typeof(str) { 
-    if options.quote_strings 
+  } else if value.type == typeof(str) {
+    if options.quote_strings
       then builder.append("\"");
-    builder.append_then_free((*(value.ptr as *const str)).as_string());   
-    if options.quote_strings 
+    builder.append_then_free((*(value.ptr as *const str)).as_string());
+    if options.quote_strings
       then builder.append("\"");
   } else if !value.type.is_pointer() && strncmp(value.type.name, "List!<"c, 6) == 0 {
-    
-    // ! TODO: @Cooper-Pilot, 
+
+    // ! TODO: @Cooper-Pilot,
     // ! this, and `format_struct()` call from within format_struct cause a similar
     // ! dependency emitter explosion.
     // ! format_list(value, builder, options);
 
-  } else if !value.type.is_pointer() && (value.type.is_struct() || value.type.is_tuple()) {
+  } else if !value.type.is_pointer() && value.type.is_struct() {
     format_struct(value, builder, options);
+  } else if !value.type.is_pointer() && value.type.is_tuple() {
+    format_tuple(value, builder, options);
   } else if value.ptr == null {
     builder.append("null");
   } else if value.type == typeof(c_str) {
@@ -511,7 +581,7 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
       typeof(u16):     { builder.append_then_free(to_string(value.unwrap!<u16>()));       }
       typeof(u32):     { builder.append_then_free(to_string(value.unwrap!<u32>()));       }
       typeof(u64):     { builder.append_then_free(to_string(value.unwrap!<u64>()));       }
-      
+
       typeof(s8):      { builder.append_then_free(to_string(value.unwrap!<s8>()));        }
       typeof(s16):     { builder.append_then_free(to_string(value.unwrap!<s16>()));       }
       typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>()));       }
@@ -530,13 +600,13 @@ format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Optio
   ptr := list.ptr;
 
   length_field := type.fields.find_first_of (
-    fn (field: *const Field) -> bool { 
+    fn (field: *const Field) -> bool {
       return strcmp(field.name, "length"c) == 0;
     }
   );
 
   data_field := type.fields.find_first_of(
-    fn (field: *const Field) -> bool { 
+    fn (field: *const Field) -> bool {
       return strcmp(field.name, "data"c) == 0;
     }
   )
@@ -582,14 +652,14 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
   mut builder: String_Builder;
 
   defer builder.deinit();
-  
+
   value_index := 0;
 
   fields := typeof(Tuple).fields;
 
   if fields.is_empty() {
     return String::from("()");
-  }  
+  }
 
   while *fmt.data {
     if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
@@ -605,13 +675,13 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
     if (*fmt.data) == '%' && value_index < fields.length {
       field := fields[value_index];
 
-      value :any = .{ 
+      value :any = .{
         type: field.type,
         ptr: field.get(&const tuple),
       };
 
       format_any(value, &mut builder, options);
-      
+
       value_index++;
     } else {
       builder.append((*fmt.data) as u32);
@@ -657,7 +727,7 @@ impl String_Builder {
   }
 }
 
-/* 
+/*
   ! this needs to be rewritten for Iterator!<>
 */
 UTF8_Iter :: struct {

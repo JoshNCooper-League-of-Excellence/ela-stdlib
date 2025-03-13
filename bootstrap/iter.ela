@@ -64,10 +64,10 @@ impl!<V> Iterator!<*mut V> for IterMut!<V> {
   Iterable is a generic interface that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
 */
-Iterable :: interface!<V> {
+Iterable :: interface {
   // Returns an iterator for the collection.
-  iter :: fn(*const self) -> Iterator!<V>;
-  iter_mut :: fn(*mut self) -> Iterator!<V>;
+  iter :: fn(*const self) -> Iterator;
+  iter_mut :: fn(*mut self) -> Iterator;
 }
 
 Enumerate :: struct!<V, I> where I is Iterator!<V> {

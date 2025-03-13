@@ -64,7 +64,7 @@ impl str {
 }
 
 // This iterator is over the bytes.
-impl Iterable!<u8> for str { 
+impl Iterable for str { 
   iter :: fn(*const self) -> Iter!<u8> {
     return .{
       ptr: self.data as *mut u8,

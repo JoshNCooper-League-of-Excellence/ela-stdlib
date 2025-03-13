@@ -1,114 +1,96 @@
 
-HASH_INITIAL_VALUE :: 0xCBF29CE484222325;
-HASH_FACTOR        :: 0x100000001B3;
+HASH_INITIAL_VALUE: u64 = 0xCBF29CE484222325;
+HASH_FACTOR:        u64 = 0x100000001B3;
 
-#region NUMBER TYPES {
-  impl Hash for s8 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
 
-  impl Hash for s16 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for s32 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for s64 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for u8 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for u16 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for u32 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for u64 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= self;
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for f32 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= *(cast(*u32, &self));
-      hash *= HASH_FACTOR;
-      return hash;
-    }
-  }
-
-  impl Hash for f64 {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      hash ^= *(cast(*u64, &self));
-      hash *= HASH_FACTOR;
-      return hash;
-    }
+impl Hash for s8 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
   }
 }
 
-#region STRING TYPES {
-  impl Hash for str {
-    hash :: fn(self) -> u64 {
-      hash := HASH_INITIAL_VALUE;
-      for c in self {
-        hash ^= c;
-        hash *= HASH_FACTOR;
-      }
-      return hash;
-    }
-  }
-
-  impl Hash for String {
-    hash :: fn(self) -> u64 {
-      return self.as_str().hash();
-    }
+impl Hash for s16 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
   }
 }
+
+impl Hash for s32 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for s64 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for u8 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for u16 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for u32 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for u64 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for f32 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self as u32;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+impl Hash for f64 {
+  hash :: fn(self) -> u64 {
+    mut hash := HASH_INITIAL_VALUE;
+    hash ^= self as u32;
+    hash *= HASH_FACTOR;
+    return hash;
+  }
+}
+
+

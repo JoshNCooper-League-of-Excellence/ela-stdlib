@@ -24,7 +24,8 @@
 #include "String.ela";
 // generic utilities for reflection
 #include "reflection.ela";
-
+// basic hashing functions implemented for numerical and string types.
+#include "hash.ela";
 
 #ifndef FREESTANDING {
   assert :: fn(message: str, condition: bool) {

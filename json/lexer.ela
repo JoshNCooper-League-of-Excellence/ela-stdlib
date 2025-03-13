@@ -90,7 +90,7 @@ impl JsonLexer {
     c : u8 = self.input[self.position];
 
     // whitespace
-    // TODO: this should handle tabs, no?
+    // TODO: this should handle tabs, no? perhaps isspace does that.
     while self.position < self.input.length {
       if c == '\n' || c == '\r' {
         self.line_start = self.position;

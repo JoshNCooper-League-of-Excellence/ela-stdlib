@@ -182,7 +182,7 @@ panic :: fn(msg: str);
   }
 }
 
-impl!<T> Iterable!<T> for T[] {
+impl!<T> Iterable for T[] {
   /*
     Get an iterator to the list.
     the 
@@ -267,6 +267,19 @@ impl!<T> As_Slice!<T> for T[] {
         }
       }
       return -1;
+    }
+
+    /*
+      Remove an element at a specific index from the list.
+      This doesn't deallocate the old memory.
+    */
+    remove_at :: fn(*mut self, index: u64) -> bool {
+      if index >= self.length {
+        return false;
+      }
+      memmove(self.data + index, self.data + index + 1, sizeof(T) * (self.length - index - 1));
+      self.length -= 1;
+      return true;
     }
 
 

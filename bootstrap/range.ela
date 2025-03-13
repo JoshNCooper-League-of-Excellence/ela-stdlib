@@ -59,7 +59,7 @@ impl!<V> Iterator!<V> for RangeIterMut!<V>  {
   }
 }
 
-impl!<V> Iterable!<V> for Range_Base!<V> {
+impl!<V> Iterable for Range_Base!<V> {
   iter :: fn(*const self) -> RangeIter!<V> {
     return .{
       begin: self.begin,
