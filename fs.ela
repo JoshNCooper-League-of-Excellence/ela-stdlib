@@ -256,7 +256,7 @@ impl Directory {
     if !dir => Option!<Directory>::None();
 
     mut entries: String[];
-    entry: *mut void;
+    mut entry: *mut void;
 
     while entry = readdir(dir) {
       ent : *const dirent = entry;

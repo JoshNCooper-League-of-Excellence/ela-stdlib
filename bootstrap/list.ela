@@ -113,6 +113,9 @@ panic :: fn(msg: str);
     */
     deinit :: fn(*mut self) {
       free(self.data);
+      self.data = null;
+      self.length = 0;
+      self.capacity = 0;
     }
   }
 

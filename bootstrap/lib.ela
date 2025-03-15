@@ -16,7 +16,7 @@
 #include "libc.ela";
 // List<T> aka T[].
 #include "list.ela";
-// Slice!<T> and Slice_Mut!<T>, views over memory.
+// Slice!<T> and SliceMut!<T>, views over memory.
 #include "slice.ela";
 // str, the default type of a string literal.
 #include "str.ela";
@@ -180,4 +180,11 @@ impl As_Byte_Slice for u32 {
     *ptr = initial_value;
     return ptr;
   }
+
+  delete :: fn!<T>(pointer: *const *mut T) {
+    free(*pointer);
+    *pointer = null;
+  }
 }
+
+

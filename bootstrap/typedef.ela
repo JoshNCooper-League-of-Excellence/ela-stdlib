@@ -56,7 +56,7 @@ Slice :: struct!<V> {
   length: u64,
 }
 
-Slice_Mut :: struct!<V> {
+SliceMut :: struct!<V> {
   data:  *mut V,
   length: u64,
 }
