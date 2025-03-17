@@ -2,7 +2,7 @@
   a generic iterator, can be used for 'for' loops, such as
   `for i in <my_object> {}`
   where my_object implements either Iterable!<T> (which just indicates we can be converted into an iterator)
-  or my_object implements Iterator!<> where it is an iterator itself.
+  or my_object implements Iterator!<> where it: an iterator itself.
 */
 Iterator :: interface!<V> {
   next :: fn(*mut self) -> Option!<V>;
@@ -70,7 +70,7 @@ Iterable :: interface {
   iter_mut :: fn(*mut self) -> Iterator;
 }
 
-Enumerate :: struct!<V, I> where I is Iterator!<V> {
+Enumerate :: struct!<V, I> where I: Iterator!<V> {
   idx: u64,
   iterator: I,
 }

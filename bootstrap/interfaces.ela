@@ -3,15 +3,9 @@
 // Run a cleanup procedure implicitly when an object goes out of scope.
 // Absolutely equivalent to a C++ Destructor.
 // This could be called explicitly on pointers, but it's not reccomended.
-Drop        :: interface {
-  drop      :: fn(*mut self);
-}
-
-// Allow an object to be converted to a String
-To_String    :: interface {
-  // convert self to str::
-  to_string :: fn(self) -> String;
-}
+// Drop        :: interface {
+//   drop      :: fn(*mut self);
+// }
 
 // equivalent to an explicit cast operator overload in C++,
 // allow an object to be constructed from another.
@@ -27,7 +21,7 @@ Clone       :: interface {
 }
 
 Init :: interface!<V> {
-  init :: fn(init: Init_List!<V>) -> #self;
+  init :: fn(init: InitList!<V>) -> #self;
 }
 
 // Binary arithmetic operator overloads.
@@ -82,7 +76,7 @@ Deinit :: interface {
   deinit :: fn(*mut self);
 }
 // just a free function version for those who might prefer a C like 'free' style api.
-deinit :: fn!<T>(t: *const T) where T is Deinit {
+deinit :: fn!<T>(t: *const T) where T: Deinit {
   t.deinit();
 }
 
@@ -90,13 +84,15 @@ Hash :: interface {
   hash :: fn(self) -> u64;
 }
 
-As_Slice :: interface!<T> {
+AsSlice :: interface!<T> {
   as_slice :: fn(self, range: Range) -> Slice!<T>;
 }
-As_Char_Slice :: interface {
+
+AsCharSlice :: interface {
   as_char_slice :: fn(self) -> Slice!<u32>;
 }
-As_Byte_Slice :: interface {
+
+AsByteSlice :: interface {
   as_byte_slice :: fn(self) -> Slice!<u8>;
 }
 

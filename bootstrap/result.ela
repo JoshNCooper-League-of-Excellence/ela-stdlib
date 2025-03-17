@@ -21,7 +21,6 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return self.ok;
   }
 
-
   is_ok :: fn(self) -> bool {
     return self.index == RESULT_IS_OK;
   }

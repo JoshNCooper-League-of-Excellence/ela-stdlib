@@ -10,13 +10,13 @@
 #include "iter.ela";
 // impls for numeric types, mostly marker interfaces.
 #include "numeric.ela"; 
-// Range_Base!<T> and Range, Range_s32... etc.
+// RangeBase!<T> and Range, Range_s32... etc.
 #include "range.ela";
 // a few libc functions that are used in most programs.
 #include "libc.ela";
 // List<T> aka T[].
 #include "list.ela";
-// Slice!<T> and Slice_Mut!<T>, views over memory.
+// Slice!<T> and SliceMut!<T>, views over memory.
 #include "slice.ela";
 // str, the default type of a string literal.
 #include "str.ela";
@@ -35,7 +35,7 @@
     }
   }
 
-  assert_eq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
+  assert_eq :: fn!<T>(message: str, a: T, b: T) where T: IsNumeric | Eq {
     if a != b {
       // TODO: we should have a better way to do this.
       // I don't want to import format here, probably should just have an 'assert' library.
@@ -45,7 +45,7 @@
     }
   }
 
-  assert_neq :: fn!<T>(message: str, a: T, b: T) where T is Is_Numeric | Eq {
+  assert_neq :: fn!<T>(message: str, a: T, b: T) where T: IsNumeric | Eq {
     if a == b {
       // TODO: we should have a better way to do this.
       // I don't want to import format here, probably should just have an 'assert' library.
@@ -128,7 +128,7 @@ panic :: fn(msg: str) {
   }
 }
 
-impl As_Char_Slice for u32 {
+impl AsCharSlice for u32 {
   as_char_slice :: fn(self) -> Slice!<u32> {
     #static mut chars : char[2] = .[
       '\0', '\0'
@@ -141,7 +141,7 @@ impl As_Char_Slice for u32 {
   }
 }
 
-impl As_Byte_Slice for u32 {
+impl AsByteSlice for u32 {
   as_byte_slice :: fn(self) -> Slice!<u8> {
     #static mut chars : u8[2] = .[
       '\0', '\0'
@@ -174,10 +174,11 @@ impl As_Byte_Slice for u32 {
       z: 3000.0
     };
   */
-
   new :: fn!<T>(initial_value: T) -> *mut T {
     ptr: *mut T = malloc(sizeof(T));
     *ptr = initial_value;
     return ptr;
   }
 }
+
+

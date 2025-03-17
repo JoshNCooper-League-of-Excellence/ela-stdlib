@@ -1,36 +1,28 @@
 
 // TODO: add reverse ranges?
 
-Range_Base :: struct!<V> where V is Eq | Is_Numeric {
+RangeBase :: struct!<V> where V: Eq | IsNumeric {
   begin: V,
   end:   V,
 }
 
-alias Range_s8  :: Range_Base!<s8>;
-alias Range_s16 :: Range_Base!<s16>;
-alias Range_s32 :: Range_Base!<s32>;
-alias Range_s64 :: Range_Base!<s64>;
+// default range for most things.
+alias Range :: RangeBase!<s32>;
 
-alias Range_u8  :: Range_Base!<u8>;
-alias Range_u16 :: Range_Base!<u16>;
-alias Range_u32 :: Range_Base!<u32>;
-alias Range_u64 :: Range_Base!<u64>;
-
-alias Range :: Range_s32;
-
-impl!<T> Range_Base!<T> {
+impl!<T> RangeBase!<T> {
   contains :: fn(self, value: T) -> bool {
     return self.begin <= value && self.end >= value;
   }
 }
 
-RangeIter :: struct!<V> where V is Eq | Is_Numeric {
+RangeIter :: struct!<V> where V: Eq | IsNumeric {
   begin: V,
   end:   V,
   idx:   V,
 }
 
 RangeIterMut :: struct!<V> {
+  begin: V,
   idx:   V,
   end:   V, // it sucks but this has to be *mut 
 }
@@ -38,45 +30,66 @@ RangeIterMut :: struct!<V> {
 impl!<V> Iterator!<V> for RangeIter!<V>  {
   alias Option :: Option!<V>;
   next :: fn(*mut self) -> Option {
-    value := Option::Some(self.idx);
-    if self.idx >= self.end {
-      return Option::None();
+    is_reverse := self.begin > self.end;
+    if is_reverse {
+      value := Option::Some(self.idx);
+      if self.idx <= self.end {
+        return Option::None();
+      }
+      self.idx--;
+      return value;
+    } else {
+      value := Option::Some(self.idx);
+      if self.idx >= self.end {
+        return Option::None();
+      }
+      self.idx++;
+      return value;
     }
-    self.idx++;
-    return value;
   }
 }
 
-impl!<V> Iterator!<V> for RangeIterMut!<V>  {
-  alias Option :: Option!<V>;
+impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
+  alias Option :: Option!<*mut V>;
   next :: fn(*mut self) -> Option {
-    value := Option::Some(self.idx);
-    if self.idx >= self.end {
-      return Option::None();
+    is_reverse := self.begin > self.end;
+    if is_reverse {
+      value := Option::Some(&mut self.idx);
+      if self.idx <= self.end {
+        return Option::None();
+      }
+      self.idx--;
+      return value;
+    } else {
+      value := Option::Some(&mut self.idx);
+      if self.idx >= self.end {
+        return Option::None();
+      }
+      self.idx++;
+      return value;
     }
-    self.idx++;
-    return value;
   }
 }
 
-impl!<V> Iterable for Range_Base!<V> {
+impl!<V> Iterable for RangeBase!<V> {
   iter :: fn(*const self) -> RangeIter!<V> {
     return .{
       begin: self.begin,
+      idx:   self.begin,
       end:   self.end,
-      idx:          0,
     };
   }
 
   iter_mut :: fn(*mut self) -> RangeIterMut!<V> {
     return .{
+      begin: self.begin,
       idx:  self.begin,
       end:  self.end,
     };
   }
 }
 
-impl!<V> Eq for Range_Base!<V> {
+impl!<V> Eq for RangeBase!<V> {
   eq :: fn(self, right: #self) -> bool {
     return self.begin == right.begin && self.end == right.end;
   }

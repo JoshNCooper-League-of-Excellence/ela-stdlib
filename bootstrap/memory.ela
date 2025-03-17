@@ -11,7 +11,7 @@ Dyn_Allocator :: struct {
 }
 
 impl Dyn_Allocator {
-  new :: fn!<T>(t: T*) -> #self where T is Allocator {
+  new :: fn!<T>(t: T*) -> #self where T: Allocator {
     // we do this to mock a call but not output the code of actually calling it at runtime.
     // this is due to a bug that is plaguing our shiz currently.
     typeof(t.free(null));

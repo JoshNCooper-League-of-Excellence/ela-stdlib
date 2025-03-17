@@ -154,7 +154,7 @@ impl any {
 
 #ifndef FREESTANDING {
   impl any {
-    new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self where Alloc is Allocator {
+    new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self where Alloc: Allocator {
       ptr : *mut T = alloc.allocate(sizeof(T));
       *ptr = t;
       return .{

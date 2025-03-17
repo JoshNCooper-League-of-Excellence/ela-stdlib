@@ -104,7 +104,7 @@ impl Hash for str {
 	}
 }
 
-impl As_Char_Slice for str {
+impl AsCharSlice for str {
   as_char_slice :: fn(self) -> Slice!<u32> {
     return .{
       data: self.data,
@@ -113,7 +113,7 @@ impl As_Char_Slice for str {
   }
 }
 
-impl As_Byte_Slice for str {
+impl AsByteSlice for str {
   as_byte_slice :: fn(self) -> Slice!<u8> {
     return .{
       data: self.data,

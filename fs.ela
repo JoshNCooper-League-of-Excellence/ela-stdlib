@@ -33,7 +33,7 @@ Stat :: struct {
 
 /* Idk the validity of these methods, just written by chatgpt */
 impl Stat {
-  new :: fn!<T>(path: T) -> Option!<#self> where T is As_Byte_Slice {
+  new :: fn!<T>(path: T) -> Option!<#self> where T: AsByteSlice {
     file := fopen(path.as_byte_slice().data, "r"c);
 
     if !file {
@@ -41,7 +41,7 @@ impl Stat {
       return Option!<#self>::None();
     }
 
-    stat: #self;
+    mut stat: #self;
     fd := fileno(file);
 
     if fd == -1 {
@@ -54,31 +54,31 @@ impl Stat {
     return Option!<#self>::Some(stat);
   }
 
-  is_dir :: fn(*mut self) -> bool {
+  is_dir :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0x4000;
   }
   
-  is_file :: fn(*mut self) -> bool {
+  is_file :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0x8000;
   }
   
-  is_symlink :: fn(*mut self) -> bool {
+  is_symlink :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0xA000;
   }
   
-  is_block_device :: fn(*mut self) -> bool {
+  is_block_device :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0x6000;
   }
   
-  is_char_device :: fn(*mut self) -> bool {
+  is_char_device :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0x2000;
   }
   
-  is_fifo :: fn(*mut self) -> bool {
+  is_fifo :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0x1000;
   }
   
-  is_socket :: fn(*mut self) -> bool {
+  is_socket :: fn(*const self) -> bool {
       return (self.st_mode & 0xF000) == 0xC000;
   }
 }
@@ -133,7 +133,7 @@ File :: struct {
 }
 
 impl File {
-  open :: fn!<T>(path: T, flags: FileOpenFlags) -> #self where T is As_Byte_Slice {
+  open :: fn!<T>(path: T, flags: FileOpenFlags) -> #self where T: AsByteSlice {
     slice := path.as_byte_slice();
     self: #self;
     self.fd = fopen(slice.data, flags.as_str());
@@ -245,18 +245,18 @@ Directory :: struct {
 }
 
 impl Directory {
-  current :: fn() -> *const u8 {
+  current :: fn() -> String {
     buffer: u8[256];
     getcwd(buffer, 256);
-    return strdup(buffer);
+    return String::from_ptr(buffer);
   }
 
-  open :: fn!<T>(path: T) -> Option!<Directory> where T is As_Byte_Slice {
+  open :: fn!<T>(path: T) -> Option!<Directory> where T: AsByteSlice {
     dir := opendir(path.as_byte_slice().data);
     if !dir => Option!<Directory>::None();
 
     mut entries: String[];
-    entry: *mut void;
+    mut entry: *mut void;
 
     while entry = readdir(dir) {
       ent : *const dirent = entry;
@@ -269,6 +269,32 @@ impl Directory {
       path: String::from(path), 
       entries: entries
     });
+  }
+
+  files :: fn(*const self) -> String[] {
+    mut files: String[];
+    for entry in self.entries {
+      file_stat := Stat::new(entry);
+      if file_stat.is_none() then continue;
+      file := file_stat.unwrap();
+      if file.is_file() {
+        files.push(entry.clone());
+      }
+    }
+    return files;
+  }
+
+  subdirectories :: fn(*const self) -> String[] {
+    mut files: String[];
+    for entry in self.entries {
+      dir_stat := Stat::new(entry);
+      if dir_stat.is_none() then continue;
+      dir := dir_stat.unwrap();
+      if dir.is_dir() {
+        files.push(entry.clone());
+      }
+    }
+    return files;
   }
 }
 
