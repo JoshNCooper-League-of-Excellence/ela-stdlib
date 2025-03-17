@@ -10,7 +10,7 @@ Map :: struct!<Key, Value> {
   length: u64,
 }
 
-impl!<Key, Value> Map!<Key, Value> where Key is Hash {
+impl!<Key, Value> Map!<Key, Value> where Key: Hash {
   alias Pair :: (Key, Value);
   new :: fn() -> #self {
     INITIAL_CAPACITY :: 16;

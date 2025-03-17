@@ -27,7 +27,7 @@ String :: struct {
 // .[0, 1, 2, 3] (or {0, 1, 2, 3})
 // it is stack allocated and does not need to be freed, nor
 // should it ever be held on to.
-Init_List :: struct!<V> {
+InitList :: struct!<V> {
   data:   *const V,
   length: u64,
 }

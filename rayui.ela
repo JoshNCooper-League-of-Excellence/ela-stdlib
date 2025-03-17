@@ -18,7 +18,7 @@ Style :: struct {
 }
 
 // * Measure the width of a jiggly text of 'text' and 'style'
-measure_jiggly_text :: fn!<Path>(text: Path, style: Style) -> f32 where Path is As_Byte_Slice {
+measure_jiggly_text :: fn!<Path>(text: Path, style: Style) -> f32 where Path: AsByteSlice {
   slice := text.as_byte_slice();
   if slice.length == 0 then return 0.0;
   mut total_width: f32 = 0.0;
@@ -29,7 +29,7 @@ measure_jiggly_text :: fn!<Path>(text: Path, style: Style) -> f32 where Path is 
 }
 
 // * Draw wavy jiggly text.
-jiggly_text :: fn!<Path>(path: Path, rect: Rectangle, style: Style) where Path is As_Byte_Slice {
+jiggly_text :: fn!<Path>(path: Path, rect: Rectangle, style: Style) where Path: AsByteSlice {
   text := path.as_byte_slice();
   time: f32 = GetTime() as f32;
   intensity := style.jiggle_intensity;
@@ -46,7 +46,7 @@ jiggly_text :: fn!<Path>(path: Path, rect: Rectangle, style: Style) where Path i
 }
 
 // * Draw a button with that returns true for clicked, false for not clicked.
-button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Path is As_Byte_Slice {
+button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Path: AsByteSlice {
   text_bytes := text.as_byte_slice();
 
   mut position: Vector2 = .{ 
@@ -109,7 +109,7 @@ button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Pat
 // * Draw a button with a click callback.
 // * T* in the callback is a pointer to some of your state data, if you want to mutate it.
 // * use 'button' if you don't want the callback system, or pass 'null, null' as the last two arguments.
-button_pro :: fn!<Path, T>(text: Path, rect: Rectangle, style: Style, callback: fn* (*mut T), user_data : *mut T) where Path is As_Byte_Slice{
+button_pro :: fn!<Path, T>(text: Path, rect: Rectangle, style: Style, callback: fn* (*mut T), user_data : *mut T) where Path: AsByteSlice{
   if button(text, rect, style) {
     callback(user_data);
   }

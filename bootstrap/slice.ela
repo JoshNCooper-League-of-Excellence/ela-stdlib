@@ -29,7 +29,7 @@ impl!<T> Slice!<T> {
   
   // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
   // data available??
-  slice :: fn!<Range>(self, mut range: Range) -> Slice!<T> where Range is Range_Base!<u8>  |  Range_Base!<u16> |  Range_Base!<u32> | Range_Base!<u64> | Range_Base!<s8>  | Range_Base!<s16> | Range_Base!<s32> |  Range_Base!<s64> {
+  slice :: fn!<Range>(self, mut range: Range) -> Slice!<T> where Range: RangeBase!<u8>  |  RangeBase!<u16> |  RangeBase!<u32> | RangeBase!<u64> | RangeBase!<s8>  | RangeBase!<s16> | RangeBase!<s32> |  RangeBase!<s64> {
     if range.begin < 0 then range.begin = 0;
 
     if range.end == -1 || range.end > self.length {
@@ -64,7 +64,7 @@ impl!<T> Iterable for Slice!<T> {
   }
 }
 
-impl As_Byte_Slice for Slice!<u8> {
+impl AsByteSlice for Slice!<u8> {
   as_byte_slice :: fn(self) -> #self {
     return self;
   }

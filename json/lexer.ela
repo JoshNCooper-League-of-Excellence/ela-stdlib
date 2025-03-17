@@ -1,7 +1,7 @@
 import fs::*;
 import fmt::*;
 
-JsonTokenType :: enum {
+TokenType :: enum {
   Invalid,
   True,
   False,
@@ -17,14 +17,14 @@ JsonTokenType :: enum {
   Comma,
 }
 
-JsonToken :: struct {
+Token :: struct {
   type : s32,
   value : String,
   line: s32,
   column: s32,
 }
 
-impl JsonToken {
+impl Token {
   Invalid :: fn() -> #self {
     v: #self;
     return v;
@@ -57,7 +57,7 @@ JsonLexer :: struct {
   // position in input stream.
   position: u32,
   // lookahead buffer
-  lookahead_buffer : JsonToken[],
+  lookahead_buffer : Token[],
 }
 
 impl JsonLexer {
@@ -74,17 +74,18 @@ impl JsonLexer {
     return format("%:%:%", (self.file, line, column), Format_Options::default());
   }
 
-  get_token :: fn(*mut self) -> Result!<JsonToken, String> {
-    alias Result :: Result!<JsonToken, String>;
+  get_token :: fn(*mut self) -> Result!<Token, String> {
+    alias Result :: Result!<Token, String>;
+    mut token : Token;
 
-    mut token : JsonToken;
-    token.type = JsonTokenType::Eof;
+    token.type = TokenType::Eof;
     token.column = self.position - self.line_start;
     token.line = self.cur_line + 1;
 
     if self.position >= self.input.length || self.input[self.position] == 0 {
       return Result::Ok(token);
     }
+
 
     // TODO: handle UTF8.
     mut c := self.input[self.position];
@@ -125,7 +126,7 @@ impl JsonLexer {
       while c != '\n' && c != '\r' {
         self.position++;
         if self.position >= self.input.length || self.input[self.position] == 0 {
-          token.type = JsonTokenType::Eof;
+          token.type = TokenType::Eof;
           return Result::Ok(token);
         }
         c = self.input[self.position];
@@ -133,49 +134,55 @@ impl JsonLexer {
       return self.get_token();
     }
 
-    if isdigit(c) {
+
+    // I had to inline isdigit for some reason.
+    // it causes C errors.
+    if c >= '0' && c <= '9' /* || isdigit(c) */ {
       // numbers
       len : s32;
       start : s32 = self.position;
-      while (isdigit(c) || c == '.') && self.position < self.input.length {
+      while (c >= '0' && c <= '9' || c == '.') && self.position < self.input.length {
         len++;
         self.position++;
         c = self.input[self.position];
       }
-      token.value = String::from(Slice!<u8>.{
-        data: self.input.data + start, length: len
-      });
-      token.type = JsonTokenType::Number;
+
+      token.value = .{
+        data: strndup(self.input.data + start, len),
+        length: len
+      };
+
+      token.type = TokenType::Number;
       return Result::Ok(token);
       // operators
     } else if c == ':' {
       token.value = String::from(":");
-      token.type = JsonTokenType::Colon;
+      token.type = TokenType::Colon;
       self.position++;
       return Result::Ok(token);
     } else if c == '{' {
       token.value = String::from("{");
-      token.type = JsonTokenType::LCurly;
+      token.type = TokenType::LCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '}' {
       token.value = String::from("}");
-      token.type = JsonTokenType::RCurly;
+      token.type = TokenType::RCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '[' {
       token.value = String::from("[");
-      token.type = JsonTokenType::LBracket;
+      token.type = TokenType::LBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ']' {
       token.value = String::from("]");
-      token.type = JsonTokenType::RBracket;
+      token.type = TokenType::RBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ',' {
       token.value = String::from(",");
-      token.type = JsonTokenType::Comma;
+      token.type = TokenType::Comma;
       self.position++;
       return Result::Ok(token);
     } else if c == '\"' {
@@ -199,27 +206,30 @@ impl JsonLexer {
         length: len
       };
 
-      token.type = JsonTokenType::String;
+      token.type = TokenType::String;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "true"c, 4) == 0 {
       token.value = String::from("true"); 
-      token.type = JsonTokenType::True;
+      token.type = TokenType::True;
       self.position += 4;
       return Result::Ok(token);
     } else if self.position + 5 <= self.input.length && strncmp(self.input.data + self.position, "false"c, 5) == 0 {
       token.value = String::from("false");
-      token.type = JsonTokenType::False;
+      token.type = TokenType::False;
       self.position += 5;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "null"c, 4) == 0 {
       token.value = String::from("null");
-      token.type = JsonTokenType::Null;
+      token.type = TokenType::Null;
       self.position += 4;
       return Result::Ok(token);
     } else {
       return Result::Ok(token);
     }
   }
+}
+
+impl JsonLexer {
 
   ensure_buffer_is_full :: fn(*mut self) {
     while self.lookahead_buffer.length < 8 {
@@ -227,7 +237,7 @@ impl JsonLexer {
     }
   }
 
-  eat :: fn(*mut self) -> JsonToken {
+  eat :: fn(*mut self) -> Token {
     self.ensure_buffer_is_full();
     token := self.lookahead_buffer[0];
     for i in 0..self.lookahead_buffer.length - 1 {
@@ -237,12 +247,12 @@ impl JsonLexer {
     return token;
   }
 
-  peek :: fn(*mut self) -> JsonToken {
+  peek :: fn(*mut self) -> Token {
     self.ensure_buffer_is_full();
     return self.lookahead_buffer[0];
   }
 
-  expect_types :: fn(*mut self, types: Init_List!<s32>) -> Result!<JsonToken, String> {
+  expect_types :: fn(*mut self, types: InitList!<s32>) -> Result!<Token, String> {
     token := self.peek();
 
     // this should never happen.
@@ -257,7 +267,7 @@ impl JsonLexer {
     for i in 0..types.length {
       type := types.data[i];
       if token.type == type {
-        return Result!<JsonToken, String>::Ok(token);
+        return Result!<Token, String>::Ok(token);
       }
     }
 
@@ -278,10 +288,10 @@ impl JsonLexer {
       Format_Options::default(),
     );
 
-    return Result!<JsonToken, String>::Err(error);
+    return Result!<Token, String>::Err(error);
   }
 
-  expect_type :: fn(*mut self, type: s32) -> Result!<JsonToken, String> {
+  expect_type :: fn(*mut self, type: s32) -> Result!<Token, String> {
     // TODO: it's much cheaper if we just check this, instead of making list lol.
     // saves a stack alloc and a function call.
     return self.expect_types(.[type]);

@@ -3,13 +3,13 @@ alias ParseResult :: Result!<*mut JsonValue, String>;
 
 parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
   mut token_result := lexer.expect_types(.[
-    JsonTokenType::LBracket,
-    JsonTokenType::LCurly,
-    JsonTokenType::Number,
-    JsonTokenType::String,
-    JsonTokenType::True,
-    JsonTokenType::False,
-    JsonTokenType::Null,
+    TokenType::LBracket,
+    TokenType::LCurly,
+    TokenType::Number,
+    TokenType::String,
+    TokenType::True,
+    TokenType::False,
+    TokenType::Null,
   ]);
 
   if token_result.is_err()
@@ -22,18 +22,18 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
   mut token := token_result.unwrap();
 
   switch token.type {
-    JsonTokenType::LBracket: {
+    TokenType::LBracket: {
       value.type = JsonValueType::Array;
       value.array = .{};
 
       token = lexer.peek();
 
-      if token.type == JsonTokenType::RBracket {
+      if token.type == TokenType::RBracket {
         lexer.eat();
         return ParseResult::Ok(value);
       }
 
-      while token.type != JsonTokenType::RBracket {
+      while token.type != TokenType::RBracket {
         value_result := parse(lexer);
         if value_result.is_err()
           then return value_result.propagate();
@@ -41,32 +41,32 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
         value.array.push(value_result.unwrap());
 
         token_result = lexer.expect_types(.[
-          JsonTokenType::RBracket, 
-          JsonTokenType::Comma
+          TokenType::RBracket, 
+          TokenType::Comma
         ]);
         if token_result.is_err()
           then return token_result.propagate();
         token = token_result.unwrap();
       }
     }
-    JsonTokenType::LCurly: {
+    TokenType::LCurly: {
       value.type = JsonValueType::Object;
       value.object = .{};
 
-      if lexer.peek().type == JsonTokenType::RCurly {
+      if lexer.peek().type == TokenType::RCurly {
         lexer.eat();
         return ParseResult::Ok(value);
       }
 
-      while token.type != JsonTokenType::RCurly {
+      while token.type != TokenType::RCurly {
         
-        token_result = lexer.expect_type(JsonTokenType::String);
+        token_result = lexer.expect_type(TokenType::String);
         if token_result.is_err() 
           then return token_result.propagate();
         
         key_token := token_result.unwrap();
 
-        token_result = lexer.expect_type(JsonTokenType::Colon);
+        token_result = lexer.expect_type(TokenType::Colon);
         if token_result.is_err() 
           then return token_result.propagate();
 
@@ -79,8 +79,8 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
         value.object.insert(key_token.value, val);
 
         token_result = lexer.expect_types(.[
-          JsonTokenType::RCurly, 
-          JsonTokenType::Comma
+          TokenType::RCurly, 
+          TokenType::Comma
         ]);
 
         if token_result.is_err() 
@@ -91,19 +91,19 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
     }
   }
   
-  if token.type == JsonTokenType::Number {
+  if token.type == TokenType::Number {
     value.type = JsonValueType::Number;
     value.number = atof(token.value.data);
-  } else if token.type == JsonTokenType::String {
+  } else if token.type == TokenType::String {
     value.type = JsonValueType::String;
     value.string = token.value;
-  } else if token.type == JsonTokenType::True {
+  } else if token.type == TokenType::True {
     value.type = JsonValueType::Boolean;
     value.boolean = true;
-  } else if token.type == JsonTokenType::False {
+  } else if token.type == TokenType::False {
     value.type = JsonValueType::Boolean;
     value.boolean = false;
-  } else if token.type == JsonTokenType::Null {
+  } else if token.type == TokenType::Null {
     value.type = JsonValueType::Null;
   }
 

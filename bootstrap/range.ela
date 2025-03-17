@@ -1,30 +1,21 @@
 
 // TODO: add reverse ranges?
 
-Range_Base :: struct!<V> where V is Eq | Is_Numeric {
+RangeBase :: struct!<V> where V: Eq | IsNumeric {
   begin: V,
   end:   V,
 }
 
-alias Range_s8  :: Range_Base!<s8>;
-alias Range_s16 :: Range_Base!<s16>;
-alias Range_s32 :: Range_Base!<s32>;
-alias Range_s64 :: Range_Base!<s64>;
+// default range for most things.
+alias Range :: RangeBase!<s32>;
 
-alias Range_u8  :: Range_Base!<u8>;
-alias Range_u16 :: Range_Base!<u16>;
-alias Range_u32 :: Range_Base!<u32>;
-alias Range_u64 :: Range_Base!<u64>;
-
-alias Range :: Range_s32;
-
-impl!<T> Range_Base!<T> {
+impl!<T> RangeBase!<T> {
   contains :: fn(self, value: T) -> bool {
     return self.begin <= value && self.end >= value;
   }
 }
 
-RangeIter :: struct!<V> where V is Eq | Is_Numeric {
+RangeIter :: struct!<V> where V: Eq | IsNumeric {
   begin: V,
   end:   V,
   idx:   V,
@@ -59,7 +50,7 @@ impl!<V> Iterator!<V> for RangeIterMut!<V>  {
   }
 }
 
-impl!<V> Iterable for Range_Base!<V> {
+impl!<V> Iterable for RangeBase!<V> {
   iter :: fn(*const self) -> RangeIter!<V> {
     return .{
       begin: self.begin,
@@ -76,7 +67,7 @@ impl!<V> Iterable for Range_Base!<V> {
   }
 }
 
-impl!<V> Eq for Range_Base!<V> {
+impl!<V> Eq for RangeBase!<V> {
   eq :: fn(self, right: #self) -> bool {
     return self.begin == right.begin && self.end == right.end;
   }

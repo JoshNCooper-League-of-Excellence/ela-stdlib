@@ -102,7 +102,7 @@
     return (code_point, index as s8);
   }
 
-  utf8_decode :: fn!<T>(data: T) -> u32[] where T is As_Char_Slice {
+  utf8_decode :: fn!<T>(data: T) -> u32[] where T: AsCharSlice {
     slice := data.as_byte_slice();
     mut output: u32[];
     index := 0;
@@ -235,7 +235,10 @@ String_Builder :: struct {
 
 impl Deinit for String_Builder {
   deinit :: fn(*mut self) {
-    if self.root then self.root.deinit();
+    if self.root {
+      self.root.deinit();
+      free(self.root);
+    } 
   }
 }
 
@@ -273,14 +276,14 @@ impl String_Builder {
     };
   }
 
-  append :: fn!<T>(*mut self, value: T) where T is As_Byte_Slice {
+  append :: fn!<T>(*mut self, value: T) where T: AsByteSlice {
     slice := value.as_byte_slice();
 
     if slice.length <= 0 then return;
 
     if !self.root {
-        self.root = String_Builder_Block::new();
-        self.current = self.root;
+      self.root = String_Builder_Block::new();
+      self.current = self.root;
     }
 
     mut slice_index := 0;
@@ -313,8 +316,8 @@ impl String_Builder {
   // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
   // this is helpful for doing a builder.append_then_free(some_allocating_function());
   // so you don't leak.
-  append_then_free :: fn!<T>(*mut self, mut value: T) where T is Deinit {
-    self.append!<T>(value);
+  append_then_free :: fn!<T>(*mut self, mut value: T) where T: Deinit {
+    self.append(value);
     value.deinit();
   }
 
@@ -553,7 +556,7 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
   } else if value.type == typeof(str) {
     if options.quote_strings
       then builder.append("\"");
-    builder.append_then_free((*(value.ptr as *const str)).as_string());
+    builder.append((*(value.ptr as *const str)));
     if options.quote_strings
       then builder.append("\"");
   } else if !value.type.is_pointer() && strncmp(value.type.name, "List!<"c, 6) == 0 {
@@ -663,7 +666,7 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
 
   while *fmt.data {
     if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
-      builder.append!<u32>('%');
+      builder.append('%');
       fmt.data += 2;
       continue;
     }
@@ -704,14 +707,14 @@ println :: fn!<T>(message: T) {
   formatted.deinit();
 }
 
-printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple is IsTuple {
+printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   mut formatted := format(fmt, tuple, *Format_Options::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 impl String_Builder {
-  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple is IsTuple{
+  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple: IsTuple{
     mut formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();

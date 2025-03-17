@@ -2,37 +2,37 @@
   * Marker interfaces for numerical type constraints.
 */
 
-Is_Numeric :: interface {}
+IsNumeric :: interface {}
 
-impl Is_Numeric for u8 {}
-impl Is_Numeric for u16 {}
-impl Is_Numeric for u32 {}
-impl Is_Numeric for u64 {}
+impl IsNumeric for u8 {}
+impl IsNumeric for u16 {}
+impl IsNumeric for u32 {}
+impl IsNumeric for u64 {}
 
-impl Is_Numeric for s8 {}
-impl Is_Numeric for s16 {}
-impl Is_Numeric for s32 {}
-impl Is_Numeric for s64 {}
+impl IsNumeric for s8 {}
+impl IsNumeric for s16 {}
+impl IsNumeric for s32 {}
+impl IsNumeric for s64 {}
 
-impl Is_Numeric for f32 {}
-impl Is_Numeric for f64 {}
+impl IsNumeric for f32 {}
+impl IsNumeric for f64 {}
 
-Is_Float :: interface {}
+IsFloat :: interface {}
 
-impl Is_Float for f32 {}
-impl Is_Float for f64 {}
+impl IsFloat for f32 {}
+impl IsFloat for f64 {}
 
-Is_Integer :: interface {}
+IsInteger :: interface {}
 
-impl Is_Integer for u8 {}
-impl Is_Integer for u16 {}
-impl Is_Integer for u32 {}
-impl Is_Integer for u64 {}
+impl IsInteger for u8 {}
+impl IsInteger for u16 {}
+impl IsInteger for u32 {}
+impl IsInteger for u64 {}
 
-impl Is_Integer for s8 {}
-impl Is_Integer for s16 {}
-impl Is_Integer for s32 {}
-impl Is_Integer for s64 {}
+impl IsInteger for s8 {}
+impl IsInteger for s16 {}
+impl IsInteger for s32 {}
+impl IsInteger for s64 {}
 
 impl u8 {
   min_value :: fn() -> u8 => 0;

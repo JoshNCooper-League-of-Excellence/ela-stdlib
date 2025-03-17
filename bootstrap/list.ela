@@ -143,7 +143,7 @@ panic :: fn(msg: str);
 
       of course, this allocates.
     */
-    init :: fn(init: Init_List!<T>) -> #self {
+    init :: fn(init: InitList!<T>) -> #self {
       mut self: #self;
       self.resize(init.length);
       memcpy(self.data, init.data, sizeof(T) * init.length);
@@ -226,7 +226,7 @@ impl!<T> Subscript!<T> for T[] {
   }
 }
 
-impl!<T> As_Slice!<T> for T[] {
+impl!<T> AsSlice!<T> for T[] {
   /* 
     Take a `slice` or a view into the array, without taking any ownership of the memory we are viewing into.
   */
