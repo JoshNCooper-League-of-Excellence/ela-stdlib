@@ -15,59 +15,51 @@ impl!<T> RangeBase!<T> {
   }
 }
 
-RangeIter :: struct!<V> where V: Eq | IsNumeric {
+RangeIter :: struct!<V> where V: Eq | IsNumeric | IsPointer {
   begin: V,
   end:   V,
   idx:   V,
 }
 
-RangeIterMut :: struct!<V> {
+RangeIterMut :: struct!<V> where V: Eq| IsNumeric | IsPointer {
   begin: V,
   idx:   V,
-  end:   V, // it sucks but this has to be *mut 
+  end:   V,
 }
 
 impl!<V> Iterator!<V> for RangeIter!<V>  {
   alias Option :: Option!<V>;
   next :: fn(*mut self) -> Option {
-    is_reverse := self.begin > self.end;
-    if is_reverse {
-      value := Option::Some(self.idx);
-      if self.idx <= self.end {
-        return Option::None();
-      }
+    if self.idx == self.end
+      then return Option::None();
+
+    value := Option::Some(self.idx);
+
+    if self.begin > self.end {
       self.idx--;
-      return value;
     } else {
-      value := Option::Some(self.idx);
-      if self.idx >= self.end {
-        return Option::None();
-      }
       self.idx++;
-      return value;
     }
+
+    return value;
   }
 }
 
 impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
   alias Option :: Option!<*mut V>;
   next :: fn(*mut self) -> Option {
-    is_reverse := self.begin > self.end;
-    if is_reverse {
-      value := Option::Some(&mut self.idx);
-      if self.idx <= self.end {
-        return Option::None();
-      }
+    if self.idx == self.end
+      then return Option::None();
+
+    value := Option::Some(&mut self.idx);
+
+    if self.begin > self.end {
       self.idx--;
-      return value;
     } else {
-      value := Option::Some(&mut self.idx);
-      if self.idx >= self.end {
-        return Option::None();
-      }
       self.idx++;
-      return value;
     }
+
+    return value;
   }
 }
 

@@ -26,6 +26,8 @@
 #include "reflection.ela";
 // basic hashing functions implemented for numerical and string types.
 #include "hash.ela";
+// dynamic interface for allocator.
+#include "memory.ela";
 
 #ifndef FREESTANDING {
   assert :: fn(message: str, condition: bool) {

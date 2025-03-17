@@ -21,6 +21,14 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return self.ok;
   }
 
+  expect :: fn(self, handler: fn* (_Err)) -> _Ok {
+    if self.index == RESULT_IS_ERR {
+      handler(self.err);
+      panic("unwrapped a 'Err' result.");
+    } 
+    return self.ok;
+  }
+
   is_ok :: fn(self) -> bool {
     return self.index == RESULT_IS_OK;
   }

@@ -2,16 +2,16 @@
 // This is soon to come, but we want to model our standard library around it too,
 // so this is a nice placeholder.
 Dyn_Allocator :: struct {
-  instance:         void  *,
+  instance:         *mut void,
   p_allocate:       fn * (*mut void, u64) -> *mut void,
   p_free:           fn * (*mut void, *const void),
   p_allocate_array: fn * (*mut void, u64, u64) -> *mut void,
-  p_resize:         fn * (*mut void, *mut void, u64, u64) -> *mut void,
-  p_copy:           fn * (*mut void, *mut void, u64, u64) -> *mut void,
+  p_resize:         fn * (*mut void, *const void, u64, u64) -> *mut void,
+  p_copy:           fn * (*mut void, *const void, u64, u64) -> *mut void,
 }
 
 impl Dyn_Allocator {
-  new :: fn!<T>(t: T*) -> #self where T: Allocator {
+  new :: fn!<T>(t: *mut T) -> #self where T: Allocator {
     // we do this to mock a call but not output the code of actually calling it at runtime.
     // this is due to a bug that is plaguing our shiz currently.
     typeof(t.free(null));
@@ -32,27 +32,27 @@ impl Dyn_Allocator {
 }
 
 impl Dyn_Allocator {
-  allocate :: fn(*mut self, size: u64) -> void* {
+  allocate :: fn(*mut self, size: u64) -> *mut void {
     p_allocate := self.p_allocate;
     return p_allocate(self.instance, size);
   }
 
-  free :: fn(*mut self, ptr: void*) {
+  free :: fn(*mut self, ptr: *mut void) {
     p_free := self.p_free;
     p_free(self.instance, ptr);
   }
 
-  allocate_array :: fn(*mut self, size: u64, n: u64) -> void* {
+  allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void {
     p_allocate_array := self.p_allocate_array;
     return p_allocate_array(self.instance, size, n);
   }
 
-  resize :: fn(*mut self, ptr: void*, element_size: u64, new_size: u64) -> void* {
+  resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
     p_resize := self.p_resize;
     return p_resize(self.instance, ptr, element_size, new_size);
   }
 
-  copy :: fn(*mut self, ptr: void*, element_size: u64, n: u64) -> void* {
+  copy :: fn(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
     p_copy := self.p_copy;
     return p_copy(self.instance, ptr, element_size, n);
   }
