@@ -170,14 +170,14 @@
   }
 }
 
-Format_Options :: struct {
+FormatOptions :: struct {
   digits_after_decimal: u8,
   indented: bool,
   quote_strings: bool,
   enum_parent_name: bool,
 }
 
-impl Format_Options {
+impl FormatOptions {
   default :: fn() -> #self => .{
     digits_after_decimal: 2,
     indented: false,
@@ -186,7 +186,7 @@ impl Format_Options {
   };
 
   current :: fn() -> *mut #self {
-    #static mut current := Format_Options.{
+    #static mut current := FormatOptions.{
       digits_after_decimal: 2,
       indented: false,
       quote_strings: false,
@@ -196,19 +196,19 @@ impl Format_Options {
   }
 }
 
-String_Builder :: struct;
+StringBuilder :: struct;
 
 Format :: interface {
-  format :: fn(*const self, builder: *mut String_Builder, options: Format_Options);
+  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions);
 }
 
 DynFormat :: struct {
   instance: *const void,
-  p_format: fn * (*const void, *mut String_Builder, Format_Options),
+  p_format: fn * (*const void, *mut StringBuilder, FormatOptions),
 }
 
 impl DynFormat {
-  format :: fn(*const self, builder: *mut String_Builder, options: Format_Options) {
+  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
     self.p_format(self.instance, builder, options);
   }
   new :: fn(value: any) -> #self {
@@ -228,7 +228,7 @@ impl DynFormat {
 
     return .{
       instance: instance,
-      p_format: method as fn * (*const void, *mut String_Builder, Format_Options),
+      p_format: method as fn * (*const void, *mut StringBuilder, FormatOptions),
     };
   }
 }
@@ -238,15 +238,15 @@ impl DynFormat {
 // but perhaps this is a setting we can have the user pass in.
 STRING_BUILDER_BLOCK_MAX_LEN :: 8192;
 
-String_Builder_Block :: struct {
+StringBuilderBlock :: struct {
   data: *mut u8,
   length: u64,
-  next: *mut String_Builder_Block,
+  next: *mut StringBuilderBlock,
 }
 
-impl String_Builder_Block {
+impl StringBuilderBlock {
   new :: fn() -> *mut #self {
-    mut self : *mut #self =  malloc(sizeof(String_Builder_Block));
+    mut self : *mut #self =  malloc(sizeof(StringBuilderBlock));
     self.data = calloc(sizeof(u8), STRING_BUILDER_BLOCK_MAX_LEN);
     self.length = 0;
     self.next = null;
@@ -254,7 +254,7 @@ impl String_Builder_Block {
   }
 }
 
-impl Deinit for String_Builder_Block {
+impl Deinit for StringBuilderBlock {
   deinit :: fn(*mut self) {
     if self.data then free(self.data);
     if self.next {
@@ -264,12 +264,12 @@ impl Deinit for String_Builder_Block {
   }
 }
 
-String_Builder :: struct {
-  root:    *mut String_Builder_Block,
-  current: *mut String_Builder_Block,
+StringBuilder :: struct {
+  root:    *mut StringBuilderBlock,
+  current: *mut StringBuilderBlock,
 }
 
-impl Deinit for String_Builder {
+impl Deinit for StringBuilder {
   deinit :: fn(*mut self) {
     if self.root {
       self.root.deinit();
@@ -279,11 +279,11 @@ impl Deinit for String_Builder {
 }
 
 to_string :: fn!<T>(value: T) -> String;
-format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
-format_any :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
-format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String;
+format_list :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
+format_any :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
+format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String;
 
-impl String_Builder {
+impl StringBuilder {
   // just here for 'clarity' xd
   clear :: fn(*mut self) {
     self.deinit();
@@ -323,7 +323,7 @@ impl String_Builder {
     if slice.length <= 0 then return;
 
     if !self.root {
-      self.root = String_Builder_Block::new();
+      self.root = StringBuilderBlock::new();
       self.current = self.root;
     }
 
@@ -348,7 +348,7 @@ impl String_Builder {
       }
       slice_index += remaining;
       length -= remaining;
-      self.current.next = String_Builder_Block::new();
+      self.current.next = StringBuilderBlock::new();
       self.current = self.current.next;
       remaining = STRING_BUILDER_BLOCK_MAX_LEN;
     }
@@ -364,12 +364,12 @@ impl String_Builder {
 
   append_byte :: fn(*mut self, ch: u8) {
     if !self.root {
-      self.root = String_Builder_Block::new();
+      self.root = StringBuilderBlock::new();
       self.current = self.root;
     }
 
     if self.current.length == STRING_BUILDER_BLOCK_MAX_LEN {
-      self.current.next = String_Builder_Block::new();
+      self.current.next = StringBuilderBlock::new();
       self.current = self.current.next;
     }
 
@@ -377,7 +377,7 @@ impl String_Builder {
     self.current.length += 1;
   }
 
-  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple: IsTuple {
+  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {
     mut formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();
@@ -390,6 +390,7 @@ impl String_Builder {
   }
 }
 
+@[inline]
 to_string :: fn!<T>(value: T) -> String {
   type := typeof(T);
   mut format : str;
@@ -436,9 +437,9 @@ to_string :: fn!<T>(value: T) -> String {
       i++;
     }
   } else if type == typeof(f32) {
-    sprintf(format_buffer, "%%.%df"c, Format_Options::current().digits_after_decimal);
+    sprintf(format_buffer, "%%.%df"c, FormatOptions::current().digits_after_decimal);
   } else if type == typeof(f64) {
-    sprintf(format_buffer, "%%.%dlf"c, Format_Options::current().digits_after_decimal);
+    sprintf(format_buffer, "%%.%dlf"c, FormatOptions::current().digits_after_decimal);
   } else {
     return .{};
   }
@@ -448,7 +449,8 @@ to_string :: fn!<T>(value: T) -> String {
   return String::from_ptr(buffer);
 }
 
-format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+@[inline]
+format_struct :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   builder.append(value.type.name);
   builder.append(" {");
 
@@ -483,7 +485,9 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
 
   builder.append("}");
 }
-format_tuple :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+
+@[inline]
+format_tuple :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   builder.append("(");
   for i in 0..value.type.fields.length {
     field := value.type.fields[i];
@@ -499,7 +503,9 @@ format_tuple :: fn(value: any, builder: *mut String_Builder, options: Format_Opt
   }
   builder.append(")");
 }
-format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+
+@[inline]
+format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   if value.type.implements("Format") {
     dyn_format := DynFormat::new(value);
     dyn_format.format(builder, options);
@@ -559,7 +565,9 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
     }
   }
 }
-format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options) {
+
+@[inline]
+format_list :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions) {
   type := list.type;
   ptr := list.ptr;
 
@@ -609,11 +617,12 @@ format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Optio
   }
 }
 
-format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String {
+@[inline]
+format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String {
   if fmt.length == 0 then
     return .{};
 
-  mut builder: String_Builder;
+  mut builder: StringBuilder;
 
   defer builder.deinit();
 
@@ -653,20 +662,23 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
   return builder.get_string();
 }
 
+@[inline]
 print :: fn!<T>(message: T) {
-  mut formatted := format("%", (message,), *Format_Options::current());
+  mut formatted := format("%", (message,), *FormatOptions::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
+@[inline]
 println :: fn!<T>(message: T) {
-  mut formatted := format("%", (message,), *Format_Options::current());
+  mut formatted := format("%", (message,), *FormatOptions::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
+@[inline]
 printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
-  mut formatted := format(fmt, tuple, *Format_Options::current());
+  mut formatted := format(fmt, tuple, *FormatOptions::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }

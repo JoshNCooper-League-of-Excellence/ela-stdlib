@@ -1,6 +1,16 @@
+impl Format for s32 {
+  @[inline]
+  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
+    buffer: u8[32];
+    len := snprintf(buffer, 32, "%d"c, *self);
+    builder.append(Slice!<u8>::from(buffer, len));
+    // builder.append_then_free(to_string(*self));
+  }
+}
+
 
 impl!<T> Format for Option!<T> {
-  format :: fn(*const self, builder: *mut String_Builder, mut options: Format_Options) {
+  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
     if options.enum_parent_name {
       old := options.quote_strings;
       options.quote_strings = false;
@@ -16,7 +26,7 @@ impl!<T> Format for Option!<T> {
 }
 
 impl!<_Ok, _Err> Format for Result!<_Ok, _Err> {
-  format :: fn(*const self, builder: *mut String_Builder, mut options: Format_Options) {
+  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
     if options.enum_parent_name {
       old := options.quote_strings;
       options.quote_strings = false;

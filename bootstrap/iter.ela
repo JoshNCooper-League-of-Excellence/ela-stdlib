@@ -37,6 +37,7 @@ IterMut :: struct!<V> {
 impl!<V> Iterator!<V> for Iter!<V> {
   alias Option :: Option!<V>;
   // Advances the iterator to the next element in the collection.
+  @[inline]
   next :: fn(*mut self) -> Option {
     if self.ptr >= self.end {
       return Option::None();

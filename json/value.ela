@@ -1,6 +1,6 @@
 import fmt::{
-  Format_Options,
-  String_Builder,
+  FormatOptions,
+  StringBuilder,
 };
 
 import map::*;
@@ -77,16 +77,16 @@ impl Subscript!<JsonValue> for JsonValue {
 }
 
 impl JsonValue {
-  to_string :: fn(*mut self, mut options: *const Format_Options) -> String {
+  to_string :: fn(*mut self, mut options: *const FormatOptions) -> String {
     
     // just doing this for now so you can pass null,
     // just for testing.
-    options = new(Format_Options .{
+    options = new(FormatOptions .{
       quote_strings: true,
       digits_after_decimal: 6,
     });
 
-    mut builder: String_Builder;
+    mut builder: StringBuilder;
 
     defer { 
       free(options);

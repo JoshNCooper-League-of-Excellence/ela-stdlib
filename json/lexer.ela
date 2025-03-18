@@ -71,7 +71,7 @@ impl JsonLexer {
   get_location_string :: fn(self) -> String {
     column := self.position - self.line_start;
     line := self.cur_line + 1;
-    return format("%:%:%", (self.file, line, column), Format_Options::default());
+    return format("%:%:%", (self.file, line, column), FormatOptions::default());
   }
 
   get_token :: fn(*mut self) -> Result!<Token, String> {
@@ -116,12 +116,12 @@ impl JsonLexer {
       if self.position >= self.input.length {
         mut location := self.get_location_string();
         defer location.deinit();
-        return Result::Err(format("at \"%\" unexpected end of input %", (location, c), Format_Options::default(),))
+        return Result::Err(format("at \"%\" unexpected end of input %", (location, c), FormatOptions::default(),))
       }
       c = self.input[self.position];
       if c != '/' {
         location := self.get_location_string();
-        return Result::Err(format("at \"%\" expected /, got %", (location, c), Format_Options::default(),))
+        return Result::Err(format("at \"%\" expected /, got %", (location, c), FormatOptions::default(),))
       }
       while c != '\n' && c != '\r' {
         self.position++;
@@ -259,7 +259,7 @@ impl JsonLexer {
     // we are the consumer of this API, but I guess maybe someone might want to use this?
     if types.length == 0 {
       loc := #location;
-      panic(format("json lexers `expect_types` got an empty set of types to expect, at \"%\"", (loc,), Format_Options::default(),).as_str());
+      panic(format("json lexers `expect_types` got an empty set of types to expect, at \"%\"", (loc,), FormatOptions::default(),).as_str());
     }
 
     // We do this without the string building so that we can only do that expensive heavy allocating procedure if we
@@ -271,11 +271,11 @@ impl JsonLexer {
       }
     }
 
-    mut builder: String_Builder;
+    mut builder: StringBuilder;
     defer builder.deinit();
 
     for i in 0..types.length {
-      builder.append_then_free(format("| %", (json_token_type_names.data[types.data[i]],), Format_Options::default(),));
+      builder.append_then_free(format("| %", (json_token_type_names.data[types.data[i]],), FormatOptions::default(),));
     }
 
     types_string := builder.get_string();
@@ -285,7 +285,7 @@ impl JsonLexer {
         types_string,
         json_token_type_names.data[token.type]
       ),
-      Format_Options::default(),
+      FormatOptions::default(),
     );
 
     return Result!<Token, String>::Err(error);

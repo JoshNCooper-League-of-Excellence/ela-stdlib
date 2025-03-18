@@ -25,6 +25,7 @@ impl!<_Some> Option!<_Some> {
       has_value: true
     };
   }
+
   None :: fn() -> #self {
     return .{
       has_value: false
@@ -35,6 +36,7 @@ impl!<_Some> Option!<_Some> {
 // This can be inferred, but 
 // This only works with an expected type, such as an argument, 
 // typed declaration, etc.
+@[inline]
 Some :: fn!<T>(t: T) -> Option!<T> {
   return Option!<T>::Some(t);
 }
@@ -42,6 +44,7 @@ Some :: fn!<T>(t: T) -> Option!<T> {
 // This can be inferred, but 
 // This only works with an expected type, such as an argument, 
 // typed declaration, etc.
+@[inline]
 None :: fn!<T>() -> T {
   return T::None();
 }

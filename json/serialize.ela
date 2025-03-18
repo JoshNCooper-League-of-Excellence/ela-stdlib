@@ -31,7 +31,7 @@ serialize_scalar :: fn(object: any) -> JsonResult {
     val.boolean = *(object.ptr as *const bool);
     return JsonResult::Ok(val);
   }
-  return JsonResult::Err(format("Unsupported type :: %", (object.type.name, ), Format_Options::default()));
+  return JsonResult::Err(format("Unsupported type :: %", (object.type.name, ), FormatOptions::default()));
 }
 
 serialize_any :: fn(object: any) -> JsonResult;
@@ -77,7 +77,7 @@ serialize_any :: fn(object: any) -> JsonResult {
   } else if Type::is_array(object.type) {
     return serialize_array(object);
   }
-  return JsonResult::Err(format("Unsupported type :: '%'", (object.type.name, ), Format_Options::default()));
+  return JsonResult::Err(format("Unsupported type :: '%'", (object.type.name, ), FormatOptions::default()));
 }
 
 serialize :: fn!<T>(mut object: T) -> JsonResult {

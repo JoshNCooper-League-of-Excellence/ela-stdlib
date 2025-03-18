@@ -201,6 +201,7 @@ impl!<T> Iterable for T[] {
     of course, this is always a view into the list, and holding on to this outside of the 
     guaranteed lifetime of the T[] is inherently unsafe.
   */
+  @[inline]
   iter :: fn(*const self) -> Iter!<T> {
     return .{
       ptr: self.data,
@@ -211,6 +212,7 @@ impl!<T> Iterable for T[] {
   /* 
     Get a mutable iterator.
   */
+  @[inline]
   iter_mut :: fn(*mut self) -> IterMut!<T> {
     return .{
       ptr: self.data,
