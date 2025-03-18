@@ -48,7 +48,9 @@
     }
 
     free :: fn(*mut self, ptr: *mut void) {
-      self.pointers.remove(ptr);
+      self.pointers.remove(ptr, fn(a: *mut void, b: *mut void) -> bool {
+        return a == b;
+      });
       free(ptr);
     }
 
@@ -59,7 +61,9 @@
     }
 
     resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
-      if !self.pointers.contains(ptr as *mut void) {
+      if !self.pointers.contains(ptr as *mut void, fn(a: *mut void, b: *mut void) -> bool {
+        return a == b;
+      }) {
         panic("cannot resize a pointer that wasn't allocated from the same allocator that's resizing");
       }
       

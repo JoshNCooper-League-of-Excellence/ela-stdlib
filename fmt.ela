@@ -174,6 +174,7 @@ Format_Options :: struct {
   digits_after_decimal: u8,
   indented: bool,
   quote_strings: bool,
+  enum_parent_name: bool,
 }
 
 impl Format_Options {
@@ -181,6 +182,7 @@ impl Format_Options {
     digits_after_decimal: 2,
     indented: false,
     quote_strings: false,
+    enum_parent_name: true,
   };
 
   current :: fn() -> *mut #self {
@@ -188,13 +190,39 @@ impl Format_Options {
       digits_after_decimal: 2,
       indented: false,
       quote_strings: false,
+      enum_parent_name: true,
     };
     return &mut current;
   }
 }
 
+String_Builder :: struct;
+
 Format :: interface {
-  format :: fn(self, builder: *mut String_Builder, options: Format_Options);
+  format :: fn(*const self, builder: *mut String_Builder, options: Format_Options);
+}
+
+DynFormat :: struct {
+  instance: *const void,
+  p_format: fn * (*const void, *mut String_Builder, Format_Options),
+}
+
+impl DynFormat {
+  format :: fn(*const self, builder: *mut String_Builder, options: Format_Options) {
+    self.p_format(self.instance, builder, options);
+  }
+  new :: fn(value: any) -> #self {
+    instance, type := value;
+    _, method := *type.methods.find_first_of(
+      fn(tuple: *const (str, *const void)) -> bool {
+        return tuple.0 == "format";
+      }
+    )
+    return .{
+      instance: instance,
+      p_format: method as fn * (*const void, *mut String_Builder, Format_Options),
+    };
+  }
 }
 
 // T!his seems pretty chunky,
@@ -241,6 +269,11 @@ impl Deinit for String_Builder {
     } 
   }
 }
+
+to_string :: fn!<T>(value: T) -> String;
+format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
+format_any :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
+format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String;
 
 impl String_Builder {
   // just here for 'clarity' xd
@@ -335,6 +368,18 @@ impl String_Builder {
     self.current.data[self.current.length] = ch;
     self.current.length += 1;
   }
+
+  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple: IsTuple {
+    mut formatted := format(fmt, values, options);
+    self.append(formatted);
+    formatted.deinit();
+  }
+  append_utf8 :: fn(*mut self, ch: u32) {
+    bytes := utf8_encode(ch);
+    for byte in bytes {
+      self.append_byte(byte);
+    }
+  }
 }
 
 to_string :: fn!<T>(value: T) -> String {
@@ -352,7 +397,7 @@ to_string :: fn!<T>(value: T) -> String {
   if type.is_enum() {
     for field in type.fields {
       if value == field.enum_value {
-        return String::from_ptr(field.name);
+        return String::from(field.name);
       }
     }
   }
@@ -395,55 +440,50 @@ to_string :: fn!<T>(value: T) -> String {
   return String::from_ptr(buffer);
 }
 
-format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
-format_any :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
-
 format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
-  builder.append(Slice!<u8>::from(value.type.name, strlen(value.type.name)));
+  builder.append(value.type.name);
   builder.append(" {");
 
   if options.indented {
     builder.append("\n");
   }
 
+  mut idx := 0;
   for field in value.type.fields {
     if options.indented {
       builder.append("  ");
     }
 
-    mut field_any := any.{
-      type: field.type,
-      ptr: field.get(value.ptr),
-    };
-
     builder.append(" ");
-    builder.append(Slice!<u8>::from(field.name, strlen(field.name)));
+    builder.append(field.name);
     builder.append(": ");
 
-    format_any(field_any, builder, options);
+    format_any(any.{
+      type: field.type,
+      ptr: field.get(value.ptr),
+    }, builder, options);
 
-    builder.append(",");
+    if idx != value.type.fields.length - 1 {
+      builder.append(",");
+    }
 
     if options.indented {
       builder.append("\n");
-    } else {
-      builder.append(" ");
-    }
+    } 
+    idx++;
   }
 
   builder.append("}");
 }
-
 format_tuple :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
   builder.append("(");
   for i in 0..value.type.fields.length {
     field := value.type.fields[i];
-    mut field_any := any.{
+
+    format_any(any.{
       type: field.type,
       ptr: field.get(value.ptr),
-    };
-
-    format_any(field_any, builder, options);
+    }, builder, options);
 
     if i != value.type.fields.length - 1 {
       builder.append(", ");
@@ -451,8 +491,13 @@ format_tuple :: fn(value: any, builder: *mut String_Builder, options: Format_Opt
   }
   builder.append(")");
 }
-
 format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
+  if value.type.implements("Format") {
+    dyn_format := DynFormat::new(value);
+    dyn_format.format(builder, options);
+    return;
+  }
+
   if value.type == typeof(String)  {
     if options.quote_strings
       then builder.append("\"");
@@ -465,20 +510,30 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
     builder.append((*(value.ptr as *const str)));
     if options.quote_strings
       then builder.append("\"");
-  } else if !value.type.is_pointer() && strncmp(value.type.name, "List!<"c, 6) == 0 {
+  } else if value.type.is_pointer() {
+    builder.append_then_free(to_string(value.ptr));
+  } else if value.type.name == "List!<" {
     format_list(value, builder, options);
-  } else if !value.type.is_pointer() && value.type.is_struct() {
+  } else if value.type.is_struct() {
     format_struct(value, builder, options);
-  } else if !value.type.is_pointer() && value.type.is_tuple() {
+  } else if value.type.is_tuple() {
     format_tuple(value, builder, options);
   } else if value.ptr == null {
     builder.append("null");
   } else if value.type == typeof(c_str) {
     builder.append(String::from_ptr(value.unwrap!<*const u8>()));
-  } else if value.type.is_pointer() {
-    builder.append_then_free(to_string(value.ptr));
   } else if value.type.is_enum() {
-    builder.append_then_free(to_string(value.unwrap!<s32>()));
+    if options.enum_parent_name {
+      builder.append(value.type.name);
+      builder.append("::");
+    }
+    for field in value.type.fields {
+      if field.enum_value == value.unwrap!<s32>() {
+        builder.append(field.name);
+        return;
+      }
+    }
+    builder.append("(invalid enum value)");
   } else {
     switch value.type {
       typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));        }
@@ -492,23 +547,23 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
       typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));       }
       typeof(f64):     { builder.append_then_free(to_string(value.unwrap!<f64>()));       }
       typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>()));      }
+      else:            { builder.append("(unsupported)");                                 }
     }
   }
 }
-
 format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options) {
   type := list.type;
   ptr := list.ptr;
 
   length_field := type.fields.find_first_of (
     fn (field: *const Field) -> bool {
-      return strcmp(field.name, "length"c) == 0;
+      return field.name == "length";
     }
   );
 
   data_field := type.fields.find_first_of(
     fn (field: *const Field) -> bool {
-      return strcmp(field.name, "data"c) == 0;
+      return field.name == "data";
     }
   )
 
@@ -518,7 +573,7 @@ format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Optio
   element_type := type.generic_args[0];
   element_size := element_type.size;
 
-  builder.append(Slice!<u8>::from(type.name, strlen(type.name)));
+  builder.append(type.name);
   builder.append(" [");
 
   if options.indented {
@@ -575,14 +630,11 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: Format_Options) -> String
 
     if (*fmt.data) == '%' && value_index < fields.length {
       field := fields[value_index];
-
       value :any = .{
         type: field.type,
         ptr: field.get(&const tuple),
       };
-
       format_any(value, &mut builder, options);
-
       value_index++;
     } else {
       builder.append((*fmt.data) as u32);
@@ -611,51 +663,44 @@ printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   formatted.deinit();
 }
 
-impl String_Builder {
-  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: Format_Options) where Tuple: IsTuple{
-    mut formatted := format(fmt, values, options);
-    self.append(formatted);
-    formatted.deinit();
+#region UTF8.2 {
+  /*
+    ! this needs to be rewritten for Iterator!<>
+  */
+  UTF8_Iter :: struct {
+    slice: Slice!<u8>,
+    position: u32,
+    current_char: u32,
   }
-}
 
-impl String_Builder {
-  append_utf8 :: fn(*mut self, ch: u32) {
-    bytes := utf8_encode(ch);
-    for byte in bytes {
-      self.append_byte(byte);
+  impl Iterator!<u32> for UTF8_Iter {
+    next :: fn(*mut self) -> Option!<u32> {
+      if self.position >= self.slice.length {
+        return Option!<u32>::None();
+      }
+      subslice := self.slice.slice(self.position..(self.position + 4));
+      ch, advance := utf8_to_code_point(subslice);
+      self.position += advance;
+      self.current_char = ch;
+      return Option!<u32>::Some(ch);
+    }
+  }
+
+  impl String {
+    chars :: fn(self) -> UTF8_Iter {
+      return .{
+        slice: self.as_byte_slice(),
+        position: 0,
+        current_char: '\0',
+      }
     }
   }
 }
 
-/*
-  ! this needs to be rewritten for Iterator!<>
+
+/* 
+  ! Don't touch these!!
 */
-UTF8_Iter :: struct {
-  slice: Slice!<u8>,
-  position: u32,
-  current_char: u32,
-}
 
-impl Iterator!<u32> for UTF8_Iter {
-  next :: fn(*mut self) -> Option!<u32> {
-    if self.position >= self.slice.length {
-      return Option!<u32>::None();
-    }
-    subslice := self.slice.slice(self.position..(self.position + 4));
-    ch, advance := utf8_to_code_point(subslice);
-    self.position += advance;
-    self.current_char = ch;
-    return Option!<u32>::Some(ch);
-  }
-}
+#include "formatters/other.ela"
 
-impl String {
-  chars :: fn(self) -> UTF8_Iter {
-    return .{
-      slice: self.as_byte_slice(),
-      position: 0,
-      current_char: '\0',
-    }
-  }
-}

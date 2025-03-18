@@ -1,5 +1,5 @@
 Field :: struct {
-  name: c_str,
+  name: str,
   type: *const Type,
   size: u64,
   offset: u64,
@@ -8,12 +8,17 @@ Field :: struct {
 
 Type :: struct {
   id: s32,                                                          // the integer ID used to identify this type.
-  name: c_str,                                                      // the type's name.
+  name: str,
   size: u64,                                                        // sizeof(T)
   flags: u64,                                                       // defined in reflection.ela and emit.cpp, the values of the flags.
   fields: Field[],                                                  // get a list of struct fields, enum variants.
   element_type: *const Type,                                        // the type this type has a pointer to, is an array of, etc.
-  generic_args: List!<*const Type>                                  // a list of the generic types provided. 
+
+  generic_args: List!<*const Type>,                                 // a list of the generic arguments.
+  interfaces: List!<*const Type>,                                   // a list of implemented interfaces.
+
+  //// TODO: maybe we can make this more type safe in the future.
+  methods:    List!<(str, *const void)>,                                   // a list of method function pointers, 
 };
 
 #ifndef FREESTANDING {
@@ -29,18 +34,18 @@ Type :: struct {
   _type_info: *const Type[];
 
   impl Type {
-    get_field :: fn(*mut self, name: c_str) -> *const Field {
+    get_field :: fn(*mut self, name: str) -> *const Field {
       for field in self.fields.iter_mut() {
-        if strcmp(field.name, name) == 0 {
+        if field.name == name {
           return field as *const Field;
         }
       }
       return null;
     }
-    
+
     offset :: fn(*mut self, member: str) -> u64 {
       for field in self.fields {
-        if strncmp(field.name, member.data, member.length as s32) == 0  {
+        if field.name == member  {
           return field.offset;
         }
       }
@@ -192,16 +197,16 @@ impl Iterator!<any> for ElementIter {
 
 impl Type {
   elements :: fn(self, ptr: *const u8) -> ElementIter {
-    if strncmp(self.name, "List!<"c, 6) {
+    if self.name == "List!<" {
       length_field := self.fields.find_first_of (
         fn (field: *const Field) -> bool {
-          return strcmp(field.name, "length"c) == 0;
+          return field.name == "length"
         }
       );
 
       data_field := self.fields.find_first_of(
         fn (field: *const Field) -> bool {
-          return strcmp(field.name, "data"c) == 0;
+          return field.name == "data";
         }
       )
 
@@ -218,5 +223,16 @@ impl Type {
         element_type: self.element_type,
       };
     }
+  }
+}
+
+impl Type {
+  implements :: fn(*const self, interface_name: str) -> bool {
+    for iface in self.interfaces {
+      if iface.name == interface_name {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -15,19 +15,21 @@ impl String {
 
 #ifndef FREESTANDING {
   impl String {
-    replace :: fn!<Old, Replacement>(*mut self, old: Old, replacement: Replacement) -> String
+    replace :: fn!<Old, Replacement>(*mut self, old_arg: Old, replacement_arg: Replacement) -> String
       where Old: AsByteSlice,
             Replacement: AsByteSlice
     {
-      old_len := strlen(old);
-      new_len := strlen(replacement);
+      old := old_arg.as_byte_slice();
+      replacement := replacement_arg.as_byte_slice();
+      
+
       mut result : String = .{};
       for i in 0..self.length {
-        if strncmp(self.data + i, old, old_len) == 0 {
-          result.data = realloc(result.data, result.length + new_len + 1);
-          memcpy(result.data + result.length, replacement, new_len);
-          result.length += new_len;
-          i += old_len - 1;
+        if strncmp(self.data + i, old.data, old.length as s32) == 0 {
+          result.data = realloc(result.data, result.length + replacement.length + 1);
+          memcpy(result.data + result.length, replacement.data, replacement.length);
+          result.length += replacement.length;
+          i += old.length - 1;
         } else {
           result.data = realloc(result.data, result.length + 1 + 1);
           result.data[result.length] = self.data[i];

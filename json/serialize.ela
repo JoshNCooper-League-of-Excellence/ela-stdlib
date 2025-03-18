@@ -45,7 +45,7 @@ serialize_struct :: fn(object: any) -> JsonResult {
     if result.is_err() {
       return result;
     }
-    val.object.insert(String::from_ptr(field.name), result.unwrap());
+    val.object.insert(String::from(field.name), result.unwrap());
   }
   return JsonResult::Ok(val);
 }

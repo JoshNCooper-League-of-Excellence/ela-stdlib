@@ -1,0 +1,32 @@
+
+impl!<T> Format for Option!<T> {
+  format :: fn(*const self, builder: *mut String_Builder, mut options: Format_Options) {
+    if options.enum_parent_name {
+      old := options.quote_strings;
+      options.quote_strings = false;
+      builder.appendf("%::", (typeof(Option!<T>).name,), options);
+      options.quote_strings = old;
+    }
+    if self.is_some() {
+      builder.appendf("Some(%)", (self.s, ), options);
+    } else {
+      builder.append("None()");
+    }
+  }
+}
+
+impl!<_Ok, _Err> Format for Result!<_Ok, _Err> {
+  format :: fn(*const self, builder: *mut String_Builder, mut options: Format_Options) {
+    if options.enum_parent_name {
+      old := options.quote_strings;
+      options.quote_strings = false;
+      builder.appendf("%::", (typeof(Result!<_Ok, _Err>).name,), options);
+      options.quote_strings = old;
+    }
+    if self.is_ok() {
+      builder.appendf("Ok(%)", (self.ok,), options);
+    } else {
+      builder.appendf("Err(%)", (self.err,), options);
+    }
+  }
+}
