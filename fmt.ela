@@ -398,13 +398,6 @@ to_string :: fn!<T>(value: T) -> String {
 format_list :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
 format_any :: fn(list: any, builder: *mut String_Builder, options: Format_Options);
 
-/*
-  ! Massive TODO/BUG!
-  ! @Cooper-Pilot
-  We need to figure out why doing these kind of 'mutually recursive' functions,
-  such as the various formatters, causes a crazy blow-up in the dependency emitter.
-*/
-
 format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Options) {
   builder.append(Slice!<u8>::from(value.type.name, strlen(value.type.name)));
   builder.append(" {");
@@ -436,7 +429,6 @@ format_struct :: fn(value: any, builder: *mut String_Builder, options: Format_Op
     } else {
       builder.append(" ");
     }
-
   }
 
   builder.append("}");
@@ -474,12 +466,7 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
     if options.quote_strings
       then builder.append("\"");
   } else if !value.type.is_pointer() && strncmp(value.type.name, "List!<"c, 6) == 0 {
-
-    // ! TODO: @Cooper-Pilot,
-    // ! this, and `format_struct()` call from within format_struct cause a similar
-    // ! dependency emitter explosion.
-    // ! format_list(value, builder, options);
-
+    format_list(value, builder, options);
   } else if !value.type.is_pointer() && value.type.is_struct() {
     format_struct(value, builder, options);
   } else if !value.type.is_pointer() && value.type.is_tuple() {
@@ -498,15 +485,12 @@ format_any :: fn(value: any, builder: *mut String_Builder, options: Format_Optio
       typeof(u16):     { builder.append_then_free(to_string(value.unwrap!<u16>()));       }
       typeof(u32):     { builder.append_then_free(to_string(value.unwrap!<u32>()));       }
       typeof(u64):     { builder.append_then_free(to_string(value.unwrap!<u64>()));       }
-
       typeof(s8):      { builder.append_then_free(to_string(value.unwrap!<s8>()));        }
       typeof(s16):     { builder.append_then_free(to_string(value.unwrap!<s16>()));       }
       typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>()));       }
       typeof(s64):     { builder.append_then_free(to_string(value.unwrap!<s64>()));       }
-
       typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));       }
       typeof(f64):     { builder.append_then_free(to_string(value.unwrap!<f64>()));       }
-
       typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>()));      }
     }
   }
