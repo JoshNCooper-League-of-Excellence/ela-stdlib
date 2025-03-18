@@ -98,12 +98,13 @@ impl JsonValue {
         builder.append("{");
         mut idx := 0;
         for key, value in self.object {
+          if idx != 0 {
+            builder.append(", ");
+          }
+          idx++;
           builder.append(key);
           builder.append(": ");
           builder.append_then_free(value.to_string(options));
-          if idx != self.object.length {
-            builder.append(", ");
-          }
         }
         builder.append("}");
       }
@@ -111,10 +112,11 @@ impl JsonValue {
         builder.append("[");
         mut idx := 0;
         for val in self.array {
-          builder.append_then_free(val.to_string(options));
-          if idx != self.array.length {
+          if idx != 0 {
             builder.append(", ");
           }
+          idx++;
+          builder.append_then_free(val.to_string(options));
         }
         builder.append("]");  
       }
