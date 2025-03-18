@@ -213,11 +213,19 @@ impl DynFormat {
   }
   new :: fn(value: any) -> #self {
     instance, type := value;
-    _, method := *type.methods.find_first_of(
+    tuple := type.methods.find_first_of(
       fn(tuple: *const (str, *const void)) -> bool {
         return tuple.0 == "format";
       }
     )
+
+    if !tuple {
+      printf("unable to find 'format' in type %s\n"c, type.name);
+      panic("DynFormat failure");
+    }
+
+    _, method := *tuple;
+
     return .{
       instance: instance,
       p_format: method as fn * (*const void, *mut String_Builder, Format_Options),
