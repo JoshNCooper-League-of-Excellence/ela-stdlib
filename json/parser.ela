@@ -1,7 +1,6 @@
+alias JsonResult :: Result!<*mut JsonValue, String>;
 
-alias ParseResult :: Result!<*mut JsonValue, String>;
-
-parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
+parse :: fn(lexer: *mut JsonLexer) -> JsonResult {
   mut token_result := lexer.expect_types(.[
     TokenType::LBracket,
     TokenType::LCurly,
@@ -30,7 +29,7 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
 
       if token.type == TokenType::RBracket {
         lexer.eat();
-        return ParseResult::Ok(value);
+        return JsonResult::Ok(value);
       }
 
       while token.type != TokenType::RBracket {
@@ -55,7 +54,7 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
 
       if lexer.peek().type == TokenType::RCurly {
         lexer.eat();
-        return ParseResult::Ok(value);
+        return JsonResult::Ok(value);
       }
 
       while token.type != TokenType::RCurly {
@@ -107,20 +106,20 @@ parse :: fn(lexer: *mut JsonLexer) -> ParseResult {
     value.type = JsonValueType::Null;
   }
 
-  return ParseResult::Ok(value);
+  return JsonResult::Ok(value);
 }
 
-parse_file :: fn(file: str) -> ParseResult {
+parse_file :: fn(file: str) -> JsonResult {
   result := File::read_all(file);
   if result.is_err() {
-    return ParseResult::Err(result.err.as_string())
+    return JsonResult::Err(result.err.as_string())
   }
 
   mut lexer := JsonLexer::create(file.as_string(), result.unwrap());
   return parse(&mut lexer);
 }
 
-parse_string :: fn(s: str) -> ParseResult {
+parse_string :: fn(s: str) -> JsonResult {
   mut lexer := JsonLexer::create(":<loaded from string>:".as_string(), s.as_string());
   return parse(&mut lexer);
 }

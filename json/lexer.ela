@@ -253,7 +253,7 @@ impl JsonLexer {
   }
 
   expect_types :: fn(*mut self, types: InitList!<s32>) -> Result!<Token, String> {
-    token := self.peek();
+    token := self.eat();
 
     // this should never happen.
     // we are the consumer of this API, but I guess maybe someone might want to use this?

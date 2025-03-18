@@ -171,3 +171,52 @@ impl any {
     }
   }
 }
+
+ElementIter :: struct {
+  ptr: *mut u8,
+  end: *const u8,
+  element_type: *const Type,
+}
+
+impl Iterator!<any> for ElementIter {
+  // Advances the iterator to the next element in the collection.
+  next :: fn(*mut self) -> Option!<any> {
+    if self.ptr >= self.end {
+      return None();
+    }
+    value := Some(any.{ptr: self.ptr, type: self.element_type});
+    self.ptr += self.element_type.size;
+    return value;
+  }
+}
+
+impl Type {
+  elements :: fn(self, ptr: *const u8) -> ElementIter {
+    if strncmp(self.name, "List!<"c, 6) {
+      length_field := self.fields.find_first_of (
+        fn (field: *const Field) -> bool {
+          return strcmp(field.name, "length"c) == 0;
+        }
+      );
+
+      data_field := self.fields.find_first_of(
+        fn (field: *const Field) -> bool {
+          return strcmp(field.name, "data"c) == 0;
+        }
+      )
+
+      length := *(length_field.get(ptr) as *const u64);
+      data   := *(data_field.get(ptr) as *const *const u8);
+
+      element_type := self.generic_args[0];
+      end := data + length * element_type.size;
+      return .{ptr: data as *mut u8, end: end, element_type: element_type};
+    } else {
+      return .{
+        ptr: ptr as *mut u8,
+        end: ptr + (self.size / self.element_type.size),
+        element_type: self.element_type,
+      };
+    }
+  }
+}
