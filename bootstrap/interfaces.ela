@@ -61,20 +61,20 @@ Subscript :: interface!<T> {
   subscript_mut :: fn(*mut self, index: u64) -> *mut T;
 }
 
+Deinit :: interface {
+  deinit :: fn(*mut self);
+}
+
 Allocator :: interface {
   allocate :: fn(*mut self, size: u64) -> *mut void;
   free :: fn(*mut self, ptr: *mut void);
   allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void;
   resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
   copy :: fn(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
-}
-
-Deinit :: interface {
-  // Albeit strange, this is declared const because you do not want to have to declare things like
-  // a local String as mutable just because you release it.
-  // it's counter intuitive, because we actually do modify it, but it's just a QOL thing.
   deinit :: fn(*mut self);
 }
+
+
 // just a free function version for those who might prefer a C like 'free' style api.
 deinit :: fn!<T>(t: *const T) where T: Deinit {
   t.deinit();

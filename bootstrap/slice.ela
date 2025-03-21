@@ -1,13 +1,21 @@
 
 #ifndef FREESTANDING {
-  impl!<T> Clone for Slice!<T> {
-    clone :: fn(self) -> #self {
-      data : *mut T = malloc(sizeof(T) * self.length);
+  impl!<T> Slice!<T> {
+    clone :: fn!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | Dyn_Allocator {
+      data : *mut T = allocator.allocate_array(sizeof(T), self.length);
       memcpy(data, self.data, self.length * sizeof(T));
       return .{
         data: data,
         length: self.length,
       };
+    }
+
+    // this is really just for cloned slices, that which take ownership.
+    // To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
+    // since Slice!<T> is supposed to be like blatantly non-owning.
+    // it's confusing and muddles the intended purpose and clarity of having the type in the standard.
+    deinit :: fn!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | Dyn_Allocator {
+      allocator.free(self.data);
     }
   }
 }

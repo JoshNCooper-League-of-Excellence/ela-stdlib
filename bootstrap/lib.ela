@@ -14,6 +14,8 @@
 #include "range.ela";
 // a few libc functions that are used in most programs.
 #include "libc.ela";
+// dynamic interface for allocator.
+#include "memory.ela";
 // List<T> aka T[].
 #include "list.ela";
 // Slice!<T> and SliceMut!<T>, views over memory.
@@ -26,8 +28,7 @@
 #include "reflection.ela";
 // basic hashing functions implemented for numerical and string types.
 #include "hash.ela";
-// dynamic interface for allocator.
-#include "memory.ela";
+
 
 #ifndef FREESTANDING {
   assert :: fn(message: str, condition: bool) {

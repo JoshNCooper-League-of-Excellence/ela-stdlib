@@ -1,9 +1,9 @@
 
 #ifndef FREESTANDING {
   impl str {
-    as_string :: fn(self) -> String {
+    to_string :: fn!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | Dyn_Allocator {
       return .{
-        data: strdup(self.data),
+        data: allocator.copy(self.data, sizeof(u8), self.length),
         length: self.length,
       };
     }

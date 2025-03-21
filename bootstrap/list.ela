@@ -2,7 +2,6 @@ panic :: fn(msg: str);
 
 #ifndef FREESTANDING {
   impl!<T> T[] {
-
     clear :: fn(*mut self) {
       free(self.data);
       self.capacity = 0;
@@ -20,7 +19,7 @@ panic :: fn(msg: str);
     */
     subarray :: fn(self, range: Range) -> #self {
       len := range.end - range.begin;
-      new_data := malloc(sizeof(T) * len);
+      new_data := self.allocator.allocate_array(sizeof(T), len);
       memcpy(new_data, self.data + range.begin, sizeof(T) * len);
       return .{
         data: new_data,
@@ -42,7 +41,12 @@ panic :: fn(msg: str);
         self.length = new_capacity; 
       }
       self.capacity = new_capacity;
-      self.data = realloc(self.data, sizeof(T) * self.capacity);
+
+      if self.allocator == null {
+        self.allocator = get_default_allocator();
+      }
+
+      self.data = self.allocator.resize(self.data, sizeof(T), self.capacity);
     }
     
     /* 
@@ -124,7 +128,7 @@ panic :: fn(msg: str);
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
     clone :: fn(self) -> #self {
-      new_data := malloc(sizeof(T) * self.capacity);
+      new_data := self.allocator.allocate_array(sizeof(T), self.capacity);
       memcpy(new_data, self.data, sizeof(T) * self.length);
       return .{
         data: new_data,

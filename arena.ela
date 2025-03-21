@@ -14,14 +14,6 @@ Arena :: struct {
   next: *mut Arena,
 } 
 
-impl Deinit for Arena {
-  deinit :: fn(*mut self) {
-    if self.next then self.next.deinit();
-    free(self.memory);
-    (self as *mut #self).memory = null;
-  }
-}
-
 impl Arena {
   new :: fn(size: u64, flags: ArenaFlags) -> #self {
     return .{
@@ -89,5 +81,16 @@ impl Allocator for Arena {
     memcpy(new_ptr, ptr, n);
     return new_ptr;
 
+  }
+  deinit :: fn(*mut self) {
+    if self.next {
+      self.next.deinit();
+      free(self.next);
+      self.next = null;
+    }
+
+    free(self.memory);
+
+    self.memory = null;
   }
 }

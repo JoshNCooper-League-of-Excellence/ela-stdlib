@@ -21,6 +21,7 @@ String :: struct {
   data: *mut u8,
   length: u64,
   capacity: u64,
+  allocator: *mut Dyn_Allocator,
 }
 
 // This is what is produced when you do 
@@ -37,7 +38,7 @@ List :: struct!<V> {
   data:     *mut V,
   length:   u64,
   capacity: u64,
-  // allocator: Dyn_Allocator,
+  allocator: *mut Dyn_Allocator,
 }
 
 

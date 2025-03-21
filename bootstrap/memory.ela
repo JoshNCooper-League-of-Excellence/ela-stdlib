@@ -8,6 +8,7 @@ Dyn_Allocator :: struct {
   p_allocate_array: fn * (*mut void, u64, u64) -> *mut void,
   p_resize:         fn * (*mut void, *const void, u64, u64) -> *mut void,
   p_copy:           fn * (*mut void, *const void, u64, u64) -> *mut void,
+  p_deinit:           fn * (*mut void),
 }
 
 impl Dyn_Allocator {
@@ -19,7 +20,7 @@ impl Dyn_Allocator {
     typeof(t.allocate_array(0, 0));
     typeof(t.copy(null, 1, 0));
     typeof(t.resize(null, 1, 0));
-
+    typeof(t.deinit());
     return .{
       instance: t,
       p_allocate:       &mut T::allocate,
@@ -27,6 +28,7 @@ impl Dyn_Allocator {
       p_allocate_array: &mut T::allocate_array,
       p_resize:         &mut T::resize,
       p_copy:           &mut T::copy,
+      p_deinit:         &mut T::deinit,
     };
   }
 }
@@ -56,4 +58,124 @@ impl Dyn_Allocator {
     p_copy := self.p_copy;
     return p_copy(self.instance, ptr, element_size, n);
   }
+
+  deinit :: fn(*mut self) {
+
+  }
+}
+
+#ifndef FREESTANDING {
+  Libc_Allocator :: struct {}
+  impl Allocator for Libc_Allocator {
+    allocate :: fn(*mut self, size: u64) -> *mut void {
+      return malloc(size);
+    }
+    free :: fn(*mut self, ptr: *mut void) {
+      free(ptr);
+    }
+    allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void {
+      return calloc(size, n);
+    }
+    resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
+      return realloc(ptr, element_size * new_size);
+    }
+    copy :: fn(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
+      newptr := self.allocate_array(element_size, n);
+      memcpy(newptr, ptr, n * element_size);
+      return newptr;
+    }
+    deinit :: fn(*mut self) {}
+  }
+  impl Libc_Allocator {
+    get :: fn() -> #self {
+      #static self: #self;
+      return self;
+    }
+  }
+
+  Tracking_Allocator :: struct {
+    pointers: *mut *mut void,
+    length: u64,
+    capacity: u64,
+  }
+  impl Tracking_Allocator {
+
+    push_pointer :: fn(*mut self, ptr: *mut void) {
+      if self.length + 1 > self.capacity {
+        if self.capacity == 0 then self.capacity = 4;
+        self.capacity *= 2;
+        self.pointers = realloc(self.pointers, sizeof(*const void) * self.capacity);
+      }
+      self.pointers[self.length] = ptr;
+      self.length += 1;
+    }
+
+    contains_pointer :: fn(self, ptr: *mut void) -> bool {
+      for i in 0..self.length {
+        if self.pointers[i] == ptr {
+          return true;
+        }
+      }
+      return false;
+    }
+  }
+  impl Allocator for Tracking_Allocator {
+    deinit :: fn(*mut self) {
+      while self.length > 0 {
+        free(self.pointers[self.length - 1]);
+        self.length -= 1;
+      }
+      free(self.pointers);
+      self.pointers = null;
+      self.capacity = 0;
+    }
+
+    allocate :: fn(*mut self, size: u64) -> *mut void {
+      ptr := malloc(size);
+      self.push_pointer(ptr);
+      return ptr;
+    }
+
+    free :: fn(*mut self, ptr: *mut void) {
+      for i in 0..self.length {
+        if self.pointers[i] == ptr {
+          memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
+          self.length -= 1;
+          break;
+        }
+      }
+      free(ptr);
+    }
+
+    allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void {
+      ptr := calloc(size, n);
+      self.push_pointer(ptr);
+      return ptr;
+    }
+
+    resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
+      pointer := realloc(ptr, element_size * new_size);
+      if ptr == null {
+        self.push_pointer(pointer);
+      }
+      return pointer;
+    }
+
+    copy :: fn(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
+      new_ptr := self.allocate_array(element_size, n);
+      memcpy(new_ptr, ptr, n * element_size);
+      return new_ptr;
+    }
+  }
+}
+
+// TODO: make this less stupid.
+// you can also overwrite this if you want, just be sure to free the old one.
+get_default_allocator :: fn() -> *mut Dyn_Allocator {
+  #static mut allocator: Libc_Allocator;
+  #static mut dyn: *mut Dyn_Allocator = null;
+  if dyn == null {
+    dyn = new(Dyn_Allocator::new(&mut allocator));
+  }
+  return dyn;
 }

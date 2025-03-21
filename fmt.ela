@@ -397,9 +397,9 @@ to_string :: fn!<T>(value: T) -> String {
 
   if type.is_bool() {
     if value {
-      return "true".as_string();
+      return "true".to_string(get_default_allocator());
     } else {
-      return "false".as_string();
+      return "false".to_string(get_default_allocator());
     }
   }
 

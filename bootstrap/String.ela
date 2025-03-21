@@ -68,14 +68,19 @@ impl String {
     resize :: fn(*mut self, new_size: u64) {
       if new_size < self.length then self.length = new_size;
       self.capacity = new_size;
-      self.data = realloc(self.data, new_size * sizeof(u8) + 1);
+
+      if self.allocator == null {
+        self.allocator = get_default_allocator();
+      }
+
+      self.data = self.allocator.resize(self.data, sizeof(u8), new_size + 1);
       self.data[self.length] = 0;
     }
 
     push :: fn(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
       if self.length + 1 >= self.capacity {
-      self.resize(self.capacity * 3 + 1);
+        self.resize(self.capacity * 3 + 1);
       }
       self.data[self.length] = ch;
       self.length++;

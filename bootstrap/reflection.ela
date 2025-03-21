@@ -31,7 +31,7 @@ Type :: struct {
     }
   }
 
-  _type_info: *const Type[];
+  _type_info: List!<*const Type>;
 
   impl Type {
     get_field :: fn(*mut self, name: str) -> *const Field {
@@ -159,7 +159,7 @@ impl any {
 
 #ifndef FREESTANDING {
   impl any {
-    new :: fn!<T, Alloc>(t: T, alloc: Alloc) -> #self where Alloc: Allocator {
+    new :: fn!<T, Alloc>(t: T, alloc: *mut Alloc) -> #self where Alloc: Allocator | Dyn_Allocator {
       ptr : *mut T = alloc.allocate(sizeof(T));
       *ptr = t;
       return .{
