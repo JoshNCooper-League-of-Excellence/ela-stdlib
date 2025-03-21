@@ -1,6 +1,7 @@
 import fmt::{
   FormatOptions,
   StringBuilder,
+  Format,
 };
 
 import map::*;
@@ -77,19 +78,12 @@ impl Subscript!<JsonValue> for JsonValue {
 }
 
 impl JsonValue {
-  to_string :: fn(*mut self, mut options: *const FormatOptions) -> String {
-    
-    // just doing this for now so you can pass null,
-    // just for testing.
-    options = new(FormatOptions .{
-      quote_strings: true,
-      digits_after_decimal: 6,
-    });
+  to_string :: fn(*const self, mut options: FormatOptions) -> String {
+    options.quote_strings = true;
 
     mut builder: StringBuilder;
 
     defer { 
-      free(options);
       builder.deinit();
     }
 
@@ -121,10 +115,10 @@ impl JsonValue {
         builder.append("]");  
       }
       JsonValueType::Number: {
-        builder.appendf("%", (self.number,), *options);
+        builder.appendf("%", (self.number,), options);
       }
       JsonValueType::String: {
-        builder.appendf("%", (self.string,), *options);
+        builder.appendf("%", (self.string,), options);
       }
       JsonValueType::Boolean: {
         value := switch self.boolean {
@@ -202,5 +196,11 @@ impl JsonValue {
       return Some(self.boolean);
     }
     return None();
+  }
+}
+
+impl Format for JsonValue {
+  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+    builder.append_then_free(self.to_string(options));
   }
 }

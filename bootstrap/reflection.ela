@@ -219,7 +219,7 @@ impl Type {
     } else {
       return .{
         ptr: ptr as *mut u8,
-        end: ptr + (self.size / self.element_type.size),
+        end: ptr + self.size,
         element_type: self.element_type,
       };
     }

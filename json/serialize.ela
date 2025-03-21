@@ -11,7 +11,7 @@ serialize_scalar :: fn(object: any) -> JsonResult {
   } else if Type::is_integral(object.type) {
     val.type = JsonValueType::Number;
     if Type::is_signed(object.type) {
-      val.number =switch object.type.size {
+      val.number = switch object.type.size {
         8 => *(object.ptr as *const s64),
         4 => *(object.ptr as *const s32),
         2 => *(object.ptr as *const s16),
