@@ -1,5 +1,5 @@
 serialize_scalar :: fn(object: any) -> JsonResult {
-  val := new(JsonValue.{});
+  val := JsonValue::new();
   if Type::is_float(object.type) {
     val.type = JsonValueType::Number;
     if object.type.size == 8 {
@@ -37,7 +37,7 @@ serialize_scalar :: fn(object: any) -> JsonResult {
 serialize_any :: fn(object: any) -> JsonResult;
 
 serialize_struct :: fn(object: any) -> JsonResult {
-  val := new(JsonValue.{});
+  val := JsonValue::new();
   val.type = JsonValueType::Object;
   val.object = .{};
   for field in object.type.fields {
@@ -51,7 +51,7 @@ serialize_struct :: fn(object: any) -> JsonResult {
 }
 
 serialize_array :: fn(object: any) -> JsonResult {
-  val := new(JsonValue.{});
+  val := JsonValue::new();
   val.type = JsonValueType::Array;
   val.array = .{};
   for element in object.type.elements(object.ptr as *const u8) {
@@ -65,7 +65,7 @@ serialize_array :: fn(object: any) -> JsonResult {
 serialize_any :: fn(object: any) -> JsonResult {
   if Type::has_no_extension(object.type) {
     if object.type.id == #typeid(*const u8) {
-      val := new(JsonValue.{});
+      val := JsonValue::new();
       val.type = JsonValueType::String;
       val.string = String::from_ptr(*(object.ptr as *const *const u8));
       return JsonResult::Ok(val);
