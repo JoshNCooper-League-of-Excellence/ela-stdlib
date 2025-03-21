@@ -8,7 +8,7 @@ Dyn_Allocator :: struct {
   p_allocate_array: fn * (*mut void, u64, u64) -> *mut void,
   p_resize:         fn * (*mut void, *const void, u64, u64) -> *mut void,
   p_copy:           fn * (*mut void, *const void, u64, u64) -> *mut void,
-  p_deinit:           fn * (*mut void),
+  p_deinit:         fn * (*mut void),
 }
 
 impl Dyn_Allocator {
@@ -34,6 +34,12 @@ impl Dyn_Allocator {
 }
 
 impl Dyn_Allocator {
+  new_ptr :: fn!<T>(*mut self, value: T) -> *mut T {
+    mut mem : *mut T = self.allocate(sizeof(T));
+    *mem = value;
+    return mem;
+  }
+
   allocate :: fn(*mut self, size: u64) -> *mut void {
     p_allocate := self.p_allocate;
     return p_allocate(self.instance, size);
@@ -60,7 +66,8 @@ impl Dyn_Allocator {
   }
 
   deinit :: fn(*mut self) {
-
+    p_deinit := self.p_deinit;
+    p_deinit(self.instance);
   }
 }
 
@@ -118,6 +125,16 @@ impl Dyn_Allocator {
       }
       return false;
     }
+
+    remove_pointer :: fn(*mut self, ptr: *const void) {
+      for i in 0..self.length {
+        if self.pointers[i] == ptr {
+          memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
+          self.length -= 1;
+          break;
+        }
+      }
+    }
   }
   impl Allocator for Tracking_Allocator {
     deinit :: fn(*mut self) {
@@ -137,13 +154,7 @@ impl Dyn_Allocator {
     }
 
     free :: fn(*mut self, ptr: *mut void) {
-      for i in 0..self.length {
-        if self.pointers[i] == ptr {
-          memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
-          self.length -= 1;
-          break;
-        }
-      }
+      self.remove_pointer(ptr);
       free(ptr);
     }
 
@@ -154,10 +165,9 @@ impl Dyn_Allocator {
     }
 
     resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
+      self.remove_pointer(ptr);
       pointer := realloc(ptr, element_size * new_size);
-      if ptr == null {
-        self.push_pointer(pointer);
-      }
+      self.push_pointer(pointer);
       return pointer;
     }
 

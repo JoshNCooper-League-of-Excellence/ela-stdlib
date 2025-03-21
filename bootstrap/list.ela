@@ -267,19 +267,6 @@ impl!<T> AsSlice!<T> for T[] {
       return new_list;
     }
 
-    // /*
-    //   Find the first occurrence of an element in the list that matches the given value.
-    //   Returns the index of the element if found, otherwise returns -1.
-    // */
-    // find :: fn(self, value: T) -> s64 {
-    //   for idx in 0..self.length {
-    //     if self.data[idx] == value {
-    //       return idx as s64;
-    //     }
-    //   }
-    //   return -1;
-    // }
-
     /*
       Remove an element at a specific index from the list.
       This doesn't deallocate the old memory.
