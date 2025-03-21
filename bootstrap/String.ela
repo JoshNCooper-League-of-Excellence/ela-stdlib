@@ -106,7 +106,7 @@ impl String {
     push_front :: fn(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
       if self.length + 1 >= self.capacity {
-      self.resize(self.capacity * 3);
+        self.resize(self.capacity * 3);
       }
       memmove(self.data + 1, self.data, self.length);
       self.data[0] = ch;
@@ -143,13 +143,17 @@ impl String {
       self.data[self.length] = '\0';
     }
 
-    substr :: fn(self, start: u64, mut length: u64) -> String {
+    substr :: fn(*mut self, start: u64, mut length: u64) -> String {
+      if self.allocator == null {
+        self.allocator = get_default_allocator();
+      }
+
       if start >= self.length then return .{};
 
       if start + length > self.length then 
         length = self.length - start;
       return .{
-        data: strndup(self.data + start, length),
+        data: self.allocator.copy(self.data + start, sizeof(u8), length),
         capacity: length,
         length: length,
       };
@@ -210,17 +214,25 @@ impl String {
 
   impl Clone for String {
     clone :: fn(self) -> #self {
+      mut allocator := self.allocator;
+      if allocator == null {
+        allocator = get_default_allocator();
+      }
       return .{
-        data: strdup(self.data),
+        data: allocator.copy(self.data, sizeof(u8), self.length),
         length: self.length,
         capacity: self.capacity,
+        allocator: allocator,
       };
     }
   }
 
   impl Deinit for String {
     deinit :: fn(*mut self) {
-      free(self.data);
+      if self.allocator == null {
+        self.allocator = get_default_allocator();
+      }
+      self.allocator.free(self.data);
       self.data = null;
       self.capacity = 0;
       self.length = 0;
