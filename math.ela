@@ -26,10 +26,11 @@
 // We use this struct for namespacing.
 Random :: struct;
 
+RAND_MAX :: 2147483647;
+
 impl Random {
   next :: fn(max: f32) -> f32 {
-    // ! HACK:: replace this magic number with Random::Max when we fix that problen.
-    return (rand() as f32) / (2147483647 as f32) * max;
+    return (rand() as f32) / (RAND_MAX as f32) * max;
   }
 }
 
