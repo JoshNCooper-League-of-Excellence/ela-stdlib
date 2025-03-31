@@ -159,8 +159,9 @@ impl File {
     return len as u32;
   }
 
-  read_all :: fn(filename: str) -> Result!<String, str> {
+  read_all :: fn!<Path>(filename_path: Path) -> Result!<String, str> where Path: AsByteSlice {
     alias Result :: Result!<String, str>;
+    filename := filename_path.as_byte_slice();
     file := fopen(filename.data, "r"c);
 
     if !file then 
@@ -306,4 +307,62 @@ impl Deinit for Directory {
     }
     self.entries.deinit();
   }
+}
+
+/* 
+  ! We should make a solid decision if we want the free functions like the ones below
+  ! to be within a struct as associated functions, or if we want to keep them free functions
+  ! floating in our module. I think I prefer the latter, but it's easy to change for now.
+*/
+/* 
+  ! I just copied this from my system, we need a better way to get this.
+  ! should use pathconf.
+*/
+PATH_MAX :: 4096;
+
+#foreign realpath :: fn(path: *const u8, result: *mut u8) -> *const u8;
+
+canonical_path :: fn!<Path>(path: Path) -> Option!<String> where Path: AsByteSlice {
+  slice := path.as_byte_slice();
+  if slice.length == 0 {
+    return None();
+  }
+  mut resolved_path: u8[PATH_MAX];
+  if !realpath(slice.data, resolved_path) {
+    return None();
+  }
+  return Some(String::from_ptr(resolved_path));
+}
+
+#foreign chdir :: fn(path: *const u8) -> s32;
+#foreign dirname :: fn(path: *const u8) -> *mut u8;
+
+/* 
+  The option return type simply says when it .is_none(), it has failed in some capacity.
+  We don't have a way to interact with perror, so we don't really get much information as to why
+  this has failed, just that it did fail.
+*/
+change_directory :: fn!<Path>(path: Path) -> Option!<()> where Path: AsByteSlice {
+  slice := path.as_byte_slice();
+  if slice.length == 0 {
+    return None();
+  }
+  if chdir(slice.data) != 0 {
+    return None();
+  }
+  return Some(());
+}
+
+parent_path :: fn!<Path>(path: Path) -> Option!<String> where Path: AsByteSlice {
+  slice := path.as_byte_slice();
+  if slice.length == 0 {
+    return None();
+  }
+  mut data := strdup(slice.data);
+  defer free(data);
+  name := dirname(data);
+  if !name {
+    return None();
+  }
+  return Some(String::from_ptr(name));
 }
