@@ -197,6 +197,12 @@ impl JsonValue {
     }
     return None();
   }
+
+  new :: fn() -> *mut JsonValue {
+    ptr: *mut JsonValue = malloc(sizeof(JsonValue));
+    *ptr = .{};
+    return ptr;
+  }
 }
 
 impl Format for JsonValue {
