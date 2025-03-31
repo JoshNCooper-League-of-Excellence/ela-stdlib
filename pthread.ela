@@ -28,14 +28,16 @@ impl Thread {
   }
   
   join :: fn(*mut self) -> void {
-    #static n : *mut void = null; // this is discarded.
+    #static n : *mut void;
     pthread_join(&mut self.handle, &mut n);
   }
 }
 
 /* wrapper callback to init Thread struct. */ 
 start_thread :: fn(arg: *mut void) -> *mut void {
-  mut function, user_arg := *(arg as *const (ThreadFunction, *mut void));
+  tuple_ptr := arg as *const (ThreadFunction, *mut void);
+  tuple := *tuple_ptr;
+  function, user_arg := tuple;
   function(user_arg);
   free(arg);   // allocated by Thread::start();
   return null;
@@ -52,7 +54,7 @@ Mutex :: struct {
 }
 
 impl Mutex {
-  create :: fn() -> #self {
+  new :: fn() -> #self {
     self: #self;
     pthread_mutex_init(&mut self.handle, null);
     return self;

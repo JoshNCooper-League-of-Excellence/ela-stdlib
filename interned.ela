@@ -1,0 +1,49 @@
+import map::Map;
+
+Interned :: struct!<T> 
+  where T:  Hash {
+  data: *const T,
+}
+
+impl!<T> Interned!<T> {
+  #static table :: fn() -> *mut Map!<u64, *const T> {
+    #static mut table: Map!<u64, *const T>;
+    return &mut table;
+  }
+
+  value :: fn(self) -> T {
+    return *self.data;
+  }
+
+  insert_or_set :: fn(*mut self, value: T) {
+    hash := value.hash();
+    mut table := #self::table();
+    result := table.get(hash);
+
+    /* 
+      Already had this value, just store the existing pointer in the  
+      instance.
+    */
+    if result.is_some() { 
+      self.data = result.unwrap();
+    } else {
+      self.data = new(value);
+      table.insert(hash, self.data);
+    }
+  }
+
+  new :: fn(value: T) -> #self {
+    mut self: #self;
+    self.insert_or_set(value);
+    return self;
+  }
+}
+
+impl!<T> Eq for Interned!<T> {
+  eq :: fn(self, other: #self) -> bool {
+    return self.data == other.data;
+  }
+  neq :: fn(self, other: #self) -> bool {
+    return self.data != other.data;
+  }
+}
