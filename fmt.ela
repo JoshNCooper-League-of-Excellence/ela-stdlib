@@ -281,7 +281,7 @@ impl Deinit for StringBuilder {
 to_string :: fn!<T>(value: T) -> String;
 format_list :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
 format_any :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
-format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String;
+format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
 
 impl StringBuilder {
   // just here for 'clarity' xd
@@ -618,7 +618,7 @@ format_list :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions
 }
 
 @[inline]
-format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String {
+format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
   if fmt.length == 0 then
     return .{};
 

@@ -156,6 +156,7 @@ panic :: fn(msg: str);
     }
   }
 
+
   impl!<T> T[]  {
     alias Comparator :: fn*(T, T) -> bool;
     /* 
@@ -289,5 +290,35 @@ impl!<T> AsSlice!<T> for T[] {
       }
       return null;
     }
+  }
+}
+
+impl!<T> T[] {
+  back :: fn(self) -> Option!<T> {
+    if self.length > 0 {
+      return Some(self.data[self.length-1]);
+    }
+    return None();
+  }
+
+  front :: fn(self) -> Option!<T> {
+    if self.length > 0 {
+      return Some(self.data[0]);
+    }
+    return None();
+  }
+
+  back_mut :: fn(*mut self) -> Option!<*mut T> {
+    if self.length > 0 {
+      return Some(&mut self.data[self.length-1]);
+    }
+    return None();
+  }
+
+  front_mut :: fn(*mut self) -> Option!<*mut T> {
+    if self.length > 0 {
+      return Some(&mut self.data[0]);
+    }
+    return None();
   }
 }

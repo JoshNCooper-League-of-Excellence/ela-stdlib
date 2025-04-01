@@ -59,6 +59,23 @@ impl String {
       };
     }
 
+    append :: fn!<T>(*mut self, other: T) where T: AsByteSlice {
+      slice := other.as_byte_slice();
+      if self.capacity == 0 then self.capacity = 256 / 3;
+
+      if self.length + slice.length >= self.capacity 
+        then self.resize(self.capacity * 3 + slice.length);
+
+      memcpy(self.data + self.length, slice.data, slice.length);
+
+      self.length += slice.length;
+      self.data[self.length] = '\0';
+    }
+
+    append_then_free :: fn!<T>(*mut self, mut other: T) where T: AsByteSlice & Deinit {
+      self.append(other);
+      other.deinit();
+    }
   }
 
   /*
@@ -79,7 +96,9 @@ impl String {
 
     push :: fn(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
-      if self.length + 1 >= self.capacity {
+      // ! BUG: why do we have to check !data here?
+      // ! i was getting a large capacity with null data. Not sure how.
+      if !self.data || self.length + 1 >= self.capacity {
         self.resize(self.capacity * 3 + 1);
       }
       self.data[self.length] = ch;
@@ -143,11 +162,7 @@ impl String {
       self.data[self.length] = '\0';
     }
 
-    substr :: fn(*mut self, start: u64, mut length: u64) -> String {
-      if self.allocator == null {
-        self.allocator = get_default_allocator();
-      }
-
+    substr :: fn(self, start: u64, mut length: u64) -> String {
       if start >= self.length then return .{};
 
       if start + length > self.length then 

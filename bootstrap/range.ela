@@ -6,8 +6,10 @@ RangeBase :: struct!<V> where V: Eq | IsNumeric {
   end:   V,
 }
 
+
 // default range for most things.
 alias Range :: RangeBase!<s32>;
+
 
 impl!<T> RangeBase!<T> {
   contains :: fn(self, value: T) -> bool {

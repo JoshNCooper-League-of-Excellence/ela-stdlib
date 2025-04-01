@@ -27,7 +27,7 @@ Type :: struct {
       memcpy((target as *mut u8) + self.offset, (&const data) as *const u8, sizeof(T1));
     }
     get :: fn!<T>(*const self, source: *const T) -> *mut u8 {
-      return ((source) as *mut u8) + self.offset;
+      return source as *mut u8 + self.offset;
     }
   }
 
@@ -200,13 +200,13 @@ impl Type {
     if self.name == "List!<" {
       length_field := self.fields.find_first_of (
         fn (field: *const Field) -> bool {
-          return field.name == "length"
+          return field.name.eq("length");
         }
       );
 
       data_field := self.fields.find_first_of(
         fn (field: *const Field) -> bool {
-          return field.name == "data";
+          return field.name.eq("data");
         }
       )
 
