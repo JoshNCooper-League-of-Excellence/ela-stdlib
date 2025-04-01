@@ -19,8 +19,9 @@ main :: fn() {
 
   LLVMBuildRet(builder, value);
 
-  println("\033[3;3;34m");
+  println("\033[3;3;34mllvm module:");
   LLVMDumpModule(mod);
+  println("\033[3;4;32m");
 
   mut engine: LLVMExecutionEngineRef;
   mut error: *mut u8;
