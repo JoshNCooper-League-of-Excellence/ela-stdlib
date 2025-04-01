@@ -85,49 +85,30 @@ panic :: fn(msg: str) {
   panic_handler(msg);
 }
 
-#ifdef FREESTANDING  {
-  Env :: struct {
-    m_args: *const str,
-    length: u64,
-  };
-  impl Env {
-    current :: fn() -> *mut #self {
-      #static self: #self;
-      return &mut self;
-    }
-    args :: fn(*const self) -> Slice!<str> {
-      return .{
-        data: self.m_args,
-        length: self.length,
-      }
-    }
-    initialize :: fn(argc: s32, argv: *const str) {
-      self := #self::current();
-      self.m_args = argv;
-      self.length = argc;
-    }
+Env :: struct {
+  args_slice: Slice!<str>,
+};
+impl Env {
+  current :: fn() -> *mut #self {
+    #static mut self: #self;
+    return &mut self;
   }
-} else {
-  Env :: struct {
-    m_args: str[],
-  };
-  impl Env {
-    current :: fn() -> *const #self {
-      #static self: #self;
-      return &const self;
-    }
-    args :: fn() -> str[] {
-      return #self::current().m_args.clone();
-    }
-    initialize :: fn(argc: s32, argv: *const c_str) {
-      mut self := #self::current() as *mut #self;
-      for i in 0..argc {
-        self.m_args.push(.{
-          data: argv[i],
-          length: strlen(argv[i])
-        });
-      }
-    }
+
+  /* 
+    The args are passed by the C runtime,
+    and never need to be deallocated. Nor should they be
+    mutated.
+  */
+  args :: fn() -> Slice!<str> {
+    return #self::current().args_slice;
+  }
+  
+  initialize :: fn(argc: s32, argv: *const str) {
+    self := #self::current();
+    self.args_slice = .{
+      data: argv,
+      length: argc,
+    };
   }
 }
 

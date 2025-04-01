@@ -73,6 +73,7 @@ impl Allocator for Arena {
   }
 
   resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
+    // return self.allocate_array(element_size, new_size);
     return null;
   }
 

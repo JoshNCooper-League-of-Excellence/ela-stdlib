@@ -1,7 +1,6 @@
 import map::Map;
 
-Interned :: struct!<T> 
-  where T:  Hash {
+Interned :: struct!<T> where T:  Hash {
   data: *const T,
 }
 
@@ -45,5 +44,14 @@ impl!<T> Eq for Interned!<T> {
   }
   neq :: fn(self, other: #self) -> bool {
     return self.data != other.data;
+  }
+}
+
+
+impl!<T> Hash for Interned!<T> {
+  hash :: fn(self) -> u64 {
+    // TODO: do we want to just return the pointer as if it were a hash?
+    // or do we want to rehash the value itself.
+    return self.data.hash();
   }
 }

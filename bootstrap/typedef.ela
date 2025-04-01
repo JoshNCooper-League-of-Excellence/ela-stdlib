@@ -49,7 +49,7 @@ any :: struct {
   type: *const Type
 };
 
-// A non-owning fat pointer. This should just be a view into a pointer, that tracks length.
+// A non-owning immutable fat pointer. This should just be a view into a pointer, that tracks length.
 // very useful for efficiently passing arrays of data to functions for quick usage with a known (temporary)lifetime,
 // iterating over subarrays, etc.
 Slice :: struct!<V> {
@@ -57,6 +57,7 @@ Slice :: struct!<V> {
   length: u64,
 }
 
+// Same as above but mutable, for cheaply modifying subsets of data within ranges of memory.
 SliceMut :: struct!<V> {
   data:  *mut V,
   length: u64,

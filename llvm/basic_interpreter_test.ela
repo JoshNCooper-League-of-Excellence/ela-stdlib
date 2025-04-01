@@ -1,0 +1,41 @@
+import fmt::*;
+import llvm::*;
+
+main :: fn() {
+  context: LLVMContextRef = LLVMContextCreate();
+  mod: LLVMModuleRef = LLVMModuleCreateWithNameInContext("test_module"c, context);
+  builder: LLVMBuilderRef = LLVMCreateBuilderInContext(context);
+
+  s32_ty: LLVMTypeRef = LLVMInt32Type();
+  fn_ty: LLVMTypeRef = LLVMFunctionType(s32_ty, null, 0, 0);
+  function: LLVMValueRef = LLVMAddFunction(mod, "main"c, fn_ty);
+ 
+  entry: LLVMBasicBlockRef = LLVMAppendBasicBlockInContext(context, function, "entry"c);
+  LLVMPositionBuilderAtEnd(builder, entry);
+
+  left := LLVMConstInt(s32_ty, 42, 0);
+  right := LLVMConstInt(s32_ty, 100, 0);
+  value := LLVMBuildAdd(builder, left, right, "addtemp"c);
+
+  LLVMBuildRet(builder, value);
+
+  println("\033[3;3;34m");
+  LLVMDumpModule(mod);
+
+  mut engine: LLVMExecutionEngineRef;
+  mut error: *mut u8;
+
+  if LLVMCreateExecutionEngineForModule(&mut engine, mod, &mut error) != 0 {
+    printlnf("Failed to create execution engine: %", (error,));
+    LLVMDisposeMessage(error);
+    return;
+  }
+
+  result := LLVMRunFunction(engine, function, 0, null);
+  printlnf("Result: %", (LLVMGenericValueToInt(result, 0),));
+
+  LLVMDisposeGenericValue(result);
+  LLVMDisposeExecutionEngine(engine);
+  LLVMDisposeBuilder(builder);
+  LLVMContextDispose(context);
+}
