@@ -55,3 +55,19 @@ impl!<T> Hash for Interned!<T> {
     return self.data.hash();
   }
 }
+
+
+import fmt::{
+  Format,
+  StringBuilder,
+  FormatOptions
+};
+impl!<T> Format for Interned!<T> {
+  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+    if self.data {
+      builder.appendf("Interned { % }", (*self.data,), options.quoted());
+    } else {
+      builder.append("Interned { null }");
+    }
+  }
+}
