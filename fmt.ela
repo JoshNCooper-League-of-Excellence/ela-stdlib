@@ -213,6 +213,7 @@ impl DynFormat {
   }
   new :: fn(value: any) -> #self {
     instance, type := value;
+    
     tuple := type.methods.find_first_of(
       fn(tuple: *const (str, *const void)) -> bool {
         return tuple.0 == "format";

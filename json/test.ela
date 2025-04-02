@@ -1,0 +1,6 @@
+import fmt;
+
+main :: fn() {
+  type := typeof(s32[]);
+  fmt::println(type.name);
+}

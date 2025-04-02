@@ -103,10 +103,19 @@ impl Env {
     return #self::current().args_slice;
   }
   
-  initialize :: fn(argc: s32, argv: *const str) {
+  initialize :: fn(argc: s32, argv: *const c_str) {
     self := #self::current();
+    mut data : *mut str = malloc(argc * sizeof(str));
+    
+    for i in 0..argc {
+      data[i] = .{
+        data: argv[i],
+        length: strlen(argv[i]),
+      };
+    }
+
     self.args_slice = .{
-      data: argv,
+      data: data,
       length: argc,
     };
   }

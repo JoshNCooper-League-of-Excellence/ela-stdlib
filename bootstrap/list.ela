@@ -322,3 +322,12 @@ impl!<T> T[] {
     return None();
   }
 }
+
+impl!<T> T[] {
+  enumerate :: fn(self) -> Enumerate!<T, Iter!<T>> {
+    return .{
+      idx: 0,
+      iterator: self.iter(),
+    };
+  }
+}
