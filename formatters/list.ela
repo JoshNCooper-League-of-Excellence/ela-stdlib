@@ -1,0 +1,32 @@
+
+
+impl!<T> Format for List!<T> {
+  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+    element_type := typeof(T);
+    builder.appendf("List!<%>", (element_type.name,), options.unquoted());
+
+    builder.append(" [");
+    if options.indented {
+      builder.append("\n  ");
+    }
+
+    for i, val in self.enumerate() {
+      value : any = any.{
+        ptr: &mut self.data[i]
+        type: element_type,
+      };
+      format_any(value, builder, options);
+      if options.indented && i != self.length - 1 {
+        builder.append(",\n  ");
+      } else if i != self.length - 1 {
+        builder.append(", ");
+      }
+    }
+
+    if options.indented {
+      builder.append("\n]");
+    } else {
+      builder.append("]");
+    }
+  }
+}

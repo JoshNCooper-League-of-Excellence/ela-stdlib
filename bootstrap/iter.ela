@@ -76,7 +76,7 @@ Enumerate :: struct!<V, I> where I: Iterator!<V> {
   iterator: I,
 }
 
-impl!<V, I> Iterator!<V> for Enumerate!<V, I> {
+impl!<V, I> Iterator!<(u64, V)> for Enumerate!<V, I> {
   next :: fn(*mut self) -> Option!<(u64, V)> {
     index := self.idx;
     self.idx++;

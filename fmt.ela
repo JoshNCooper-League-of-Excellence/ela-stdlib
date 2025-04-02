@@ -194,6 +194,18 @@ impl FormatOptions {
     };
     return &mut current;
   }
+
+  unquoted :: fn(self) -> #self {
+    mut copy := self;
+    copy.quote_strings = false;
+    return copy;
+  }
+
+  quoted :: fn(self) -> #self {
+    mut copy := self;
+    copy.quote_strings = true;
+    return copy;
+  }
 }
 
 StringBuilder :: struct;
@@ -280,7 +292,6 @@ impl Deinit for StringBuilder {
 }
 
 to_string :: fn!<T>(value: T) -> String;
-format_list :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
 format_any :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
 format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
 
@@ -484,7 +495,11 @@ format_struct :: fn(value: any, builder: *mut StringBuilder, options: FormatOpti
     idx++;
   }
 
-  builder.append("}");
+  if !options.indented {
+    builder.append(" }");
+  } else {
+    builder.append("}");
+  }
 }
 
 @[inline]
@@ -527,8 +542,6 @@ format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions
       then builder.append("\"");
   } else if value.type.is_pointer() {
     builder.append_then_free(to_string(value.ptr));
-  } else if value.type.name == "List!<" {
-    format_list(value, builder, options);
   } else if value.type.is_struct() {
     format_struct(value, builder, options);
   } else if value.type.is_tuple() {
@@ -564,57 +577,6 @@ format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions
       typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>()));      }
       else:            { builder.append("(unsupported)");                                 }
     }
-  }
-}
-
-@[inline]
-format_list :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions) {
-  type := list.type;
-  ptr := list.ptr;
-
-  length_field := type.fields.find_first_of (
-    fn (field: *const Field) -> bool {
-      return field.name == "length";
-    }
-  );
-
-  data_field := type.fields.find_first_of(
-    fn (field: *const Field) -> bool {
-      return field.name == "data";
-    }
-  )
-
-  length := *(length_field.get(ptr) as *const u64);
-  data   := *(data_field.get(ptr) as *const *const u8);
-
-  element_type := type.generic_args[0];
-  element_size := element_type.size;
-
-  builder.append(type.name);
-  builder.append(" [");
-
-  if options.indented {
-    builder.append("\n  ");
-  }
-
-  for i in 0..length {
-    value := any.{
-      ptr: &mut data[element_size * i]
-      type: element_type,
-    };
-    format_any(value, builder, options);
-
-    if options.indented && i != length - 1 {
-      builder.append(",\n  ");
-    } else if i != length - 1{
-      builder.append(", ");
-    }
-  }
-
-  if options.indented {
-    builder.append("\n]");
-  } else {
-    builder.append("]");
   }
 }
 
@@ -718,10 +680,8 @@ printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   }
 }
 
-
-/* 
-  ! Don't touch these!!
-*/
-
-#include "formatters/other.ela"
+#include "formatters/other.ela"   // Option!<T> Result!<Ok, Err>.
+#include "formatters/number.ela"  // Barely implemented.
+#include "formatters/strings.ela" // Not yet implemented.
+#include "formatters/list.ela"    // List!<T>
 
