@@ -54,88 +54,162 @@ impl Deinit for JsonValue {
   }
 }
 
-// ! This just crashes the compiler.
-// ! it resolves to Subscript$-2, an unresolved generic?
-// ! Wtf.
 impl Subscript!<JsonValue> for JsonValue {
   subscript :: fn(*const self, index: u64) -> *const JsonValue {
-    if self.type != JsonValueType::Array 
+    if self.type != JsonValueType::Array
       then return null;
-      
-    if index < 0 || index >= self.array.length 
+
+    if index < 0 || index >= self.array.length
       then return null;
 
     return self.array[index];
   }
 
   subscript_mut :: fn(*mut self, index: u64) -> *mut JsonValue {
-    if self.type != JsonValueType::Array 
+    if self.type != JsonValueType::Array
       then return null;
-    if index < 0 || index >= self.array.length 
+    if index < 0 || index >= self.array.length
       then return null;
     return self.array[index];
   }
 }
 
-impl JsonValue {
-  to_string :: fn(*const self, mut options: FormatOptions) -> String {
-    options.quote_strings = true;
+Writer :: struct {
+  builder: StringBuilder,
+  options: FormatOptions,
+  indentation: (u16 /* depth */, u8 /* width in spaces */),
+}
 
-    mut builder: StringBuilder;
+impl Writer {
+  new :: fn() -> #self {
+    options := FormatOptions.{
+      indented: true,
+      quote_strings: true,
+      // TODO: JSON spec doesn't preserve formatting of digits, it trims all trailing zeros.
+      // TODO: We need a way to tell our format options to do this, it's nice anyway
+      digits_after_decimal: 8,
+    };
+    return .{
+      builder: .{},
+      options: options,
+      indentation: (0, 2),
+    }
+  }
 
-    defer { 
-      builder.deinit();
+  indent :: fn(*mut self, depth_change: s8) {
+    if depth_change > 0  {
+      self.indentation.0 += depth_change;
+    } else if depth_change < 0 {
+      self.indentation.0 += depth_change;
+      if self.indentation.0 < 0
+        then self.indentation.0 = 0;
+      return;
     }
 
+    depth, width := self.indentation;
+    if depth > 0 && width > 0 {
+      mut indent: String;
+      for i in 0..(depth * width) {
+        indent.push(' ');
+      }
+      self.builder.append_then_free(indent);
+    }
+  }
+
+  newline :: fn(*mut self) {
+    if self.options.indented {
+      self.builder.append_byte('\n');
+      self.indent(0);
+    }
+  }
+
+
+  write :: fn!<DataSlice>(*mut self, data: DataSlice) where DataSlice: AsByteSlice {
+    self.builder.append(data);
+  }
+
+  writef :: fn!<Tuple>(*mut self, fmt: str, args: Tuple) where Tuple: IsTuple {
+    self.builder.appendf(fmt, args, self.options);
+  }
+
+  write_byte :: fn(*mut self, byte: u8) {
+    self.builder.append_byte(byte);
+  }
+}
+
+impl Deinit for Writer {
+  deinit :: fn(*mut self) {
+    self.builder.deinit();
+  }
+}
+
+impl JsonValue {
+  to_string :: fn(*const self, writer: *mut Writer) {
     switch self.type {
       JsonValueType::Object: {
-        builder.append("{");
+        writer.write_byte('{');
+        writer.indent(1);
+        writer.newline();
         mut idx := 0;
         for key, value in self.object {
           if idx != 0 {
-            builder.append(", ");
+            writer.write(", ");
+            writer.newline();
           }
           idx++;
-          builder.append(key);
-          builder.append(": ");
-          builder.append_then_free(value.to_string(options));
+          writer.writef("%", (key,));
+          writer.write(": ");
+          value.to_string(writer);
         }
-        builder.append("}");
+        writer.indent(-1);
+        writer.newline();
+        writer.write_byte('}');
       }
       JsonValueType::Array: {
-        builder.append("[");
+        writer.write_byte('[');
+        writer.indent(1);
+        writer.newline();
         mut idx := 0;
         for val in self.array {
           if idx != 0 {
-            builder.append(", ");
+            writer.write(", ");
+            writer.newline();
           }
           idx++;
-          builder.append_then_free(val.to_string(options));
+          val.to_string(writer);
         }
-        builder.append("]");  
+        writer.indent(-1);
+        writer.newline();
+        writer.write_byte(']');
       }
       JsonValueType::Number: {
-        builder.appendf("%", (self.number,), options);
+        writer.writef("%", (self.number,));
       }
       JsonValueType::String: {
-        builder.appendf("%", (self.string,), options);
+        writer.writef("%", (self.string,));
       }
       JsonValueType::Boolean: {
         value := switch self.boolean {
           true => "true",
           false => "false"
         };
-        builder.append(value);
+        writer.write(value);
       }
       JsonValueType::Null: {
-        builder.append("null");
+        writer.write("null");
       }
       else: {
         panic("unsupported json type, probably a corrupted JsonValue");
       }
     }
+  }
 
-    return builder.get_string();
+  stringify :: fn(*const self) -> String {
+    mut writer := Writer::new();
+    self.to_string(&mut writer);
+    data := writer.builder.get_string();
+    writer.deinit();
+    return data;
   }
 
   get :: fn(*mut self, key: String) -> Option!<*mut JsonValue> {
@@ -145,24 +219,24 @@ impl JsonValue {
     return self.object.get(key);
   }
 
-  is_number :: fn(*mut self)  -> bool 
+  is_number :: fn(*mut self)  -> bool
     => self.type == JsonValueType::Number;
 
-  is_string :: fn(*mut self)  -> bool 
+  is_string :: fn(*mut self)  -> bool
     => self.type == JsonValueType::String;
 
-  is_object :: fn(*mut self)  -> bool 
+  is_object :: fn(*mut self)  -> bool
     => self.type == JsonValueType::Object;
 
-  is_array :: fn(*mut self)   -> bool 
+  is_array :: fn(*mut self)   -> bool
     => self.type == JsonValueType::Array;
 
-  is_boolean :: fn(*mut self) -> bool 
+  is_boolean :: fn(*mut self) -> bool
     => self.type == JsonValueType::Boolean;
 
-  is_null :: fn(*mut self)    -> bool 
+  is_null :: fn(*mut self)    -> bool
     => self.type == JsonValueType::Null;
-  
+
   as_number :: fn(*mut self) -> Option!<f64> {
     if self.type == JsonValueType::Number {
       return Some(self.number);
@@ -206,7 +280,10 @@ impl JsonValue {
 }
 
 impl Format for JsonValue {
-  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
-    builder.append_then_free(self.to_string(options));
+  format :: fn(*const self, mut builder: *mut StringBuilder, _: FormatOptions) {
+    mut writer := Writer::new();
+    writer.builder = *builder;
+    self.to_string(&mut writer);
+    *builder = writer.builder;
   }
 }

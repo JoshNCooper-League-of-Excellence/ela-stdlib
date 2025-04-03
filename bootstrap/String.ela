@@ -43,6 +43,11 @@ impl String {
     from :: fn!<T>(data: T) -> #self
     where T: AsByteSlice {
       slice := data.as_byte_slice();
+
+      if slice.is_empty() {
+        return .{};
+      }
+      
       return .{
         data: strdup(slice.data),
         capacity: slice.length,
@@ -255,12 +260,15 @@ impl String {
   }
 
   impl String {
-    starts_with :: fn(self, prefix: c_str) -> bool {
-      prefix_len := strlen(prefix);
-      if self.length < prefix_len then return false;
-      for i in 0..prefix_len {
-        if self.data[i] != prefix[i] then return false;
+    starts_with :: fn!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
+      data, length := prefix.as_byte_slice();
+      if self.length < length then return false;
+
+      for i in 0..length {
+        if self.data[i] != data[i] 
+          then return false;
       }
+
       return true;
     }
 

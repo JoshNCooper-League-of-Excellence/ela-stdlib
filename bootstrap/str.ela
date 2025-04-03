@@ -12,7 +12,7 @@
 
 #ifndef FREESTANDING {
   impl str {
-    starts_with :: fn(*mut self, prefix: c_str) -> bool {
+    starts_with :: fn(self, prefix: c_str) -> bool {
       prefix_len := strlen(prefix);
       if self.length < prefix_len then return false;
       for i in 0..prefix_len {
@@ -21,7 +21,7 @@
       return true;
     }
     
-    ends_with :: fn(*mut self, suffix: c_str) -> bool {
+    ends_with :: fn(self, suffix: c_str) -> bool {
       suffix_len := strlen(suffix);
       if self.length < suffix_len then return false;
       for i in 0..suffix_len {

@@ -197,7 +197,7 @@ impl Iterator!<any> for ElementIter {
 
 impl Type {
   elements :: fn(self, ptr: *const u8) -> ElementIter {
-    if self.name == "List!<" {
+    if self.name.starts_with("List!<"c) {
       length_field := self.fields.find_first_of (
         fn (field: *const Field) -> bool {
           return field.name.eq("length");

@@ -178,11 +178,11 @@ impl File {
     return Result::Ok(string);
   }
   
-  read_bytes :: fn(filename: str) -> Result!<u8[], str> {
+  read_bytes :: fn!<Path>(path: Path) -> Result!<u8[], str> where Path: AsByteSlice {
     alias Result :: Result!<u8[], str>;
+    filename := path.as_byte_slice();
     file := fopen(filename.data, "r"c);
     if !file then return Result::Err("Couldnt open file");
-    
     mut bytes: u8[];
     bytes.resize(1024);
 
@@ -196,14 +196,24 @@ impl File {
     return Result::Ok(bytes);
   }
   
-  write_all :: fn(filename: str, data: str) -> Option!<str> {
+  write_all :: fn!<Path, Data>(path: Path, data_slice: Data) -> Option!<str> 
+    where Path: AsByteSlice, Data: AsByteSlice {
     alias Option :: Option!<str>;
-    file := fopen(filename.data, "w"c);
+
+    filename := path.as_byte_slice();
+
+    data := data_slice.as_byte_slice();
+
+    file := fopen(filename.data, "w "c);
+
     if !file {
       return Option::Some("Unable to open file");
     }
+
     fwrite(data.data, sizeof(u8), data.length, file);
+
     fclose(file);
+
     return Option::None();
   }
 }

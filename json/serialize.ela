@@ -64,20 +64,31 @@ serialize_array :: fn(object: any) -> JsonResult {
 
 serialize_any :: fn(object: any) -> JsonResult {
   if Type::has_no_extension(object.type) {
-    if object.type.id == #typeid(c_str) {
+    if object.type.name.starts_with("List!<"c) {
+      return serialize_array(object);
+    }
+
+    if object.type.id == #typeid(str) {
       val := JsonValue::new();
       val.type = JsonValueType::String;
-      val.string = String::from_ptr(*(object.ptr as *const c_str));
+      the_str := *(object.ptr as *const str);
+      val.string = String::from(the_str);
+      return JsonResult::Ok(val);
+    } else if object.type.id == #typeid(String) {
+      val := JsonValue::new();
+      val.type = JsonValueType::String;
+      // We clone here to guarantee we don't have to rely on the original object's lifetime.
+      val.string = (object.ptr as *const String).clone(); 
+      return JsonResult::Ok(val);
+    } if object.type.id == #typeid(*const u8) {
+      val := JsonValue::new();
+      val.type = JsonValueType::String;
+      val.string = String::from_ptr(*(object.ptr as *const *const u8));
       return JsonResult::Ok(val);
     } else if Type::is_scalar(object.type) {
       return serialize_scalar(object);
     } else if Type::is_struct(object.type) {
       return serialize_struct(object);
-    } 
-
-    type := object.type;
-    if type.name.starts_with("List!<") {
-      return serialize_array(object);
     }
   } else if Type::is_array(object.type) {
     return serialize_array(object);

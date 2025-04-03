@@ -1,6 +1,6 @@
-import fmt;
+import fmt::*;
+import json::*;
 
 main :: fn() {
-  type := typeof(s32[]);
-  fmt::println(type.name);
+
 }

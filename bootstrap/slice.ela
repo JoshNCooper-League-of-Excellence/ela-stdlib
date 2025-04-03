@@ -30,6 +30,10 @@ impl!<T> Subscript!<T> for Slice!<T> {
 }
 
 impl!<T> Slice!<T> {
+  is_empty :: fn(self) -> bool {
+    return self.length == 0;
+  }
+
   from :: fn(data: *const T, len: u32) -> #self => .{
     data: data,
     length: len,
