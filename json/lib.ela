@@ -10,16 +10,45 @@ impl!<T> Serializable for T[] {
   }
 
   deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
+    if object.type != JsonValueType::Array then return Some(String::from("invalid json type, expected array."));
+    self.initialize(object.array.length);
+    for i in 0..object.array.length {
+      err := deserialize(object.array[i], &mut (*self)[i]);
+      if err.is_some() {
+        return err;
+      }
+    }
     return .{};
   }
 }
 
-impl!<K, V> Serializable for Map!<K, V> {
+impl!<K, V> Serializable for Map!<K, V> where K: String {
   serialize :: fn(*const self) -> JsonResult {
-    return serialize_iterator!<MapIter!<K, V>, (K, V)>(self.iter());
+    mut value := JsonValue::new();
+    value.type = JsonValueType::Object;
+    for key, v in *self {
+      result := serialize!<V>(v);
+      if result.is_err() {
+        return result;
+      }
+      value.object.insert(key, result.unwrap());
+    }
+    return JsonResult::Ok(value);
   }
 
   deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
-    return .{};
+    println(object.type as JsonValueType);
+    if object.type != JsonValueType::Object 
+      then return Some(String::from("invalid json type, expected an object to deserialize into Map."));
+
+    for key, value in object.object {
+      mut v: V;
+      err := deserialize!<V>(value, &mut v);
+      if err.is_some() {
+        return err;
+      }
+      self.insert(key, v);
+    }
+    return None();
   }
 }

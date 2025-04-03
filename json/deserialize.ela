@@ -79,18 +79,20 @@ deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
       return Some(format("Type mismatch: object to %", (object.type.name,), FormatOptions::default()));
     }
   } else if object.type.id == #typeid(String) {
-    *(object.ptr as *mut String) = value.as_string().unwrap();
+    *(object.ptr as *mut String) = value.as_string().unwrap().clone();
+    return None();
   } else if object.type.id == #typeid(str) {
-    // ! This poses a strange problem, where a 'str' is all of a sudden heap allocated.
-    // ! this is not correct to the semantics of the std library and the intention.
     mut string := value.as_string().unwrap();
     string = string.clone();
     *(object.ptr as *mut str) = string.as_str();
+    return None();
   } 
   return deserialize_scalar(value, object);
 }
 
 deserialize :: fn!<T>(value: *mut JsonValue, object: *mut T) -> Option!<String> {
-  return None();
+  return deserialize_any(value, any.{
+    ptr: object,
+    type: typeof(T),
+  });
 }
-
