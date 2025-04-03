@@ -13,14 +13,6 @@ Dyn_Allocator :: struct {
 
 impl Dyn_Allocator {
   new :: fn!<T>(t: *mut T) -> #self where T: Allocator {
-    // we do this to mock a call but not output the code of actually calling it at runtime.
-    // this is due to a bug that is plaguing our shiz currently.
-    typeof(t.free(null));
-    typeof(t.allocate(0));
-    typeof(t.allocate_array(0, 0));
-    typeof(t.copy(null, 1, 0));
-    typeof(t.resize(null, 1, 0));
-    typeof(t.deinit());
     return .{
       instance: t,
       p_allocate:       &mut T::allocate,
