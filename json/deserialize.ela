@@ -1,0 +1,96 @@
+deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String>;
+
+deserialize_struct :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
+  for key, value in value.object {
+    struct_field := object.type.get_field(key);
+
+    if !struct_field => Some(format("Could not find field % in type %", (key, object.type.name), FormatOptions::default()));
+
+    any_value : any = .{
+      ptr: object.ptr as *mut u8 + object.type.offset(struct_field.name),
+      type: struct_field.type,
+    };
+
+    result := deserialize_any(value, any_value);
+
+    if result.is_some() => result;
+  }
+  return None();
+}
+
+deserialize_scalar :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
+  if (!Type::has_no_extension(object.type)) => Some(String::from("Unable to deserialize into pointer type with 'deserialize_scalar'"));
+  if Type::is_bool(object.type) {
+    *(object.ptr as *mut bool) = value.as_boolean().unwrap();
+  } else if (Type::is_float(object.type)) {
+    if (object.type.size == 8) {
+      *(object.ptr as *mut f64) = value.as_number().unwrap();
+    } else {
+      *(object.ptr as *mut f32) = value.as_number().unwrap() as f32;
+    }
+  } else if (Type::is_integral(object.type)) {
+    is_signed := Type::is_signed(object.type);
+    switch object.type.size {
+        8: {
+          if is_signed {
+            *(object.ptr as *mut s64) = value.as_number().unwrap();
+          } else {
+            *(object.ptr as *mut u64) = value.as_number().unwrap() as u64;
+          }
+        }
+        4: {
+          if is_signed {
+            *(object.ptr as *mut s32) = value.as_number().unwrap() as s32;
+          } else {
+            *(object.ptr as *mut u32) = value.as_number().unwrap() as u32;
+          }
+        }
+        2: {
+          if is_signed {
+            *(object.ptr as *mut s16) = value.as_number().unwrap() as s16;
+          } else {
+            *(object.ptr as *mut u16) = value.as_number().unwrap() as u16;
+          }
+        }
+        1: {
+          if is_signed {
+            *(object.ptr as *mut s8) = value.as_number().unwrap() as s8;
+          } else {
+            *(object.ptr as *mut u8) = value.as_number().unwrap() as u8;
+          }
+        }
+    }
+  } else {
+    return Some(format("Unable to deserialize into type %", (object.type.name,), FormatOptions::default()));
+  }
+  return None();
+}
+
+deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
+  if Type::implements(object.type, "Serializable") {
+    dyn := DynSerializable::new(object);
+    return dyn.deserialize(value);
+  }
+
+  if value.is_object() {
+    if Type::is_struct(object.type) {
+      return deserialize_struct(value, object);
+    } else {
+      return Some(format("Type mismatch: object to %", (object.type.name,), FormatOptions::default()));
+    }
+  } else if object.type.id == #typeid(String) {
+    *(object.ptr as *mut String) = value.as_string().unwrap();
+  } else if object.type.id == #typeid(str) {
+    // ! This poses a strange problem, where a 'str' is all of a sudden heap allocated.
+    // ! this is not correct to the semantics of the std library and the intention.
+    mut string := value.as_string().unwrap();
+    string = string.clone();
+    *(object.ptr as *mut str) = string.as_str();
+  } 
+  return deserialize_scalar(value, object);
+}
+
+deserialize :: fn!<T>(value: *mut JsonValue, object: *mut T) -> Option!<String> {
+  return None();
+}
+

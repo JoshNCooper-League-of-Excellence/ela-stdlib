@@ -34,23 +34,26 @@ Type :: struct {
   _type_info: List!<*const Type>;
 
   impl Type {
-    get_field :: fn(*mut self, name: str) -> *const Field {
-      for field in self.fields.iter_mut() {
-        if field.name == name {
-          return field as *const Field;
+    get_field :: fn!<Path>(*const self, name: Path) -> *const Field where Path: AsByteSlice {
+      slice := name.as_byte_slice();
+      for i in 0..self.fields.length {
+        field := &mut self.fields[i];
+        string : str = .{data: slice.data, length:  slice.length};
+        if field.name == string {
+          return field;
         }
       }
       return null;
     }
 
-    offset :: fn(*mut self, member: str) -> u64 {
+    offset :: fn(*const self, member: str) -> u64 {
       for field in self.fields {
         if field.name == member  {
           return field.offset;
         }
       }
       return -1;
-  }
+    }
   }
 }
 
@@ -68,9 +71,13 @@ Type :: struct {
   POINTER,
   SIGNED,
   UNSIGNED,
+  INTERFACE,
 }
 
 impl Type  {
+  is_interface :: fn(*const self) -> bool {
+    return self.flags & TypeFlags::INTERFACE != 0;
+  }
   is_signed :: fn(*const self) -> bool {
     return self.flags & TypeFlags::SIGNED != 0;
   }
@@ -197,7 +204,7 @@ impl Iterator!<any> for ElementIter {
 
 impl Type {
   elements :: fn(self, ptr: *const u8) -> ElementIter {
-    if self.name.starts_with("List!<"c) {
+    if self.name.starts_with("List!<") {
       length_field := self.fields.find_first_of (
         fn (field: *const Field) -> bool {
           return field.name.eq("length");
@@ -222,6 +229,40 @@ impl Type {
         end: ptr + self.size,
         element_type: self.element_type,
       };
+    }
+  }
+}
+
+TupleElementIter :: struct {
+  ptr: *mut u8,
+  element_index: u64,
+  tuple_type: *const Type,
+}
+
+impl Iterator!<any> for TupleElementIter {
+  next :: fn(*mut self) -> Option!<any> {
+    if self.element_index >= self.tuple_type.fields.length {
+      return None();
+    }
+    field := self.tuple_type.fields[self.element_index];
+
+    element_type := field.type;
+    offset := self.tuple_type.offset(field.name);
+    value : any = .{
+      ptr: self.ptr + offset,
+      type: element_type
+    };
+    self.element_index++;
+    return Some(value);
+  }
+}
+
+impl Type {
+  tuple_elements :: fn(*const self, instance: *mut u8) -> TupleElementIter {
+    return .{
+      ptr: instance,
+      element_index: 0,
+      tuple_type: self,
     }
   }
 }

@@ -20,6 +20,8 @@
 #include "list.ela";
 // Slice!<T> and SliceMut!<T>, views over memory.
 #include "slice.ela";
+// utils that both string types use, avoiding some redundancy
+// #include "stringutils.ela";
 // str, the default type of a string literal.
 #include "str.ela";
 // String, heap allocated string.

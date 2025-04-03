@@ -203,7 +203,9 @@ impl JsonValue {
       }
     }
   }
+}
 
+impl JsonValue {
   stringify :: fn(*const self) -> String {
     mut writer := Writer::new();
     self.to_string(&mut writer);

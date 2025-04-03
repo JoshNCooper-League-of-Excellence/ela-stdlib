@@ -2,3 +2,24 @@
 #include "value.ela"
 #include "parser.ela"
 #include "serialize.ela"
+#include "deserialize.ela"
+
+impl!<T> Serializable for T[] {
+  serialize :: fn(*const self) -> JsonResult {
+    return serialize_iterator!<Iter!<T>, T>(self.iter());
+  }
+
+  deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
+    return .{};
+  }
+}
+
+impl!<K, V> Serializable for Map!<K, V> {
+  serialize :: fn(*const self) -> JsonResult {
+    return serialize_iterator!<MapIter!<K, V>, (K, V)>(self.iter());
+  }
+
+  deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
+    return .{};
+  }
+}

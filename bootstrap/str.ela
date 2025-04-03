@@ -1,34 +1,58 @@
+// impl StringUtils for str {}
+impl str {
+  is_empty :: fn(self) -> bool => self.length == 0;
 
-#ifndef FREESTANDING {
-  impl str {
-    to_string :: fn!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | Dyn_Allocator {
-      return .{
-        data: allocator.copy(self.data, sizeof(u8), self.length),
-        length: self.length,
-      };
+  empty :: fn() -> #self {
+    return .{};
+  }
+
+  front :: fn(self) -> Option!<u8> {
+    if self.length == 0 then return None();
+    return Some(self.data[0]);
+  }
+
+  back :: fn(self) -> Option!<u8> {
+    if self.length == 0 then return None();
+    return Some(self.data[self.length - 1]);
+  }
+
+  starts_with :: fn!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
+    data, length := prefix.as_byte_slice();
+    if self.length < length then return false;
+
+    for i in 0..length {
+      if self.data[i] != data[i] 
+        then return false;
     }
+
+    return true;
+  }
+  ends_with :: fn!<Prefix>(self, suffix: Prefix) -> bool where Prefix: AsByteSlice {
+    data, length := suffix.as_byte_slice();
+    if self.length < length then return false;
+    for i in 0..length {
+      if self.data[self.length - length + i] != data[i] then return false;
+    }
+    return true;
+  }
+  is_empty_or_whitespace :: fn(self) -> bool {
+    for i in 0..self.length {
+      ch := self.data[i];
+      if !isspace(ch) {
+        return false;
+      }
+    }
+    return true;
   }
 }
+// ! replace the above impl with StringUtils
 
-#ifndef FREESTANDING {
-  impl str {
-    starts_with :: fn(self, prefix: c_str) -> bool {
-      prefix_len := strlen(prefix);
-      if self.length < prefix_len then return false;
-      for i in 0..prefix_len {
-        if self.data[i] != prefix[i] then return false;
-      }
-      return true;
-    }
-    
-    ends_with :: fn(self, suffix: c_str) -> bool {
-      suffix_len := strlen(suffix);
-      if self.length < suffix_len then return false;
-      for i in 0..suffix_len {
-        if self.data[self.length - suffix_len + i] != suffix[i] then return false;
-      }
-      return true;
-    }
+impl str {
+  to_string :: fn!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | Dyn_Allocator {
+    return .{
+      data: allocator.copy(self.data, sizeof(u8), self.length),
+      length: self.length,
+    };
   }
 }
 
@@ -42,12 +66,6 @@ impl Subscript!<u8> for str {
 }
 
 impl str {
-  is_empty :: fn(self) -> bool => self.length == 0;
-
-  empty :: fn() -> #self {
-    return .{};
-  }
-
   slice :: fn(*mut self, range: Range) -> Slice!<u8> {
     start, end := (range.begin, range.end);
     length := end - start;

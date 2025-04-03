@@ -1,3 +1,59 @@
+serialize_any :: fn(object: any) -> JsonResult;
+
+Serializable :: interface {
+  serialize :: fn(*const self) -> JsonResult;
+  deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String>;
+}
+
+DynSerializable :: struct {
+  instance: *const void,
+  p_serialize: fn * (*const void) -> JsonResult,
+  p_deserialize: fn *(*mut void, *mut JsonValue) -> Option!<String>,
+}
+
+impl DynSerializable {
+  serialize :: fn(self) -> JsonResult {
+    return self.p_serialize(self.instance);
+  }
+
+  deserialize :: fn(self, object: *mut JsonValue) -> Option!<String> {
+    return self.p_deserialize(self.instance as *mut void, object);
+  }
+  
+  new :: fn(value: any) -> #self {
+    instance, type := value;
+
+    serialize_tuple := type.methods.find_first_of(
+      fn(tuple: *const (str, *const void)) -> bool {
+        return tuple.0 == "serialize";
+      }
+    )
+
+    if !serialize_tuple {
+      panic(format("unable to find 'serialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
+    }
+
+    deserialize_tuple := type.methods.find_first_of(
+      fn(tuple: *const (str, *const void)) -> bool {
+        return tuple.0 == "deserialize";
+      }
+    );
+
+    if !deserialize_tuple {
+      panic(format("unable to find 'deserialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
+    }
+
+    _0, serialize := *serialize_tuple;
+    _1, deserialize := *deserialize_tuple;
+
+    return .{
+      instance: instance,
+      p_serialize: serialize as fn * (*const void) -> JsonResult,
+      p_deserialize: deserialize as fn *(*mut void, *mut JsonValue) -> Option!<String>,
+    };
+  }
+}
+
 serialize_scalar :: fn(object: any) -> JsonResult {
   val := JsonValue::new();
   if Type::is_float(object.type) {
@@ -34,8 +90,6 @@ serialize_scalar :: fn(object: any) -> JsonResult {
   return JsonResult::Err(format("Unsupported type :: %", (object.type.name, ), FormatOptions::default()));
 }
 
-serialize_any :: fn(object: any) -> JsonResult;
-
 serialize_struct :: fn(object: any) -> JsonResult {
   val := JsonValue::new();
   val.type = JsonValueType::Object;
@@ -62,12 +116,27 @@ serialize_array :: fn(object: any) -> JsonResult {
   return JsonResult::Ok(val);
 }
 
-serialize_any :: fn(object: any) -> JsonResult {
-  if Type::has_no_extension(object.type) {
-    if object.type.name.starts_with("List!<"c) {
-      return serialize_array(object);
-    }
+serialize_tuple :: fn(object: any) -> JsonResult {
+  val := JsonValue::new();
+  val.type = JsonValueType::Object;
+  val.array = .{};
+  mut index := 0;
+  for element in object.type.tuple_elements(object.ptr as *mut u8) {
+    result := serialize_any(element);
+    if result.is_err() then return result;
+    val.object.insert(to_string(index), result.unwrap());
+    index += 1;
+  }
+  return JsonResult::Ok(val);
+}
 
+serialize_any :: fn(object: any) -> JsonResult {
+  if Type::implements(object.type, "Serializable") {
+    dyn := DynSerializable::new(object);
+    return dyn.serialize();
+  }
+
+  if Type::has_no_extension(object.type) {
     if object.type.id == #typeid(str) {
       val := JsonValue::new();
       val.type = JsonValueType::String;
@@ -89,6 +158,8 @@ serialize_any :: fn(object: any) -> JsonResult {
       return serialize_scalar(object);
     } else if Type::is_struct(object.type) {
       return serialize_struct(object);
+    } else if Type::is_tuple(object.type) {
+      return serialize_tuple(object);
     }
   } else if Type::is_array(object.type) {
     return serialize_array(object);
@@ -100,112 +171,16 @@ serialize :: fn!<T>(mut object: T) -> JsonResult {
   return serialize_any(any::from(&mut object));
 }
 
-// deserialize :: fn(val: JsonValue*, object: any) -> JsonResult;
+serialize_iterator :: fn!<It, V>(obj: It) -> JsonResult where It: Iterator!<V> {
+  value : *mut JsonValue = JsonValue::new();
+  value.type = JsonValueType::Array;
+  for v in obj {
+    result := serialize(v);
+    if result.is_err() {
+      return result.propagate();
+    }
+    value.array.push(result.unwrap());
+  }
+  return JsonResult::Ok(value);
+}
 
-// deserialize_struct :: fn(val: JsonValue*, object: any) -> JsonResult {
-//   for field in val.object {
-//     struct_field := Type::get_field(type, field.key);
-//     if !struct_field {
-//       set_error(format("Could not find field % in type %", {any::new(&field.key), any::new(&type.name)}))
-//       return JsonResult::ERROR;
-//     }
-//     err := deserialize(field.value, object.ptr as u8* + struct_field.offset, struct_field.type);
-//     if err {
-//       return err;
-//     }
-//   }
-//   return {};
-// }
-
-// deserialize_array :: fn(val: JsonValue*, object: any) -> JsonResult {
-//   i := 0;
-//   ptr: void* = malloc(type.element_type.size);
-//   for elem in val.as_array() {
-//     memset(ptr, 0, type.element_type.size);
-//     err := deserialize(elem, ptr, type.element_type);
-//     if err {
-//       return err;
-//     }
-//     memcpy(object.ptr as u8* + (i * type.element_type.size), ptr, type.element_type.size);
-//     ++i;
-//   }
-//   free(ptr);
-//   return {};
-// }
-
-// deserialize_scalar :: fn(val: JsonValue*, object: any) -> JsonResult {
-//   if (!Type::has_no_extension(object.type)) {
-//     // strdup this literal because the error handler will free on overwrite.
-//     set_error(strdup("Unable to deserialize into pointer type with 'deserialize_scalar'"));
-//     return JsonResult::ERROR;
-//   }
-//   if Type::is_bool(object.type) {
-//     *(object.ptr as *const bool) = val.as_boolean();
-//   } else if (Type::is_float(object.type)) {
-//     if (type.size == 8) {
-//       *(object.ptr as *const f64) = val.as_number();
-//     } else {
-//       *(object.ptr as *const f32) = val.as_number() as f32;
-//     }
-//   } else if (Type::is_integral(object.type)) {
-//     is_signed := Type::is_signed(object.type);
-//     switch type.size {
-//         8: {
-//           if is_signed {
-//             *(object.ptr as *const s64) = val.as_number();
-//           } else {
-//             *(object.ptr as *const u64) = val.as_number() as u64;
-//           }
-//         }
-//         4: {
-//           if is_signed {
-//             *(object.ptr as *const s32) = val.as_number() as s32;
-//           } else {
-//             *(object.ptr as *const u32) = val.as_number() as u32;
-//           }
-//         }
-//         2: {
-//           if is_signed {
-//             *(object.ptr as *const s16) = val.as_number() as s16;
-//           } else {
-//             *(object.ptr as *const u16) = val.as_number() as u16;
-//           }
-//         }
-//         1: {
-//           if is_signed {
-//             *(object.ptr as *const s8) = val.as_number() as s8;
-//           } else {
-//             *(object.ptr as *const u8) = val.as_number() as u8;
-//           }
-//         }
-//     }
-//   } else if (Type::is_string(object.type)) {
-//     *(object.ptr as u8*const *) = val.as_string();
-//   } else {
-//     set_error(format("Unable to deserialize into type %", {any::new(&type.name)}));
-//     return JsonResult::ERROR;
-//   }
-//   return {};
-// }
-
-// deserialize :: fn(val: JsonValue*, object: any) -> JsonResult {
-//   if val.is_string() {
-//     if type.id == #typeid(*const u8) {
-//       *(object.ptr as u8*const *) = val.as_string();
-//       return {};
-//     } else {
-//       set_error(format("Type mismatch: u8* to %", {any::new(&type.name)}));
-//       return JsonResult::ERROR;
-//     }
-//   } else if val.is_object() {
-//     if Type::is_struct(object.type) {
-//       return deserialize_struct(val, object);
-//     } else {
-//       set_error(format("Type mismatch: object to %", {any::new(&type.name)}));
-//       return JsonResult::ERROR;
-//     }
-//   } else if val.is_array() {
-//     return deserialize_array(val, object);
-//   }
-//   return deserialize_scalar(val, object);
-// }

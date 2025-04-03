@@ -1,0 +1,53 @@
+
+
+// ! TODO: 
+  // fix the bug where this doesn't fricken work.
+  // emit_symbol tries to emit it as if the functions belong ot StringUtils where 
+  // we need to do like String$slice not StringUtils$slice
+
+StringUtils :: interface {
+  is_empty :: fn(self) -> bool => self.length == 0;
+
+  empty :: fn() -> #self {
+    return .{};
+  }
+
+  front :: fn(self) -> Option!<u8> {
+    if self.length == 0 then return None();
+    return Some(self.data[0]);
+  }
+
+  back :: fn(self) -> Option!<u8> {
+    if self.length == 0 then return None();
+    return Some(self.data[self.length - 1]);
+  }
+
+  starts_with :: fn!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
+    data, length := prefix.as_byte_slice();
+    if self.length < length then return false;
+
+    for i in 0..length {
+      if self.data[i] != data[i] 
+        then return false;
+    }
+
+    return true;
+  }
+  ends_with :: fn!<Prefix>(self, suffix: Prefix) -> bool where Prefix: AsByteSlice {
+    data, length := suffix.as_byte_slice();
+    if self.length < length then return false;
+    for i in 0..length {
+      if self.data[self.length - length + i] != data[i] then return false;
+    }
+    return true;
+  }
+  is_empty_or_whitespace :: fn(self) -> bool {
+    for i in 0..self.length {
+      ch := self.data[i];
+      if !isspace(ch) {
+        return false;
+      }
+    }
+    return true;
+  }
+}
