@@ -214,36 +214,23 @@ Format :: interface {
   format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions);
 }
 
-DynFormat :: struct {
-  instance: *const void,
-  p_format: fn * (*const void, *mut StringBuilder, FormatOptions),
-}
-
-impl DynFormat {
-  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
-    self.p_format(self.instance, builder, options);
-  }
-  new :: fn(value: any) -> #self {
-    instance, type := value;
-    
-    tuple := type.methods.find_first_of(
-      fn(tuple: *const (str, *const void)) -> bool {
-        return tuple.0 == "format";
-      }
-    )
-
-    if !tuple {
-      printf("unable to find 'format' in type %s\n"c, type.name);
-      panic("DynFormat failure");
+new_dyn_format :: fn(value: any) -> dyn Format {
+  instance, type := value;
+  tuple := type.methods.find_first_of(
+    fn(tuple: *const (str, *const void)) -> bool {
+      return tuple.0 == "format";
     }
-
-    _, method := *tuple;
-
-    return .{
-      instance: instance,
-      p_format: method as fn * (*const void, *mut StringBuilder, FormatOptions),
-    };
+  )
+  if !tuple {
+    printf("unable to find 'format' in type %s\n"c, type.name);
+    panic("DynFormat failure");
   }
+  _, method := *tuple;
+
+  mut dynamic: dyn Format;
+  dynamic.instance = instance;
+  dynamic.format =  method as fn * (*const void, *mut StringBuilder, FormatOptions);
+  return dynamic;
 }
 
 // T!his seems pretty chunky,
@@ -294,6 +281,7 @@ impl Deinit for StringBuilder {
 to_string :: fn!<T>(value: T) -> String;
 format_any :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
 format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
+
 
 impl StringBuilder {
   // just here for 'clarity' xd
@@ -523,7 +511,7 @@ format_tuple :: fn(value: any, builder: *mut StringBuilder, options: FormatOptio
 @[inline]
 format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   if value.type.implements("Format") {
-    dyn_format := DynFormat::new(value);
+    dyn_format := new_dyn_format(value);
     dyn_format.format(builder, options);
     return;
   }
@@ -581,7 +569,7 @@ format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions
 }
 
 @[inline]
-format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
+format :: fn!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
   if fmt.length == 0 then
     return .{};
 
@@ -629,8 +617,8 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String 
   Quick format. avoid passing settings.
 */
 @[inline]
-qformat :: fn!<Tuple>(fmt : str, tuple: Tuple) -> String where Tuple: IsTuple {
-  return format(fmt, tuple, FormatOptions::default());
+qformat :: fn!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
+  return format(fmt, tuple, *FormatOptions::current());
 }
 
 
@@ -693,4 +681,6 @@ printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
 #include "formatters/number.ela"  // Barely implemented.
 #include "formatters/strings.ela" // Not yet implemented.
 #include "formatters/list.ela"    // List!<T>
+
+
 

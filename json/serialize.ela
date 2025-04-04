@@ -5,53 +5,37 @@ Serializable :: interface {
   deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String>;
 }
 
-DynSerializable :: struct {
-  instance: *const void,
-  p_serialize: fn * (*const void) -> JsonResult,
-  p_deserialize: fn *(*mut void, *mut JsonValue) -> Option!<String>,
-}
+new_dyn_serializable :: fn(value: any) -> #self {
+  instance, type := value;
 
-impl DynSerializable {
-  serialize :: fn(self) -> JsonResult {
-    return self.p_serialize(self.instance);
-  }
-
-  deserialize :: fn(self, object: *mut JsonValue) -> Option!<String> {
-    return self.p_deserialize(self.instance as *mut void, object);
-  }
-  
-  new :: fn(value: any) -> #self {
-    instance, type := value;
-
-    serialize_tuple := type.methods.find_first_of(
-      fn(tuple: *const (str, *const void)) -> bool {
-        return tuple.0 == "serialize";
-      }
-    )
-
-    if !serialize_tuple {
-      panic(format("unable to find 'serialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
+  serialize_tuple := type.methods.find_first_of(
+    fn(tuple: *const (str, *const void)) -> bool {
+      return tuple.0 == "serialize";
     }
+  )
 
-    deserialize_tuple := type.methods.find_first_of(
-      fn(tuple: *const (str, *const void)) -> bool {
-        return tuple.0 == "deserialize";
-      }
-    );
-
-    if !deserialize_tuple {
-      panic(format("unable to find 'deserialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
-    }
-
-    _0, serialize := *serialize_tuple;
-    _1, deserialize := *deserialize_tuple;
-
-    return .{
-      instance: instance,
-      p_serialize: serialize as fn * (*const void) -> JsonResult,
-      p_deserialize: deserialize as fn *(*mut void, *mut JsonValue) -> Option!<String>,
-    };
+  if !serialize_tuple {
+    panic(format("unable to find 'serialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
   }
+
+  deserialize_tuple := type.methods.find_first_of(
+    fn(tuple: *const (str, *const void)) -> bool {
+      return tuple.0 == "deserialize";
+    }
+  );
+
+  if !deserialize_tuple {
+    panic(format("unable to find 'deserialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
+  }
+
+  _0, serialize := *serialize_tuple;
+  _1, deserialize := *deserialize_tuple;
+
+  mut dynamic: dyn Serializable;
+  dynamic.instance = instance;
+  dynamic.serialize = serialize as fn * (*const void) -> JsonResult;
+  dynamic.deserialize = deserialize as fn *(*mut void, *mut JsonValue) -> Option!<String>;
+  return dynamic;
 }
 
 serialize_scalar :: fn(object: any) -> JsonResult {
@@ -132,7 +116,7 @@ serialize_tuple :: fn(object: any) -> JsonResult {
 
 serialize_any :: fn(object: any) -> JsonResult {
   if Type::implements(object.type, "Serializable") {
-    dynamic := DynSerializable::new(object);
+    dynamic := new_dyn_serializable(object);
     return dynamic.serialize();
   }
 
