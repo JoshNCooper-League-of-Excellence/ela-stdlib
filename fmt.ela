@@ -625,6 +625,15 @@ format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String 
   return builder.get_string();
 }
 
+/* 
+  Quick format. avoid passing settings.
+*/
+@[inline]
+qformat :: fn!<Tuple>(fmt : str, tuple: Tuple) -> String where Tuple: IsTuple {
+  return format(fmt, tuple, FormatOptions::default());
+}
+
+
 @[inline]
 print :: fn!<T>(message: T) {
   mut formatted := format("%", (message,), *FormatOptions::current());

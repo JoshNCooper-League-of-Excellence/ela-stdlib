@@ -38,6 +38,7 @@ impl!<K, V> Serializable for Map!<K, V> where K: String {
 
   deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
     println(object.type as JsonValueType);
+
     if object.type != JsonValueType::Object 
       then return Some(String::from("invalid json type, expected an object to deserialize into Map."));
 
@@ -49,6 +50,7 @@ impl!<K, V> Serializable for Map!<K, V> where K: String {
       }
       self.insert(key, v);
     }
+
     return None();
   }
 }
