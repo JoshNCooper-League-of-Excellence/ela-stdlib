@@ -269,7 +269,7 @@ impl Check_Button {
   }
 }
 
-Drop_Down :: struct {
+DropDown :: struct {
   options: c_str[],
   rect: Rectangle,
   style: Style,
@@ -281,9 +281,9 @@ Drop_Down :: struct {
   show_selected_option: bool,
 }
 
-impl Drop_Down {
+impl DropDown {
   draw :: fn(*mut self) {
-    // Draw the Drop_Down box
+    // Draw the DropDown box
     DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.background);
 
     if self.selected_index >= 0 && self.selected_index < self.options.length && self.show_selected_option {
