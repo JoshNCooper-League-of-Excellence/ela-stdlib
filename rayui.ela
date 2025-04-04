@@ -151,7 +151,7 @@ Slider :: struct!<T>  {
 
 impl!<T> Slider!<T> {
   adjust_slider_value :: fn(*mut self) {
-    increment: T;
+    mut increment: T;
     if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
       increment = (self.max_value - self.min_value) / 100;
     } else {
@@ -211,7 +211,7 @@ impl!<T> Slider!<T> {
 
     DrawText(self.text.data, text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
 
-    value_text := to_string(*self.value);
+    mut value_text := to_string(*self.value);
     value_text[self.digits_to_show] = '\0';
 
     value_text_x := text_x + MeasureText(self.text.data, self.style.font_size) + 10; // 10 pixels padding
