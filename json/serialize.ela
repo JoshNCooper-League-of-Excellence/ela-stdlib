@@ -132,8 +132,8 @@ serialize_tuple :: fn(object: any) -> JsonResult {
 
 serialize_any :: fn(object: any) -> JsonResult {
   if Type::implements(object.type, "Serializable") {
-    dyn := DynSerializable::new(object);
-    return dyn.serialize();
+    dynamic := DynSerializable::new(object);
+    return dynamic.serialize();
   }
 
   if Type::has_no_extension(object.type) {

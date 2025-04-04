@@ -1,4 +1,4 @@
-// This is a 'dyn' because we don't support dynamic dispatch interfaces yet.
+// This is a 'dynamic' because we don't support dynamic dispatch interfaces yet.
 // This is soon to come, but we want to model our standard library around it too,
 // so this is a nice placeholder.
 Dyn_Allocator :: struct {
@@ -175,9 +175,9 @@ impl Dyn_Allocator {
 // you can also overwrite this if you want, just be sure to free the old one.
 get_default_allocator :: fn() -> *mut Dyn_Allocator {
   #static mut allocator: Libc_Allocator;
-  #static mut dyn: *mut Dyn_Allocator = null;
-  if dyn == null {
-    dyn = new(Dyn_Allocator::new(&mut allocator));
+  #static mut dynamic: *mut Dyn_Allocator = null;
+  if dynamic == null {
+    dynamic = new(Dyn_Allocator::new(&mut allocator));
   }
-  return dyn;
+  return dynamic;
 }
