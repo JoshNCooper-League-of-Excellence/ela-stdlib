@@ -233,10 +233,10 @@ new_dyn_format :: fn(value: any) -> dyn Format {
   return dynamic;
 }
 
-// T!his seems pretty chunky,
+// This seems pretty chunky,
 // it might be more performant for building large strings,
 // but perhaps this is a setting we can have the user pass in.
-STRING_BUILDER_BLOCK_MAX_LEN :: 8192;
+const STRING_BUILDER_BLOCK_MAX_LEN := 8192;
 
 StringBuilderBlock :: struct {
   data: *mut u8,
