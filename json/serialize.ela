@@ -5,7 +5,7 @@ Serializable :: interface {
   deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String>;
 }
 
-new_dyn_serializable :: fn(value: any) -> #self {
+new_dyn_serializable :: fn(value: any) -> dyn Serializable {
   instance, type := value;
 
   serialize_tuple := type.methods.find_first_of(

@@ -68,7 +68,7 @@ deserialize_scalar :: fn(value: *mut JsonValue, object: any) -> Option!<String> 
 
 deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
   if Type::implements(object.type, "Serializable") {
-    dynamic := DynSerializable::new(object);
+    dynamic := new_dyn_serializable(object);
     return dynamic.deserialize(value);
   }
 
