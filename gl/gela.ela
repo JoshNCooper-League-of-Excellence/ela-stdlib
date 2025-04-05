@@ -61,7 +61,7 @@ impl Shader {
   
   create :: fn(vertexSource: String, fragSource: String) -> #self {
     return .{
-      handle: #self::compile_program(vertexSource.data, fragSource.data),
+      handle: Shader::compile_program(vertexSource.data, fragSource.data),
     };
   }
 

@@ -50,7 +50,7 @@ impl Arena {
     
     if oom  {
       if !self.next {
-        self.next = new(#self::new(self.size, self.flags));
+        self.next = new(Arena::new(self.size, self.flags));
       }
       return self.next.alloc(size);
     }

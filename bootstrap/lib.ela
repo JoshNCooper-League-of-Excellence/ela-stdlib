@@ -102,11 +102,11 @@ impl Env {
     mutated.
   */
   args :: fn() -> Slice!<str> {
-    return #self::current().args_slice;
+    return Env::current().args_slice;
   }
   
   initialize :: fn(argc: s32, argv: *const c_str) {
-    self := #self::current();
+    self := Env::current();
     mut data : *mut str = malloc(argc * sizeof(str));
     
     for i in 0..argc {

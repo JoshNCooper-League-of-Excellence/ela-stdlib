@@ -16,7 +16,7 @@ impl!<T> Interned!<T> {
 
   insert_or_set :: fn(*mut self, value: T) {
     hash := value.hash();
-    mut table := #self::table();
+    mut table := Interned!<T>::table();
     result := table.get(hash);
 
     /* 

@@ -34,42 +34,42 @@ impl Timing {
   
   // returns a seconds value representing time since epoch
   seconds :: fn() -> f64 {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     return (ts.tv_sec as f64) + (ts.tv_nsec as f64) / (1_000_000_000.0 as f64);
   }
 
   // returns a milliseconds value representing time since epoch
   milliseconds :: fn() -> f64 {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     return (ts.tv_sec as f64) * 1_000.0 + (ts.tv_nsec as f64) / 1_000_000.0 as f64;
   }
 
   // returns a microseconds value representing time since epoch
   microseconds :: fn() -> f64 {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     return (ts.tv_sec as f64) * 1_000_000.0 + (ts.tv_nsec as f64) / 1_000.0;
   }
 
   // returns a minutes value representing time since epoch
   minutes :: fn() -> f64 {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     return (ts.tv_sec as f64) / 60.0 + (ts.tv_nsec as f64) / (60.0 * 1_000_000_000.0);
   }
 
   // returns an hours value representing time since epoch
   hours :: fn() -> f64 {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     return (ts.tv_sec as f64) / 3_600.0 + (ts.tv_nsec as f64) / ((3_600.0 * 1_000_000_000.0) as f64);
   }
 
   // returns a days value representing time since epoch
   days :: fn() -> f64 {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     return (ts.tv_sec as f64) / 86_400.0 + (ts.tv_nsec as f64) / ((86_400.0 * 1_000_000_000.0) as f64)
   }
 
   date_time :: fn() -> String {
-    ts := #self::get_timespec_since_epoch();
+    ts := Timing::get_timespec_since_epoch();
     time_t: s64 = ts.tv_sec;
     mut tm: tm_t;
     localtime_r(&const time_t, &mut tm);
