@@ -102,9 +102,9 @@
     return (code_point, index as s8);
   }
 
-  utf8_decode :: fn!<T>(data: T) -> u32[] where T: AsCharSlice {
+  utf8_decode :: fn!<T>(data: T) -> List!<u32> where T: AsCharSlice {
     slice := data.as_byte_slice();
-    mut output: u32[];
+    mut output: List!<u32>;
     index := 0;
     while index < slice.length {
       subslice := slice.slice(index..index+4);
@@ -115,8 +115,8 @@
     return output;
   }
 
-  utf8_encode :: fn(code_point: u32) -> u8[] {
-    mut output: u8[];
+  utf8_encode :: fn(code_point: u32) -> List!<u8> {
+    mut output: List!<u8>;
     if code_point <= 0x7F {
       output.push(code_point as u8);
       return output;

@@ -11,7 +11,7 @@ Type :: struct {
   name: str,
   size: u64,                                                        // sizeof(T)
   flags: u64,                                                       // defined in reflection.ela and emit.cpp, the values of the flags.
-  fields: Field[],                                                  // get a list of struct fields, enum variants.
+  fields: List!<Field>,                                                  // get a list of struct fields, enum variants.
   element_type: *const Type,                                        // the type this type has a pointer to, is an array of, etc.
 
   generic_args: List!<*const Type>,                                 // a list of the generic arguments.

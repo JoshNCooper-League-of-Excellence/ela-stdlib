@@ -6,14 +6,14 @@
 */
 
 Map :: struct!<Key, Value> {
-  buckets: (Key, Value)[][],
+  buckets: List!<List!<(Key, Value)>>,
   length: u64,
 }
 
 impl!<Key, Value> Map!<Key, Value> where Key: Hash {
   alias Pair :: (Key, Value);
   new :: fn() -> #self {
-    INITIAL_CAPACITY :: 16;
+    const INITIAL_CAPACITY := 16;
     mut buckets: List!<List!<Pair>>;
     buckets.initialize(INITIAL_CAPACITY);
     return .{

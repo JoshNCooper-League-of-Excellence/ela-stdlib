@@ -1,5 +1,5 @@
 // all of your basic types.
-#include "typedef.ela";
+#include "typedef.ela"
 // many more basic types, mainly interfaces.
 #include "interfaces.ela";
 // Option!<T>
@@ -16,7 +16,7 @@
 #include "libc.ela";
 // dynamic interface for allocator.
 #include "memory.ela";
-// List<T> aka T[].
+// List!<T>
 #include "list.ela";
 // Slice!<T> and SliceMut!<T>, views over memory.
 #include "slice.ela";

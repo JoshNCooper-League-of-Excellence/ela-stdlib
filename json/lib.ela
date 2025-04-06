@@ -4,7 +4,7 @@
 #include "serialize.ela"
 #include "deserialize.ela"
 
-impl!<T> Serializable for T[] {
+impl!<T> Serializable for List!<T> {
   serialize :: fn(*const self) -> JsonResult {
     return serialize_iterator!<Iter!<T>, T>(self.iter());
   }

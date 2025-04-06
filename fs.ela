@@ -1,6 +1,7 @@
 import fmt::*;
 
-EOF :: -1;
+const EOF := -1;
+
 _IO_FILE :: struct;
 alias FILE :: _IO_FILE;
 
@@ -178,12 +179,12 @@ impl File {
     return Result::Ok(string);
   }
   
-  read_bytes :: fn!<Path>(path: Path) -> Result!<u8[], str> where Path: AsByteSlice {
-    alias Result :: Result!<u8[], str>;
+  read_bytes :: fn!<Path>(path: Path) -> Result!<List!<u8>, str> where Path: AsByteSlice {
+    alias Result :: Result!<List!<u8>, str>;
     filename := path.as_byte_slice();
     file := fopen(filename.data, "r"c);
     if !file then return Result::Err("Couldnt open file");
-    mut bytes: u8[];
+    mut bytes: List!<u8>;
     bytes.resize(1024);
 
     while {
@@ -252,7 +253,7 @@ dirent :: struct {
 
 Directory :: struct {
   path: String,
-  entries: String[],
+  entries: List!<String>,
 }
 
 impl Directory {
@@ -266,7 +267,7 @@ impl Directory {
     dir := opendir(path.as_byte_slice().data);
     if !dir => Option!<Directory>::None();
 
-    mut entries: String[];
+    mut entries: List!<String>;
     mut entry: *mut void;
 
     while entry = readdir(dir) {
@@ -282,8 +283,8 @@ impl Directory {
     });
   }
 
-  files :: fn(*const self) -> String[] {
-    mut files: String[];
+  files :: fn(*const self) -> List!<String> {
+    mut files: List!<String>;
     for entry in self.entries {
       file_stat := Stat::new(entry);
       if file_stat.is_none() then continue;
@@ -295,8 +296,8 @@ impl Directory {
     return files;
   }
 
-  subdirectories :: fn(*const self) -> String[] {
-    mut files: String[];
+  subdirectories :: fn(*const self) -> List!<String> {
+    mut files: List!<String>;
     for entry in self.entries {
       dir_stat := Stat::new(entry);
       if dir_stat.is_none() then continue;
@@ -328,7 +329,7 @@ impl Deinit for Directory {
   ! I just copied this from my system, we need a better way to get this.
   ! should use pathconf.
 */
-PATH_MAX :: 4096;
+const PATH_MAX := 4096;
 
 #foreign realpath :: fn(path: *const u8, result: *mut u8) -> *const u8;
 

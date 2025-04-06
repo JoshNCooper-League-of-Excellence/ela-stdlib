@@ -57,7 +57,7 @@ JsonLexer :: struct {
   // position in input stream.
   position: u32,
   // lookahead buffer
-  lookahead_buffer : Token[],
+  lookahead_buffer : List!<Token>,
 }
 
 impl JsonLexer {

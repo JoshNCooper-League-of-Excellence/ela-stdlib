@@ -14,7 +14,7 @@ str :: struct {
   length:  u64,
 }
 
-// This is basically just a u8[]
+// This is basically just a List!<u8>
 // but it has some particularly special methods for dealing with strings,
 // so it gets it's own distinct type.
 String :: struct {

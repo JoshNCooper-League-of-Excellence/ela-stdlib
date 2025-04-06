@@ -1,7 +1,7 @@
 panic :: fn(msg: str);
 
 #ifndef FREESTANDING {
-  impl!<T> T[] {
+  impl!<T> List!<T> {
     clear :: fn(*mut self) {
       free(self.data);
       self.capacity = 0;
@@ -109,7 +109,7 @@ panic :: fn(msg: str);
     }
   }
 
-  impl!<T> Deinit for T[] {
+  impl!<T> Deinit for List!<T> {
 
     /* 
       This does not actually deinit any of members in the list. 
@@ -123,7 +123,7 @@ panic :: fn(msg: str);
     }
   }
 
-  impl!<T> Clone for T[] {
+  impl!<T> Clone for List!<T> {
     /* 
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
@@ -138,11 +138,11 @@ panic :: fn(msg: str);
     } 
   }
 
-  impl!<T> Init!<T> for T[] {
+  impl!<T> Init!<T> for List!<T> {
     /* 
       construct the list from an initializer list. 
       This is sure to change, but for now, you do have to do the obnoxious:
-        `my_list := s32[]::init(.[0,1,2,3])`
+        `my_list := List!<s32>::init(.[0,1,2,3])`
       or whatever you need.
 
       of course, this allocates.
@@ -157,7 +157,7 @@ panic :: fn(msg: str);
   }
 
 
-  impl!<T> T[]  {
+  impl!<T> List!<T>  {
     alias Comparator :: fn*(T, T) -> bool;
     /* 
       Check if the list contains an item. This uses the `a == b` operator, so this is only valid
@@ -192,7 +192,7 @@ panic :: fn(msg: str);
   }
 }
 
-impl!<T> Iterable for T[] {
+impl!<T> Iterable for List!<T> {
   /*
     Get an iterator to the list.
     the 
@@ -204,7 +204,7 @@ impl!<T> Iterable for T[] {
     or whatever.
 
     of course, this is always a view into the list, and holding on to this outside of the 
-    guaranteed lifetime of the T[] is inherently unsafe.
+    guaranteed lifetime of the List!<T> is inherently unsafe.
   */
   @[inline]
   iter :: fn(*const self) -> Iter!<T> {
@@ -226,7 +226,7 @@ impl!<T> Iterable for T[] {
   }
 }
 
-impl!<T> Subscript!<T> for T[] {
+impl!<T> Subscript!<T> for List!<T> {
   subscript :: fn(*const self, idx: u64) -> *const T {
     return &const self.data[idx];
   }
@@ -235,7 +235,7 @@ impl!<T> Subscript!<T> for T[] {
   }
 }
 
-impl!<T> AsSlice!<T> for T[] {
+impl!<T> AsSlice!<T> for List!<T> {
   /* 
     Take a `slice` or a view into the array, without taking any ownership of the memory we are viewing into.
   */
@@ -248,13 +248,13 @@ impl!<T> AsSlice!<T> for T[] {
 }
 
 #ifndef FREESTANDING {
-  impl!<T> T[] {
+  impl!<T> List!<T> {
     alias Ordering_Predicate :: fn * (*const T, *const T) -> bool;
 
     /* 
       return a new list with the order specified by the predicate.
     */
-    order_by :: fn(self, predicate: Ordering_Predicate) -> T[] {
+    order_by :: fn(self, predicate: Ordering_Predicate) -> List!<T> {
       mut new_list := self.clone();
       for i in 0..new_list.length {
         for j in (i+1)..new_list.length {
@@ -293,7 +293,7 @@ impl!<T> AsSlice!<T> for T[] {
   }
 }
 
-impl!<T> T[] {
+impl!<T> List!<T> {
   back :: fn(self) -> Option!<T> {
     if self.length > 0 {
       return Some(self.data[self.length-1]);
@@ -323,7 +323,7 @@ impl!<T> T[] {
   }
 }
 
-impl!<T> T[] {
+impl!<T> List!<T> {
   enumerate :: fn(self) -> Enumerate!<T, Iter!<T>> {
     return .{
       idx: 0,

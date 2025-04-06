@@ -26,8 +26,8 @@
 // We use this struct for namespacing.
 Random :: struct;
 
-RAND_MAX :: 2147483647;
-PI :: 3.141592653589793;
+const RAND_MAX := 2147483647;
+const PI := 3.141592653589793;
 
 impl Random {
   next :: fn(max: f32) -> f32 {

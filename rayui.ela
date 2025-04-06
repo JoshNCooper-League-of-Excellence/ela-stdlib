@@ -270,7 +270,7 @@ impl Check_Button {
 }
 
 DropDown :: struct {
-  options: c_str[],
+  options: List!<c_str>,
   rect: Rectangle,
   style: Style,
   selected_index: s32,
