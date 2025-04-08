@@ -35,6 +35,7 @@ impl Style {
 }
 
 // * Measure the width of a jiggly text of 'text' and 'style'
+@[inline]
 measure_jiggly_text :: fn!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
   slice := text.as_byte_slice();
   if slice.length == 0 then return 0.0;
@@ -46,7 +47,8 @@ measure_jiggly_text :: fn!<Data>(text: Data, style: Style) -> f32 where Data: As
 }
 
 // * Draw wavy jiggly text.
-jiggly_text :: fn!<Data>(Data: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
+@[inline]
+jiggly_text :: fn!<Data>(text: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
   text := Data.as_byte_slice();
   time: f32 = GetTime() as f32;
   intensity := style.jiggle_intensity;
@@ -63,6 +65,7 @@ jiggly_text :: fn!<Data>(Data: Data, rect: Rectangle, style: Style) where Data: 
 }
 
 // * Draw a button with that returns true for clicked, false for not clicked.
+@[inline]
 button :: fn!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: AsByteSlice {
   text_bytes := text.as_byte_slice();
 
@@ -126,6 +129,7 @@ button :: fn!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Dat
 // * Draw a button with a click callback.
 // * T* in the callback is a pointer to some of your state data, if you want to mutate it.
 // * use 'button' if you don't want the callback system, or pass 'null, null' as the last two arguments.
+@[inline]
 button_pro :: fn!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn* (*mut T), user_data : *mut T) where Data: AsByteSlice {
   if button(text, rect, style) {
     callback(user_data);
@@ -144,6 +148,7 @@ SliderState :: struct!<T> {
 
   TODO: add vertical sliders.
 */
+@[inline]
 slider :: fn!<T>(
   text: Option!<String>,
   rectangle: Rectangle,
@@ -276,6 +281,7 @@ slider :: fn!<T>(
 
     perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
 */
+@[inline]
 check_button :: fn(
   text: Option!<String>,
   rectangle: Rectangle,
@@ -326,71 +332,108 @@ check_button :: fn(
   }
 }
 
-DropDown :: struct {
-  options: List!<c_str>,
-  rect: Rectangle,
-  style: Style,
-  selected_index: s32,
-  is_open: bool,
-  on_selected: fn*(s32),
-  on_open: fn*(),
-  label: str,
-  show_selected_option: bool,
+DropDownState :: struct!<OptionsType> where OptionsType: AsByteSlice {
+  
+  selected_index:     Option!<u32>, // Some(index) when one is selected, None when none are selected.
+  is_open:            bool,
 }
 
-impl DropDown {
-  draw :: fn(*mut self) {
-    // Draw the DropDown box
-    DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.background);
+/* 
+  'prefer_selected_option' 
+    will prefer presenting the string value of the selected option when one is selected, over the label.
+*/
+@[inline]
+drop_down :: fn!<OptionsType, UserArg>(
+  text:                   Option!<String>,
+  rectangle:              Rectangle,
+  style:                  Style,
+  prefer_selected_option: bool,
+  state:                  *mut DropDownState!<OptionsType>,
+  options:                List!<OptionsType>,
+  on_option_selected:     fn * (OptionsType, *mut UserArg) -> void,
+  user_arg:               *mut UserArg,
+) {
+  // Draw the DropDown box
+  DrawRectangleRec(
+    rectangle, style.background);
 
-    if self.selected_index >= 0 && self.selected_index < self.options.length && self.show_selected_option {
-      // Draw the selected option
-      text_x := self.rect.x + (self.rect.width - MeasureText(self.options[self.selected_index], self.style.font_size)) / 2;
-      text_y := self.rect.y + (self.rect.height - self.style.font_size) / 2;
-      DrawText(self.options[self.selected_index], text_x as s32, text_y as s32, self.style.font_size, self.style.foreground);
-    } else {
-      // Draw the label
-      text_x := self.rect.x + (self.rect.width - MeasureText(self.label.data, self.style.font_size)) / 2;
-      text_y := self.rect.y + (self.rect.height - self.style.font_size) / 2;
-      DrawText(self.label.data, text_x as s32, text_y as s32, self.style.font_size, self.style.foreground);
-    }
+  // Draw the selected option, instead of the label text.
+  if state.selected_index.is_some() && (text.is_none() || prefer_selected_option) {
+    index := state.selected_index.unwrap();
+    text_data := options[index].as_byte_slice();
 
-    hit := CheckCollisionPointRec(GetMousePosition(), self.rect);
-    if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-      self.is_open = !self.is_open;
-      if self.is_open && self.on_open {
-        // self.on_open();
+    text_x := (rectangle.x + (rectangle.width - MeasureText(text_data.data, style.font_size)) / 2) as s32;
+    text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
+
+    DrawText(
+      text_data.data, 
+      text_x, 
+      text_y, 
+      style.font_size, 
+      style.font_color_override.or_else(style.foreground),
+    );
+  } else if text.is_some() {
+    label := text.unwrap();
+    text_x := (rectangle.x + (rectangle.width - MeasureText(label.data, style.font_size)) / 2) as s32;
+    text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
+    DrawText(
+      label.data, 
+      text_x, 
+      text_y, 
+      style.font_size, 
+      style.font_color_override.or_else(style.foreground),
+    );
+  }
+
+  hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
+
+  if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+    state.is_open = !state.is_open;
+  }
+
+  mut hit_option := false;
+  if state.is_open {
+
+    // copy for mutating.
+    mut option_rect: Rectangle = rectangle;
+    option_rect.y += rectangle.height;
+
+    for i in 0..options.length {
+
+      mut option_color := style.background;
+      hit := CheckCollisionPointRec(GetMousePosition(), option_rect);
+      if hit {
+        option_color = style.highlighted;
+        hit_option = true;
       }
-    }
 
-    mut hit_option := false;
-    if self.is_open {
-      option_rect := self.rect;
-      option_rect.y += self.rect.height;
-      for i in 0..self.options.length {
-        mut option_color := self.style.background;
-        if CheckCollisionPointRec(GetMousePosition(), option_rect) {
-          option_color = self.style.highlighted;
-          hit_option = true;
-        }
-        DrawRectangleV(Vector2.{ x: option_rect.x, y: option_rect.y}, Vector2.{ x: option_rect.width, y: option_rect.height}, option_color);
-        text_x := option_rect.x + (option_rect.width - MeasureText(self.options[i], self.style.font_size)) / 2;
-        text_y := option_rect.y + (option_rect.height - self.style.font_size) / 2;
-        DrawText(self.options[i], text_x as s32, text_y as s32, self.style.font_size, self.style.foreground);
+      DrawRectangleRec(option_rect, option_color);
 
-        if CheckCollisionPointRec(GetMousePosition(), option_rect) && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-          self.selected_index = i;
-          self.is_open = false;
-          if self.on_selected {
-            // self.on_selected(i as s32);
-          }
+      text := options[i].as_byte_slice();
+      text_x := (option_rect.x + (option_rect.width - MeasureText(text.data, style.font_size)) / 2) as s32;
+      text_y := (option_rect.y + (option_rect.height - style.font_size) / 2) as s32;
+
+      DrawText(
+        text.data, 
+        text_x , 
+        text_y, 
+        style.font_size, 
+        style.font_color_override.or_else(style.foreground),
+      );
+
+      if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+        state.selected_index = Some(i as u32);
+        state.is_open = false;
+        if on_option_selected {
+          on_option_selected(options[i], user_arg);
         }
-        option_rect.y += option_rect.height;
       }
-    }
 
-    if !hit && !hit_option {
-      self.is_open = false;
+      option_rect.y += option_rect.height;
     }
+  }
+
+  if !hit && !hit_option {
+    state.is_open = false;
   }
 }
