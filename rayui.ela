@@ -3,22 +3,39 @@ import fmt::*;
 
 // * used for UI styling.
 Style :: struct {
-  foreground:         Color,
-  background:         Color,
-  highlighted:        Color,
+  foreground:           Color,
+  background:           Color,
+  highlighted:          Color,
 
-  font_size:          s32,
+  line_thickness:       f32,
+  font_size:            s32,
+  font_color_override:  Option!<Color>,
+  font:                 Font,
 
   // TODO: probably don't do this here?
   // It's just kind of a silly thing, we don't need to support that for everything.
   // we should have some more extensible settings so you can achieve whatever you want rather simply.
-  use_jiggly_text:    bool,
-  jiggle_intensity:   f32,
-  jiggle_rate:        f32,
+  use_jiggly_text:      bool,
+  jiggle_intensity:     f32,
+  jiggle_rate:          f32,
+}
+
+impl Style {
+  default :: fn() -> Style {
+    return .{
+      foreground: WHITE,
+      background: BLACK,
+      highlighted: ORANGE,
+      font_color_override: Some(GRAY),
+      font_size: 16,
+      line_thickness: 2,
+      font: GetFontDefault(),
+    };
+  }
 }
 
 // * Measure the width of a jiggly text of 'text' and 'style'
-measure_jiggly_text :: fn!<Path>(text: Path, style: Style) -> f32 where Path: AsByteSlice {
+measure_jiggly_text :: fn!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
   slice := text.as_byte_slice();
   if slice.length == 0 then return 0.0;
   mut total_width: f32 = 0.0;
@@ -29,33 +46,33 @@ measure_jiggly_text :: fn!<Path>(text: Path, style: Style) -> f32 where Path: As
 }
 
 // * Draw wavy jiggly text.
-jiggly_text :: fn!<Path>(path: Path, rect: Rectangle, style: Style) where Path: AsByteSlice {
-  text := path.as_byte_slice();
+jiggly_text :: fn!<Data>(Data: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
+  text := Data.as_byte_slice();
   time: f32 = GetTime() as f32;
   intensity := style.jiggle_intensity;
   rate := style.jiggle_rate;
   for i in 0..text.length {
     pos_x := rect.x + (i * style.font_size) as f32;
     pos_y := rect.y + intensity * sin(rate * time + (i as f32));
-    temp : u8[2] = .[ 
-      text.data[i], 
-      '\0' as u8 
+    temp : u8[2] = .[
+      text.data[i],
+      '\0' as u8
     ];
     DrawText(temp, pos_x as s32, pos_y as s32, style.font_size, style.foreground);
   }
 }
 
 // * Draw a button with that returns true for clicked, false for not clicked.
-button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Path: AsByteSlice {
+button :: fn!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: AsByteSlice {
   text_bytes := text.as_byte_slice();
 
-  mut position: Vector2 = .{ 
-    x: rect.x, 
+  mut position: Vector2 = .{
+    x: rect.x,
     y: rect.y
   };
-  
-  mut size: Vector2 = .{ 
-    x: rect.width, 
+
+  mut size: Vector2 = .{
+    x: rect.width,
     y: rect.height
   };
 
@@ -73,10 +90,10 @@ button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Pat
     position.x = rect.x - (text_width - rect.width) / 2;
   }
 
-  new_rect : Rectangle = .{ 
-    x: position.x, 
-    y: position.y, 
-    width: size.x, 
+  new_rect : Rectangle = .{
+    x: position.x,
+    y: position.y,
+    width: size.x,
     height: size.y
   };
 
@@ -94,10 +111,10 @@ button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Pat
   if !style.use_jiggly_text {
     DrawText(text_bytes.data, text_x as s32, text_y as s32, style.font_size, style.foreground);
   } else {
-    rect : Rectangle = .{ 
-      x: text_x, 
-      y: text_y, 
-      width: new_rect.width, 
+    rect : Rectangle = .{
+      x: text_x,
+      y: text_y,
+      width: new_rect.width,
       height: new_rect.height
     };
     jiggly_text(text, rect, style);
@@ -109,163 +126,203 @@ button :: fn!<Path>(text: Path, rect: Rectangle, style: Style) -> bool where Pat
 // * Draw a button with a click callback.
 // * T* in the callback is a pointer to some of your state data, if you want to mutate it.
 // * use 'button' if you don't want the callback system, or pass 'null, null' as the last two arguments.
-button_pro :: fn!<Path, T>(text: Path, rect: Rectangle, style: Style, callback: fn* (*mut T), user_data : *mut T) where Path: AsByteSlice{
+button_pro :: fn!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn* (*mut T), user_data : *mut T) where Data: AsByteSlice {
   if button(text, rect, style) {
     callback(user_data);
   }
 }
 
-// ? A simple timer that can be used in update loops to get a tick every N seconds.
-// * interval: f32 = seconds between each tick.
-Timer :: struct {
-  interval : f32,
-  last_tick_time: f32,
-}
-
-impl Timer {
-  // * Returns true if the timer has exceeded the interval time relative to the last tick time,
-  tick :: fn(*mut self) -> bool {
-    now := GetTime();
-    if now >= (self.last_tick_time + self.interval) || self.last_tick_time == 0 {
-      self.last_tick_time = now;
-      return true;
-    }
-    return false;
-  }
-}
-
-Slider :: struct!<T>  {
-  text: String,
-  rect: Rectangle,
-  style: Style,
-
-  // probably doesn't apply when this isn't limited to numbers?
-  digits_to_show: s32,
-
+SliderState :: struct!<T> {
   held : bool,
-
   min_value: T,
   max_value: T,
   value: *mut T,
 }
 
-impl!<T> Slider!<T> {
-  adjust_slider_value :: fn(*mut self) {
+/*
+  draws a draggable slider, and adjusts a value of type $T.
+
+  TODO: add vertical sliders.
+*/
+slider :: fn!<T>(
+  text: Option!<String>,
+  rectangle: Rectangle,
+  style: Style,
+  state: *mut SliderState!<T>,
+  format_options: Option!<FormatOptions>,
+) where T: IsNumeric {
+  { // * Draw the slider.
+    DrawRectangleV(
+      Vector2.{ x: rectangle.x, y: rectangle.y},
+      Vector2.{ x: rectangle.width, y: rectangle.height},
+      style.background,
+    );
+
+    v_f := (*state.value) as f32;
+    min_f := state.min_value as f32;
+    max_f := state.max_value as f32;
+
+    slider_width: f32 = rectangle.width *
+                        clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
+
+    slider_rect: Rectangle = .{
+      x: rectangle.x,
+      y: rectangle.y,
+      width: slider_width,
+      height: rectangle.height
+    };
+
+    DrawRectangleRec(slider_rect, style.foreground);
+
+    DrawRectangleLinesEx(
+      rectangle,
+      style.line_thickness,
+      style.foreground
+    );
+
+    mut font_color: Color = style.font_color_override.or_else(style.foreground);
+
+    mut text_x: s32;
+    mut text_y: s32;
+    if text.is_some() {
+      the_text := text.unwrap();
+      text_x = (rectangle.x - 15 + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2) as s32;
+      text_y = (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
+      DrawText(
+        the_text.data,
+        text_x,
+        text_y,
+        style.font_size,
+        font_color
+      );
+    }
+
+    mut options: FormatOptions;
+
+    if format_options.is_some() {
+      options = format_options.unwrap();
+    } else {
+      options = *FormatOptions::current();
+    }
+
+    mut value_text := format("%", (*state.value,), options);
+    defer value_text.deinit();
+
+    // 10 pixels padding
+    value_text_x: s32 = (text_x + 30 + MeasureText(value_text.data, style.font_size)) as s32;
+
+    DrawText(
+      value_text.data,
+      value_text_x,
+      text_y,
+      style.font_size,
+      font_color
+    );
+  }
+
+  { // * Update the slider.
     mut increment: T;
     if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
-      increment = (self.max_value - self.min_value) / 100;
+      increment = (state.max_value - state.min_value) / 100;
     } else {
-      increment = (self.max_value - self.min_value) / 50;
+      increment = (state.max_value - state.min_value) / 50;
     }
 
     if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
-      *self.value = clamp(*self.value + increment, min(self.min_value, self.max_value), max(self.min_value, self.max_value));
+      *state.value = clamp(*state.value + increment, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
     } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
-      *self.value = clamp(*self.value - increment, min(self.min_value, self.max_value), max(self.min_value, self.max_value));
+      *state.value = clamp(*state.value - increment, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
     }
 
     // Handle mouse input
     mouse_pos := GetMousePosition();
 
-    if CheckCollisionPointRec(mouse_pos, self.rect) {
+    if CheckCollisionPointRec(mouse_pos, rectangle) {
       if IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
-        self.held = true;
+        state.held = true;
       }
     }
 
-    if self.held {
+    if state.held {
       if !IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
-        self.held = false;
+        state.held = false;
       } else {
-        new_value := self.min_value + ((mouse_pos.x - self.rect.x) / self.rect.width) * (self.max_value - self.min_value);
-        *self.value = clamp(new_value, min(self.min_value, self.max_value), max(self.min_value, self.max_value));
+        new_value := state.min_value + ((mouse_pos.x - rectangle.x) / rectangle.width) * (state.max_value - state.min_value);
+        *state.value = clamp(new_value, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
       }
     }
   }
-  draw :: fn(*mut self) {
-    DrawRectangleV(
-      .{ x: self.rect.x, y: self.rect.y}, 
-      .{ x: self.rect.width, y: self.rect.height}, 
-      self.style.background
-    );
+}
 
-    v_f := (*self.value) as f32;
-    min_f := self.min_value as f32;
-    max_f := self.max_value as f32;
+/* 
+  Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
 
-    slider_width : f32 = self.rect.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
+  NOTE: 
+    the 'allow_hold' parameter has significant effect on the behaviour of the button.
 
-    slider_rect : Rectangle = .{
-      x: self.rect.x,
-      y: self.rect.y,
-      width: slider_width,
-      height: self.rect.height
-    };
-
-    DrawRectangleV(.{ x: slider_rect.x, y: slider_rect.y}, .{ x: slider_rect.width, y: slider_rect.height}, self.style.foreground);
-
-    DrawRectangleLines(self.rect.x as s32, self.rect.y as s32, self.rect.width as s32, self.rect.height as s32, self.style.highlighted);
-
-    text_x := self.rect.x + (self.rect.width - MeasureText(self.text.data, self.style.font_size)) / 2;
-    text_y := self.rect.y + (self.rect.height - self.style.font_size) / 2;
-
-    DrawText(self.text.data, text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
-
-    mut value_text := to_string(*self.value);
-    value_text[self.digits_to_show] = '\0';
-
-    value_text_x := text_x + MeasureText(self.text.data, self.style.font_size) + 10; // 10 pixels padding
-
-    DrawText(value_text.data, value_text_x as s32, text_y as s32, self.style.font_size, self.style.highlighted);
+    if it is false:
+      clicking once will toggle the button on (LMB).
+      clicking it again, will toggle it off   (LMB).
+      holding the button has no effect.
     
-    value_text.deinit();
+    if it is true:
+      clicking the button will toggle the button on (LMB).
+      mousing over the button while (LMB) is held down will toggle it on.
+      clicking the button again, will toggle the button off (RMB)
+      mousing over the button while (RMB) is held down will toggle it off.
 
-    self.adjust_slider_value();
+    It's very likely you'd never utilize the 'allow_hold: true' behaviour, unless you're creating some grid of buttons,
+    where  you want to quickly enable large ranges of them, or disable them alike. (such as the 'sequencer' project).
+
+    perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
+*/
+check_button :: fn(
+  text: Option!<String>,
+  rectangle: Rectangle,
+  style: Style,             
+  allow_hold: bool,
+  value: *mut bool,         // whether the button is toggled or not.
+) {
+  if *value {
+    DrawRectangleRec(
+      rectangle,
+      style.highlighted
+    );
+  } else {
+    DrawRectangleRec(rectangle, style.background);
   }
-}
 
-Check_Button :: struct {
-  value: bool,
-  rect: Rectangle,
-  style: Style,
-  text: c_str,
-  allow_hold : bool,
-}
+  if text.is_some() {
+    font_color := style.font_color_override.or_else(style.foreground);
+    the_text := text.unwrap();
+    text_x := (rectangle.x + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2) as s32;
+    text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
+    DrawText(the_text.data, text_x, text_y, style.font_size, font_color);
+  }
 
-impl Check_Button {
-  draw :: fn(*mut self) {
-    if self.value {
-      DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.highlighted);
-    } else {
-      DrawRectangleV(Vector2.{ x: self.rect.x, y: self.rect.y}, Vector2.{ x: self.rect.width, y: self.rect.height}, self.style.background);
+  hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
+
+  if hit {
+    DrawRectangleLinesEx(
+      rectangle, 
+      style.line_thickness, 
+      ORANGE
+    );
+  }
+
+  mut left := false;
+  mut right := false;
+
+  if allow_hold {
+    left = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT);
+    right = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_RIGHT);
+    if hit && left {
+      *value = true;
+    } else if hit && right {
+      *value = false;
     }
-
-    if self.text {
-      text_x := self.rect.x + (self.rect.width - MeasureText(self.text, self.style.font_size)) / 2;
-      text_y := self.rect.y + (self.rect.height - self.style.font_size) / 2;
-      DrawText(self.text, text_x as s32, text_y as s32, self.style.font_size, self.style.foreground);
-    }
-
-    hit := CheckCollisionPointRec(GetMousePosition(), self.rect);
-
-    if hit {
-      DrawRectangleLines(self.rect.x as s32, self.rect.y as s32, self.rect.width as s32, self.rect.height as s32, ORANGE);
-    }
-
-    mut left := false;
-    mut right := false;
-
-    if self.allow_hold {
-      left = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT);
-      right = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_RIGHT);
-      if hit && left {
-        self.value = true;
-      } else if hit && right {
-        self.value = false;
-      }
-    } else if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-      self.value = !self.value;
-    }
+  } else if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+    *value = !*value;
   }
 }
 

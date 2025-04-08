@@ -324,3 +324,30 @@ impl Color {
   }
 
 }
+
+// ? A simple timer that can be used in update loops to get a tick every N seconds.
+// * interval: f32 = seconds between each tick.
+Timer :: struct {
+  interval : f32,
+  last_tick_time: f32,
+}
+
+impl Timer {
+  // * Returns true if the timer has exceeded the interval time relative to the last tick time,
+  tick :: fn(*mut self) -> bool {
+    if self.will_tick() {
+      self.last_tick_time = GetTime();
+      return true;
+    }
+    return false;
+  }
+
+  // * check whether the timer will tick when 'tick' is called, without setting the last tick time.
+  will_tick :: fn(self) -> bool {
+    now := GetTime();
+    if now >= (self.last_tick_time + self.interval) || self.last_tick_time == 0 {
+      return true;
+    }
+    return false;
+  }
+}

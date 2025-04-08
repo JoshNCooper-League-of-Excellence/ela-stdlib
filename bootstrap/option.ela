@@ -31,6 +31,14 @@ impl!<_Some> Option!<_Some> {
       has_value: false
     }
   }
+
+  or_else :: fn(self, fallback: _Some) -> _Some {
+    if self.is_some() {
+      return self.s;
+    } else {
+      return fallback;
+    }
+  }
 }
 
 // This can be inferred, but 
