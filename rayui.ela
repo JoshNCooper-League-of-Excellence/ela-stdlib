@@ -130,9 +130,9 @@ button :: fn!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Dat
 // * T* in the callback is a pointer to some of your state data, if you want to mutate it.
 // * use 'button' if you don't want the callback system, or pass 'null, null' as the last two arguments.
 @[inline]
-button_pro :: fn!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn* (*mut T), user_data : *mut T) where Data: AsByteSlice {
+button_pro :: fn!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn* (*mut T), user_arg : *mut T) where Data: AsByteSlice {
   if button(text, rect, style) {
-    callback(user_data);
+    callback(user_arg);
   }
 }
 
@@ -259,17 +259,17 @@ slider :: fn!<T>(
   }
 }
 
-/* 
+/*
   Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
 
-  NOTE: 
+  NOTE:
     the 'allow_hold' parameter has significant effect on the behaviour of the button.
 
     if it is false:
       clicking once will toggle the button on (LMB).
       clicking it again, will toggle it off   (LMB).
       holding the button has no effect.
-    
+
     if it is true:
       clicking the button will toggle the button on (LMB).
       mousing over the button while (LMB) is held down will toggle it on.
@@ -285,7 +285,7 @@ slider :: fn!<T>(
 check_button :: fn(
   text: Option!<String>,
   rectangle: Rectangle,
-  style: Style,             
+  style: Style,
   allow_hold: bool,
   value: *mut bool,         // whether the button is toggled or not.
 ) {
@@ -310,8 +310,8 @@ check_button :: fn(
 
   if hit {
     DrawRectangleLinesEx(
-      rectangle, 
-      style.line_thickness, 
+      rectangle,
+      style.line_thickness,
       ORANGE
     );
   }
@@ -332,28 +332,27 @@ check_button :: fn(
   }
 }
 
-DropDownState :: struct!<OptionsType> where OptionsType: AsByteSlice {
-  
+DropDownState :: struct!<O> where O: AsByteSlice {
   selected_index:     Option!<u32>, // Some(index) when one is selected, None when none are selected.
   is_open:            bool,
 }
 
-/* 
-  'prefer_selected_option' 
+/*
+  'prefer_selected_option'
     will prefer presenting the string value of the selected option when one is selected, over the label.
 */
 @[inline]
-drop_down :: fn!<OptionsType, UserArg>(
+drop_down :: fn!<O, UserArg>(
   text:                   Option!<String>,
   rectangle:              Rectangle,
   style:                  Style,
   prefer_selected_option: bool,
-  state:                  *mut DropDownState!<OptionsType>,
-  options:                List!<OptionsType>,
-  on_option_selected:     fn * (OptionsType, *mut UserArg) -> void,
+  state:                  *mut DropDownState!<O>,
+  options:                List!<O>,
+  on_option_selected:     fn * (O, *mut UserArg) -> void,
   user_arg:               *mut UserArg,
 ) {
-  // Draw the DropDown box
+  // Draw the WDropDown box
   DrawRectangleRec(
     rectangle, style.background);
 
@@ -366,10 +365,10 @@ drop_down :: fn!<OptionsType, UserArg>(
     text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
 
     DrawText(
-      text_data.data, 
-      text_x, 
-      text_y, 
-      style.font_size, 
+      text_data.data,
+      text_x,
+      text_y,
+      style.font_size,
       style.font_color_override.or_else(style.foreground),
     );
   } else if text.is_some() {
@@ -377,10 +376,10 @@ drop_down :: fn!<OptionsType, UserArg>(
     text_x := (rectangle.x + (rectangle.width - MeasureText(label.data, style.font_size)) / 2) as s32;
     text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
     DrawText(
-      label.data, 
-      text_x, 
-      text_y, 
-      style.font_size, 
+      label.data,
+      text_x,
+      text_y,
+      style.font_size,
       style.font_color_override.or_else(style.foreground),
     );
   }
@@ -414,10 +413,10 @@ drop_down :: fn!<OptionsType, UserArg>(
       text_y := (option_rect.y + (option_rect.height - style.font_size) / 2) as s32;
 
       DrawText(
-        text.data, 
-        text_x , 
-        text_y, 
-        style.font_size, 
+        text.data,
+        text_x ,
+        text_y,
+        style.font_size,
         style.font_color_override.or_else(style.foreground),
       );
 
@@ -435,5 +434,142 @@ drop_down :: fn!<OptionsType, UserArg>(
 
   if !hit && !hit_option {
     state.is_open = false;
+  }
+}
+
+
+/*
+  The following abstractions are made intentionally more restricted (in terms of generic types, etc)
+  than the above. This is so we can use them in lists of 'dyn IWidget', or the `Widget :: choice` type,
+  without having type arguments.
+
+  It's a trade off, and I'm choosing the most dynamic one anyway. (just using String in most cases.)
+*/
+IWidget :: interface {
+  // draw the widget it,
+  // and inform the caller about the dimensions that this widget required to be drawn.
+  draw :: fn(*mut self);
+}
+
+WButton :: struct {
+  label: String,
+  rectangle: Rectangle,
+  style: Style,
+  user_arg: *mut void,
+  on_clicked:  fn * (*mut void),
+}
+
+impl IWidget for WButton {
+  draw :: fn(*mut self) {
+    if button(self.label, self.rectangle, self.style) && self.on_clicked {
+      self.on_clicked(self.user_arg);
+    }
+  }
+}
+
+WSlider :: struct {
+  text: Option!<String>,
+  rectangle: Rectangle,
+  style: Style,
+  state: *mut SliderState!<f32>,
+  format_options: Option!<FormatOptions>,
+}
+
+impl IWidget for WSlider {
+  draw :: fn(*mut self) {
+    slider!<f32>(
+      self.text,
+      self.rectangle,
+      self.style,
+      self.state,
+      self.format_options,
+    );
+  }
+}
+
+/*
+  NOTE:
+  the 'allow_hold' parameter has significant effect on the behaviour of the button.
+
+  if it is false:
+    clicking once will toggle the button on (LMB).
+    clicking it again, will toggle it off   (LMB).
+    holding the button has no effect.
+
+  if it is true:
+    clicking the button will toggle the button on (LMB).
+    mousing over the button while (LMB) is held down will toggle it on.
+    clicking the button again, will toggle the button off (RMB)
+    mousing over the button while (RMB) is held down will toggle it off.
+
+  It's very likely you'd never utilize the 'allow_hold: true' behaviour, unless you're creating some grid of buttons,
+  where  you want to quickly enable large ranges of them, or disable them alike. (such as the 'sequencer' project).
+
+  perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
+*/
+WCheckButton :: struct {
+  text: Option!<String>,
+  rectangle: Rectangle,
+  style: Style,
+  allow_hold: bool,
+  value: bool,         // whether the button is toggled or not.
+}
+
+impl IWidget for WCheckButton {
+  draw :: fn(*mut self) {
+    check_button(
+      self.text,
+      self.rectangle,
+      self.style,
+      self.allow_hold,
+      &mut self.value,
+    );
+  }
+}
+
+WDropDown :: struct {
+  text:                   Option!<String>,
+  rectangle:              Rectangle,
+  style:                  Style,
+  prefer_selected_option: bool,
+  state:                  *mut DropDownState!<String>,
+  options:                List!<String>,
+  on_option_selected:     fn * (String, *mut void) -> void,
+  user_arg:               *mut void,
+}
+
+impl WDropDown {
+  draw :: fn(*mut self) {
+    drop_down!<String, void>(
+      self.text,
+      self.rectangle,
+      self.style,
+      self.prefer_selected_option,
+      self.state,
+      self.options,
+      self.on_option_selected,
+      self.user_arg,
+    );
+  }
+}
+
+Widget :: choice {
+  Button(WButton),
+  Slider(WSlider),
+  CheckButton(WCheckButton),
+  DropDown(WDropDown),
+}
+
+impl Widget {
+  draw :: fn(self) {  
+    if self is Widget::Button(mut btn) {
+      btn.draw();
+    } else if self is Widget::Slider(mut slider) {
+      slider.draw();
+    } else if self is Widget::CheckButton(mut chk_btn) {
+      chk_btn.draw();
+    } else if self is Widget::DropDown(mut drp_dwn) {
+      drp_dwn.draw();
+    }
   }
 }
