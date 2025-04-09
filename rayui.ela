@@ -48,8 +48,8 @@ measure_jiggly_text :: fn!<Data>(text: Data, style: Style) -> f32 where Data: As
 
 // * Draw wavy jiggly text.
 @[inline]
-jiggly_text :: fn!<Data>(text: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
-  text := text.as_byte_slice();
+jiggly_text :: fn!<Data>(data: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
+  text := data.as_byte_slice();
   time: f32 = GetTime() as f32;
   intensity := style.jiggle_intensity;
   rate := style.jiggle_rate;
