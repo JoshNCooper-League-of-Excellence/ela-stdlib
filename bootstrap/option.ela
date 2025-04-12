@@ -1,49 +1,50 @@
+
 // forward declare panic.
 panic :: fn(msg: str);
+
 impl!<_Some> Option!<_Some> {
   is_some :: fn(self) -> bool {
-    return self.has_value;
+    if self is Option!<_Some>::Some {
+      return true;
+    }
+    return false;
   }
 
   is_none :: fn(self) -> bool {
-    return !self.has_value;
+    return !self.is_some();
   }
 
   unwrap :: fn(self) -> _Some {
-    if self.has_value {
-      return self.s;
-    } else {
-      default: _Some;
-      panic("unwrapped a 'none' option");
-      return default;
+    if self is Option!<_Some>::Some(v) {
+      return v;
     }
-  }
+    
+    panic("unwrapped a 'none' option");
 
-  Some :: fn(v: _Some) -> #self {
-    return .{
-      s: v,
-      has_value: true
-    };
-  }
-
-  None :: fn() -> #self {
-    return .{
-      has_value: false
-    }
+    default: _Some;
+    return default;
   }
 
   or_else :: fn(self, fallback: _Some) -> _Some {
-    if self.is_some() {
-      return self.s;
+    if self is Option!<_Some>::Some(v) {
+      return v;
     } else {
       return fallback;
     }
   }
 }
 
-// This can be inferred, but 
-// This only works with an expected type, such as an argument, 
-// typed declaration, etc.
+/* 
+  TODO:
+  replace these with something like this:
+  * alias!<T> Some!<T> :: Option!<T>;
+*/
+
+/* 
+  This can be inferred, but 
+  This only works with an expected type, such as an argument, 
+  typed declaration, etc.
+*/
 @[inline]
 Some :: fn!<T>(t: T) -> Option!<T> {
   return Option!<T>::Some(t);
@@ -54,5 +55,5 @@ Some :: fn!<T>(t: T) -> Option!<T> {
 // typed declaration, etc.
 @[inline]
 None :: fn!<T>() -> T {
-  return T::None();
+  return T::None;
 }

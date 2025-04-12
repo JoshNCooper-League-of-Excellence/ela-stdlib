@@ -75,9 +75,7 @@ Result :: struct!<_Ok, _Err> {
   },
 }
 
-Option :: struct!<_Some> {
-  has_value: bool,
-  #anon :: union {
-    s: _Some
-  },
+Option :: choice!<T> {
+  Some(T),
+  None,
 }

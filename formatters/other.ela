@@ -18,7 +18,7 @@ impl!<T> Format for Option!<T> {
       options.quote_strings = old;
     }
     if self.is_some() {
-      builder.appendf("Some(%)", (self.s, ), options);
+      builder.appendf("Some(%)", (self.unwrap(), ), options);
     } else {
       builder.append("None()");
     }

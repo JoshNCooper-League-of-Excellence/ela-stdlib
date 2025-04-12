@@ -80,8 +80,8 @@ panic :: fn(msg: str) {
       panic_handler = fn(msg: str) {
         // idk, segfault on panic?
         n : *mut s32 = null;
-        *n = 10;
-      }
+        *n = 10;;
+      };
     }
   }
   panic_handler(msg);

@@ -40,7 +40,7 @@ impl!<V> Iterator!<V> for Iter!<V> {
   @[inline]
   next :: fn(*mut self) -> Option {
     if self.ptr >= self.end {
-      return Option::None();
+      return Option::None;
     }
     value := Option::Some(*self.ptr);
     self.ptr++;
@@ -53,7 +53,7 @@ impl!<V> Iterator!<*mut V> for IterMut!<V> {
   // Advances the iterator to the next element in the collection.
   next :: fn(*mut self) -> Option {
     if self.ptr >= self.end {
-      return Option::None();
+      return Option::None;
     }
     value := Option::Some(self.ptr);
     self.ptr++;
@@ -81,10 +81,11 @@ impl!<V, I> Iterator!<(u64, V)> for Enumerate!<V, I> {
     index := self.idx;
     self.idx++;
     next := self.iterator.next();
-    if next.has_value {
-      return Option!<(u64, V)>::Some((index, next.unwrap()));
+    
+    if next is Option!<V>::Some(v) {
+      return Option!<(u64, V)>::Some((index, v));
     } else {
-      return Option!<(u64, V)>::None();
+      return Option!<(u64, V)>::None;
     }
   }
 }

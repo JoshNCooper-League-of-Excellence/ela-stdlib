@@ -39,7 +39,7 @@ impl Stat {
 
     if !file {
       fclose(file); // probably not needed?
-      return Option!<#self>::None();
+      return Option!<#self>::None;
     }
 
     mut stat: #self;
@@ -47,7 +47,7 @@ impl Stat {
 
     if fd == -1 {
       fclose(file);
-      return Option!<#self>::None();
+      return Option!<#self>::None;
     }
 
     fstat(fd, &mut stat);
@@ -104,7 +104,6 @@ SeekPosition :: enum {
 #foreign putc :: fn(ch: u8, file: *mut FILE) -> void;
 #foreign fprintf :: fn(stream: *mut FILE, format: c_str, ...) -> s32;
 #foreign fflush :: fn(f: *const FILE);
-
 
 // TODO: add a way to do Binary stuff.
 #flags FileOpenFlags :: enum {
@@ -230,7 +229,7 @@ impl File {
     alias Option :: Option!<Stat>;
     mut stat: Stat;
     if fstat(fileno(self.fd), &mut stat) != 0 {
-      return Option::None();
+      return Option::None;
     }
     return Option::Some(stat);
   }

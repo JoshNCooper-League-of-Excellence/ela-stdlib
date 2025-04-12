@@ -33,9 +33,9 @@ impl!<V> Iterator!<V> for RangeIter!<V>  {
   alias Option :: Option!<V>;
   next :: fn(*mut self) -> Option {
     if self.idx == self.end
-      then return Option::None();
+      then return Option::None;
 
-    value := Option::Some(self.idx);
+    value: Option = Some(self.idx);
 
     if self.begin > self.end {
       self.idx--;
@@ -51,7 +51,7 @@ impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
   alias Option :: Option!<*mut V>;
   next :: fn(*mut self) -> Option {
     if self.idx == self.end
-      then return Option::None();
+      then return Option::None;
 
     value := Option::Some(&mut self.idx);
 

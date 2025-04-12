@@ -352,7 +352,7 @@ drop_down :: fn!<O, UserArg>(
   on_option_selected:     fn * (O, *mut UserArg) -> void,
   user_arg:               *mut UserArg,
 ) {
-  // Draw the WDropDown box
+  // Draw the DropDown box
   DrawRectangleRec(
     rectangle, style.background);
 
@@ -437,6 +437,16 @@ drop_down :: fn!<O, UserArg>(
   }
 }
 
+/* 
+  used for managing hit masking primarily,
+  maybe this will have more responsibilities later.
+  generally, just a shared state object all the Widgets can use.
+*/
+Ctx :: struct {
+  widgets:  List!<Widget>,
+  //               id,  layer.
+  hit_mask: List!<(u32, u16)>,
+}
 
 /*
   The following abstractions are made intentionally more restricted (in terms of generic types, etc)
@@ -449,33 +459,51 @@ IWidget :: interface {
   // draw the widget it,
   // and inform the caller about the dimensions that this widget required to be drawn.
   draw :: fn(*mut self);
+
+  // handle the events this widget provides.
+  events :: fn(*mut self, ctx: *mut Ctx);
+
+  // tell the context about the layout of our object, primarily.
+  layout :: fn(*mut self, ctx: *mut Ctx);
+
+  get_metadata :: fn(self) -> (u32, u32) {
+    return self.metadata;
+  }
 }
 
-WButton :: struct {
-  label: String,
-  rectangle: Rectangle,
-  style: Style,
-  user_arg: *mut void,
-  on_clicked:  fn * (*mut void),
+Button :: struct {
+  label:        String,
+  rectangle:    Rectangle,
+  style:        Style,
+  user_arg:     *mut void,
+  on_clicked:   fn * (*mut void),
+  metadata:     (u32, u32),
 }
 
-impl IWidget for WButton {
+impl IWidget for Button {
   draw :: fn(*mut self) {
     if button(self.label, self.rectangle, self.style) && self.on_clicked {
       self.on_clicked(self.user_arg);
     }
   }
+
+  events :: fn(*mut self, ctx: *mut Ctx) {
+  }
+
+  layout :: fn(*mut self, ctx: *mut Ctx) {
+  }
 }
 
-WSlider :: struct {
-  text: Option!<String>,
-  rectangle: Rectangle,
-  style: Style,
-  state: *mut SliderState!<f32>,
+Slider :: struct {
+  text:           Option!<String>,
+  rectangle:      Rectangle,
+  style:          Style,
+  state:          *mut SliderState!<f32>,
   format_options: Option!<FormatOptions>,
+  metadata:       (u32, u32),
 }
 
-impl IWidget for WSlider {
+impl IWidget for Slider {
   draw :: fn(*mut self) {
     slider!<f32>(
       self.text,
@@ -485,6 +513,13 @@ impl IWidget for WSlider {
       self.format_options,
     );
   }
+
+  events :: fn(*mut self, ctx: *mut Ctx) {
+  }
+
+  layout :: fn(*mut self, ctx: *mut Ctx) {
+  }
+  
 }
 
 /*
@@ -507,15 +542,16 @@ impl IWidget for WSlider {
 
   perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
 */
-WCheckButton :: struct {
-  text: Option!<String>,
-  rectangle: Rectangle,
-  style: Style,
-  allow_hold: bool,
-  value: bool,         // whether the button is toggled or not.
+CheckButton :: struct {
+  text:         Option!<String>,
+  rectangle:    Rectangle,
+  style:        Style,
+  allow_hold:   bool,
+  value:        bool,         // whether the button is toggled or not.
+  metadata:     (u32, u32),
 }
 
-impl IWidget for WCheckButton {
+impl IWidget for CheckButton {
   draw :: fn(*mut self) {
     check_button(
       self.text,
@@ -525,9 +561,15 @@ impl IWidget for WCheckButton {
       &mut self.value,
     );
   }
+
+  events :: fn(*mut self, ctx: *mut Ctx) {
+  }
+
+  layout :: fn(*mut self, ctx: *mut Ctx) {
+  }
 }
 
-WDropDown :: struct {
+DropDown :: struct {
   text:                   Option!<String>,
   rectangle:              Rectangle,
   style:                  Style,
@@ -536,9 +578,12 @@ WDropDown :: struct {
   options:                List!<String>,
   on_option_selected:     fn * (String, *mut void) -> void,
   user_arg:               *mut void,
+
+                          // layer, id;
+  metadata:               (u32, u32),
 }
 
-impl WDropDown {
+impl IWidget for DropDown {
   draw :: fn(*mut self) {
     drop_down!<String, void>(
       self.text,
@@ -551,25 +596,46 @@ impl WDropDown {
       self.user_arg,
     );
   }
+
+  events :: fn(*mut self, ctx: *mut Ctx) {
+  }
+
+  layout :: fn(*mut self, ctx: *mut Ctx) {
+  }
 }
 
 Widget :: choice {
-  Button(WButton),
-  Slider(WSlider),
-  CheckButton(WCheckButton),
-  DropDown(WDropDown),
+  Button(Button),
+  Slider(Slider),
+  CheckButton(CheckButton),
+  DropDown(DropDown),
 }
 
 impl Widget {
-  draw :: fn(self) {  
-    if self is Widget::Button(mut btn) {
-      btn.draw();
-    } else if self is Widget::Slider(mut slider) {
-      slider.draw();
-    } else if self is Widget::CheckButton(mut chk_btn) {
-      chk_btn.draw();
-    } else if self is Widget::DropDown(mut drp_dwn) {
-      drp_dwn.draw();
+  events :: fn(*mut self, ctx: *mut Ctx) {
+    switch is self {
+      Widget::Button(&mut btn) => btn.events(ctx),
+      Widget::Slider(&mut slider) => slider.events(ctx),
+      Widget::CheckButton(&mut chk_btn) => chk_btn.events(ctx),
+      Widget::DropDown(&mut drp_dwn) => drp_dwn.events(ctx),
+    }
+  }
+
+  layout :: fn(*mut self, ctx: *mut Ctx) {
+    switch is self {
+      Widget::Button(&mut btn) => btn.layout(ctx),
+      Widget::Slider(&mut slider) => slider.layout(ctx),
+      Widget::CheckButton(&mut chk_btn) => chk_btn.layout(ctx),
+      Widget::DropDown(&mut drp_dwn) => drp_dwn.layout(ctx),
+    }
+  }
+
+  draw :: fn(*mut self) {
+    switch is self {
+      Widget::Button(&mut btn) => btn.draw(),
+      Widget::Slider(&mut slider) => slider.draw(),
+      Widget::CheckButton(&mut chk_btn) => chk_btn.draw(),
+      Widget::DropDown(&mut drp_dwn) => drp_dwn.draw(),
     }
   }
 }

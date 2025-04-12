@@ -656,7 +656,7 @@ printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   impl Iterator!<u32> for UTF8_Iter {
     next :: fn(*mut self) -> Option!<u32> {
       if self.position >= self.slice.length {
-        return Option!<u32>::None();
+        return Option!<u32>::None;
       }
       subslice := self.slice.slice(self.position..(self.position + 4));
       ch, advance := utf8_to_code_point(subslice);

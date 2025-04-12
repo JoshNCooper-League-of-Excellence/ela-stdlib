@@ -171,13 +171,16 @@ impl Dyn_Allocator {
   }
 }
 
-// TODO: make this less stupid.
-// you can also overwrite this if you want, just be sure to free the old one.
-get_default_allocator :: fn() -> *mut Dyn_Allocator {
-  #static mut allocator: Libc_Allocator;
-  #static mut dynamic: *mut Dyn_Allocator = null;
-  if dynamic == null {
-    dynamic = new(Dyn_Allocator::new(&mut allocator));
+
+#ifndef FREESTANDING {
+  // TODO: make this less stupid.
+  // you can also overwrite this if you want, just be sure to free the old one.
+  get_default_allocator :: fn() -> *mut Dyn_Allocator {
+    #static mut allocator: Libc_Allocator;
+    #static mut dynamic: *mut Dyn_Allocator = null;
+    if dynamic == null {
+      dynamic = new(Dyn_Allocator::new(&mut allocator));
+    }
+    return dynamic;
   }
-  return dynamic;
 }
