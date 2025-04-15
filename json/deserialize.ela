@@ -78,10 +78,10 @@ deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
     } else {
       return Some(format("Type mismatch: object to %", (object.type.name,), FormatOptions::default()));
     }
-  } else if object.type.id == #typeid(String) {
+  } else if object.type == typeof(String) {
     *(object.ptr as *mut String) = value.as_string().unwrap().clone();
     return None();
-  } else if object.type.id == #typeid(str) {
+  } else if object.type == typeof(str) {
     mut string := value.as_string().unwrap();
     string = string.clone();
     *(object.ptr as *mut str) = string.as_str();

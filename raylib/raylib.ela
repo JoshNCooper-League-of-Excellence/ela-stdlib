@@ -9,12 +9,14 @@ Color :: struct {
   b: u8,
   a: u8,
 };
+
 Rectangle :: struct {
   x: f32,
   y: f32,
   width: f32,
   height: f32,
 };
+
 Image :: struct {
   data: *const void,
   width: s32,

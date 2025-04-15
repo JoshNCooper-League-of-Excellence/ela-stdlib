@@ -121,19 +121,19 @@ serialize_any :: fn(object: any) -> JsonResult {
   }
 
   if Type::has_no_extension(object.type) {
-    if object.type.id == #typeid(str) {
+    if object.type == typeof(str) {
       val := JsonValue::new();
       val.type = JsonValueType::String;
       the_str := *(object.ptr as *const str);
       val.string = String::from(the_str);
       return JsonResult::Ok(val);
-    } else if object.type.id == #typeid(String) {
+    } else if object.type == typeof(String) {
       val := JsonValue::new();
       val.type = JsonValueType::String;
       // We clone here to guarantee we don't have to rely on the original object's lifetime.
       val.string = (object.ptr as *const String).clone(); 
       return JsonResult::Ok(val);
-    } if object.type.id == #typeid(*const u8) {
+    } if object.type == typeof(*const u8) {
       val := JsonValue::new();
       val.type = JsonValueType::String;
       val.string = String::from_ptr(*(object.ptr as *const *const u8));
