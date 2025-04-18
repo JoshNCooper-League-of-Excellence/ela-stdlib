@@ -9,13 +9,13 @@
 
 // equivalent to an explicit cast operator overload in C++,
 // allow an object to be constructed from another.
-From        :: interface!<T> {
+From :: interface {
   // construct a self type from T.
-  from :: fn(v: T) -> #self;
+  from :: fn!<T>(v: T) -> #self;
 }
 
 // A deep clone, versus assignment always being a shallow clone in Ela.
-Clone       :: interface {
+Clone :: interface {
   // get a deep clone of self.
   clone     :: fn(self) -> #self;
 }
@@ -26,11 +26,11 @@ Init :: interface!<V> {
 
 // Binary arithmetic operator overloads.
 Arithmetic :: interface!<Right> {
-  add       :: fn(self, right: Right) -> #self;   // '+' operator.
-  sub       :: fn(self, right: Right) -> #self;   // '-' operator.
-  mul       :: fn(self, right: Right) -> #self;   // '*' operator.
-  div       :: fn(self, right: Right) -> #self;   // '/' operator.
-  modulo    :: fn(self, right: Right) -> #self;   // '%' operator.
+  add :: fn(self, right: Right) -> #self;       // '+' operator.
+  sub :: fn(self, right: Right) -> #self;       // '-' operator.
+  mul :: fn(self, right: Right) -> #self;       // '*' operator.
+  div :: fn(self, right: Right) -> #self;       // '/' operator.
+  modulo :: fn(self, right: Right) -> #self;    // '%' operator.
 }
 
 // Binary bitwise operator overloading.

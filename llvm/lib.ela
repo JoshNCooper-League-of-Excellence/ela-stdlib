@@ -1,0 +1,39 @@
+
+/* 
+  These enums are here because the generator does a poor job of translating the subvariant names
+  and we'd like to control that manually.
+
+  This API rarely changes, so it's not likely we'll need to regenerate it.
+  but still.
+*/
+LLVMCodeGenOptLevel :: enum {
+  None = 0,
+  Less = 1,
+  Default = 2,
+  Aggressive = 3,
+};
+
+LLVMRelocMode :: enum {
+  Default = 0,
+  Static = 1,
+  PIC = 2,
+  DynamicNoPic = 3,
+  ROPI = 4,
+  RWPI = 5,
+  ROPI_RWPI = 6,
+};
+
+LLVMCodeModel :: enum {
+  Default = 0,
+  JITDefault = 1,
+  Tiny = 2,
+  Small = 3,
+  Kernel = 4,
+  Medium = 5,
+  Large = 6,
+};
+
+#include "llvm.ela";
+
+
+LLVMInitializeBasicToolkit :: fn() {}

@@ -15,11 +15,15 @@ impl!<_Some> Option!<_Some> {
   }
 
   unwrap :: fn(self) -> _Some {
-    if self is Option!<_Some>::Some(v) {
-      return v;
+    switch is self { 
+      Option!<_Some>::Some(v): {
+        return v;
+      }
+      else: {
+        panic("unwrapped a 'none' option");
+      }
     }
     
-    panic("unwrapped a 'none' option");
 
     default: _Some;
     return default;

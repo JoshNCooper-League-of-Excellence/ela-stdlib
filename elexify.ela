@@ -1,0 +1,837 @@
+/*
+  This is a generalized lexing library suitable for most use cases.
+
+  The design is modeled after ela's own lexer, so it's probably a bit
+  more well suited for programming languages.
+
+  However it's absolutely suitable for other formats, such as JSON, XAML, etc.
+*/
+
+/* 
+  USAGE:
+
+  Explained:
+    (1) the keywords map is for alphanumeric (which in this lexer can always start with, or contain underscores)
+      identifiers that get associated with a specific u32.
+
+    (2) the operators map is for punctuation that gets associated with a specific u32. to understand what gets recognized
+      as punctuation, look into the C standard library's 'ispunct', we use that function here. (Linux manpages, available online too, are a good resource).
+
+    (3) the reserved words list is very similar to the keywords map, except it doesn't associate each item with a u32.
+      instead, it will prepend a customizable character to the front of the string, and return it as an identifier.
+      This is especially useful when making something like a DSL that transpiles to C, where things like 'void' or any
+      reserved word in C would clash normally. this avoids that clashing, and your frontend doesn't have to worry about it.
+
+    (4) the 'state' object is used to control a stack of various inputs, or to switch between different inputs.
+      this is primarily used for things like text "include"s, where you encounter an "include" to a file, 
+      start to read it, and want to jump back to your last "state" when done.
+
+      This can be achieved by simply pushing a state on the lexer, and continuing to execute. 
+      Once the lexer gets to an EOF token (and it has more states left on its stack)
+      it will pop the finished state, and resume it's operation wherever you left off on your old state.
+
+      I'm sure this could also be used to parallelize your parsing, however care must be taken as the containers used
+      for keywords, operators, and reserved words are not thread safe, nor is the lookahead buffer used within each state.
+      This may not be important for your use case, but it's worth noting.
+    
+    (5) We simply push the first state onto the lexers stack, before beginning lexing.
+      It should be obvious, but we take a shallow copy of the state when we pass this by value.
+      You can keep track of your states and copy them back if you wanted to do something like multi threading,
+      but as of now, it's meant to contain it's own mutable state, and not be read back from.
+
+    (6) Here, we have a loop that continually 'eat's or consumes tokens from the stream, until it reaches the EOF.
+      We also have a bunch of helpers in the lexer, such as 'peek', 'lookahead', 'expect', etc. These, of course,
+      are for your parser to use while reading from the stream.
+
+  main :: fn() {
+    mut lexer := Lexer::new(
+      (1) (a Map!<str, u32> of keywords),
+      (2) (a Map!<str, u32> of operators),
+      (3) (a List!<str>       of reserved words),
+    );
+
+    (4) mut state := State::from_file("input_file.json");
+    (5) lexer.push_state(state);
+
+    (6) while {
+      token := lexer.eat();
+      if token.type == TOKEN_EOF then break;
+
+      // Do something with your token :D
+    }
+  }
+*/
+
+/* 
+  --------------------------------------------------------------------------
+  ## A FULL, CORRECT EXAMPLE ###############################################
+  --------------------------------------------------------------------------
+    import fmt;
+    import lexer::*;
+
+    alias None :: Option!<s32>::None;
+
+    // We don't need to worry about clashes with
+    // the builtin token types, because the lexer
+    // uses incredibly large u32's to represent those, 
+    // with the express intent to avoid said clashes.
+
+    // You may want to alias these types in your own enum,
+    // as shown below.
+    u32 :: enum {
+      Add,
+      OpenParen,
+      CloseParen,
+      OpenAngle,
+      CloseAngle,
+      OpenCurly,
+      CloseCurly,
+      Semicolon,
+      Comma,
+      DoubleColon,
+      Arrow,
+      Dot,
+      Assign,
+      Fn,
+
+      // alias the constants of the lexer.
+      Eof         = lexer::TOKEN_EOF,
+      Identifier  = lexer::TOKEN_IDENTIFIER,
+      Integer     = lexer::TOKEN_INTEGER,
+      Float       = lexer::TOKEN_FLOAT,
+      String      = lexer::TOKEN_STRING,
+      Char        = lexer::TOKEN_CHAR,
+    }
+
+    operators :: fn() -> Map!<str, lexer::u32> {
+      return Map!<str, lexer::u32>::init(.[
+        ("+",  u32::Add),
+        ("(",  u32::OpenParen),
+        (")",  u32::CloseParen),
+        (";",  u32::Semicolon),
+        ("<",  u32::OpenAngle),
+        (">",  u32::CloseAngle),
+        (",",  u32::Comma),
+        ("=",  u32::Assign),
+        ("::", u32::DoubleColon),
+        ("->", u32::Arrow),
+        ("{",  u32::OpenCurly),
+        ("}",  u32::CloseCurly),
+        (".",  u32::Dot),
+      ]);
+    }
+
+    keywords :: fn() -> Map!<str, lexer::u32> {
+      return Map!<str, lexer::u32>::init(.[
+        ("fn", u32::Fn),
+      ]);
+    }
+
+    reserved :: fn() -> List!<str> {
+      return List!<str>::init(.["volatile"]);
+    }
+
+    main :: fn() {
+      mut lexer := Lexer::new(
+        Some(operators()),
+        Some(keywords()),
+        Some(reserved()),
+      );
+
+      mut state := State::from_file("sample.txt");
+
+      lexer.push_state(state);
+      
+      while {
+        token := lexer.eat();
+
+        if token.is_eof() then break;
+
+        // print the tokens out. 
+        println(token.to_string());
+      }
+    }
+    
+  -----------------------------------------------------------------------
+  ## END ################################################################
+  -----------------------------------------------------------------------
+*/
+
+/* 
+  TODO: 
+    add customizable string delimiters, 
+    char delimiters, 
+    and comment syntax.
+*/
+
+import interned::*;
+alias InternedString :: Interned!<String>;
+
+import math::{
+  clamp,
+  max,
+};
+
+import map::*;
+import fmt::*;
+import fs::*;
+
+const TOKEN_EOF        : u32 = -1;
+const TOKEN_IDENTIFIER : u32 = -2;
+const TOKEN_INTEGER    : u32 = -3;
+const TOKEN_FLOAT      : u32 = -4;
+const TOKEN_STRING     : u32 = -5;
+const TOKEN_CHAR       : u32 = -6;
+
+SourceLocation :: struct {
+  line: u64,
+  column: u64,
+  file: u64,
+}
+
+impl SourceLocation {
+  #static files :: fn() -> *mut List!<String> {
+    #static mut files: List!<String>;
+    return &mut files;
+  }
+
+  to_string :: fn(self) -> String {
+    files := SourceLocation::files();
+    filename := (*files)[self.file];
+    return format("%:%:%", (filename, self.line, self.column), FormatOptions::default());
+  }
+}
+
+impl Format for SourceLocation {
+  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
+    builder.append_then_free(self.to_string());
+  }
+}
+
+lex_error :: fn!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
+  mut builder: StringBuilder;
+  builder.append("\n\033[1;31mat:\n\t\033[1;34m");
+  location.format(&mut builder, FormatOptions::default());
+  builder.append("\033[0m\n");
+  builder.appendf("\033[1;3;31merror: %", (msg,), FormatOptions::default());
+  builder.append("\033[0m\n");
+
+  filename := (*SourceLocation::files())[location.file];
+  mut file_data := File::read_all(filename).unwrap();
+
+  line := location.line as s32;
+  mut clamped_begin := clamp(line - 3, line - 3, line) as s32;
+  mut clamped_end := clamp(line + 3, line, line + 3) as s32;
+
+  clamped_begin = max(0, clamped_begin);
+  clamped_end = max(0, clamped_end);
+
+  mut lines : Slice!<String> =
+    file_data
+      .split('\n')
+      .as_slice(clamped_begin..clamped_end);
+
+  defer {
+    builder.deinit();
+    file_data.deinit();
+    for line in lines {
+      line.deinit();
+    }
+  }
+
+  builder.append("\033[1;3;37m\n");
+  for i in 0..lines.length {
+    line : str = .{
+      data: lines[i].data as *mut u8,
+      length: lines[i].length,
+    };
+
+    builder.appendf("%\n", (line,), FormatOptions::default());
+
+    if i == 2 {
+      for i in 1..location.column-1 {
+        builder.append(" ");
+      }
+      for i in 0..3 {
+        builder.append("^");
+      }
+      builder.append("\n");
+    }
+  }
+
+  mut string := builder.get_string();
+  defer builder.deinit();
+  defer string.deinit();
+  panic(string.as_str());
+}
+
+Token :: struct {
+  // TODO: put this in an option.
+  value:    Option!<InternedString>,
+  type:     u32,
+  location: SourceLocation,
+}
+
+impl Token {
+  Eof :: fn() -> Token {
+    #static eof: Token = .{
+      type: TOKEN_EOF,
+    };
+    return eof;
+  }
+
+  is_type :: fn(self, type: u32) -> bool {
+    return self.type == type;
+  }
+
+  is_eof :: fn(self) -> bool {
+    return self.type == TOKEN_EOF;
+  }
+
+  new :: fn(location: SourceLocation, value: Option!<String>, type: u32) -> Token {
+    if value is Option!<String>::Some(string) {
+      return .{
+        value: Option!<InternedString>::Some(InternedString::new(string)),
+        type: type,
+        location: location,
+      };
+    } else {
+      return .{
+        value: Option!<InternedString>::None,
+        type: type,
+        location: location,
+      };
+    }
+
+  }
+};
+
+impl Format for Token {
+  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
+    builder.append("Token {\n  location: ");
+    builder.append_then_free(self.location.to_string());
+
+    mut value: Option!<String>;
+    if self.value is Option!<InternedString>::Some(string) {
+      value = Option!<String>::Some(*string.data);
+    } else {
+      value = Option!<String>::None;
+    }
+
+    old := options.quote_strings;
+    options.quote_strings = true;
+    builder.appendf("\n  type: %,\n  value: %\n}", (self.type, value), options);
+    options.quote_strings = old;
+  }
+}
+
+impl Token {
+  to_string :: fn(self) -> String {
+    mut builder: StringBuilder;
+    defer builder.deinit();
+    self.format(&mut builder, FormatOptions::default());
+    return builder.get_string();
+  }
+}
+
+State :: struct {
+  input: String,
+  path: String,
+  pos: u64,
+  col: u64,
+  line: u64,
+  file_idx: u64,
+}
+
+impl State {
+  new :: fn(path: String, input: String, file_idx: u64) -> #self {
+    return .{
+      path: path,
+      input: input,
+      file_idx: file_idx,
+      pos: 0,
+      col: 1,
+      line: 1,
+    };
+  }
+
+  from_file :: fn!<Path>(filename: Path) -> #self where Path: AsByteSlice {
+      canonical_option := canonical_path(filename);
+      if canonical_option.is_none() {
+        printlnf("file '%' was unable to be located.", (filename,));
+      }
+      canonical := canonical_option.unwrap();
+      parent := parent_path(canonical).unwrap();
+      change_directory(parent).unwrap();
+      input := File::read_all(canonical).unwrap();
+
+      mut found := false;
+      mut file_idx := 0;
+      for file in *SourceLocation::files() {
+        if file == canonical {
+          found = true;
+          break;
+        }
+        file_idx++;
+      }
+      if (!found) {
+        SourceLocation::files().push(canonical);
+      }
+      return State::new(canonical, input, file_idx);
+    }
+}
+
+Lexer :: struct {
+  operators: Map!<str, u32>,
+  keywords:  Map!<str, u32>,
+  reserved:  List!<str>,
+  states:    List!<State>,
+  lookahead_buffer: List!<Token>,
+  reserved_placeholder: String,
+}
+
+impl Lexer {
+  new :: fn(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>) -> #self {
+    return .{
+      operators:  operators.or_else(.{}),
+      keywords:   keywords.or_else(.{}),
+      reserved:   reserved.or_else(.{}),
+      reserved_placeholder: String::from("$"),
+    };
+  }
+}
+
+impl Deinit for Lexer {
+  deinit :: fn(*mut self) {
+    self.operators.deinit();
+    self.keywords.deinit();
+    self.reserved.deinit();
+    self.states.deinit();
+    self.lookahead_buffer.deinit();
+    self.reserved_placeholder.deinit();
+  }
+}
+
+impl Lexer {
+  push_state :: fn(*mut self, state: State) {
+    self.states.push(state);
+  }
+
+  fill_buffer_if_needed :: fn(*mut self) {
+    while self.lookahead_buffer.length < 8 {
+      if self.states.is_empty() {
+        self.lookahead_buffer.push(Token::Eof());
+      } else {
+        self.get_token(self.states.back_mut().unwrap());
+        token := self.lookahead_buffer.back().unwrap();
+        if token.type == TOKEN_EOF {
+          self.states.pop();
+        }
+      }
+    }
+  }
+
+  expect :: fn(*mut self, type: u32) -> Token {
+    token := self.eat();
+    if token.type != type {
+      lex_error(
+        format("unexpected token: '%' ...\nexpected '%' instead.",
+          (token.type, type), FormatOptions::default()
+        ),
+        token.location
+      );
+    }
+    return token;
+  }
+
+  peek :: fn(*mut self) -> Token {
+    self.fill_buffer_if_needed();
+    return self.lookahead_buffer.front().unwrap();
+  }
+
+  eat :: fn(*mut self) -> Token {
+    self.fill_buffer_if_needed();
+    return self.lookahead_buffer.pop_front();
+  }
+
+  get_token :: fn(*mut self, state: *mut State) {
+    mut token_builder: StringBuilder;
+    defer token_builder.deinit();
+
+    while state.pos < state.input.length {
+      token_builder.clear();
+      mut c: u8 = state.input[state.pos];
+
+      /* Newline */
+      if c == '\n' {
+        state.pos++;
+        state.line++;
+        state.col = 1;
+        continue;
+      }
+
+      /* Whitespace */
+      if c == ' ' || c == '\t' {
+        state.pos++;
+        state.col++;
+        continue;
+      }
+
+      /* Line comments */
+      if c == '/' && state.pos + 1 < state.input.length && state.input[state.pos + 1] == '/' {
+        state.pos += 2;
+        state.col += 2;
+        while c != '\n' && state.pos < state.input.length {
+          state.pos++;
+          c = state.input[state.pos];
+        }
+        if state.pos < state.input.length {
+          state.pos++;
+          state.col = 1;
+          state.line++;
+        }
+        continue;
+      }
+
+      /* Block comments */
+      if c == '/' && state.pos + 1 < state.input.length && state.input[state.pos + 1] == '*' {
+        state.pos += 2;
+        state.col += 2;
+        while state.pos + 1 < state.input.length && state.input[state.pos] != '*' || state.input[state.pos + 1] != '/' {
+          if state.input[state.pos] == '\n' {
+            state.line++;
+            state.col = 1;
+          } else {
+            state.col++;
+          }
+          state.pos++;
+          c = state.input[state.pos];
+        }
+        if state.pos < state.input.length {
+          state.pos += 2;
+          state.col += 2;
+        }
+        continue;
+      }
+
+      /* token-yielding symbols below. */
+      mut location : SourceLocation = .{
+        line: state.line,
+        column: state.col,
+        file: state.file_idx
+      };
+
+      // Characters.
+      if c == '\'' {
+        start := state.pos;
+        state.pos++;
+        state.col++;
+        c = state.input[state.pos];
+        mut codepoint: u32 = -1;
+
+        // Escape characters.
+        if c == '\\' {
+          state.pos++;
+          state.col++;
+          c = state.input[state.pos];
+          state.pos++;
+          state.col++;
+          if c == 'n' {
+            codepoint = '\n';
+          } else if c == 'v' {
+            codepoint = '\v';
+          } else if c == 'b' {
+            codepoint = '\b';
+          } else if c == 't' {
+            codepoint = '\t';
+          } else if c == 'f' {
+            codepoint = '\f';
+          } else if c == 'r' {
+            codepoint = '\r';
+          } else if c == '\'' {
+            codepoint = '\'';
+          } else if c == '\\' {
+            codepoint = '\\';
+          } else if c == '\"' {
+            codepoint = '\"';
+          } else if c == '0' {
+            codepoint = '\0';
+          } else if c == 'x' || c == 'u' || c == 'U' {
+            mut num_digits: u64;
+            if c == 'x' {
+              num_digits = 2;
+            } else if c == 'u' {
+              num_digits = 4;
+            } else {
+              num_digits = 8;
+            }
+            state.pos++;
+            state.col++;
+            codepoint = 0;
+            for i in 0..num_digits {
+              if (state.pos >= state.input.length || !isxdigit(state.input[state.pos])) {
+                lex_error("invalid hexadecimal escape sequence", location);
+              }
+              buffer: u8[2] = .[
+                state.input[state.pos],
+                '\0',
+              ];
+              mut hex_value: u8 = state.input[state.pos];
+              if hex_value >= '0' && hex_value <= '9' {
+                hex_value -= '0';
+              } else if hex_value >= 'a' && hex_value <= 'f' {
+                hex_value -= 'a' - 10;
+              } else if hex_value >= 'A' && hex_value <= 'F' {
+                hex_value -= 'A' - 10;
+              }
+              codepoint = (codepoint << 4) | hex_value;
+              state.pos++;
+              state.col++;
+            }
+          } else if c >= '0' && c <= '7' { // Octal escape sequence
+            codepoint = 0;
+            mut i := 0;
+            while i < 3 && c > '0' && c < '7' {
+              codepoint = (codepoint << 3) | (c - '0');
+              state.pos++;
+              state.col++;
+              c = state.input[state.pos];
+              ++i;
+            }
+          } else {
+            lex_error(format("invalid escape sequence %", (c,), FormatOptions::default()), location);
+          }
+        } else if (c & 0x80) == 0 {
+          codepoint = c;
+          state.pos++;
+          state.col++;
+        } else {
+          mut num_bytes := 0;
+          if ((c & 0xE0) == 0xC0) {
+            num_bytes = 2;
+          }
+          else if ((c & 0xF0) == 0xE0) {
+            num_bytes = 3;
+          }
+          else if ((c & 0xF8) == 0xF0) {
+            num_bytes = 4;
+          }
+          else {
+            lex_error("invalid utf8 char", location);
+          }
+
+          for i in 0..num_bytes {
+            if (state.pos >= state.input.length || (i > 0 && (state.input[state.pos] & 0xC0) != 0x80)) {
+              lex_error("invalid UTF-8 continuation byte", location);
+            }
+            codepoint = (codepoint << 6) | (state.input[state.pos] & 0x3F);
+            state.pos++;
+            state.col++;
+          }
+        }
+
+        c = state.input[state.pos];
+        if (c != '\'') {
+          lex_error(format("invalid char literal: too many characters %", (codepoint,), FormatOptions::default()), location);
+        }
+        state.pos++; // move past '
+        state.col++;
+        mut buffer: u8[32];
+        snprintf(buffer, 32 * sizeof(u8), "0x%X"c, codepoint);
+        self.lookahead_buffer.push(Token::new(location, Some(String::from_ptr(buffer)), TOKEN_CHAR));
+        return;
+      }
+
+      // Strings
+      if c == '\"' {
+        state.pos++;
+        state.col++;
+        c = state.input[state.pos];
+        while (state.pos < state.input.length) {
+          c = state.input[state.pos];
+          if (c == '\"') {
+            break;
+          } if (c == '\n') {
+            lex_error("You can't directly embed a '\\n' in string by just letting it span multiple lines", location);
+          } else if (c == '\\') {
+            if (state.pos + 1 < state.input.length) {
+              token_builder.append_byte(c);
+              state.pos++;
+              state.col++;
+              token_builder.append_byte(state.input[state.pos]);
+              state.pos++;
+              state.col++;
+            } else {
+              lex_error("incomplete escape sequence at end of input", location);
+            }
+          } else {
+            token_builder.append_byte(c);
+            state.pos++;
+            state.col++;
+            c = state.input[state.pos];
+          }
+        }
+        if c != '\"' {
+          panic("unescaped string");
+        }
+        state.pos++;
+        state.col++;
+        self.lookahead_buffer.push(Token::new(location, Some(token_builder.get_string()), TOKEN_STRING));
+        return;
+      }
+
+      // Identifiers, Keywords.
+      // Check if the character is alphabetic, underscore, or a UTF-8 start byte
+      if (isalpha(c) || c == '_' || (c & 0x80) != 0) {
+        while (state.pos < state.input.length) {
+          if (isalnum(c) || c == '_') {
+            token_builder.append_byte(c);
+            state.pos++;
+            state.col++;
+            c = state.input[state.pos];
+          // Check if the character is a UTF-8 start byte
+          } else if ((c & 0x80) != 0) {
+            mut num_bytes := 0;
+            if (c & 0xE0) == 0xC0 {
+              num_bytes = 2;
+            } else if (c & 0xF0) == 0xE0 {
+              num_bytes = 3;
+            } else if (c & 0xF8) == 0xF0 {
+              num_bytes = 4;
+            } else {
+              // Stop processing if it's not a valid UTF-8 start byte
+              break;
+            }
+            for i in 0..num_bytes {
+              if (state.pos >= state.input.length || (i > 0 && (state.input[state.pos] & 0xC0) != 0x80)) {
+                break; // Stop processing if it's not a valid UTF-8 continuation byte
+              }
+              token_builder.append_byte(state.input[state.pos]);
+              state.pos++;
+              state.col++;
+            }
+            c = state.input[state.pos];
+          } else {
+            break; // Stop processing if it's not a valid identifier character
+          }
+        }
+
+        mut value := token_builder.get_string();
+        
+        if self.keywords.contains(value.as_str()) {
+          self.lookahead_buffer.push(Token::new(location, None(), self.keywords.get(value.as_str()).unwrap()));
+          value.deinit();
+          return;
+        } else if self.reserved.contains(value.as_str(), fn (a: str, b: str) -> bool {
+          return a == b;
+        }) {
+          // we prepend a $ on C's reserved words so we don't have any invisible overlap between the source
+          // and target languages
+          mut new_value := self.reserved_placeholder.clone();
+          new_value.append(value);
+          value.deinit();
+          value = new_value;
+        }
+        self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_IDENTIFIER));
+        return;
+      }
+
+      // Operators and Punctuation.
+      if ispunct(c) {
+        mut longest_match: String = .{};
+        mut current_match: String = .{};
+        while state.pos < state.input.length && ispunct(c) {
+          if c == '\"'
+            then break;
+
+          current_match.push(state.input[state.pos]);
+          option := self.operators.get(current_match.as_str());
+
+          if (option.is_some()) {
+            longest_match = current_match;
+          } else if !longest_match.is_empty() {
+            self.lookahead_buffer.push(Token::new(location, None(), self.operators.get(longest_match.as_str()).unwrap()));
+            return;
+          }
+
+          state.pos++;
+          state.col++;
+          c = state.input[state.pos];
+        }
+
+        if !longest_match.is_empty() {
+          self.lookahead_buffer.push(Token::new(location, None(), self.operators.get(longest_match.as_str()).unwrap()));
+          return;
+        } else {
+          lex_error(format("unable to lex operator :: \'%\'", (current_match,), FormatOptions::default()), location);
+        }
+      }
+
+      if isdigit(c) {
+        mut is_float: bool = false;
+        mut is_hex: bool = false;
+        mut is_bin: bool = false;
+        if c == '0' && (state.input[state.pos + 1] == 'x' || state.input[state.pos + 1] == 'X') {
+          is_hex = true;
+          state.pos += 2; // Skip '0x'
+          state.col += 2;
+          c = state.input[state.pos];
+        } else if c == '0' && (state.input[state.pos + 1] == 'b' || state.input[state.pos + 1] == 'B') {
+          is_bin = true;
+          state.pos += 2; // Skip '0b'
+          state.col += 2;
+          c = state.input[state.pos];
+        }
+
+        while state.pos < state.input.length && (isdigit(c) || c == '.' || (is_hex && isxdigit(c)) ||
+                            (is_bin && (c == '0' || c == '1')) || c == '_') {
+          if (c == '_') {
+            state.pos++;
+            state.col++;
+            c = state.input[state.pos];
+          }
+
+          if (c == '.' && state.pos + 1 < state.input.length && (state.input[state.pos + 1] == '.' || !isdigit(state.input[state.pos+1]))) {
+            break;
+          }
+
+          if (c == '.') {
+            if (is_float) {
+              lex_error("got too many '.' periods in a float literal.", location);
+            }
+            is_float = true;
+          }
+          token_builder.append_byte(c);
+          state.pos++;
+          state.col++;
+          c = state.input[state.pos];
+          if (c == '_') {
+            state.pos++;
+            state.col++;
+            c = state.input[state.pos];
+          }
+        }
+
+        mut value := token_builder.get_string();
+
+        if (is_hex) {
+          mut hex := String::from("0x");
+          hex.append_then_free(value);
+          self.lookahead_buffer.push(Token::new(location, Some(hex), TOKEN_INTEGER));
+        } else if (is_bin) {
+          mut bin := String::from("0b");
+          bin.append_then_free(value);
+          self.lookahead_buffer.push(Token::new(location, Some(bin), TOKEN_INTEGER));
+        } else if (!is_float) {
+          self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_INTEGER));
+        } else {
+          self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_FLOAT));
+        }
+        return;
+      }
+
+    }
+
+    self.lookahead_buffer.push(Token::Eof());
+  }
+}

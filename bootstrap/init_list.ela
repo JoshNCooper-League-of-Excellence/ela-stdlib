@@ -1,0 +1,34 @@
+
+impl!<T> Iterable for InitList!<T> {
+  /*
+    Get an iterator to the list.
+    the 
+      `for .. in ...` 
+    syntax will automatically fetch this when you do
+      `for v in list`
+    but you can also use it manually, such as:
+      `for v in list.iter().reverse()` 
+    or whatever.
+
+    of course, this is always a view into the list, and holding on to this outside of the 
+    guaranteed lifetime of the List!<T> is inherently unsafe.
+  */
+  @[inline]
+  iter :: fn(*const self) -> Iter!<T> {
+    return .{
+      ptr: self.data as *mut T,
+      end: self.data + self.length,
+    }
+  }
+
+  /* 
+    Get a mutable iterator.
+  */
+  @[inline]
+  iter_mut :: fn(*mut self) -> IterMut!<T> {
+    return .{
+      ptr: self.data as *mut T,
+      end: self.data + self.length,
+    }
+  }
+}

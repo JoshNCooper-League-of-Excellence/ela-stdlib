@@ -214,7 +214,7 @@ impl File {
 
     fclose(file);
 
-    return Option::None();
+    return Option::None;
   }
 }
 

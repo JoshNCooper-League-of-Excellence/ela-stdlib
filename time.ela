@@ -24,6 +24,12 @@ tm_t :: struct {
 
 Timing :: struct;
 
+DateTime :: struct {
+  year: s32,
+  month: s32,
+  day: s32,
+}
+
 impl Timing {
   // returns the timespec_t for the current time since epoch.
   get_timespec_since_epoch :: fn() -> timespec_t {
@@ -68,7 +74,7 @@ impl Timing {
     return (ts.tv_sec as f64) / 86_400.0 + (ts.tv_nsec as f64) / ((86_400.0 * 1_000_000_000.0) as f64)
   }
 
-  date_time :: fn() -> String {
+  date_time_string :: fn() -> String {
     ts := Timing::get_timespec_since_epoch();
     time_t: s64 = ts.tv_sec;
     mut tm: tm_t;
@@ -80,4 +86,33 @@ impl Timing {
     buffer[length] = '\0';
     return String::from_ptr(buffer);
   }
+}
+
+#test __test_timing :: fn() {
+  // Capture a reference time
+  start_time := Timing::get_timespec_since_epoch();
+
+  // Test seconds
+  seconds := Timing::seconds();
+  assert("seconds failed", seconds >= start_time.tv_sec);
+
+  // Test milliseconds
+  milliseconds := Timing::milliseconds();
+  assert("ms failed", milliseconds >= start_time.tv_sec * 1000 + start_time.tv_nsec / 1_000_000);
+
+  // Test microseconds
+  microseconds := Timing::microseconds();
+  assert("us failed", microseconds >= start_time.tv_sec * 1_000_000 + start_time.tv_nsec / 1_000);
+
+  // Test minutes
+  minutes := Timing::minutes();
+  assert("minutes failed", minutes >= start_time.tv_sec / 60);
+
+  // Test hours
+  hours := Timing::hours();
+  assert("hours failed", hours >= start_time.tv_sec / 3600);
+
+  // Test days
+  days := Timing::days();
+  assert("days failed", days >= start_time.tv_sec / 86400);
 }

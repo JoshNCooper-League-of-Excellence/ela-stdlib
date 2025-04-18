@@ -63,7 +63,7 @@ Type :: struct {
   BOOL,
   STRING,
   STRUCT,
-  TAGGED_UNION,
+  CHOICE,
   ENUM,
   TUPLE,
   ARRAY,
@@ -72,6 +72,7 @@ Type :: struct {
   SIGNED,
   UNSIGNED,
   INTERFACE,
+  UNION,
 }
 
 impl Type  {
@@ -137,6 +138,14 @@ impl Type  {
 
   is_pointer :: fn(*const self) -> bool {
     return self.flags & TypeFlags::POINTER != 0;
+  }
+
+  is_choice :: fn(*const self) -> bool {
+    return self.flags & TypeFlags::CHOICE != 0;
+  }
+
+  is_union :: fn(*const self) -> bool {
+    return self.flags & TypeFlags::UNION != 0;
   }
 }
 

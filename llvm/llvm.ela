@@ -1575,30 +1575,7 @@ LLVMOpaqueTargetMachine :: struct;
 alias LLVMTargetMachineRef :: *mut LLVMOpaqueTargetMachine;
 LLVMTarget :: struct;
 alias LLVMTargetRef :: *mut LLVMTarget;
-LLVMCodeGenOptLevel :: enum {
-  LLVMCodeGenLevelNone = 0,
-  LLVMCodeGenLevelLess = 1,
-  LLVMCodeGenLevelDefault = 2,
-  LLVMCodeGenLevelAggressive = 3,
-};
-LLVMRelocMode :: enum {
-  LLVMRelocDefault = 0,
-  LLVMRelocStatic = 1,
-  LLVMRelocPIC = 2,
-  LLVMRelocDynamicNoPic = 3,
-  LLVMRelocROPI = 4,
-  LLVMRelocRWPI = 5,
-  LLVMRelocROPI_RWPI = 6,
-};
-LLVMCodeModel :: enum {
-  LLVMCodeModelDefault = 0,
-  LLVMCodeModelJITDefault = 1,
-  LLVMCodeModelTiny = 2,
-  LLVMCodeModelSmall = 3,
-  LLVMCodeModelKernel = 4,
-  LLVMCodeModelMedium = 5,
-  LLVMCodeModelLarge = 6,
-};
+
 LLVMCodeGenFileType :: enum {
   LLVMAssemblyFile = 0,
   LLVMObjectFile = 1,

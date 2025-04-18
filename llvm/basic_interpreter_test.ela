@@ -33,6 +33,7 @@ main :: fn() {
   }
 
   result := LLVMRunFunction(engine, function, 0, null);
+
   printlnf("Result: %", (LLVMGenericValueToInt(result, 0),));
 
   LLVMDisposeGenericValue(result);

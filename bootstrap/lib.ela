@@ -18,6 +18,8 @@
 #include "memory.ela";
 // List!<T>
 #include "list.ela";
+// Iterators and such for InitList!<T>
+#include "init_list.ela";
 // Slice!<T> and SliceMut!<T>, views over memory.
 #include "slice.ela";
 // utils that both string types use, avoiding some redundancy
