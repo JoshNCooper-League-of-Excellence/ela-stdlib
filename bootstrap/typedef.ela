@@ -76,6 +76,6 @@ Result :: struct!<_Ok, _Err> {
 }
 
 Option :: choice!<T> {
-  Some(T),
   None,
+  Some(T),
 }
