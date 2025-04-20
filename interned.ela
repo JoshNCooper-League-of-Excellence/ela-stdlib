@@ -56,6 +56,11 @@ impl!<T> Hash for Interned!<T> {
   }
 }
 
+impl!<T> AsByteSlice for Interned!<T> where T: AsByteSlice {
+  as_byte_slice :: fn(self) -> Slice!<u8> {
+    return self.value().as_byte_slice();
+  }
+}
 
 import fmt::{
   Format,
