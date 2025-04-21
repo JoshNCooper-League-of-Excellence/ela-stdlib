@@ -6,7 +6,7 @@ import fmt::{
 
 import map::*;
 
-JsonValueType :: enum {
+enum JsonValueType {
   Invalid = -1,
   String,
   Number,
@@ -16,7 +16,7 @@ JsonValueType :: enum {
   Null,
 }
 
-JsonValue :: struct {
+struct JsonValue {
   type : s32,
   #anon :: union {
     number: f64,
@@ -30,7 +30,7 @@ JsonValue :: struct {
 }
 
 impl Deinit for JsonValue {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     switch self.type {
       JsonValueType::Object: {
         for key, value in self.object {
@@ -55,7 +55,7 @@ impl Deinit for JsonValue {
 }
 
 impl Subscript!<JsonValue> for JsonValue {
-  subscript :: fn(*const self, index: u64) -> *const JsonValue {
+  fn subscript(*const self, index: u64) -> *const JsonValue {
     if self.type != JsonValueType::Array
       then return null;
 
@@ -65,7 +65,7 @@ impl Subscript!<JsonValue> for JsonValue {
     return self.array[index];
   }
 
-  subscript_mut :: fn(*mut self, index: u64) -> *mut JsonValue {
+  fn subscript_mut(*mut self, index: u64) -> *mut JsonValue {
     if self.type != JsonValueType::Array
       then return null;
     if index < 0 || index >= self.array.length
@@ -74,14 +74,14 @@ impl Subscript!<JsonValue> for JsonValue {
   }
 }
 
-Writer :: struct {
+struct Writer {
   builder: StringBuilder,
   options: FormatOptions,
   indentation: (u16 /* depth */, u8 /* width in spaces */),
 }
 
 impl Writer {
-  new :: fn() -> #self {
+  fn new() -> #self {
     options := FormatOptions.{
       indented: true,
       quote_strings: true,
@@ -96,7 +96,7 @@ impl Writer {
     }
   }
 
-  indent :: fn(*mut self, depth_change: s8) {
+  fn indent(*mut self, depth_change: s8) {
     if depth_change > 0  {
       self.indentation.0 += depth_change;
     } else if depth_change < 0 {
@@ -116,7 +116,7 @@ impl Writer {
     }
   }
 
-  newline :: fn(*mut self) {
+  fn newline(*mut self) {
     if self.options.indented {
       self.builder.append_byte('\n');
       self.indent(0);
@@ -124,27 +124,27 @@ impl Writer {
   }
 
 
-  write :: fn!<DataSlice>(*mut self, data: DataSlice) where DataSlice: AsByteSlice {
+  fn write!<DataSlice>(*mut self, data: DataSlice) where DataSlice: AsByteSlice {
     self.builder.append(data);
   }
 
-  writef :: fn!<Tuple>(*mut self, fmt: str, args: Tuple) where Tuple: IsTuple {
+  fn writef!<Tuple>(*mut self, fmt: str, args: Tuple) where Tuple: IsTuple {
     self.builder.appendf(fmt, args, self.options);
   }
 
-  write_byte :: fn(*mut self, byte: u8) {
+  fn write_byte(*mut self, byte: u8) {
     self.builder.append_byte(byte);
   }
 }
 
 impl Deinit for Writer {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     self.builder.deinit();
   }
 }
 
 impl JsonValue {
-  to_string :: fn(*const self, writer: *mut Writer) {
+  fn to_string(*const self, writer: *mut Writer) {
     switch self.type {
       JsonValueType::Object: {
         writer.write_byte('{');
@@ -206,7 +206,7 @@ impl JsonValue {
 }
 
 impl JsonValue {
-  stringify :: fn(*const self) -> String {
+  fn stringify(*const self) -> String {
     mut writer := Writer::new();
     self.to_string(&mut writer);
     data := writer.builder.get_string();
@@ -214,67 +214,67 @@ impl JsonValue {
     return data;
   }
 
-  get :: fn(*mut self, key: String) -> Option!<*mut JsonValue> {
+  fn get(*mut self, key: String) -> Option!<*mut JsonValue> {
     if self.type != JsonValueType::Object {
       return None();
     }
     return self.object.get(key);
   }
 
-  is_number :: fn(*mut self)  -> bool
+  fn is_number(*mut self)  -> bool
     => self.type == JsonValueType::Number;
 
-  is_string :: fn(*mut self)  -> bool
+  fn is_string(*mut self)  -> bool
     => self.type == JsonValueType::String;
 
-  is_object :: fn(*mut self)  -> bool
+  fn is_object(*mut self)  -> bool
     => self.type == JsonValueType::Object;
 
-  is_array :: fn(*mut self)   -> bool
+  fn is_array(*mut self)   -> bool
     => self.type == JsonValueType::Array;
 
-  is_boolean :: fn(*mut self) -> bool
+  fn is_boolean(*mut self) -> bool
     => self.type == JsonValueType::Boolean;
 
-  is_null :: fn(*mut self)    -> bool
+  fn is_null(*mut self)    -> bool
     => self.type == JsonValueType::Null;
 
-  as_number :: fn(*mut self) -> Option!<f64> {
+  fn as_number(*mut self) -> Option!<f64> {
     if self.type == JsonValueType::Number {
       return Some(self.number);
     }
     return None();
   }
 
-  as_string :: fn(*mut self) -> Option!<String> {
+  fn as_string(*mut self) -> Option!<String> {
     if self.type == JsonValueType::String {
       return Some(self.string);
     }
     return None()
   }
 
-  as_object :: fn(*mut self) -> Option!<Map!<String, *mut JsonValue>> {
+  fn as_object(*mut self) -> Option!<Map!<String, *mut JsonValue>> {
     if self.type == JsonValueType::Object {
       return Some(self.object);
     }
     return None();
   }
 
-  as_array :: fn(*mut self) -> Option!<List!<*mut JsonValue>> {
+  fn as_array(*mut self) -> Option!<List!<*mut JsonValue>> {
     if self.type == JsonValueType::Array {
       return Some(self.array);
     }
     return None();
   }
 
-  as_boolean :: fn(*mut self) -> Option!<bool> {
+  fn as_boolean(*mut self) -> Option!<bool> {
     if self.type == JsonValueType::Boolean {
       return Some(self.boolean);
     }
     return None();
   }
 
-  new :: fn() -> *mut JsonValue {
+  fn new() -> *mut JsonValue {
     ptr: *mut JsonValue = malloc(sizeof(JsonValue));
     *ptr = .{};
     return ptr;
@@ -282,7 +282,7 @@ impl JsonValue {
 }
 
 impl Format for JsonValue {
-  format :: fn(*const self, mut builder: *mut StringBuilder, _: FormatOptions) {
+  fn format(*const self, mut builder: *mut StringBuilder, _: FormatOptions) {
     mut writer := Writer::new();
     writer.builder = *builder;
     self.to_string(&mut writer);

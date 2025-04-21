@@ -2,11 +2,11 @@
 
 alias GLFWglproc :: fn*() -> void;
 alias GLFWvkproc :: fn*() -> void;
-GLFWmonitor :: struct {
+struct GLFWmonitor {
 };
-GLFWwindow :: struct {
+struct GLFWwindow {
 };
-GLFWcursor :: struct {
+struct GLFWcursor {
 };
 alias GLFWallocatefun :: fn*(u64, *mut void) -> *mut void;
 alias GLFWreallocatefun :: fn*(*mut void, u64, *mut void) -> *mut void;
@@ -31,7 +31,7 @@ alias GLFWcharmodsfun :: fn*(*mut GLFWwindow, u32, s32) -> void;
 alias GLFWdropfun :: fn*(*mut GLFWwindow, s32, *const *const u8) -> void;
 alias GLFWmonitorfun :: fn*(*mut GLFWmonitor, s32) -> void;
 alias GLFWjoystickfun :: fn*(s32, s32) -> void;
-GLFWvidmode :: struct {
+struct GLFWvidmode {
   width: s32,
   height: s32,
   redBits: s32,
@@ -39,150 +39,150 @@ GLFWvidmode :: struct {
   blueBits: s32,
   refreshRate: s32,
 };
-GLFWgammaramp :: struct {
+struct GLFWgammaramp {
   red: *mut u16,
   green: *mut u16,
   blue: *mut u16,
   size: u32,
 };
-GLFWimage :: struct {
+struct GLFWimage {
   width: s32,
   height: s32,
   pixels: *mut u8,
 };
-GLFWgamepadstate :: struct {
+struct GLFWgamepadstate {
   buttons: u8[15],
   axes: f32[6],
 };
-GLFWallocator :: struct {
+struct GLFWallocator {
   allocate: GLFWallocatefun,
   reallocate: GLFWreallocatefun,
   deallocate: GLFWdeallocatefun,
   user: *mut void,
 };
-#foreign glfwInit :: fn() -> s32;
-#foreign glfwTerminate :: fn() -> void;
-#foreign glfwInitHint :: fn(hint: s32, value: s32) -> void;
-#foreign glfwInitAllocator :: fn(allocator: *const GLFWallocator) -> void;
-#foreign glfwGetVersion :: fn(major: *mut s32, minor: *mut s32, rev: *mut s32) -> void;
-#foreign glfwGetVersionString :: fn() -> *const u8;
-#foreign glfwGetError :: fn(description: *mut *const u8) -> s32;
-#foreign glfwSetErrorCallback :: fn(callback: GLFWerrorfun) -> GLFWerrorfun;
-#foreign glfwGetPlatform :: fn() -> s32;
-#foreign glfwPlatformSupported :: fn(platform: s32) -> s32;
-#foreign glfwGetMonitors :: fn(count: *mut s32) -> *mut *mut GLFWmonitor;
-#foreign glfwGetPrimaryMonitor :: fn() -> *mut GLFWmonitor;
-#foreign glfwGetMonitorPos :: fn(monitor: *mut GLFWmonitor, xpos: *mut s32, ypos: *mut s32) -> void;
-#foreign glfwGetMonitorWorkarea :: fn(monitor: *mut GLFWmonitor, xpos: *mut s32, ypos: *mut s32, width: *mut s32, height: *mut s32) -> void;
-#foreign glfwGetMonitorPhysicalSize :: fn(monitor: *mut GLFWmonitor, widthMM: *mut s32, heightMM: *mut s32) -> void;
-#foreign glfwGetMonitorContentScale :: fn(monitor: *mut GLFWmonitor, xscale: *mut f32, yscale: *mut f32) -> void;
-#foreign glfwGetMonitorName :: fn(monitor: *mut GLFWmonitor) -> *const u8;
-#foreign glfwSetMonitorUserPointer :: fn(monitor: *mut GLFWmonitor, pointer: *mut void) -> void;
-#foreign glfwGetMonitorUserPointer :: fn(monitor: *mut GLFWmonitor) -> *mut void;
-#foreign glfwSetMonitorCallback :: fn(callback: GLFWmonitorfun) -> GLFWmonitorfun;
-#foreign glfwGetVideoModes :: fn(monitor: *mut GLFWmonitor, count: *mut s32) -> *const GLFWvidmode;
-#foreign glfwGetVideoMode :: fn(monitor: *mut GLFWmonitor) -> *const GLFWvidmode;
-#foreign glfwSetGamma :: fn(monitor: *mut GLFWmonitor, gamma: f32) -> void;
-#foreign glfwGetGammaRamp :: fn(monitor: *mut GLFWmonitor) -> *const GLFWgammaramp;
-#foreign glfwSetGammaRamp :: fn(monitor: *mut GLFWmonitor, ramp: *const GLFWgammaramp) -> void;
-#foreign glfwDefaultWindowHints :: fn() -> void;
-#foreign glfwWindowHint :: fn(hint: s32, value: s32) -> void;
-#foreign glfwWindowHintString :: fn(hint: s32, value: *const u8) -> void;
-#foreign glfwCreateWindow :: fn(width: s32, height: s32, title: *const u8, monitor: *mut GLFWmonitor, share: *mut GLFWwindow) -> *mut GLFWwindow;
-#foreign glfwDestroyWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwWindowShouldClose :: fn(window: *mut GLFWwindow) -> s32;
-#foreign glfwSetWindowShouldClose :: fn(window: *mut GLFWwindow, value: s32) -> void;
-#foreign glfwGetWindowTitle :: fn(window: *mut GLFWwindow) -> *const u8;
-#foreign glfwSetWindowTitle :: fn(window: *mut GLFWwindow, title: *const u8) -> void;
-#foreign glfwSetWindowIcon :: fn(window: *mut GLFWwindow, count: s32, images: *const GLFWimage) -> void;
-#foreign glfwGetWindowPos :: fn(window: *mut GLFWwindow, xpos: *mut s32, ypos: *mut s32) -> void;
-#foreign glfwSetWindowPos :: fn(window: *mut GLFWwindow, xpos: s32, ypos: s32) -> void;
-#foreign glfwGetWindowSize :: fn(window: *mut GLFWwindow, width: *mut s32, height: *mut s32) -> void;
-#foreign glfwSetWindowSizeLimits :: fn(window: *mut GLFWwindow, minwidth: s32, minheight: s32, maxwidth: s32, maxheight: s32) -> void;
-#foreign glfwSetWindowAspectRatio :: fn(window: *mut GLFWwindow, numer: s32, denom: s32) -> void;
-#foreign glfwSetWindowSize :: fn(window: *mut GLFWwindow, width: s32, height: s32) -> void;
-#foreign glfwGetFramebufferSize :: fn(window: *mut GLFWwindow, width: *mut s32, height: *mut s32) -> void;
-#foreign glfwGetWindowFrameSize :: fn(window: *mut GLFWwindow, left: *mut s32, top: *mut s32, right: *mut s32, bottom: *mut s32) -> void;
-#foreign glfwGetWindowContentScale :: fn(window: *mut GLFWwindow, xscale: *mut f32, yscale: *mut f32) -> void;
-#foreign glfwGetWindowOpacity :: fn(window: *mut GLFWwindow) -> f32;
-#foreign glfwSetWindowOpacity :: fn(window: *mut GLFWwindow, opacity: f32) -> void;
-#foreign glfwIconifyWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwRestoreWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwMaximizeWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwShowWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwHideWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwFocusWindow :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwRequestWindowAttention :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwGetWindowMonitor :: fn(window: *mut GLFWwindow) -> *mut GLFWmonitor;
-#foreign glfwSetWindowMonitor :: fn(window: *mut GLFWwindow, monitor: *mut GLFWmonitor, xpos: s32, ypos: s32, width: s32, height: s32, refreshRate: s32) -> void;
-#foreign glfwGetWindowAttrib :: fn(window: *mut GLFWwindow, attrib: s32) -> s32;
-#foreign glfwSetWindowAttrib :: fn(window: *mut GLFWwindow, attrib: s32, value: s32) -> void;
-#foreign glfwSetWindowUserPointer :: fn(window: *mut GLFWwindow, pointer: *mut void) -> void;
-#foreign glfwGetWindowUserPointer :: fn(window: *mut GLFWwindow) -> *mut void;
-#foreign glfwSetWindowPosCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowposfun) -> GLFWwindowposfun;
-#foreign glfwSetWindowSizeCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowsizefun) -> GLFWwindowsizefun;
-#foreign glfwSetWindowCloseCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowclosefun) -> GLFWwindowclosefun;
-#foreign glfwSetWindowRefreshCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowrefreshfun) -> GLFWwindowrefreshfun;
-#foreign glfwSetWindowFocusCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowfocusfun) -> GLFWwindowfocusfun;
-#foreign glfwSetWindowIconifyCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowiconifyfun) -> GLFWwindowiconifyfun;
-#foreign glfwSetWindowMaximizeCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowmaximizefun) -> GLFWwindowmaximizefun;
-#foreign glfwSetFramebufferSizeCallback :: fn(window: *mut GLFWwindow, callback: GLFWframebuffersizefun) -> GLFWframebuffersizefun;
-#foreign glfwSetWindowContentScaleCallback :: fn(window: *mut GLFWwindow, callback: GLFWwindowcontentscalefun) -> GLFWwindowcontentscalefun;
-#foreign glfwPollEvents :: fn() -> void;
-#foreign glfwWaitEvents :: fn() -> void;
-#foreign glfwWaitEventsTimeout :: fn(timeout: f64) -> void;
-#foreign glfwPostEmptyEvent :: fn() -> void;
-#foreign glfwGetInputMode :: fn(window: *mut GLFWwindow, mode: s32) -> s32;
-#foreign glfwSetInputMode :: fn(window: *mut GLFWwindow, mode: s32, value: s32) -> void;
-#foreign glfwRawMouseMotionSupported :: fn() -> s32;
-#foreign glfwGetKeyName :: fn(key: s32, scancode: s32) -> *const u8;
-#foreign glfwGetKeyScancode :: fn(key: s32) -> s32;
-#foreign glfwGetKey :: fn(window: *mut GLFWwindow, key: s32) -> s32;
-#foreign glfwGetMouseButton :: fn(window: *mut GLFWwindow, button: s32) -> s32;
-#foreign glfwGetCursorPos :: fn(window: *mut GLFWwindow, xpos: *mut f64, ypos: *mut f64) -> void;
-#foreign glfwSetCursorPos :: fn(window: *mut GLFWwindow, xpos: f64, ypos: f64) -> void;
-#foreign glfwCreateCursor :: fn(image: *const GLFWimage, xhot: s32, yhot: s32) -> *mut GLFWcursor;
-#foreign glfwCreateStandardCursor :: fn(shape: s32) -> *mut GLFWcursor;
-#foreign glfwDestroyCursor :: fn(cursor: *mut GLFWcursor) -> void;
-#foreign glfwSetCursor :: fn(window: *mut GLFWwindow, cursor: *mut GLFWcursor) -> void;
-#foreign glfwSetKeyCallback :: fn(window: *mut GLFWwindow, callback: GLFWkeyfun) -> GLFWkeyfun;
-#foreign glfwSetCharCallback :: fn(window: *mut GLFWwindow, callback: GLFWcharfun) -> GLFWcharfun;
-#foreign glfwSetCharModsCallback :: fn(window: *mut GLFWwindow, callback: GLFWcharmodsfun) -> GLFWcharmodsfun;
-#foreign glfwSetMouseButtonCallback :: fn(window: *mut GLFWwindow, callback: GLFWmousebuttonfun) -> GLFWmousebuttonfun;
-#foreign glfwSetCursorPosCallback :: fn(window: *mut GLFWwindow, callback: GLFWcursorposfun) -> GLFWcursorposfun;
-#foreign glfwSetCursorEnterCallback :: fn(window: *mut GLFWwindow, callback: GLFWcursorenterfun) -> GLFWcursorenterfun;
-#foreign glfwSetScrollCallback :: fn(window: *mut GLFWwindow, callback: GLFWscrollfun) -> GLFWscrollfun;
-#foreign glfwSetDropCallback :: fn(window: *mut GLFWwindow, callback: GLFWdropfun) -> GLFWdropfun;
-#foreign glfwJoystickPresent :: fn(jid: s32) -> s32;
-#foreign glfwGetJoystickAxes :: fn(jid: s32, count: *mut s32) -> *const f32;
-#foreign glfwGetJoystickButtons :: fn(jid: s32, count: *mut s32) -> *const u8;
-#foreign glfwGetJoystickHats :: fn(jid: s32, count: *mut s32) -> *const u8;
-#foreign glfwGetJoystickName :: fn(jid: s32) -> *const u8;
-#foreign glfwGetJoystickGUID :: fn(jid: s32) -> *const u8;
-#foreign glfwSetJoystickUserPointer :: fn(jid: s32, pointer: *mut void) -> void;
-#foreign glfwGetJoystickUserPointer :: fn(jid: s32) -> *mut void;
-#foreign glfwJoystickIsGamepad :: fn(jid: s32) -> s32;
-#foreign glfwSetJoystickCallback :: fn(callback: GLFWjoystickfun) -> GLFWjoystickfun;
-#foreign glfwUpdateGamepadMappings :: fn(string: *const u8) -> s32;
-#foreign glfwGetGamepadName :: fn(jid: s32) -> *const u8;
-#foreign glfwGetGamepadState :: fn(jid: s32, state: *mut GLFWgamepadstate) -> s32;
-#foreign glfwSetClipboardString :: fn(window: *mut GLFWwindow, string: *const u8) -> void;
-#foreign glfwGetClipboardString :: fn(window: *mut GLFWwindow) -> *const u8;
-#foreign glfwGetTime :: fn() -> f64;
-#foreign glfwSetTime :: fn(time: f64) -> void;
-#foreign glfwGetTimerValue :: fn() -> u64;
-#foreign glfwGetTimerFrequency :: fn() -> u64;
-#foreign glfwMakeContextCurrent :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwGetCurrentContext :: fn() -> *mut GLFWwindow;
-#foreign glfwSwapBuffers :: fn(window: *mut GLFWwindow) -> void;
-#foreign glfwSwapInterval :: fn(interval: s32) -> void;
-#foreign glfwExtensionSupported :: fn(extension: *const u8) -> s32;
-#foreign glfwGetProcAddress :: fn(procname: *const u8) -> GLFWglproc;
-#foreign glfwVulkanSupported :: fn() -> s32;
-#foreign glfwGetRequiredInstanceExtensions :: fn(count: *mut u32) -> *mut *const u8;
+#foreign fn glfwInit() -> s32;
+#foreign fn glfwTerminate() -> void;
+#foreign fn glfwInitHint(hint: s32, value: s32) -> void;
+#foreign fn glfwInitAllocator(allocator: *const GLFWallocator) -> void;
+#foreign fn glfwGetVersion(major: *mut s32, minor: *mut s32, rev: *mut s32) -> void;
+#foreign fn glfwGetVersionString() -> *const u8;
+#foreign fn glfwGetError(description: *mut *const u8) -> s32;
+#foreign fn glfwSetErrorCallback(callback: GLFWerrorfun) -> GLFWerrorfun;
+#foreign fn glfwGetPlatform() -> s32;
+#foreign fn glfwPlatformSupported(platform: s32) -> s32;
+#foreign fn glfwGetMonitors(count: *mut s32) -> *mut *mut GLFWmonitor;
+#foreign fn glfwGetPrimaryMonitor() -> *mut GLFWmonitor;
+#foreign fn glfwGetMonitorPos(monitor: *mut GLFWmonitor, xpos: *mut s32, ypos: *mut s32) -> void;
+#foreign fn glfwGetMonitorWorkarea(monitor: *mut GLFWmonitor, xpos: *mut s32, ypos: *mut s32, width: *mut s32, height: *mut s32) -> void;
+#foreign fn glfwGetMonitorPhysicalSize(monitor: *mut GLFWmonitor, widthMM: *mut s32, heightMM: *mut s32) -> void;
+#foreign fn glfwGetMonitorContentScale(monitor: *mut GLFWmonitor, xscale: *mut f32, yscale: *mut f32) -> void;
+#foreign fn glfwGetMonitorName(monitor: *mut GLFWmonitor) -> *const u8;
+#foreign fn glfwSetMonitorUserPointer(monitor: *mut GLFWmonitor, pointer: *mut void) -> void;
+#foreign fn glfwGetMonitorUserPointer(monitor: *mut GLFWmonitor) -> *mut void;
+#foreign fn glfwSetMonitorCallback(callback: GLFWmonitorfun) -> GLFWmonitorfun;
+#foreign fn glfwGetVideoModes(monitor: *mut GLFWmonitor, count: *mut s32) -> *const GLFWvidmode;
+#foreign fn glfwGetVideoMode(monitor: *mut GLFWmonitor) -> *const GLFWvidmode;
+#foreign fn glfwSetGamma(monitor: *mut GLFWmonitor, gamma: f32) -> void;
+#foreign fn glfwGetGammaRamp(monitor: *mut GLFWmonitor) -> *const GLFWgammaramp;
+#foreign fn glfwSetGammaRamp(monitor: *mut GLFWmonitor, ramp: *const GLFWgammaramp) -> void;
+#foreign fn glfwDefaultWindowHints() -> void;
+#foreign fn glfwWindowHint(hint: s32, value: s32) -> void;
+#foreign fn glfwWindowHintString(hint: s32, value: *const u8) -> void;
+#foreign fn glfwCreateWindow(width: s32, height: s32, title: *const u8, monitor: *mut GLFWmonitor, share: *mut GLFWwindow) -> *mut GLFWwindow;
+#foreign fn glfwDestroyWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwWindowShouldClose(window: *mut GLFWwindow) -> s32;
+#foreign fn glfwSetWindowShouldClose(window: *mut GLFWwindow, value: s32) -> void;
+#foreign fn glfwGetWindowTitle(window: *mut GLFWwindow) -> *const u8;
+#foreign fn glfwSetWindowTitle(window: *mut GLFWwindow, title: *const u8) -> void;
+#foreign fn glfwSetWindowIcon(window: *mut GLFWwindow, count: s32, images: *const GLFWimage) -> void;
+#foreign fn glfwGetWindowPos(window: *mut GLFWwindow, xpos: *mut s32, ypos: *mut s32) -> void;
+#foreign fn glfwSetWindowPos(window: *mut GLFWwindow, xpos: s32, ypos: s32) -> void;
+#foreign fn glfwGetWindowSize(window: *mut GLFWwindow, width: *mut s32, height: *mut s32) -> void;
+#foreign fn glfwSetWindowSizeLimits(window: *mut GLFWwindow, minwidth: s32, minheight: s32, maxwidth: s32, maxheight: s32) -> void;
+#foreign fn glfwSetWindowAspectRatio(window: *mut GLFWwindow, numer: s32, denom: s32) -> void;
+#foreign fn glfwSetWindowSize(window: *mut GLFWwindow, width: s32, height: s32) -> void;
+#foreign fn glfwGetFramebufferSize(window: *mut GLFWwindow, width: *mut s32, height: *mut s32) -> void;
+#foreign fn glfwGetWindowFrameSize(window: *mut GLFWwindow, left: *mut s32, top: *mut s32, right: *mut s32, bottom: *mut s32) -> void;
+#foreign fn glfwGetWindowContentScale(window: *mut GLFWwindow, xscale: *mut f32, yscale: *mut f32) -> void;
+#foreign fn glfwGetWindowOpacity(window: *mut GLFWwindow) -> f32;
+#foreign fn glfwSetWindowOpacity(window: *mut GLFWwindow, opacity: f32) -> void;
+#foreign fn glfwIconifyWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwRestoreWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwMaximizeWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwShowWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwHideWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwFocusWindow(window: *mut GLFWwindow) -> void;
+#foreign fn glfwRequestWindowAttention(window: *mut GLFWwindow) -> void;
+#foreign fn glfwGetWindowMonitor(window: *mut GLFWwindow) -> *mut GLFWmonitor;
+#foreign fn glfwSetWindowMonitor(window: *mut GLFWwindow, monitor: *mut GLFWmonitor, xpos: s32, ypos: s32, width: s32, height: s32, refreshRate: s32) -> void;
+#foreign fn glfwGetWindowAttrib(window: *mut GLFWwindow, attrib: s32) -> s32;
+#foreign fn glfwSetWindowAttrib(window: *mut GLFWwindow, attrib: s32, value: s32) -> void;
+#foreign fn glfwSetWindowUserPointer(window: *mut GLFWwindow, pointer: *mut void) -> void;
+#foreign fn glfwGetWindowUserPointer(window: *mut GLFWwindow) -> *mut void;
+#foreign fn glfwSetWindowPosCallback(window: *mut GLFWwindow, callback: GLFWwindowposfun) -> GLFWwindowposfun;
+#foreign fn glfwSetWindowSizeCallback(window: *mut GLFWwindow, callback: GLFWwindowsizefun) -> GLFWwindowsizefun;
+#foreign fn glfwSetWindowCloseCallback(window: *mut GLFWwindow, callback: GLFWwindowclosefun) -> GLFWwindowclosefun;
+#foreign fn glfwSetWindowRefreshCallback(window: *mut GLFWwindow, callback: GLFWwindowrefreshfun) -> GLFWwindowrefreshfun;
+#foreign fn glfwSetWindowFocusCallback(window: *mut GLFWwindow, callback: GLFWwindowfocusfun) -> GLFWwindowfocusfun;
+#foreign fn glfwSetWindowIconifyCallback(window: *mut GLFWwindow, callback: GLFWwindowiconifyfun) -> GLFWwindowiconifyfun;
+#foreign fn glfwSetWindowMaximizeCallback(window: *mut GLFWwindow, callback: GLFWwindowmaximizefun) -> GLFWwindowmaximizefun;
+#foreign fn glfwSetFramebufferSizeCallback(window: *mut GLFWwindow, callback: GLFWframebuffersizefun) -> GLFWframebuffersizefun;
+#foreign fn glfwSetWindowContentScaleCallback(window: *mut GLFWwindow, callback: GLFWwindowcontentscalefun) -> GLFWwindowcontentscalefun;
+#foreign fn glfwPollEvents() -> void;
+#foreign fn glfwWaitEvents() -> void;
+#foreign fn glfwWaitEventsTimeout(timeout: f64) -> void;
+#foreign fn glfwPostEmptyEvent() -> void;
+#foreign fn glfwGetInputMode(window: *mut GLFWwindow, mode: s32) -> s32;
+#foreign fn glfwSetInputMode(window: *mut GLFWwindow, mode: s32, value: s32) -> void;
+#foreign fn glfwRawMouseMotionSupported() -> s32;
+#foreign fn glfwGetKeyName(key: s32, scancode: s32) -> *const u8;
+#foreign fn glfwGetKeyScancode(key: s32) -> s32;
+#foreign fn glfwGetKey(window: *mut GLFWwindow, key: s32) -> s32;
+#foreign fn glfwGetMouseButton(window: *mut GLFWwindow, button: s32) -> s32;
+#foreign fn glfwGetCursorPos(window: *mut GLFWwindow, xpos: *mut f64, ypos: *mut f64) -> void;
+#foreign fn glfwSetCursorPos(window: *mut GLFWwindow, xpos: f64, ypos: f64) -> void;
+#foreign fn glfwCreateCursor(image: *const GLFWimage, xhot: s32, yhot: s32) -> *mut GLFWcursor;
+#foreign fn glfwCreateStandardCursor(shape: s32) -> *mut GLFWcursor;
+#foreign fn glfwDestroyCursor(cursor: *mut GLFWcursor) -> void;
+#foreign fn glfwSetCursor(window: *mut GLFWwindow, cursor: *mut GLFWcursor) -> void;
+#foreign fn glfwSetKeyCallback(window: *mut GLFWwindow, callback: GLFWkeyfun) -> GLFWkeyfun;
+#foreign fn glfwSetCharCallback(window: *mut GLFWwindow, callback: GLFWcharfun) -> GLFWcharfun;
+#foreign fn glfwSetCharModsCallback(window: *mut GLFWwindow, callback: GLFWcharmodsfun) -> GLFWcharmodsfun;
+#foreign fn glfwSetMouseButtonCallback(window: *mut GLFWwindow, callback: GLFWmousebuttonfun) -> GLFWmousebuttonfun;
+#foreign fn glfwSetCursorPosCallback(window: *mut GLFWwindow, callback: GLFWcursorposfun) -> GLFWcursorposfun;
+#foreign fn glfwSetCursorEnterCallback(window: *mut GLFWwindow, callback: GLFWcursorenterfun) -> GLFWcursorenterfun;
+#foreign fn glfwSetScrollCallback(window: *mut GLFWwindow, callback: GLFWscrollfun) -> GLFWscrollfun;
+#foreign fn glfwSetDropCallback(window: *mut GLFWwindow, callback: GLFWdropfun) -> GLFWdropfun;
+#foreign fn glfwJoystickPresent(jid: s32) -> s32;
+#foreign fn glfwGetJoystickAxes(jid: s32, count: *mut s32) -> *const f32;
+#foreign fn glfwGetJoystickButtons(jid: s32, count: *mut s32) -> *const u8;
+#foreign fn glfwGetJoystickHats(jid: s32, count: *mut s32) -> *const u8;
+#foreign fn glfwGetJoystickName(jid: s32) -> *const u8;
+#foreign fn glfwGetJoystickGUID(jid: s32) -> *const u8;
+#foreign fn glfwSetJoystickUserPointer(jid: s32, pointer: *mut void) -> void;
+#foreign fn glfwGetJoystickUserPointer(jid: s32) -> *mut void;
+#foreign fn glfwJoystickIsGamepad(jid: s32) -> s32;
+#foreign fn glfwSetJoystickCallback(callback: GLFWjoystickfun) -> GLFWjoystickfun;
+#foreign fn glfwUpdateGamepadMappings(string: *const u8) -> s32;
+#foreign fn glfwGetGamepadName(jid: s32) -> *const u8;
+#foreign fn glfwGetGamepadState(jid: s32, state: *mut GLFWgamepadstate) -> s32;
+#foreign fn glfwSetClipboardString(window: *mut GLFWwindow, string: *const u8) -> void;
+#foreign fn glfwGetClipboardString(window: *mut GLFWwindow) -> *const u8;
+#foreign fn glfwGetTime() -> f64;
+#foreign fn glfwSetTime(time: f64) -> void;
+#foreign fn glfwGetTimerValue() -> u64;
+#foreign fn glfwGetTimerFrequency() -> u64;
+#foreign fn glfwMakeContextCurrent(window: *mut GLFWwindow) -> void;
+#foreign fn glfwGetCurrentContext() -> *mut GLFWwindow;
+#foreign fn glfwSwapBuffers(window: *mut GLFWwindow) -> void;
+#foreign fn glfwSwapInterval(interval: s32) -> void;
+#foreign fn glfwExtensionSupported(extension: *const u8) -> s32;
+#foreign fn glfwGetProcAddress(procname: *const u8) -> GLFWglproc;
+#foreign fn glfwVulkanSupported() -> s32;
+#foreign fn glfwGetRequiredInstanceExtensions(count: *mut u32) -> *mut *const u8;
 
 
-GLFW :: enum {
+enum GLFW {
   KEY_UNKNOWN = -1,
   KEY_SPACE = 32,
   KEY_APOSTROPHE = 39,

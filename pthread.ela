@@ -1,25 +1,25 @@
 
-pthread_attr_t :: struct;
+struct pthread_attr_t;
 alias pthread_t :: u64;
 
 alias ThreadFunction :: fn*(*mut void);
-alias ThreadStartRoutine :: fn* (*mut void)-> *mut void;
+alias ThreadStartRoutine :: fn*(*mut void) -> *mut void;
 
-#foreign pthread_create :: fn(thread: *mut pthread_t, attr: *const pthread_attr_t, start_routine: ThreadStartRoutine, arg: *mut void) -> s32;
-#foreign pthread_join :: fn(thread: *mut pthread_t, retval: *const *const void) -> s32;
+#foreign fn pthread_create(thread: *mut pthread_t, attr: *const pthread_attr_t, start_routine: ThreadStartRoutine, arg: *mut void) -> s32;
+#foreign fn pthread_join(thread: *mut pthread_t, retval: *const *const void) -> s32;
 
-pthread_mutex_t :: struct;
+struct pthread_mutex_t;
 
 /* forward */ 
-start_thread :: fn(arg: *mut void) -> *mut void;
+fn start_thread(arg: *mut void) -> *mut void;
 
 /* Simple thread struct */
-Thread :: struct {
+struct Thread {
   handle: pthread_t
 }
 
 impl Thread {    
-  start :: fn(start_function: ThreadFunction, arg: *mut void) -> #self {
+  fn start(start_function: ThreadFunction, arg: *mut void) -> #self {
     self: #self;
     // this memory gets deleted in start_thread();
     parameters := new((start_function, arg));
@@ -27,14 +27,14 @@ impl Thread {
     return self;
   }
   
-  join :: fn(*mut self) -> void {
+  fn join(*mut self) -> void {
     #static n : *mut void;
     pthread_join(&mut self.handle, &mut n);
   }
 }
 
 /* wrapper callback to init Thread struct. */ 
-start_thread :: fn(arg: *mut void) -> *mut void {
+fn start_thread(arg: *mut void) -> *mut void {
   tuple_ptr := arg as *const (ThreadFunction, *mut void);
   tuple := *tuple_ptr;
   function, user_arg := tuple;
@@ -43,29 +43,29 @@ start_thread :: fn(arg: *mut void) -> *mut void {
   return null;
 }
   
-#foreign pthread_mutex_init :: fn(mutex: *mut pthread_mutex_t, attr: *const void) -> s32;
-#foreign pthread_mutex_lock :: fn(mutex: *mut pthread_mutex_t) -> s32;
-#foreign pthread_mutex_unlock :: fn(mutex: *mut pthread_mutex_t) -> s32;
-#foreign pthread_mutex_destroy :: fn(mutex: *mut pthread_mutex_t) -> s32;
+#foreign fn pthread_mutex_init(mutex: *mut pthread_mutex_t, attr: *const void) -> s32;
+#foreign fn pthread_mutex_lock(mutex: *mut pthread_mutex_t) -> s32;
+#foreign fn pthread_mutex_unlock(mutex: *mut pthread_mutex_t) -> s32;
+#foreign fn pthread_mutex_destroy(mutex: *mut pthread_mutex_t) -> s32;
 
 /* Simple mutex */
-Mutex :: struct {
+struct Mutex {
   handle: pthread_mutex_t
 }
 
 impl Mutex {
-  new :: fn() -> #self {
+  fn new() -> #self {
     self: #self;
     pthread_mutex_init(&mut self.handle, null);
     return self;
   }
-  lock :: fn(*mut self) {
+  fn lock(*mut self) {
     pthread_mutex_lock(&mut self.handle);
   }
-  unlock :: fn(*mut self) {
+  fn unlock(*mut self) {
     pthread_mutex_unlock(&mut self.handle);
   }
-  free :: fn(*mut self) {
+  fn free(*mut self) {
     pthread_mutex_destroy(&mut self.handle);
   }
 }

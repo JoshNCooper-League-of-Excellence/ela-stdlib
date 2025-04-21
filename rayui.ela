@@ -2,7 +2,7 @@ import raylib::*;
 import fmt::*;
 
 // * used for UI styling.
-Style :: struct {
+struct Style {
   foreground:           Color,
   background:           Color,
   highlighted:          Color,
@@ -21,7 +21,7 @@ Style :: struct {
 }
 
 impl Style {
-  default :: fn() -> Style {
+  fn default() -> Style {
     return .{
       foreground: WHITE,
       background: BLACK,
@@ -36,7 +36,7 @@ impl Style {
 
 // * Measure the width of a jiggly text of 'text' and 'style'
 @[inline]
-measure_jiggly_text :: fn!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
+fn measure_jiggly_text!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
   slice := text.as_byte_slice();
   if slice.length == 0 then return 0.0;
   mut total_width: f32 = 0.0;
@@ -48,7 +48,7 @@ measure_jiggly_text :: fn!<Data>(text: Data, style: Style) -> f32 where Data: As
 
 // * Draw wavy jiggly text.
 @[inline]
-jiggly_text :: fn!<Data>(data: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
+fn jiggly_text!<Data>(data: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
   text := data.as_byte_slice();
   time: f32 = GetTime() as f32;
   intensity := style.jiggle_intensity;
@@ -66,7 +66,7 @@ jiggly_text :: fn!<Data>(data: Data, rect: Rectangle, style: Style) where Data: 
 
 // * Draw a button with that returns true for clicked, false for not clicked.
 @[inline]
-button :: fn!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: AsByteSlice {
+fn button!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: AsByteSlice {
   text_bytes := text.as_byte_slice();
 
   mut position: Vector2 = .{
@@ -130,13 +130,13 @@ button :: fn!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Dat
 // * T* in the callback is a pointer to some of your state data, if you want to mutate it.
 // * use 'button' if you don't want the callback system, or pass 'null, null' as the last two arguments.
 @[inline]
-button_pro :: fn!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn* (*mut T), user_arg : *mut T) where Data: AsByteSlice {
+fn button_pro!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn* (*mut T), user_arg : *mut T) where Data: AsByteSlice {
   if button(text, rect, style) {
     callback(user_arg);
   }
 }
 
-SliderState :: struct!<T> {
+struct SliderState!<T> {
   held : bool,
   min_value: T,
   max_value: T,
@@ -149,7 +149,7 @@ SliderState :: struct!<T> {
   TODO: add vertical sliders.
 */
 @[inline]
-slider :: fn!<T>(
+fn slider!<T>(
   text: Option!<String>,
   rectangle: Rectangle,
   style: Style,
@@ -282,7 +282,7 @@ slider :: fn!<T>(
     perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
 */
 @[inline]
-check_button :: fn(
+fn check_button(
   text: Option!<String>,
   rectangle: Rectangle,
   style: Style,
@@ -332,7 +332,7 @@ check_button :: fn(
   }
 }
 
-DropDownState :: struct!<O> where O: AsByteSlice {
+struct DropDownState!<O> where O: AsByteSlice {
   selected_index:     Option!<u32>, // Some(index) when one is selected, None when none are selected.
   is_open:            bool,
 }
@@ -342,7 +342,7 @@ DropDownState :: struct!<O> where O: AsByteSlice {
     will prefer presenting the string value of the selected option when one is selected, over the label.
 */
 @[inline]
-drop_down :: fn!<O, UserArg>(
+fn drop_down!<O, UserArg>(
   text:                   Option!<String>,
   rectangle:              Rectangle,
   style:                  Style,
@@ -442,7 +442,7 @@ drop_down :: fn!<O, UserArg>(
   maybe this will have more responsibilities later.
   generally, just a shared state object all the Widgets can use.
 */
-Ctx :: struct {
+struct Ctx {
   widgets:  List!<Widget>,
   //               id,  layer.
   hit_mask: List!<(u32, u16)>,
@@ -450,28 +450,28 @@ Ctx :: struct {
 
 /*
   The following abstractions are made intentionally more restricted (in terms of generic types, etc)
-  than the above. This is so we can use them in lists of 'dyn IWidget', or the `Widget :: choice` type,
+  than the above. This is so we can use them in lists of 'dyn IWidget', or the `choice Widget` type,
   without having type arguments.
 
   It's a trade off, and I'm choosing the most dynamic one anyway. (just using String in most cases.)
 */
-IWidget :: trait {
+trait IWidget {
   // draw the widget it,
   // and inform the caller about the dimensions that this widget required to be drawn.
-  draw :: fn(*mut self);
+  fn draw(*mut self);
 
   // handle the events this widget provides.
-  events :: fn(*mut self, ctx: *mut Ctx);
+  fn events(*mut self, ctx: *mut Ctx);
 
   // tell the context about the layout of our object, primarily.
-  layout :: fn(*mut self, ctx: *mut Ctx);
+  fn layout(*mut self, ctx: *mut Ctx);
 
-  get_metadata :: fn(self) -> (u32, u32) {
+  fn get_metadata(self) -> (u32, u32) {
     return self.metadata;
   }
 }
 
-Button :: struct {
+struct Button {
   label:        String,
   rectangle:    Rectangle,
   style:        Style,
@@ -481,20 +481,20 @@ Button :: struct {
 }
 
 impl IWidget for Button {
-  draw :: fn(*mut self) {
+  fn draw(*mut self) {
     if button(self.label, self.rectangle, self.style) && self.on_clicked {
       self.on_clicked(self.user_arg);
     }
   }
 
-  events :: fn(*mut self, ctx: *mut Ctx) {
+  fn events(*mut self, ctx: *mut Ctx) {
   }
 
-  layout :: fn(*mut self, ctx: *mut Ctx) {
+  fn layout(*mut self, ctx: *mut Ctx) {
   }
 }
 
-Slider :: struct {
+struct Slider {
   text:           Option!<String>,
   rectangle:      Rectangle,
   style:          Style,
@@ -504,7 +504,7 @@ Slider :: struct {
 }
 
 impl IWidget for Slider {
-  draw :: fn(*mut self) {
+  fn draw(*mut self) {
     slider!<f32>(
       self.text,
       self.rectangle,
@@ -514,10 +514,10 @@ impl IWidget for Slider {
     );
   }
 
-  events :: fn(*mut self, ctx: *mut Ctx) {
+  fn events(*mut self, ctx: *mut Ctx) {
   }
 
-  layout :: fn(*mut self, ctx: *mut Ctx) {
+  fn layout(*mut self, ctx: *mut Ctx) {
   }
   
 }
@@ -542,7 +542,7 @@ impl IWidget for Slider {
 
   perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
 */
-CheckButton :: struct {
+struct CheckButton {
   text:         Option!<String>,
   rectangle:    Rectangle,
   style:        Style,
@@ -552,7 +552,7 @@ CheckButton :: struct {
 }
 
 impl IWidget for CheckButton {
-  draw :: fn(*mut self) {
+  fn draw(*mut self) {
     check_button(
       self.text,
       self.rectangle,
@@ -562,14 +562,14 @@ impl IWidget for CheckButton {
     );
   }
 
-  events :: fn(*mut self, ctx: *mut Ctx) {
+  fn events(*mut self, ctx: *mut Ctx) {
   }
 
-  layout :: fn(*mut self, ctx: *mut Ctx) {
+  fn layout(*mut self, ctx: *mut Ctx) {
   }
 }
 
-DropDown :: struct {
+struct DropDown {
   text:                   Option!<String>,
   rectangle:              Rectangle,
   style:                  Style,
@@ -584,7 +584,7 @@ DropDown :: struct {
 }
 
 impl IWidget for DropDown {
-  draw :: fn(*mut self) {
+  fn draw(*mut self) {
     drop_down!<String, void>(
       self.text,
       self.rectangle,
@@ -597,14 +597,14 @@ impl IWidget for DropDown {
     );
   }
 
-  events :: fn(*mut self, ctx: *mut Ctx) {
+  fn events(*mut self, ctx: *mut Ctx) {
   }
 
-  layout :: fn(*mut self, ctx: *mut Ctx) {
+  fn layout(*mut self, ctx: *mut Ctx) {
   }
 }
 
-Widget :: choice {
+choice Widget {
   Button(Button),
   Slider(Slider),
   CheckButton(CheckButton),
@@ -612,7 +612,7 @@ Widget :: choice {
 }
 
 impl Widget {
-  events :: fn(*mut self, ctx: *mut Ctx) {
+  fn events(*mut self, ctx: *mut Ctx) {
     switch is self {
       Widget::Button(&mut btn) => btn.events(ctx),
       Widget::Slider(&mut slider) => slider.events(ctx),
@@ -621,7 +621,7 @@ impl Widget {
     }
   }
 
-  layout :: fn(*mut self, ctx: *mut Ctx) {
+  fn layout(*mut self, ctx: *mut Ctx) {
     switch is self {
       Widget::Button(&mut btn) => btn.layout(ctx),
       Widget::Slider(&mut slider) => slider.layout(ctx),
@@ -630,7 +630,7 @@ impl Widget {
     }
   }
 
-  draw :: fn(*mut self) {
+  fn draw(*mut self) {
     switch is self {
       Widget::Button(&mut btn) => btn.draw(),
       Widget::Slider(&mut slider) => slider.draw(),

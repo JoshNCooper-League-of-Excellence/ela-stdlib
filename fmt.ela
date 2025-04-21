@@ -27,7 +27,7 @@
   // returns a tuple representing:
   // .0: a u32 code point,
   // .1: the 'advance' which is the number of bytes this codepoint consumed.
-  utf8_to_code_point :: fn(sequence: Slice!<u8>) -> (u32, s8) {
+  fn utf8_to_code_point(sequence: Slice!<u8>) -> (u32, s8) {
     if sequence.length == 0
       then return (UTF8_ERROR, 1);
 
@@ -102,7 +102,7 @@
     return (code_point, index as s8);
   }
 
-  utf8_decode :: fn!<T>(data: T) -> List!<u32> where T: AsCharSlice {
+  fn utf8_decode!<T>(data: T) -> List!<u32> where T: AsCharSlice {
     slice := data.as_byte_slice();
     mut output: List!<u32>;
     index := 0;
@@ -115,7 +115,7 @@
     return output;
   }
 
-  utf8_encode :: fn(code_point: u32) -> List!<u8> {
+  fn utf8_encode(code_point: u32) -> List!<u8> {
     mut output: List!<u8>;
     if code_point <= 0x7F {
       output.push(code_point as u8);
@@ -141,27 +141,27 @@
     }
   }
 
-  utf8_is_cyrillic_alpha :: fn(ch: char) -> bool {
+  fn utf8_is_cyrillic_alpha(ch: char) -> bool {
     return (0x0400 <= ch && ch <= 0x04FF) || (0x0500 <= ch && ch <= 0x052F);
   }
 
-  utf8_is_chinese_alpha :: fn(ch: char) -> bool {
+  fn utf8_is_chinese_alpha(ch: char) -> bool {
     return (0x4E00 <= ch && ch <= 0x9FFF) || (0x3400 <= ch && ch <= 0x4DBF);
   }
 
-  utf8_is_korean_alpha :: fn(ch: char) -> bool {
+  fn utf8_is_korean_alpha(ch: char) -> bool {
     return (0xAC00 <= ch && ch <= 0xD7AF) || (0x1100 <= ch && ch <= 0x11FF);
   }
 
-  utf8_is_japanese_alpha :: fn(ch: char) -> bool {
+  fn utf8_is_japanese_alpha(ch: char) -> bool {
     return (0x3040 <= ch && ch <= 0x309F) || (0x30A0 <= ch && ch <= 0x30FF) || (0x4E00 <= ch && ch <= 0x9FFF);
   }
 
-  utf8_is_latin_alpha :: fn(ch: char) -> bool {
+  fn utf8_is_latin_alpha(ch: char) -> bool {
     return (0x0041 <= ch && ch <= 0x005A) || (0x0061 <= ch && ch <= 0x007A);
   }
 
-  utf8_is_alpha :: fn(ch: char) -> bool {
+  fn utf8_is_alpha(ch: char) -> bool {
     return utf8_is_cyrillic_alpha(ch) ||
           utf8_is_chinese_alpha(ch)  ||
           utf8_is_korean_alpha(ch)   ||
@@ -170,7 +170,7 @@
   }
 }
 
-FormatOptions :: struct {
+struct FormatOptions {
   digits_after_decimal: u8,
   indented: bool,
   quote_strings: bool,
@@ -178,14 +178,14 @@ FormatOptions :: struct {
 }
 
 impl FormatOptions {
-  default :: fn() -> #self => .{
+  fn default() -> #self => .{
     digits_after_decimal: 2,
     indented: false,
     quote_strings: false,
     enum_parent_name: true,
   };
 
-  current :: fn() -> *mut #self {
+  fn current() -> *mut #self {
     #static mut current := FormatOptions.{
       digits_after_decimal: 2,
       indented: false,
@@ -195,26 +195,26 @@ impl FormatOptions {
     return &mut current;
   }
 
-  unquoted :: fn(self) -> #self {
+  fn unquoted(self) -> #self {
     mut copy := self;
     copy.quote_strings = false;
     return copy;
   }
 
-  quoted :: fn(self) -> #self {
+  fn quoted(self) -> #self {
     mut copy := self;
     copy.quote_strings = true;
     return copy;
   }
 }
 
-StringBuilder :: struct;
+struct StringBuilder;
 
-Format :: trait {
-  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions);
+trait Format {
+  fn format(*const self, builder: *mut StringBuilder, options: FormatOptions);
 }
 
-new_dyn_format :: fn(value: any) -> dyn Format {
+fn new_dyn_format(value: any) -> dyn Format {
   instance, type := value;
   tuple := type.methods.find_first_of(
     fn(tuple: *const (str, *const void)) -> bool {
@@ -238,14 +238,14 @@ new_dyn_format :: fn(value: any) -> dyn Format {
 // but perhaps this is a setting we can have the user pass in.
 const STRING_BUILDER_BLOCK_MAX_LEN := 8192;
 
-StringBuilderBlock :: struct {
+struct StringBuilderBlock {
   data: *mut u8,
   length: u64,
   next: *mut StringBuilderBlock,
 }
 
 impl StringBuilderBlock {
-  new :: fn() -> *mut #self {
+  fn new() -> *mut #self {
     mut self : *mut #self =  malloc(sizeof(StringBuilderBlock));
     self.data = calloc(STRING_BUILDER_BLOCK_MAX_LEN, sizeof(u8));
     self.length = 0;
@@ -255,7 +255,7 @@ impl StringBuilderBlock {
 }
 
 impl Deinit for StringBuilderBlock {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     if self.data then free(self.data);
     if self.next {
       self.next.deinit();
@@ -264,13 +264,13 @@ impl Deinit for StringBuilderBlock {
   }
 }
 
-StringBuilder :: struct {
+struct StringBuilder {
   root:    *mut StringBuilderBlock,
   current: *mut StringBuilderBlock,
 }
 
 impl Deinit for StringBuilder {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     if self.root {
       self.root.deinit();
       free(self.root);
@@ -278,18 +278,18 @@ impl Deinit for StringBuilder {
   }
 }
 
-to_string :: fn!<T>(value: T) -> String;
-format_any :: fn(list: any, builder: *mut StringBuilder, options: FormatOptions);
-format :: fn!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
+fn to_string!<T>(value: T) -> String;
+fn format_any(list: any, builder: *mut StringBuilder, options: FormatOptions);
+fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
 
 
 impl StringBuilder {
   // just here for 'clarity' xd
-  clear :: fn(*mut self) {
+  fn clear(*mut self) {
     self.deinit();
   }
 
-  length :: fn(*mut self) -> u64 {
+  fn length(*mut self) -> u64 {
     if !self.root then return 0;
     mut current := self.root;
     mut len: u64;
@@ -300,7 +300,7 @@ impl StringBuilder {
     return len;
   }
 
-  get_string :: fn(*mut self) -> String {
+  fn get_string(*mut self) -> String {
     length := self.length();
     data : *mut u8 = malloc(sizeof(u8) * length + 1);
     data[length] = '\0'; // Null-terminate the final str
@@ -317,7 +317,7 @@ impl StringBuilder {
     };
   }
 
-  append :: fn!<T>(*mut self, value: T) where T: AsByteSlice {
+  fn append!<T>(*mut self, value: T) where T: AsByteSlice {
     slice := value.as_byte_slice();
 
     if slice.length <= 0 then return;
@@ -357,12 +357,12 @@ impl StringBuilder {
   // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
   // this is helpful for doing a builder.append_then_free(some_allocating_function());
   // so you don't leak.
-  append_then_free :: fn!<T>(*mut self, mut value: T) where T: Deinit {
+  fn append_then_free!<T>(*mut self, mut value: T) where T: Deinit {
     self.append(value);
     value.deinit();
   }
 
-  append_byte :: fn(*mut self, ch: u8) {
+  fn append_byte(*mut self, ch: u8) {
     if !self.root {
       self.root = StringBuilderBlock::new();
       self.current = self.root;
@@ -377,12 +377,12 @@ impl StringBuilder {
     self.current.length += 1;
   }
 
-  appendf :: fn!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {
+  fn appendf!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {
     mut formatted := format(fmt, values, options);
     self.append(formatted);
     formatted.deinit();
   }
-  append_utf8 :: fn(*mut self, ch: u32) {
+  fn append_utf8(*mut self, ch: u32) {
     bytes := utf8_encode(ch);
     for byte in bytes {
       self.append_byte(byte);
@@ -391,7 +391,7 @@ impl StringBuilder {
 }
 
 @[inline]
-to_string :: fn!<T>(value: T) -> String {
+fn to_string!<T>(value: T) -> String {
   type := typeof(T);
   mut format : str;
 
@@ -450,7 +450,7 @@ to_string :: fn!<T>(value: T) -> String {
 }
 
 @[inline]
-format_struct :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
+fn format_struct(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   builder.append(value.type.name);
   builder.append(" {");
 
@@ -491,7 +491,7 @@ format_struct :: fn(value: any, builder: *mut StringBuilder, options: FormatOpti
 }
 
 @[inline]
-format_tuple :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
+fn format_tuple(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   builder.append("(");
   for i in 0..value.type.fields.length {
     field := value.type.fields[i];
@@ -509,7 +509,7 @@ format_tuple :: fn(value: any, builder: *mut StringBuilder, options: FormatOptio
 }
 
 @[inline]
-format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions) {
+fn format_any(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   if value.type.implements("Format") {
     dyn_format := new_dyn_format(value);
     dyn_format.format(builder, options);
@@ -569,7 +569,7 @@ format_any :: fn(value: any, builder: *mut StringBuilder, options: FormatOptions
 }
 
 @[inline]
-format :: fn!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
+fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
   if fmt.length == 0 then
     return .{};
 
@@ -617,27 +617,27 @@ format :: fn!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String w
   Quick format. avoid passing settings.
 */
 @[inline]
-qformat :: fn!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
+fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
   return format(fmt, tuple, *FormatOptions::current());
 }
 
 
 @[inline]
-print :: fn!<T>(message: T) {
+fn print!<T>(message: T) {
   mut formatted := format("%", (message,), *FormatOptions::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
 @[inline]
-println :: fn!<T>(message: T) {
+fn println!<T>(message: T) {
   mut formatted := format("%", (message,), *FormatOptions::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
 @[inline]
-printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
+fn printlnf!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   mut formatted := format(fmt, tuple, *FormatOptions::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
@@ -647,14 +647,14 @@ printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   /*
     ! this needs to be rewritten for Iterator!<>
   */
-  UTF8_Iter :: struct {
+  struct UTF8_Iter {
     slice: Slice!<u8>,
     position: u32,
     current_char: u32,
   }
 
   impl Iterator!<u32> for UTF8_Iter {
-    next :: fn(*mut self) -> Option!<u32> {
+    fn next(*mut self) -> Option!<u32> {
       if self.position >= self.slice.length {
         return Option!<u32>::None;
       }
@@ -667,7 +667,7 @@ printlnf :: fn!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   }
 
   impl String {
-    chars :: fn(self) -> UTF8_Iter {
+    fn chars(self) -> UTF8_Iter {
       return .{
         slice: self.as_byte_slice(),
         position: 0,

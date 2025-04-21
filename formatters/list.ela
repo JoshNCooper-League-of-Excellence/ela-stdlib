@@ -1,7 +1,7 @@
 
 
 impl!<T> Format for List!<T> {
-  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+  fn format(*const self, builder: *mut StringBuilder, options: FormatOptions) {
     element_type := typeof(T);
     builder.appendf("List!<%>", (element_type.name,), options.unquoted());
 

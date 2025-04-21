@@ -1,8 +1,8 @@
-panic :: fn(msg: str);
+fn panic(msg: str);
 
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
-    clear :: fn(*mut self) {
+    fn clear(*mut self) {
       free(self.data);
       self.capacity = 0;
       self.data = null;
@@ -12,12 +12,12 @@ panic :: fn(msg: str);
     /*  
       Is the list empty. 
     */
-    is_empty :: fn(self) -> bool => self.length == 0;
+    fn is_empty(self) -> bool => self.length == 0;
 
     /* 
       Copy out a sub array. use as_slice if you want a borrowed, un-owning view into the array at a specific range.
     */
-    subarray :: fn(self, range: Range) -> #self {
+    fn subarray(self, range: Range) -> #self {
       len := range.end - range.begin;
       new_data := self.allocator.allocate_array(sizeof(T), len);
       memcpy(new_data, self.data + range.begin, sizeof(T) * len);
@@ -35,7 +35,7 @@ panic :: fn(msg: str);
       you can also 'reserve' memory by calling this, with a large value which will force allocate that much but not fill the array.
       use 'initialize' if you want to fill the array up to that size. 
     */
-    resize :: fn(*mut self, new_capacity: u64) {
+    fn resize(*mut self, new_capacity: u64) {
       // Truncating.
       if new_capacity < self.capacity && new_capacity < self.length {
         self.length = new_capacity; 
@@ -55,7 +55,7 @@ panic :: fn(msg: str);
       Do not use this on an array that is already full of your data, unless you want to zero it out and reset to 
       a specific new size. 
     */
-    initialize :: fn(*mut self, num_to_fill: u64) {
+    fn initialize(*mut self, num_to_fill: u64) {
       self.resize(num_to_fill);
       memset(self.data, 0, sizeof(T) * self.capacity);
       self.length = num_to_fill;
@@ -64,7 +64,7 @@ panic :: fn(msg: str);
     /* 
       push an element to the array. this will, of course, expand the array if needed.
     */
-    push :: fn(*mut self, v: T) {
+    fn push(*mut self, v: T) {
       if self.length + 1 >= self.capacity {
         if self.capacity == 0 then self.capacity = 4;
         self.resize(self.capacity * 2);
@@ -76,7 +76,7 @@ panic :: fn(msg: str);
     /* 
       pop an element from the back of the array. this will never deallocate.
     */
-    pop :: fn(*mut self) -> T {
+    fn pop(*mut self) -> T {
       value := self.data[self.length - 1];
       self.length -= 1;
       return value;
@@ -85,7 +85,7 @@ panic :: fn(msg: str);
     /*
       push an element to the front of the array. again, of course, this will expand the array and allocate if needed.
     */
-    push_front :: fn(*mut self, v: T) {
+    fn push_front(*mut self, v: T) {
       if self.length + 1 >= self.capacity {
 
       if self.capacity == 0 then self.capacity = 4;
@@ -101,7 +101,7 @@ panic :: fn(msg: str);
     /* 
       pop an element from the front of the array. again, this will never de-allocate the old memory it used.
     */
-    pop_front :: fn(*mut self) -> T {
+    fn pop_front(*mut self) -> T {
       value := self.data[0];
       memmove(self.data, self.data + 1, sizeof(T) * (self.length - 1));
       self.length -= 1;
@@ -115,7 +115,7 @@ panic :: fn(msg: str);
       This does not actually deinit any of members in the list. 
       it just empties the list by freeing the memory used to store the elements.
     */
-    deinit :: fn(*mut self) {
+    fn deinit(*mut self) {
       free(self.data);
       self.data = null;
       self.length = 0;
@@ -127,7 +127,7 @@ panic :: fn(msg: str);
     /* 
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
-    clone :: fn(self) -> #self {
+    fn clone(self) -> #self {
       new_data := self.allocator.allocate_array(sizeof(T), self.capacity);
       memcpy(new_data, self.data, sizeof(T) * self.length);
       return .{
@@ -147,7 +147,7 @@ panic :: fn(msg: str);
 
       of course, this allocates.
     */
-    init :: fn(init: InitList!<T>) -> #self {
+    fn init(init: InitList!<T>) -> #self {
       mut self: #self;
       self.resize(init.length);
       memcpy(self.data, init.data, sizeof(T) * init.length);
@@ -166,7 +166,7 @@ panic :: fn(msg: str);
       Right now we don't have a good way to check if a type is a pointer with an trait and a where constraint, 
       so we can't really put a type constraint on this function yet. in the future!
     */
-    contains :: fn(self, seek: T, comparator: Comparator) -> bool {
+    fn contains(self, seek: T, comparator: Comparator) -> bool {
       for idx in 0..self.length {
         if comparator(self.data[idx], seek) {
           return true;
@@ -179,7 +179,7 @@ panic :: fn(msg: str);
       erase the first element from the list that == value;
       this doesn't deallocate the old memory.
     */
-    remove :: fn(*mut self, seek: T, comparator: Comparator) -> bool {
+    fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
       for idx in 0..self.length {
         if comparator(self.data[idx], seek) {
           memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
@@ -207,7 +207,7 @@ impl!<T> Iterable for List!<T> {
     guaranteed lifetime of the List!<T> is inherently unsafe.
   */
   @[inline]
-  iter :: fn(*const self) -> Iter!<T> {
+  fn iter(*const self) -> Iter!<T> {
     return .{
       ptr: self.data,
       end: (self.data + self.length) as *const T,
@@ -218,7 +218,7 @@ impl!<T> Iterable for List!<T> {
     Get a mutable iterator.
   */
   @[inline]
-  iter_mut :: fn(*mut self) -> IterMut!<T> {
+  fn iter_mut(*mut self) -> IterMut!<T> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
@@ -227,10 +227,10 @@ impl!<T> Iterable for List!<T> {
 }
 
 impl!<T> Subscript!<T> for List!<T> {
-  subscript :: fn(*const self, idx: u64) -> *const T {
+  fn subscript(*const self, idx: u64) -> *const T {
     return &const self.data[idx];
   }
-  subscript_mut :: fn(*mut self, idx: u64) -> *mut T {
+  fn subscript_mut(*mut self, idx: u64) -> *mut T {
     return &mut self.data[idx];
   }
 }
@@ -239,7 +239,7 @@ impl!<T> AsSlice!<T> for List!<T> {
   /* 
     Take a `slice` or a view into the array, without taking any ownership of the memory we are viewing into.
   */
-  as_slice :: fn(self, range: Range) -> Slice!<T> {
+  fn as_slice(self, range: Range) -> Slice!<T> {
     return .{
       data: self.data + range.begin,
       length: range.end - range.begin,
@@ -249,12 +249,12 @@ impl!<T> AsSlice!<T> for List!<T> {
 
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
-    alias Ordering_Predicate :: fn * (*const T, *const T) -> bool;
+    alias Ordering_Predicate :: fn*(*const T, *const T) -> bool;
 
     /* 
       return a new list with the order specified by the predicate.
     */
-    order_by :: fn(self, predicate: Ordering_Predicate) -> List!<T> {
+    fn order_by(self, predicate: Ordering_Predicate) -> List!<T> {
       mut new_list := self.clone();
       for i in 0..new_list.length {
         for j in (i+1)..new_list.length {
@@ -272,7 +272,7 @@ impl!<T> AsSlice!<T> for List!<T> {
       Remove an element at a specific index from the list.
       This doesn't deallocate the old memory.
     */
-    remove_at :: fn(*mut self, index: u64) -> bool {
+    fn remove_at(*mut self, index: u64) -> bool {
       if index >= self.length {
         return false;
       }
@@ -282,7 +282,7 @@ impl!<T> AsSlice!<T> for List!<T> {
     }
 
 
-    find_first_of :: fn(self, finder: fn*(*const T) -> bool) -> *const T {
+    fn find_first_of(self, finder: fn*(*const T) -> bool) -> *const T {
       for idx in 0..self.length {
         if finder(&const self.data[idx]) {
           return &const self.data[idx];
@@ -294,28 +294,28 @@ impl!<T> AsSlice!<T> for List!<T> {
 }
 
 impl!<T> List!<T> {
-  back :: fn(self) -> Option!<T> {
+  fn back(self) -> Option!<T> {
     if self.length > 0 {
       return Some(self.data[self.length-1]);
     }
     return None();
   }
 
-  front :: fn(self) -> Option!<T> {
+  fn front(self) -> Option!<T> {
     if self.length > 0 {
       return Some(self.data[0]);
     }
     return None();
   }
 
-  back_mut :: fn(*mut self) -> Option!<*mut T> {
+  fn back_mut(*mut self) -> Option!<*mut T> {
     if self.length > 0 {
       return Some(&mut self.data[self.length-1]);
     }
     return None();
   }
 
-  front_mut :: fn(*mut self) -> Option!<*mut T> {
+  fn front_mut(*mut self) -> Option!<*mut T> {
     if self.length > 0 {
       return Some(&mut self.data[0]);
     }
@@ -324,7 +324,7 @@ impl!<T> List!<T> {
 }
 
 impl!<T> List!<T> {
-  enumerate :: fn(self) -> Enumerate!<T, Iter!<T>> {
+  fn enumerate(self) -> Enumerate!<T, Iter!<T>> {
     return .{
       idx: 0,
       iterator: self.iter(),

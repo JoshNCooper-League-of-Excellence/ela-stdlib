@@ -3,14 +3,14 @@
   #error "dlfcn.ela is only available on linux.";
 }
 
-#foreign dlopen :: fn(filename: c_str, flags: s32) -> *mut void;
-#foreign dlclose :: fn(handle: *const void) -> s32;
-#foreign dlsym :: fn(handle: *const void, symbol: c_str) -> *mut void;
-#foreign dlerror :: fn() -> c_str;
+#foreign fn dlopen(filename: c_str, flags: s32) -> *mut void;
+#foreign fn dlclose(handle: *const void) -> s32;
+#foreign fn dlsym(handle: *const void, symbol: c_str) -> *mut void;
+#foreign fn dlerror() -> c_str;
 
 // Flags for 'dlopen'
 // Of course the later flags are completely arbitrary, so we can't use #flags.
-Rtld :: enum {
+enum Rtld {
   Lazy = 0x00001,
   Now = 0x00002,
   Binding_mask = 0x3,

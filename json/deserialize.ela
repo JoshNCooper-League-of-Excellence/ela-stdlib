@@ -1,6 +1,6 @@
-deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String>;
+fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String>;
 
-deserialize_struct :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
+fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
   for key, value in value.object {
     struct_field := object.type.get_field(key);
 
@@ -18,7 +18,7 @@ deserialize_struct :: fn(value: *mut JsonValue, object: any) -> Option!<String> 
   return None();
 }
 
-deserialize_scalar :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
+fn deserialize_scalar(value: *mut JsonValue, object: any) -> Option!<String> {
   if (!Type::has_no_extension(object.type)) => Some(String::from("Unable to deserialize into pointer type with 'deserialize_scalar'"));
   if Type::is_bool(object.type) {
     *(object.ptr as *mut bool) = value.as_boolean().unwrap();
@@ -66,7 +66,7 @@ deserialize_scalar :: fn(value: *mut JsonValue, object: any) -> Option!<String> 
   return None();
 }
 
-deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
+fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String> {
   if Type::implements(object.type, "Serializable") {
     dynamic := new_dyn_serializable(object);
     return dynamic.deserialize(value);
@@ -90,7 +90,7 @@ deserialize_any :: fn(value: *mut JsonValue, object: any) -> Option!<String> {
   return deserialize_scalar(value, object);
 }
 
-deserialize :: fn!<T>(value: *mut JsonValue, object: *mut T) -> Option!<String> {
+fn deserialize!<T>(value: *mut JsonValue, object: *mut T) -> Option!<String> {
   return deserialize_any(value, any.{
     ptr: object,
     type: typeof(T),

@@ -43,7 +43,7 @@
       We also have a bunch of helpers in the lexer, such as 'peek', 'lookahead', 'expect', etc. These, of course,
       are for your parser to use while reading from the stream.
 
-  main :: fn() {
+  fn main() {
     mut lexer := Lexer::new(
       (1) (a Map!<str, u32> of keywords),
       (2) (a Map!<str, u32> of operators),
@@ -78,7 +78,7 @@
 
     // You may want to alias these types in your own enum,
     // as shown below.
-    u32 :: enum {
+    enum u32 {
       Add,
       OpenParen,
       CloseParen,
@@ -103,7 +103,7 @@
       Char        = lexer::TOKEN_CHAR,
     }
 
-    operators :: fn() -> Map!<str, lexer::u32> {
+    fn operators() -> Map!<str, lexer::u32> {
       return Map!<str, lexer::u32>::init(.[
         ("+",  u32::Add),
         ("(",  u32::OpenParen),
@@ -121,17 +121,17 @@
       ]);
     }
 
-    keywords :: fn() -> Map!<str, lexer::u32> {
+    fn keywords() -> Map!<str, lexer::u32> {
       return Map!<str, lexer::u32>::init(.[
-        ("fn", u32::Fn),
+        ("fn", Fn u32),
       ]);
     }
 
-    reserved :: fn() -> List!<str> {
+    fn reserved() -> List!<str> {
       return List!<str>::init(.["volatile"]);
     }
 
-    main :: fn() {
+    fn main() {
       mut lexer := Lexer::new(
         Some(operators()),
         Some(keywords()),
@@ -183,19 +183,19 @@ const TOKEN_FLOAT      : u32 = -4;
 const TOKEN_STRING     : u32 = -5;
 const TOKEN_CHAR       : u32 = -6;
 
-SourceLocation :: struct {
+struct SourceLocation {
   line: u64,
   column: u64,
   file: u64,
 }
 
 impl SourceLocation {
-  #static files :: fn() -> *mut List!<String> {
+  #static fn files() -> *mut List!<String> {
     #static mut files: List!<String>;
     return &mut files;
   }
 
-  to_string :: fn(self) -> String {
+  fn to_string(self) -> String {
     files := SourceLocation::files();
     filename := (*files)[self.file];
     return format("%:%:%", (filename, self.line, self.column), FormatOptions::default());
@@ -203,12 +203,12 @@ impl SourceLocation {
 }
 
 impl Format for SourceLocation {
-  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
+  fn format(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
     builder.append_then_free(self.to_string());
   }
 }
 
-lex_error :: fn!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
+fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
   mut builder: StringBuilder;
   builder.append("\n\033[1;31mat:\n\t\033[1;34m");
   location.format(&mut builder, FormatOptions::default());
@@ -265,7 +265,7 @@ lex_error :: fn!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
   panic(string.as_str());
 }
 
-Token :: struct {
+struct Token {
   // TODO: put this in an option.
   value:    Option!<InternedString>,
   type:     u32,
@@ -273,22 +273,22 @@ Token :: struct {
 }
 
 impl Token {
-  Eof :: fn() -> Token {
+  fn Eof() -> Token {
     #static eof: Token = .{
       type: TOKEN_EOF,
     };
     return eof;
   }
 
-  is_type :: fn(self, type: u32) -> bool {
+  fn is_type(self, type: u32) -> bool {
     return self.type == type;
   }
 
-  is_eof :: fn(self) -> bool {
+  fn is_eof(self) -> bool {
     return self.type == TOKEN_EOF;
   }
 
-  new :: fn(location: SourceLocation, value: Option!<String>, type: u32) -> Token {
+  fn new(location: SourceLocation, value: Option!<String>, type: u32) -> Token {
     if value is Option!<String>::Some(string) {
       return .{
         value: Option!<InternedString>::Some(InternedString::new(string)),
@@ -307,7 +307,7 @@ impl Token {
 };
 
 impl Format for Token {
-  format :: fn(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
+  fn format(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
     builder.append("Token {\n  location: ");
     builder.append_then_free(self.location.to_string());
 
@@ -326,7 +326,7 @@ impl Format for Token {
 }
 
 impl Token {
-  to_string :: fn(self) -> String {
+  fn to_string(self) -> String {
     mut builder: StringBuilder;
     defer builder.deinit();
     self.format(&mut builder, FormatOptions::default());
@@ -334,7 +334,7 @@ impl Token {
   }
 }
 
-State :: struct {
+struct State {
   input: String,
   path: String,
   pos: u64,
@@ -344,7 +344,7 @@ State :: struct {
 }
 
 impl State {
-  new :: fn(path: String, input: String, file_idx: u64) -> #self {
+  fn new(path: String, input: String, file_idx: u64) -> #self {
     return .{
       path: path,
       input: input,
@@ -355,7 +355,7 @@ impl State {
     };
   }
 
-  from_file :: fn!<Path>(filename: Path) -> #self where Path: AsByteSlice {
+  fn from_file!<Path>(filename: Path) -> #self where Path: AsByteSlice {
       canonical_option := canonical_path(filename);
       if canonical_option.is_none() {
         printlnf("file '%' was unable to be located.", (filename,));
@@ -381,7 +381,7 @@ impl State {
     }
 }
 
-Lexer :: struct {
+struct Lexer {
   operators: Map!<str, u32>,
   keywords:  Map!<str, u32>,
   reserved:  List!<str>,
@@ -391,7 +391,7 @@ Lexer :: struct {
 }
 
 impl Lexer {
-  new :: fn(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>) -> #self {
+  fn new(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>) -> #self {
     return .{
       operators:  operators.or_else(.{}),
       keywords:   keywords.or_else(.{}),
@@ -402,7 +402,7 @@ impl Lexer {
 }
 
 impl Deinit for Lexer {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     self.operators.deinit();
     self.keywords.deinit();
     self.reserved.deinit();
@@ -413,11 +413,11 @@ impl Deinit for Lexer {
 }
 
 impl Lexer {
-  push_state :: fn(*mut self, state: State) {
+  fn push_state(*mut self, state: State) {
     self.states.push(state);
   }
 
-  fill_buffer_if_needed :: fn(*mut self) {
+  fn fill_buffer_if_needed(*mut self) {
     while self.lookahead_buffer.length < 8 {
       if self.states.is_empty() {
         self.lookahead_buffer.push(Token::Eof());
@@ -431,7 +431,7 @@ impl Lexer {
     }
   }
 
-  expect :: fn(*mut self, type: u32) -> Token {
+  fn expect(*mut self, type: u32) -> Token {
     token := self.eat();
     if token.type != type {
       lex_error(
@@ -444,17 +444,17 @@ impl Lexer {
     return token;
   }
 
-  peek :: fn(*mut self) -> Token {
+  fn peek(*mut self) -> Token {
     self.fill_buffer_if_needed();
     return self.lookahead_buffer.front().unwrap();
   }
 
-  eat :: fn(*mut self) -> Token {
+  fn eat(*mut self) -> Token {
     self.fill_buffer_if_needed();
     return self.lookahead_buffer.pop_front();
   }
 
-  get_token :: fn(*mut self, state: *mut State) {
+  fn get_token(*mut self, state: *mut State) {
     mut token_builder: StringBuilder;
     defer token_builder.deinit();
 

@@ -1,6 +1,6 @@
 #include "lib.ela";
 
-#test test_main :: fn() {
+#test fn test_main() {
   InitWindow(800, 600, "Привет"c);
 
   SetTargetFPS(60);

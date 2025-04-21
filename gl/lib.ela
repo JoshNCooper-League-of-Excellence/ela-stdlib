@@ -2,7 +2,7 @@
   We define these enums here to avoid 
   overwriting them on a regeneration of bindings.
 */
-GL :: enum {
+enum GL {
  STATIC_DRAW = 35044,
  ARRAY_BUFFER = 34962,
  INFO_LOG_LENGTH = 35716,
@@ -546,13 +546,13 @@ GL :: enum {
  CLIENT_ALL_ATTRIB_BITS =0xffffffff,
 }
 
-GLKeyPress :: enum {
+enum GLKeyPress {
   Released = 0,
   Pressed = 1,
   Repeating = 2,
 }
 
-GLKey :: enum {
+enum GLKey {
   UNKNOWN = -1,
   SPACE = 32,
   APOSTROPHE = 39,

@@ -1,6 +1,6 @@
 alias JsonResult :: Result!<*mut JsonValue, String>;
 
-parse :: fn(lexer: *mut JsonLexer) -> JsonResult {
+fn parse(lexer: *mut JsonLexer) -> JsonResult {
   mut token_result := lexer.expect_types(.[
     TokenType::LBracket,
     TokenType::LCurly,
@@ -109,7 +109,7 @@ parse :: fn(lexer: *mut JsonLexer) -> JsonResult {
   return JsonResult::Ok(value);
 }
 
-parse_file :: fn(file: str) -> JsonResult {
+fn parse_file(file: str) -> JsonResult {
   result := File::read_all(file);
   if result.is_err() {
     return JsonResult::Err(result.err.to_string(get_default_allocator()))
@@ -119,7 +119,7 @@ parse_file :: fn(file: str) -> JsonResult {
   return parse(&mut lexer);
 }
 
-parse_string :: fn(s: str) -> JsonResult {
+fn parse_string(s: str) -> JsonResult {
   mut lexer := JsonLexer::create(":<loaded from string>:".to_string(get_default_allocator()), s.to_string(get_default_allocator()));
   return parse(&mut lexer);
 }

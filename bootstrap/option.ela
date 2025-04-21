@@ -1,20 +1,20 @@
 
 // forward declare panic.
-panic :: fn(msg: str);
+fn panic(msg: str);
 
 impl!<_Some> Option!<_Some> {
-  is_some :: fn(self) -> bool {
+  fn is_some(self) -> bool {
     if self is Option!<_Some>::Some {
       return true;
     }
     return false;
   }
 
-  is_none :: fn(self) -> bool {
+  fn is_none(self) -> bool {
     return !self.is_some();
   }
 
-  unwrap :: fn(self) -> _Some {
+  fn unwrap(self) -> _Some {
     switch is self { 
       Option!<_Some>::Some(v): {
         return v;
@@ -29,7 +29,7 @@ impl!<_Some> Option!<_Some> {
     return default;
   }
 
-  or_else :: fn(self, fallback: _Some) -> _Some {
+  fn or_else(self, fallback: _Some) -> _Some {
     if self is Option!<_Some>::Some(v) {
       return v;
     } else {
@@ -50,7 +50,7 @@ impl!<_Some> Option!<_Some> {
   typed declaration, etc.
 */
 @[inline]
-Some :: fn!<T>(t: T) -> Option!<T> {
+fn Some!<T>(t: T) -> Option!<T> {
   return Option!<T>::Some(t);
 }
 
@@ -58,6 +58,6 @@ Some :: fn!<T>(t: T) -> Option!<T> {
 // This only works with an expected type, such as an argument, 
 // typed declaration, etc.
 @[inline]
-None :: fn!<T>() -> T {
+fn None!<T>() -> T {
   return T::None;
 }

@@ -1,11 +1,11 @@
-#flags ArenaFlags :: enum {
+#flags enum ArenaFlags {
   None,               // default.
   Align,              // if self flag is set, the allocator will fix alignment automatically when a misaligned allocation is found. Else it will naively allocate regardless of size.
 }
 
 // Super basic arena allocator, with a constructor that allocates a big block,
 // an allocate method that returns u8*, and a destructor that frees the block.
-Arena :: struct {
+struct Arena {
   ptr: u64,
   size: u64,
   memory: *mut u8,
@@ -15,7 +15,7 @@ Arena :: struct {
 } 
 
 impl Arena {
-  new :: fn(size: u64, flags: ArenaFlags) -> #self {
+  fn new(size: u64, flags: ArenaFlags) -> #self {
     return .{
       size: size,
       flags: flags,
@@ -25,7 +25,7 @@ impl Arena {
     }
   }
 
-  alloc :: fn(*mut self, size: u64) -> *mut u8 {
+  fn alloc(*mut self, size: u64) -> *mut u8 {
     if size == 0 {
       return null;
     }
@@ -63,27 +63,27 @@ impl Arena {
 }
 
 impl Allocator for Arena {
-  allocate :: fn(*mut self, size: u64) -> *mut void {
+  fn allocate(*mut self, size: u64) -> *mut void {
     return self.alloc(size);
   }
-  free :: fn(*mut self, ptr: *mut void) {}
+  fn free(*mut self, ptr: *mut void) {}
 
-  allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void {
+  fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
     return self.alloc(size * n);
   }
 
-  resize :: fn(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
+  fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
     // return self.allocate_array(element_size, new_size);
     return null;
   }
 
-  copy :: fn(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
+  fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
     new_ptr := self.alloc(element_size * n);
     memcpy(new_ptr, ptr, n);
     return new_ptr;
 
   }
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     if self.next {
       self.next.deinit();
       free(self.next);

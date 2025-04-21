@@ -5,24 +5,24 @@
   // emit_symbol tries to emit it as if the functions belong ot StringUtils where 
   // we need to do like String$slice not StringUtils$slice
 
-StringUtils :: trait {
-  is_empty :: fn(self) -> bool => self.length == 0;
+trait StringUtils {
+  fn is_empty(self) -> bool => self.length == 0;
 
-  empty :: fn() -> #self {
+  fn empty() -> #self {
     return .{};
   }
 
-  front :: fn(self) -> Option!<u8> {
+  fn front(self) -> Option!<u8> {
     if self.length == 0 then return None();
     return Some(self.data[0]);
   }
 
-  back :: fn(self) -> Option!<u8> {
+  fn back(self) -> Option!<u8> {
     if self.length == 0 then return None();
     return Some(self.data[self.length - 1]);
   }
 
-  starts_with :: fn!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
+  fn starts_with!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
     data, length := prefix.as_byte_slice();
     if self.length < length then return false;
 
@@ -33,7 +33,7 @@ StringUtils :: trait {
 
     return true;
   }
-  ends_with :: fn!<Prefix>(self, suffix: Prefix) -> bool where Prefix: AsByteSlice {
+  fn ends_with!<Prefix>(self, suffix: Prefix) -> bool where Prefix: AsByteSlice {
     data, length := suffix.as_byte_slice();
     if self.length < length then return false;
     for i in 0..length {
@@ -41,7 +41,7 @@ StringUtils :: trait {
     }
     return true;
   }
-  is_empty_or_whitespace :: fn(self) -> bool {
+  fn is_empty_or_whitespace(self) -> bool {
     for i in 0..self.length {
       ch := self.data[i];
       if !isspace(ch) {

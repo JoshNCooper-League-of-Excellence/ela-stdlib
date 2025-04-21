@@ -1,7 +1,7 @@
 
 #ifndef FREESTANDING {
   impl!<T> Slice!<T> {
-    clone :: fn!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | Dyn_Allocator {
+    fn clone!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | Dyn_Allocator {
       data : *mut T = allocator.allocate_array(sizeof(T), self.length);
       memcpy(data, self.data, self.length * sizeof(T));
       return .{
@@ -14,34 +14,34 @@
     // To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
     // since Slice!<T> is supposed to be like blatantly non-owning.
     // it's confusing and muddles the intended purpose and clarity of having the type in the standard.
-    deinit :: fn!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | Dyn_Allocator {
+    fn deinit!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | Dyn_Allocator {
       allocator.free(self.data);
     }
   }
 }
 
 impl!<T> Subscript!<T> for Slice!<T> {
-  subscript :: fn(*const self, idx: u64) -> *const T {
+  fn subscript(*const self, idx: u64) -> *const T {
     return &const self.data[idx];
   }
-  subscript_mut :: fn(*mut self, idx: u64) -> *mut T {
+  fn subscript_mut(*mut self, idx: u64) -> *mut T {
     return &mut self.data[idx];
   }
 }
 
 impl!<T> Slice!<T> {
-  is_empty :: fn(self) -> bool {
+  fn is_empty(self) -> bool {
     return self.length == 0;
   }
 
-  from :: fn(data: *const T, len: u32) -> #self => .{
+  fn from(data: *const T, len: u32) -> #self => .{
     data: data,
     length: len,
   }
   
   // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
   // data available??
-  slice :: fn!<Range>(self, mut range: Range) -> Slice!<T> where Range: RangeBase!<u8>  |  RangeBase!<u16> |  RangeBase!<u32> | RangeBase!<u64> | RangeBase!<s8>  | RangeBase!<s16> | RangeBase!<s32> |  RangeBase!<s64> {
+  fn slice!<Range>(self, mut range: Range) -> Slice!<T> where Range: RangeBase!<u8>  |  RangeBase!<u16> |  RangeBase!<u32> | RangeBase!<u64> | RangeBase!<s8>  | RangeBase!<s16> | RangeBase!<s32> |  RangeBase!<s64> {
     if range.begin < 0 then range.begin = 0;
 
     if range.end == -1 || range.end > self.length {
@@ -61,14 +61,14 @@ impl!<T> Slice!<T> {
 }
 
 impl!<T> Iterable for Slice!<T> {
-  iter :: fn(*const self) -> Iter!<T> {
+  fn iter(*const self) -> Iter!<T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length
     }
   }
 
-  iter_mut :: fn(*mut self) -> Iter!<T> {
+  fn iter_mut(*mut self) -> Iter!<T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length
@@ -77,7 +77,7 @@ impl!<T> Iterable for Slice!<T> {
 }
 
 impl AsByteSlice for Slice!<u8> {
-  as_byte_slice :: fn(self) -> #self {
+  fn as_byte_slice(self) -> #self {
     return self;
   }
 }

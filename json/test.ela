@@ -1,6 +1,6 @@
 import fmt::*;
 import json::*;
 
-main :: fn() {
+fn main() {
 
 }

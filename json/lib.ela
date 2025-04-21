@@ -5,11 +5,11 @@
 #include "deserialize.ela"
 
 impl!<T> Serializable for List!<T> {
-  serialize :: fn(*const self) -> JsonResult {
+  fn serialize(*const self) -> JsonResult {
     return serialize_iterator!<Iter!<T>, T>(self.iter());
   }
 
-  deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
+  fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
     if object.type != JsonValueType::Array then return Some(String::from("invalid json type, expected array."));
     self.initialize(object.array.length);
     for i in 0..object.array.length {
@@ -23,7 +23,7 @@ impl!<T> Serializable for List!<T> {
 }
 
 impl!<K, V> Serializable for Map!<K, V> where K: String {
-  serialize :: fn(*const self) -> JsonResult {
+  fn serialize(*const self) -> JsonResult {
     mut value := JsonValue::new();
     value.type = JsonValueType::Object;
     for key, v in *self {
@@ -36,7 +36,7 @@ impl!<K, V> Serializable for Map!<K, V> where K: String {
     return JsonResult::Ok(value);
   }
 
-  deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String> {
+  fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
     println(object.type as JsonValueType);
 
     if object.type != JsonValueType::Object 

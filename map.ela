@@ -5,14 +5,14 @@
   This should be replaced with one that is made with attention to detail and performaance in mind.
 */
 
-Map :: struct!<Key, Value> {
+struct Map!<Key, Value> {
   buckets: List!<List!<(Key, Value)>>,
   length: u64,
 }
 
 impl!<Key, Value> Map!<Key, Value> where Key: Hash {
   alias Pair :: (Key, Value);
-  new :: fn() -> #self {
+  fn new() -> #self {
     const INITIAL_CAPACITY := 16;
     mut buckets: List!<List!<Pair>>;
     buckets.initialize(INITIAL_CAPACITY);
@@ -22,7 +22,7 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
     };
   }
 
-  insert :: fn(*mut self, key: Key, value: Value) {
+  fn insert(*mut self, key: Key, value: Value) {
     if self.buckets.length == 0 {
       self.buckets.initialize(16);
     }
@@ -38,7 +38,7 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
     self.length += 1;
   }
 
-  get :: fn(*const self, search_key: Key) -> Option!<Value> {
+  fn get(*const self, search_key: Key) -> Option!<Value> {
     if self.buckets.length == 0 {
       return None();
     }
@@ -53,7 +53,7 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
     return None();
   }
   
-  get_mut :: fn(*mut self, search_key: Key) -> Option!<*mut Value> {
+  fn get_mut(*mut self, search_key: Key) -> Option!<*mut Value> {
     if self.buckets.length == 0 {
       return None();
     }
@@ -68,7 +68,7 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
     return None();
   }
 
-  remove :: fn(*mut self, key: Key) -> bool {
+  fn remove(*mut self, key: Key) -> bool {
     if self.buckets.length == 0 {
       return false;
     }
@@ -83,11 +83,11 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
     return false;
   }
 
-  contains :: fn(*const self, key: Key) -> bool {
+  fn contains(*const self, key: Key) -> bool {
     return self.get(key).is_some();
   }
 
-  clear :: fn(*mut self) {
+  fn clear(*mut self) {
     for bucket in self.buckets.iter_mut() {
       bucket.clear();
     }
@@ -96,7 +96,7 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
 }
 
 impl!<Key, Value> Deinit for Map!<Key, Value> {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     for bucket in self.buckets {
       bucket.deinit();
     }
@@ -105,20 +105,20 @@ impl!<Key, Value> Deinit for Map!<Key, Value> {
   }
 }
 
-MapIter :: struct!<Key, Value> {
+struct MapIter!<Key, Value> {
   map: *const Map!<Key, Value>,
   bucket_index: u64,
   pair_index: u64,
 }
 
-MapIterMut :: struct!<Key, Value> {
+struct MapIterMut!<Key, Value> {
   map: *const Map!<Key, Value>,
   bucket_index: u64,
   pair_index: u64,
 }
 
 impl!<Key, Value> Iterator!<(Key, Value)> for MapIter!<Key, Value> {
-  next :: fn(*mut self) -> Option!<(Key, Value)> {
+  fn next(*mut self) -> Option!<(Key, Value)> {
     while self.bucket_index < self.map.buckets.length {
       if self.pair_index < self.map.buckets[self.bucket_index].length {
         pair := self.map.buckets[self.bucket_index][self.pair_index];
@@ -134,7 +134,7 @@ impl!<Key, Value> Iterator!<(Key, Value)> for MapIter!<Key, Value> {
 }
 
 impl!<Key, Value> Iterator!<*mut (Key, Value)> for MapIterMut!<Key, Value> {
-  next :: fn(*mut self) -> Option!<*mut (Key, Value)> {
+  fn next(*mut self) -> Option!<*mut (Key, Value)> {
     while self.bucket_index < self.map.buckets.length {
       if self.pair_index < self.map.buckets[self.bucket_index].length {
         self.pair_index += 1;
@@ -149,7 +149,7 @@ impl!<Key, Value> Iterator!<*mut (Key, Value)> for MapIterMut!<Key, Value> {
 }
 
 impl!<Key, Value> Iterable for Map!<Key, Value> {
-  iter :: fn(*const self) -> MapIter!<Key, Value> {
+  fn iter(*const self) -> MapIter!<Key, Value> {
     return .{
       map: self,
       bucket_index: 0,
@@ -157,7 +157,7 @@ impl!<Key, Value> Iterable for Map!<Key, Value> {
     };
   }
 
-  iter_mut :: fn(*mut self) -> MapIterMut!<Key, Value> {
+  fn iter_mut(*mut self) -> MapIterMut!<Key, Value> {
     return .{
       map: self
       bucket_index: 0,
@@ -167,7 +167,7 @@ impl!<Key, Value> Iterable for Map!<Key, Value> {
 }
 
 impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
-  init :: fn(init_list: InitList!<(Key, Value)>) -> #self {
+  fn init(init_list: InitList!<(Key, Value)>) -> #self {
     mut self: #self;
     for key, value in init_list {
       self.insert(key, value);

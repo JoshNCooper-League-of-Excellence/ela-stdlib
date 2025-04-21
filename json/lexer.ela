@@ -1,7 +1,7 @@
 import fs::*;
 import fmt::*;
 
-TokenType :: enum {
+enum TokenType {
   Invalid,
   True,
   False,
@@ -17,7 +17,7 @@ TokenType :: enum {
   Comma,
 }
 
-Token :: struct {
+struct Token {
   type : s32,
   value : String,
   line: s32,
@@ -25,7 +25,7 @@ Token :: struct {
 }
 
 impl Token {
-  Invalid :: fn() -> #self {
+  fn Invalid() -> #self {
     v: #self;
     return v;
   }
@@ -47,7 +47,7 @@ impl Token {
   "Comma",
 ];
 
-JsonLexer :: struct {
+struct JsonLexer {
   line_start: s32,
   cur_line: s32,
   // filename/source of input.
@@ -61,20 +61,20 @@ JsonLexer :: struct {
 }
 
 impl JsonLexer {
-  create :: fn(file: String, input: String) -> #self {
+  fn create(file: String, input: String) -> #self {
     return .{
       file: file,
       input: input,
     };
   }
   
-  get_location_string :: fn(self) -> String {
+  fn get_location_string(self) -> String {
     column := self.position - self.line_start;
     line := self.cur_line + 1;
     return format("%:%:%", (self.file, line, column), FormatOptions::default());
   }
 
-  get_token :: fn(*mut self) -> Result!<Token, String> {
+  fn get_token(*mut self) -> Result!<Token, String> {
     alias Result :: Result!<Token, String>;
     mut token : Token;
 
@@ -231,13 +231,13 @@ impl JsonLexer {
 
 impl JsonLexer {
 
-  ensure_buffer_is_full :: fn(*mut self) {
+  fn ensure_buffer_is_full(*mut self) {
     while self.lookahead_buffer.length < 8 {
       self.lookahead_buffer.push(self.get_token().unwrap());
     }
   }
 
-  eat :: fn(*mut self) -> Token {
+  fn eat(*mut self) -> Token {
     self.ensure_buffer_is_full();
     token := self.lookahead_buffer[0];
     for i in 0..self.lookahead_buffer.length - 1 {
@@ -247,12 +247,12 @@ impl JsonLexer {
     return token;
   }
 
-  peek :: fn(*mut self) -> Token {
+  fn peek(*mut self) -> Token {
     self.ensure_buffer_is_full();
     return self.lookahead_buffer[0];
   }
 
-  expect_types :: fn(*mut self, types: InitList!<s32>) -> Result!<Token, String> {
+  fn expect_types(*mut self, types: InitList!<s32>) -> Result!<Token, String> {
     token := self.eat();
 
     // this should never happen.
@@ -291,7 +291,7 @@ impl JsonLexer {
     return Result!<Token, String>::Err(error);
   }
 
-  expect_type :: fn(*mut self, type: s32) -> Result!<Token, String> {
+  fn expect_type(*mut self, type: s32) -> Result!<Token, String> {
     // TODO: it's much cheaper if we just check this, instead of making list lol.
     // saves a stack alloc and a function call.
     return self.expect_types(.[type]);

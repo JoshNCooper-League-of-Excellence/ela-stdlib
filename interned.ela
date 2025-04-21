@@ -1,20 +1,20 @@
 import map::Map;
 
-Interned :: struct!<T> where T:  Hash {
+struct Interned!<T> where T:  Hash {
   data: *const T,
 }
 
 impl!<T> Interned!<T> {
-  #static table :: fn() -> *mut Map!<u64, *const T> {
+  #static fn table() -> *mut Map!<u64, *const T> {
     #static mut table: Map!<u64, *const T>;
     return &mut table;
   }
 
-  value :: fn(self) -> T {
+  fn value(self) -> T {
     return *self.data;
   }
 
-  insert_or_set :: fn(*mut self, value: T) {
+  fn insert_or_set(*mut self, value: T) {
     hash := value.hash();
     mut table := Interned!<T>::table();
     result := table.get(hash);
@@ -31,7 +31,7 @@ impl!<T> Interned!<T> {
     }
   }
 
-  new :: fn(value: T) -> #self {
+  fn new(value: T) -> #self {
     mut self: #self;
     self.insert_or_set(value);
     return self;
@@ -39,17 +39,17 @@ impl!<T> Interned!<T> {
 }
 
 impl!<T> Eq for Interned!<T> {
-  eq :: fn(self, other: #self) -> bool {
+  fn eq(self, other: #self) -> bool {
     return self.data == other.data;
   }
-  neq :: fn(self, other: #self) -> bool {
+  fn neq(self, other: #self) -> bool {
     return self.data != other.data;
   }
 }
 
 
 impl!<T> Hash for Interned!<T> {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     // TODO: do we want to just return the pointer as if it were a hash?
     // or do we want to rehash the value itself.
     return self.data.hash();
@@ -57,7 +57,7 @@ impl!<T> Hash for Interned!<T> {
 }
 
 impl!<T> AsByteSlice for Interned!<T> where T: AsByteSlice {
-  as_byte_slice :: fn(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> Slice!<u8> {
     return self.value().as_byte_slice();
   }
 }
@@ -68,7 +68,7 @@ import fmt::{
   FormatOptions
 };
 impl!<T> Format for Interned!<T> {
-  format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+  fn format(*const self, builder: *mut StringBuilder, options: FormatOptions) {
     if self.data {
       builder.appendf("Interned { % }", (*self.data,), options.quoted());
     } else {

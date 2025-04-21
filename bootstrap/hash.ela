@@ -6,7 +6,7 @@ HASH_FACTOR:        u64 = 0x100000001B3;
   A few implementations of hash functions for basic numerical types.
 */
 impl Hash for s8 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -15,7 +15,7 @@ impl Hash for s8 {
 }
 
 impl Hash for s16 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -24,7 +24,7 @@ impl Hash for s16 {
 }
 
 impl Hash for s32 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -33,7 +33,7 @@ impl Hash for s32 {
 }
 
 impl Hash for s64 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -42,7 +42,7 @@ impl Hash for s64 {
 }
 
 impl Hash for u8 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -51,7 +51,7 @@ impl Hash for u8 {
 }
 
 impl Hash for u16 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -60,7 +60,7 @@ impl Hash for u16 {
 }
 
 impl Hash for u32 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -69,7 +69,7 @@ impl Hash for u32 {
 }
 
 impl Hash for u64 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self;
     hash *= HASH_FACTOR;
@@ -78,7 +78,7 @@ impl Hash for u64 {
 }
 
 impl Hash for f32 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self as u32;
     hash *= HASH_FACTOR;
@@ -87,7 +87,7 @@ impl Hash for f32 {
 }
 
 impl Hash for f64 {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     mut hash := HASH_INITIAL_VALUE;
     hash ^= self as u32;
     hash *= HASH_FACTOR;

@@ -1,63 +1,63 @@
-#foreign rand :: fn() -> s32;
-#foreign srand :: fn(seed: u32);
-#foreign fmod :: fn(l: f32, r: f32) -> f32;
-#foreign fabs :: fn(f: f64) -> f64;
-#foreign isinf :: fn(arg: f64) -> bool;
-#foreign isnan :: fn(arg: f64) -> bool;
-#foreign pow :: fn(base: f64, exponent: f64) -> f64;
-#foreign sqrt :: fn(f: f64) -> f64;
-#foreign cos :: fn(f: f64) -> f64;
-#foreign sin :: fn(f: f64) -> f64;
+#foreign fn rand() -> s32;
+#foreign fn srand(seed: u32);
+#foreign fn fmod(l: f32, r: f32) -> f32;
+#foreign fn fabs(f: f64) -> f64;
+#foreign fn isinf(arg: f64) -> bool;
+#foreign fn isnan(arg: f64) -> bool;
+#foreign fn pow(base: f64, exponent: f64) -> f64;
+#foreign fn sqrt(f: f64) -> f64;
+#foreign fn cos(f: f64) -> f64;
+#foreign fn sin(f: f64) -> f64;
 
-#foreign tan :: fn(f: f64) -> f64;
-#foreign acos :: fn(f: f64) -> f64;
-#foreign asin :: fn(f: f64) -> f64;
-#foreign atan :: fn(f: f64) -> f64;
-#foreign atan2 :: fn(y: f64, x: f64) -> f64;
-#foreign ceil :: fn(f: f64) -> f64;
-#foreign floor :: fn(f: f64) -> f64;
-#foreign exp :: fn(f: f64) -> f64;
-#foreign log :: fn(f: f64) -> f64;
-#foreign log10 :: fn(f: f64) -> f64;
-#foreign sinh :: fn(f: f64) -> f64;
-#foreign cosh :: fn(f: f64) -> f64;
-#foreign tanh :: fn(f: f64) -> f64;
+#foreign fn tan(f: f64) -> f64;
+#foreign fn acos(f: f64) -> f64;
+#foreign fn asin(f: f64) -> f64;
+#foreign fn atan(f: f64) -> f64;
+#foreign fn atan2(y: f64, x: f64) -> f64;
+#foreign fn ceil(f: f64) -> f64;
+#foreign fn floor(f: f64) -> f64;
+#foreign fn exp(f: f64) -> f64;
+#foreign fn log(f: f64) -> f64;
+#foreign fn log10(f: f64) -> f64;
+#foreign fn sinh(f: f64) -> f64;
+#foreign fn cosh(f: f64) -> f64;
+#foreign fn tanh(f: f64) -> f64;
 
 // We use this struct for namespacing.
-Random :: struct;
+struct Random;
 
 const RAND_MAX := 2147483647;
 const PI := 3.141592653589793;
 
 impl Random {
-  next :: fn(max: f32) -> f32 {
+  fn next(max: f32) -> f32 {
     return (rand() as f32) / (RAND_MAX as f32) * max;
   }
 }
 
-abs :: fn!<T>(v: T) -> T {
+fn abs!<T>(v: T) -> T {
   if v < 0 {
     return -v;
   }
   return v;
 }
 
-min :: fn!<T>(a: T, b: T) -> T {
+fn min!<T>(a: T, b: T) -> T {
   if a > b then return b;
   return a;
 }
 
-max :: fn!<T>(a: T, b: T) -> T {
+fn max!<T>(a: T, b: T) -> T {
   if a > b then return a;
   return b;
 }
 
-clamp :: fn(v: f64, min: f64, max: f64) -> f64 {
+fn clamp(v: f64, min: f64, max: f64) -> f64 {
   if v < min then return min;
   if v > max then return max;
   return v;
 }
 
-lerp :: fn(a: f32, b: f32, t: f32) -> f32 {
+fn lerp(a: f32, b: f32, t: f32) -> f32 {
   return (a * (1.0 - t)) + (b * t);
 }

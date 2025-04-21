@@ -14,7 +14,7 @@ impl!<T> Iterable for InitList!<T> {
     guaranteed lifetime of the List!<T> is inherently unsafe.
   */
   @[inline]
-  iter :: fn(*const self) -> Iter!<T> {
+  fn iter(*const self) -> Iter!<T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length,
@@ -25,7 +25,7 @@ impl!<T> Iterable for InitList!<T> {
     Get a mutable iterator.
   */
   @[inline]
-  iter_mut :: fn(*mut self) -> IterMut!<T> {
+  fn iter_mut(*mut self) -> IterMut!<T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length,

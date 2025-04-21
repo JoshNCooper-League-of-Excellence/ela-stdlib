@@ -6,14 +6,14 @@
   This API rarely changes, so it's not likely we'll need to regenerate it.
   but still.
 */
-LLVMCodeGenOptLevel :: enum {
+enum LLVMCodeGenOptLevel {
   None = 0,
   Less = 1,
   Default = 2,
   Aggressive = 3,
 };
 
-LLVMRelocMode :: enum {
+enum LLVMRelocMode {
   Default = 0,
   Static = 1,
   PIC = 2,
@@ -23,7 +23,7 @@ LLVMRelocMode :: enum {
   ROPI_RWPI = 6,
 };
 
-LLVMCodeModel :: enum {
+enum LLVMCodeModel {
   Default = 0,
   JITDefault = 1,
   Tiny = 2,
@@ -36,4 +36,4 @@ LLVMCodeModel :: enum {
 #include "llvm.ela";
 
 
-LLVMInitializeBasicToolkit :: fn() {}
+fn LLVMInitializeBasicToolkit() {}

@@ -1,7 +1,7 @@
 impl StringUtils for str {}
 
 impl str {
-  to_string :: fn!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | Dyn_Allocator {
+  fn to_string!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | Dyn_Allocator {
     return .{
       data: allocator.copy(self.data, sizeof(u8), self.length),
       length: self.length,
@@ -10,16 +10,16 @@ impl str {
 }
 
 impl Subscript!<u8> for str {
-  subscript :: fn(*const self, idx: u64) -> *const u8 {
+  fn subscript(*const self, idx: u64) -> *const u8 {
     return &const self.data[idx];
   }
-  subscript_mut :: fn(*mut self, idx: u64) -> *mut u8 {
+  fn subscript_mut(*mut self, idx: u64) -> *mut u8 {
     return &mut self.data[idx];
   }
 }
 
 impl str {
-  slice :: fn(*mut self, range: Range) -> Slice!<u8> {
+  fn slice(*mut self, range: Range) -> Slice!<u8> {
     start, end := (range.begin, range.end);
     length := end - start;
 
@@ -36,13 +36,13 @@ impl str {
 
 // This iterator is over the bytes.
 impl Iterable for str { 
-  iter :: fn(*const self) -> Iter!<u8> {
+  fn iter(*const self) -> Iter!<u8> {
     return .{
       ptr: self.data as *mut u8,
       end: self.data + self.length,
     }
   }
-  iter_mut :: fn(*mut self) -> IterMut!<u8> {
+  fn iter_mut(*mut self) -> IterMut!<u8> {
     return .{
       ptr: self.data as *mut u8,
       end: (self.data + self.length),
@@ -51,7 +51,7 @@ impl Iterable for str {
 }
 
 impl Eq for str {
-  eq :: fn(self, other: #self) -> bool {
+  fn eq(self, other: #self) -> bool {
     if self.length != other.length then return false;
     for idx in 0..self.length {
       if self[idx] != other[idx] then return false;
@@ -59,13 +59,13 @@ impl Eq for str {
     return true;
   }
   
-  neq :: fn(self, other: #self) -> bool {
+  fn neq(self, other: #self) -> bool {
     return !self.eq(other);
   }
 }
 
 impl Hash for str {
-	hash :: fn(self) -> u64 {
+	fn hash(self) -> u64 {
 		mut hash : u64 = 0xCBF29CE484222325;
 		for byte in self {
 			hash ^= byte;
@@ -76,7 +76,7 @@ impl Hash for str {
 }
 
 impl AsCharSlice for str {
-  as_char_slice :: fn(self) -> Slice!<u32> {
+  fn as_char_slice(self) -> Slice!<u32> {
     return .{
       data: self.data,
       length: self.length,
@@ -85,7 +85,7 @@ impl AsCharSlice for str {
 }
 
 impl AsByteSlice for str {
-  as_byte_slice :: fn(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> Slice!<u8> {
     return .{
       data: self.data,
       length: self.length

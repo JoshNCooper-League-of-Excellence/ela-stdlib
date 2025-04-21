@@ -1,27 +1,27 @@
 
 impl!<_Ok, _Err> Result!<_Ok, _Err> {
-  Ok :: fn(v: _Ok) -> #self {
+  fn Ok(v: _Ok) -> #self {
     return .{
       index: RESULT_IS_OK,
       ok: v,
     };
   }
 
-  Err :: fn(v: _Err) -> #self {
+  fn Err(v: _Err) -> #self {
     return .{
       index: RESULT_IS_ERR,
       err: v
     }
   }
 
-  unwrap :: fn(self) -> _Ok {
+  fn unwrap(self) -> _Ok {
     if self.index == RESULT_IS_ERR {
       panic("called 'unwrap' on an Err result");
     }
     return self.ok;
   }
 
-  expect :: fn(self, handler: fn* (_Err)) -> _Ok {
+  fn expect(self, handler: fn* (_Err)) -> _Ok {
     if self.index == RESULT_IS_ERR {
       handler(self.err);
       panic("unwrapped a 'Err' result.");
@@ -29,11 +29,11 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return self.ok;
   }
 
-  is_ok :: fn(self) -> bool {
+  fn is_ok(self) -> bool {
     return self.index == RESULT_IS_OK;
   }
 
-  is_err :: fn(self) -> bool {
+  fn is_err(self) -> bool {
     return self.index == RESULT_IS_ERR;
   }
 
@@ -42,14 +42,14 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
 
   // for example
   /* 
-      getter :: fn(..) -> Result!<(), String> ... // this function returns a Result that has a String for an error.
+      fn getter(..) -> Result!<(), String> ... // this function returns a Result that has a String for an error.
 
-      other :: fn(..) -> Result!<s32, String> ... // this also returns a result that has a string for an error, but
+      fn other(..) -> Result!<s32, String> ... // this also returns a result that has a string for an error, but
       they don't match. so,
 
       in other:
 
-      other :: fn(..) -> Result!<s32, String> {
+      fn other(..) -> Result!<s32, String> {
         result := getter();
 
         if result.is_err() {
@@ -58,13 +58,13 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
 
       }
   */
-  propagate :: fn!<NewErrorT>(self) -> NewErrorT {
+  fn propagate!<NewErrorT>(self) -> NewErrorT {
     return NewErrorT::Err(self.err);
   }
 
   // this does the same thing as propagate, but it just does it for the ok.
   // I don't know good names for these, so obviously suggestions are welcome
-  coerce :: fn!<NewOkT>(self) -> NewOkT {
+  fn coerce!<NewOkT>(self) -> NewOkT {
     return NewErrorT::Ok(self.ok);
   }
 }

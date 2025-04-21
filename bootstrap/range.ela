@@ -1,7 +1,7 @@
 
 // TODO: add reverse ranges?
 
-RangeBase :: struct!<V> where V: Eq | IsNumeric {
+struct RangeBase!<V> where V: Eq | IsNumeric {
   begin: V,
   end:   V,
 }
@@ -12,18 +12,18 @@ alias Range :: RangeBase!<s32>;
 
 
 impl!<T> RangeBase!<T> {
-  contains :: fn(self, value: T) -> bool {
+  fn contains(self, value: T) -> bool {
     return self.begin <= value && self.end >= value;
   }
 }
 
-RangeIter :: struct!<V> where V: Eq | IsNumeric | IsPointer {
+struct RangeIter!<V> where V: Eq | IsNumeric | IsPointer {
   begin: V,
   end:   V,
   idx:   V,
 }
 
-RangeIterMut :: struct!<V> where V: Eq| IsNumeric | IsPointer {
+struct RangeIterMut!<V> where V: Eq| IsNumeric | IsPointer {
   begin: V,
   idx:   V,
   end:   V,
@@ -31,7 +31,7 @@ RangeIterMut :: struct!<V> where V: Eq| IsNumeric | IsPointer {
 
 impl!<V> Iterator!<V> for RangeIter!<V>  {
   alias Option :: Option!<V>;
-  next :: fn(*mut self) -> Option {
+  fn next(*mut self) -> Option {
     if self.idx == self.end
       then return Option::None;
 
@@ -49,7 +49,7 @@ impl!<V> Iterator!<V> for RangeIter!<V>  {
 
 impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
   alias Option :: Option!<*mut V>;
-  next :: fn(*mut self) -> Option {
+  fn next(*mut self) -> Option {
     if self.idx == self.end
       then return Option::None;
 
@@ -66,7 +66,7 @@ impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
 }
 
 impl!<V> Iterable for RangeBase!<V> {
-  iter :: fn(*const self) -> RangeIter!<V> {
+  fn iter(*const self) -> RangeIter!<V> {
     return .{
       begin: self.begin,
       idx:   self.begin,
@@ -74,7 +74,7 @@ impl!<V> Iterable for RangeBase!<V> {
     };
   }
 
-  iter_mut :: fn(*mut self) -> RangeIterMut!<V> {
+  fn iter_mut(*mut self) -> RangeIterMut!<V> {
     return .{
       begin: self.begin,
       idx:  self.begin,
@@ -84,10 +84,10 @@ impl!<V> Iterable for RangeBase!<V> {
 }
 
 impl!<V> Eq for RangeBase!<V> {
-  eq :: fn(self, right: #self) -> bool {
+  fn eq(self, right: #self) -> bool {
     return self.begin == right.begin && self.end == right.end;
   }
-  neq :: fn(self, right: #self) -> bool {
+  fn neq(self, right: #self) -> bool {
     return self.begin != right.begin || self.end != right.end;
   }
 }

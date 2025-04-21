@@ -4,7 +4,7 @@ impl StringUtils for String {}
 
 #ifndef FREESTANDING {
   impl String {
-    replace :: fn!<Old, Replacement>(*mut self, old_arg: Old, replacement_arg: Replacement) -> String
+    fn replace!<Old, Replacement>(*mut self, old_arg: Old, replacement_arg: Replacement) -> String
       where Old: AsByteSlice,
             Replacement: AsByteSlice
     {
@@ -29,7 +29,7 @@ impl StringUtils for String {}
       return result;
     }
 
-    from :: fn!<T>(data: T) -> #self
+    fn from!<T>(data: T) -> #self
     where T: AsByteSlice {
       slice := data.as_byte_slice();
 
@@ -44,7 +44,7 @@ impl StringUtils for String {}
       };
     }
 
-    from_ptr :: fn(data: c_str) -> #self {
+    fn from_ptr(data: c_str) -> #self {
       length := strlen(data);
       return .{
         data: strdup(data),
@@ -53,7 +53,7 @@ impl StringUtils for String {}
       };
     }
 
-    append :: fn!<T>(*mut self, other: T) where T: AsByteSlice {
+    fn append!<T>(*mut self, other: T) where T: AsByteSlice {
       slice := other.as_byte_slice();
       if self.capacity == 0 then self.capacity = 256 / 3;
 
@@ -66,7 +66,7 @@ impl StringUtils for String {}
       self.data[self.length] = '\0';
     }
 
-    append_then_free :: fn!<T>(*mut self, mut other: T) where T: AsByteSlice & Deinit {
+    fn append_then_free!<T>(*mut self, mut other: T) where T: AsByteSlice & Deinit {
       self.append(other);
       other.deinit();
     }
@@ -76,7 +76,7 @@ impl StringUtils for String {}
     These are the 'List' like functions for dynamic strings.
   */
   impl String {
-    resize :: fn(*mut self, new_size: u64) {
+    fn resize(*mut self, new_size: u64) {
       if new_size < self.length then self.length = new_size;
       self.capacity = new_size;
 
@@ -88,7 +88,7 @@ impl StringUtils for String {}
       self.data[self.length] = 0;
     }
 
-    push :: fn(*mut self, ch: u8) {
+    fn push(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
       // ! BUG: why do we have to check !data here?
       // ! i was getting a large capacity with null data. Not sure how.
@@ -100,14 +100,14 @@ impl StringUtils for String {}
       self.data[self.length] = '\0';
     }
 
-    pop :: fn(*mut self) -> u8 {
+    fn pop(*mut self) -> u8 {
       if self.length == 0 then return '\0' as u8;
       ch := self.data[--self.length];
       self.data[self.length] = '\0';
       return ch;
     }
 
-    pop_front :: fn(*mut self) -> u8 {
+    fn pop_front(*mut self) -> u8 {
       if self.length == 0 then return '\0' as u8;
       ch := self.data[0];
       memmove(self.data, self.data + 1, self.length - 1);
@@ -116,7 +116,7 @@ impl StringUtils for String {}
       return ch;
     }
 
-    push_front :: fn(*mut self, ch: u8) {
+    fn push_front(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
       if self.length + 1 >= self.capacity {
         self.resize(self.capacity * 3);
@@ -127,7 +127,7 @@ impl StringUtils for String {}
       self.data[self.length] = '\0';
     }
 
-    insert_at :: fn(*mut self, index: u64, ch: u8) {
+    fn insert_at(*mut self, index: u64, ch: u8) {
       if index > self.length 
         then return;
 
@@ -143,7 +143,7 @@ impl StringUtils for String {}
       self.data[self.length] = '\0';
     }
 
-    insert_substr :: fn!<Substring>(*mut self, index: u64, substr: Substring) where Substring: AsByteSlice {
+    fn insert_substr!<Substring>(*mut self, index: u64, substr: Substring) where Substring: AsByteSlice {
       slice := substr.as_byte_slice();
       if index > self.length then return;
       if self.capacity == 0 then self.capacity = 256 / 3;
@@ -156,7 +156,7 @@ impl StringUtils for String {}
       self.data[self.length] = '\0';
     }
 
-    substr :: fn(self, start: u64, mut length: u64) -> String {
+    fn substr(self, start: u64, mut length: u64) -> String {
       if start >= self.length then return .{};
 
       if start + length > self.length then 
@@ -168,7 +168,7 @@ impl StringUtils for String {}
       };
     }
 
-    split :: fn!<Substring>(self, delimiter: Substring) -> List!<String> where Substring: AsByteSlice {
+    fn split!<Substring>(self, delimiter: Substring) -> List!<String> where Substring: AsByteSlice {
       slice := delimiter.as_byte_slice();
 
       mut result: List!<String>;
@@ -185,7 +185,7 @@ impl StringUtils for String {}
       return result;
     }
 
-    split_view :: fn!<Substring>(self, delimiter: Substring) -> List!<Slice!<u8>> where Substring: AsByteSlice {
+    fn split_view!<Substring>(self, delimiter: Substring) -> List!<Slice!<u8>> where Substring: AsByteSlice {
       slice := delimiter.as_byte_slice();
 
       mut result: List!<Slice!<u8>>;
@@ -203,7 +203,7 @@ impl StringUtils for String {}
       return result;
     }
 
-    erase_at :: fn(*mut self, index: u64) {
+    fn erase_at(*mut self, index: u64) {
       if index >= self.length then return;
       memmove(self.data + index, self.data + index + 1, self.length - index - 1);
       self.length--;
@@ -214,7 +214,7 @@ impl StringUtils for String {}
   }
 
   impl Clone for String {
-    clone :: fn(self) -> #self {
+    fn clone(self) -> #self {
       mut allocator := self.allocator;
       if allocator == null {
         allocator = get_default_allocator();
@@ -229,7 +229,7 @@ impl StringUtils for String {}
   }
 
   impl Deinit for String {
-    deinit :: fn(*mut self) {
+    fn deinit(*mut self) {
       if self.allocator == null {
         self.allocator = get_default_allocator();
       }
@@ -246,29 +246,29 @@ impl StringUtils for String {}
 }
 
 impl Subscript!<u8> for String {
-  subscript :: fn(*const self, idx: u64) -> *const u8 {
+  fn subscript(*const self, idx: u64) -> *const u8 {
     return &const self.data[idx];
   }
-  subscript_mut :: fn(*mut self, idx: u64) -> *mut u8 {
+  fn subscript_mut(*mut self, idx: u64) -> *mut u8 {
     return &mut self.data[idx];
   }
 }
 
 impl String {
   // THIS IS JUST A VIEW OF THE CURRENT STRING, PERFORM A CLONE ON THE STR TO GET AN OWNED COPY.
-  as_str :: fn(self) -> str {
+  fn as_str(self) -> str {
     return .{
       data: self.data,
       length: self.length,
     }
   }
-  slice :: fn(self, range: Range) -> Slice!<u8> {
+  fn slice(self, range: Range) -> Slice!<u8> {
     return .{
       data: self.data + range.begin,
       length: range.end - range.begin,
     }
   }
-  slice_mut :: fn(self, range: Range) -> SliceMut!<u8> {
+  fn slice_mut(self, range: Range) -> SliceMut!<u8> {
     return .{
       data: (self.data + range.begin) as *mut u8,
       length: range.end - range.begin,
@@ -277,26 +277,26 @@ impl String {
 }
 
 impl Eq for String {
-  eq :: fn(self, other: #self) -> bool {
+  fn eq(self, other: #self) -> bool {
     if self.length != other.length then return false;
     for idx in 0..self.length {
       if self[idx] != other[idx] then return false;
     }
     return true;
   }
-  neq :: fn(self, other: #self) -> bool {
+  fn neq(self, other: #self) -> bool {
     return !self.eq(other);
   }
 }
 
 impl Iterable for String {
-  iter :: fn(*const self) -> Iter!<u8> {
+  fn iter(*const self) -> Iter!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
     }
   }
-  iter_mut :: fn(*mut self) -> Iter!<u8> {
+  fn iter_mut(*mut self) -> Iter!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
@@ -305,7 +305,7 @@ impl Iterable for String {
 }
 
 impl AsCharSlice for String {
-  as_char_slice :: fn(self) -> Slice!<u32> {
+  fn as_char_slice(self) -> Slice!<u32> {
     return .{
       data: self.data,
       length: self.length / 4, // we do this because we're reinterpreting a c_str as a u32* which effectively packs it and quarters the "length"
@@ -314,7 +314,7 @@ impl AsCharSlice for String {
 }
 
 impl AsByteSlice for String {
-  as_byte_slice :: fn(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> Slice!<u8> {
     return .{
       data: self.data,
       length: self.length
@@ -323,7 +323,7 @@ impl AsByteSlice for String {
 }
 
 impl Hash for String {
-  hash :: fn(self) -> u64 {
+  fn hash(self) -> u64 {
     return self.as_str().hash();
   }
 }

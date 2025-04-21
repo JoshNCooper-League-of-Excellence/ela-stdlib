@@ -4,8 +4,8 @@
   where my_object implements either Iterable!<T> (which just indicates we can be converted into an iterator)
   or my_object implements Iterator!<> where it: an iterator itself.
 */
-Iterator :: trait!<V> {
-  next :: fn(*mut self) -> Option!<V>;
+trait Iterator!<V> {
+  fn next(*mut self) -> Option!<V>;
 }
 
 /* 
@@ -13,7 +13,7 @@ Iterator :: trait!<V> {
   collections that are implemented as contiguous chunks of memory, and 
   a pointer just needs to be incremented until an end point to fully traverse it.
 */
-Iter :: struct!<V> {
+struct Iter!<V> {
   // Pointer to the current element in the collection.
   // Of course, this has to be mutable because we use pointer arithmetic
   // to advance the iterator.
@@ -26,7 +26,7 @@ Iter :: struct!<V> {
   collections that are implemented as contiguous chunks of memory, and 
   a pointer just needs to be incremented until an end point to fully traverse it.
 */
-IterMut :: struct!<V> {
+struct IterMut!<V> {
   // Pointer to the current element in the collection.
   // Of course, this has to be mutable because we use pointer arithmetic
   // to advance the iterator.
@@ -38,7 +38,7 @@ impl!<V> Iterator!<V> for Iter!<V> {
   alias Option :: Option!<V>;
   // Advances the iterator to the next element in the collection.
   @[inline]
-  next :: fn(*mut self) -> Option {
+  fn next(*mut self) -> Option {
     if self.ptr >= self.end {
       return Option::None;
     }
@@ -51,7 +51,7 @@ impl!<V> Iterator!<V> for Iter!<V> {
 impl!<V> Iterator!<*mut V> for IterMut!<V> {
   alias Option :: Option!<*mut V>;
   // Advances the iterator to the next element in the collection.
-  next :: fn(*mut self) -> Option {
+  fn next(*mut self) -> Option {
     if self.ptr >= self.end {
       return Option::None;
     }
@@ -65,19 +65,19 @@ impl!<V> Iterator!<*mut V> for IterMut!<V> {
   Iterable is a generic trait that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
 */
-Iterable :: trait {
+trait Iterable {
   // Returns an iterator for the collection.
-  iter :: fn(*const self) -> Iterator;
-  iter_mut :: fn(*mut self) -> Iterator;
+  fn iter(*const self) -> Iterator;
+  fn iter_mut(*mut self) -> Iterator;
 }
 
-Enumerate :: struct!<V, I> where I: Iterator!<V> {
+struct Enumerate!<V, I> where I: Iterator!<V> {
   idx: u64,
   iterator: I,
 }
 
 impl!<V, I> Iterator!<(u64, V)> for Enumerate!<V, I> {
-  next :: fn(*mut self) -> Option!<(u64, V)> {
+  fn next(*mut self) -> Option!<(u64, V)> {
     index := self.idx;
     self.idx++;
     next := self.iterator.next();

@@ -1,7 +1,7 @@
 import fmt::*;
 import llvm::*;
 
-main :: fn() {
+fn main() {
   context: LLVMContextRef = LLVMContextCreate();
   mod: LLVMModuleRef = LLVMModuleCreateWithNameInContext("test_module"c, context);
   builder: LLVMBuilderRef = LLVMCreateBuilderInContext(context);

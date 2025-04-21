@@ -1,9 +1,9 @@
-Shader :: struct {
+struct Shader {
   handle: u32
 }
 
 impl Shader {
-  compile :: fn(kind: u32, source: c_str) -> u32 {
+  fn compile(kind: u32, source: c_str) -> u32 {
     shader: u32 = glCreateShader(kind);
     glShaderSource(shader, 1, &const source, null);
     glCompileShader(shader);
@@ -22,7 +22,7 @@ impl Shader {
     return shader;
   }
 
-  compile_program :: fn(vert_source: c_str, frag_source: c_str) -> u32 {
+  fn compile_program(vert_source: c_str, frag_source: c_str) -> u32 {
     vertex_shader: u32 = Shader::compile(GL::VERTEX_SHADER, vert_source);
     fragment_shader: u32 = Shader::compile(GL::FRAGMENT_SHADER, frag_source);
 
@@ -55,17 +55,17 @@ impl Shader {
 
 
 
-  use :: fn(*mut self) {
+  fn use(*mut self) {
     glUseProgram(self.handle);
   }
   
-  create :: fn(vertexSource: String, fragSource: String) -> #self {
+  fn create(vertexSource: String, fragSource: String) -> #self {
     return .{
       handle: Shader::compile_program(vertexSource.data, fragSource.data),
     };
   }
 
-  set_mat4 :: fn(*mut self, name: str, v: *const Mat4) {
+  fn set_mat4(*mut self, name: str, v: *const Mat4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
       glUniformMatrix4fv(index, 1, false, v.values);
@@ -74,7 +74,7 @@ impl Shader {
     }
   }
   
-  set_vec4 :: fn(*mut self, name: str, v: *const Vec4) {
+  fn set_vec4(*mut self, name: str, v: *const Vec4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
       glUniform4fv(index, 1, v.values);
@@ -83,7 +83,7 @@ impl Shader {
     }
   }
   
-  set_vec3 :: fn(*mut self, name: str, v: *const Vec3) {
+  fn set_vec3(*mut self, name: str, v: *const Vec3) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
       glUniform3fv(index, 1, v.values);
@@ -92,7 +92,7 @@ impl Shader {
     }
   }
   
-  set_vec2 :: fn(*mut self, name: str, v: *const Vec2) {
+  fn set_vec2(*mut self, name: str, v: *const Vec2) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
       glUniform2fv(index, 1, v.values);
@@ -101,7 +101,7 @@ impl Shader {
     }
   }
   
-  set_float :: fn(*mut self, name: str, v: f32) {
+  fn set_float(*mut self, name: str, v: f32) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
       glUniform1f(index, v);
@@ -110,7 +110,7 @@ impl Shader {
     }
   }
 
-  set :: fn!<T>(*mut self, name: str, v: T) {
+  fn set!<T>(*mut self, name: str, v: T) {
     switch typeof(T) {
       typeof(f32): {
         self.set_float(name, *((&const v) as *const f32));
@@ -138,17 +138,17 @@ impl Shader {
 }
 
 impl Deinit for Shader {
-  deinit :: fn(*mut self) {
+  fn deinit(*mut self) {
     glDeleteProgram(self.handle);
   }
 }
 
-Window :: struct {
+struct Window {
   handle: *mut GLFWwindow
 }
 
 impl Window {
-  create :: fn(width: s32, height: s32, title: str) -> #self {
+  fn create(width: s32, height: s32, title: str) -> #self {
     mut self: #self;
     
     if !glfwInit() {
@@ -175,25 +175,25 @@ impl Window {
     return self;
   }
   
-  should_close :: fn(*mut self) -> bool {
+  fn should_close(*mut self) -> bool {
     return glfwWindowShouldClose(self.handle) as bool;
   }
   
-  present :: fn(*mut self) {
+  fn present(*mut self) {
     glfwSwapBuffers(self.handle);
     glfwPollEvents();
   }
   
-  clear :: fn(flags: GL) {
+  fn clear(flags: GL) {
     glClear(flags);
   }
 
-  set_key_callback :: fn(*mut self, callback: fn*(*mut GLFWwindow, s32, s32, s32, s32)) {
+  fn set_key_callback(*mut self, callback: fn*(*mut GLFWwindow, s32, s32, s32, s32)) {
     glfwSetKeyCallback(self.handle, callback);
   }
 }
 
-Camera :: struct {
+struct Camera {
   position: Vec3,
   target: Vec3,
   up: Vec3,
@@ -206,7 +206,7 @@ Camera :: struct {
 }
 
 impl Camera {
-  new :: fn(up: Vec3, fov: f32, aspect: f32, near: f32, far: f32) -> #self {
+  fn new(up: Vec3, fov: f32, aspect: f32, near: f32, far: f32) -> #self {
     return .{
       position: Vec3::zero(),
       target:   Vec3::zero(),
@@ -218,7 +218,7 @@ impl Camera {
     }
   }
 
-  update :: fn(*mut self) {
+  fn update(*mut self) {
     self.view = Mat4::look_at(self.position, self.target, self.up);
     self.projection = Mat4::perspective(self.fov, self.aspect_ratio, self.near, self.far);
   }
