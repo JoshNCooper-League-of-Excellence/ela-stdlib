@@ -455,7 +455,7 @@ Ctx :: struct {
 
   It's a trade off, and I'm choosing the most dynamic one anyway. (just using String in most cases.)
 */
-IWidget :: interface {
+IWidget :: trait {
   // draw the widget it,
   // and inform the caller about the dimensions that this widget required to be drawn.
   draw :: fn(*mut self);

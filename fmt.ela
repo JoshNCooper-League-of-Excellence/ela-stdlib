@@ -210,7 +210,7 @@ impl FormatOptions {
 
 StringBuilder :: struct;
 
-Format :: interface {
+Format :: trait {
   format :: fn(*const self, builder: *mut StringBuilder, options: FormatOptions);
 }
 

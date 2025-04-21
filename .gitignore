@@ -3,3 +3,4 @@ main
 main.c
 .vscode
 .vscode/*
+/scratch

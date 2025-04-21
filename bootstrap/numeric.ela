@@ -2,7 +2,7 @@
   * Marker interfaces for numerical type constraints.
 */
 
-IsNumeric :: interface {}
+IsNumeric :: trait {}
 
 impl IsNumeric for u8 {}
 impl IsNumeric for u16 {}
@@ -17,12 +17,12 @@ impl IsNumeric for s64 {}
 impl IsNumeric for f32 {}
 impl IsNumeric for f64 {}
 
-IsFloat :: interface {}
+IsFloat :: trait {}
 
 impl IsFloat for f32 {}
 impl IsFloat for f64 {}
 
-IsInteger :: interface {}
+IsInteger :: trait {}
 
 impl IsInteger for u8 {}
 impl IsInteger for u16 {}

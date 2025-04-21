@@ -14,7 +14,7 @@
 #include "range.ela";
 // a few libc functions that are used in most programs.
 #include "libc.ela";
-// dynamic interface for allocator.
+// dynamic trait for allocator.
 #include "memory.ela";
 // List!<T>
 #include "list.ela";

@@ -4,7 +4,7 @@
   where my_object implements either Iterable!<T> (which just indicates we can be converted into an iterator)
   or my_object implements Iterator!<> where it: an iterator itself.
 */
-Iterator :: interface!<V> {
+Iterator :: trait!<V> {
   next :: fn(*mut self) -> Option!<V>;
 }
 
@@ -62,10 +62,10 @@ impl!<V> Iterator!<*mut V> for IterMut!<V> {
 }
 
 /* 
-  Iterable is a generic interface that represents a collection that can be iterated over.
+  Iterable is a generic trait that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
 */
-Iterable :: interface {
+Iterable :: trait {
   // Returns an iterator for the collection.
   iter :: fn(*const self) -> Iterator;
   iter_mut :: fn(*mut self) -> Iterator;

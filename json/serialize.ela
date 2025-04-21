@@ -1,6 +1,6 @@
 serialize_any :: fn(object: any) -> JsonResult;
 
-Serializable :: interface {
+Serializable :: trait {
   serialize :: fn(*const self) -> JsonResult;
   deserialize :: fn(*mut self, object: *mut JsonValue) -> Option!<String>;
 }

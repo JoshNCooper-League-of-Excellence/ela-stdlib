@@ -1,31 +1,24 @@
-
-
-// Run a cleanup procedure implicitly when an object goes out of scope.
-// Absolutely equivalent to a C++ Destructor.
-// This could be called explicitly on pointers, but it's not reccomended.
-// Drop        :: interface {
-//   drop      :: fn(*mut self);
-// }
-
 // equivalent to an explicit cast operator overload in C++,
 // allow an object to be constructed from another.
-From :: interface {
+// Except it's not done via casting, just a call.
+From :: trait {
   // construct a self type from T.
   from :: fn!<T>(v: T) -> #self;
 }
 
-// A deep clone, versus assignment always being a shallow clone in Ela.
-Clone :: interface {
+// A deep clone, versus assignment always being a shallow clone in Ela. (think C memory semantics)
+Clone :: trait {
   // get a deep clone of self.
   clone     :: fn(self) -> #self;
 }
 
-Init :: interface!<V> {
+// Construct from an InitList!<V>. This is never done automatically/implicitly, as of now.
+Init :: trait!<V> {
   init :: fn(init: InitList!<V>) -> #self;
 }
 
 // Binary arithmetic operator overloads.
-Arithmetic :: interface!<Right> {
+Arithmetic :: trait!<Right> {
   add :: fn(self, right: Right) -> #self;       // '+' operator.
   sub :: fn(self, right: Right) -> #self;       // '-' operator.
   mul :: fn(self, right: Right) -> #self;       // '*' operator.
@@ -34,7 +27,7 @@ Arithmetic :: interface!<Right> {
 }
 
 // Binary bitwise operator overloading.
-Bitwise :: interface!<Right> {
+Bitwise :: trait!<Right> {
   shr       :: fn(self, right: Right) -> #self;   // '>>' operator.
   shl       :: fn(self, right: Right) -> #self;   // '<<' operator.
   xor       :: fn(self, right: Right) -> #self;   //  '^' operator.
@@ -42,30 +35,95 @@ Bitwise :: interface!<Right> {
   and       :: fn(self, right: Right) -> #self;   //  '&' operator.
 }
 
-// TODO:  We should tidy up operator overloads, where we can automatically use + as += etc.
-Eq :: interface {
+PartialEq :: trait!<Right> {
+  eq :: fn(self, right: Right) -> bool;
+  neq :: fn(self, right: Right) -> bool;
+}
+
+Eq :: trait {
   eq :: fn(self, right: #self) -> bool;
   neq :: fn(self, right: #self) -> bool;
 }
 
-Compare :: interface!<Right> {
-  lt  :: fn(self, right: Right) -> bool;  // '<' operator.
-  gt  :: fn(self, right: Right) -> bool;  // '>' operator.
-
-  lte :: fn(self, right: Right) -> bool;  // '<=' operator.
-  gte :: fn(self, right: Right) -> bool;  // '>=' operator.
+Ordering :: enum {
+  Less = -1,
+  Equal = 0,
+  Greater = 1
 }
 
-Subscript :: interface!<T> {
+PartialOrd :: trait!<Right> where Right: PartialEq!<#self> {
+  partial_cmp :: fn(self, right: Right) -> Option!<Ordering>;
+
+  lt  :: fn(self, right: Right) -> bool {
+    ordering_opt := self.partial_cmp(right);
+    if ordering_opt is Option!<Ordering>::None {
+      return false;
+    }
+    ordering := ordering_opt.unwrap();
+    return ordering == Ordering::Less;
+  }
+
+  gt  :: fn(self, right: Right) -> bool {
+    ordering_opt := self.partial_cmp(right);
+    if ordering_opt is Option!<Ordering>::None {
+      return false;
+    }
+    ordering := ordering_opt.unwrap();
+    return ordering == Ordering::Greater;
+  }
+
+  lte :: fn(self, right: Right) -> bool {
+    ordering_opt := self.partial_cmp(right);
+    if ordering_opt is Option!<Ordering>::None {
+      return false;
+    }
+    ordering := ordering_opt.unwrap();
+    return ordering == Ordering::Less || ordering == Ordering::Equal;
+  }
+
+  gte :: fn(self, right: Right) -> bool {
+    ordering_opt := self.partial_cmp(right);
+    if ordering_opt is Option!<Ordering>::None {
+      return false;
+    }
+    ordering := ordering_opt.unwrap();
+    return ordering == Ordering::Greater || ordering == Ordering::Equal;
+  }
+}
+
+/// ! Fix repro 114, then we can use this trait binding.
+Ord :: trait /* where #self: Eq & PartialOrd!<#self> */ {
+  cmp :: fn(self, other: #self) -> Ordering;
+
+  max :: fn(self, other: #self) -> #self {
+    if self > other {
+      return self;
+    }
+    return other;
+  }
+
+  min :: fn(self, other: #self) -> #self {
+    if self < other {
+      return self;
+    }
+    return other;
+  }
+
+  clamp :: fn(self, min: #self, max: #self) -> #self {
+    return self.max(min, self.min(self, max));
+  }
+}
+
+Subscript :: trait!<T> {
   subscript :: fn(*const self, index: u64) -> *const T;
   subscript_mut :: fn(*mut self, index: u64) -> *mut T;
 }
 
-Deinit :: interface {
+Deinit :: trait {
   deinit :: fn(*mut self);
 }
 
-Allocator :: interface {
+Allocator :: trait {
   allocate :: fn(*mut self, size: u64) -> *mut void;
   free :: fn(*mut self, ptr: *mut void);
   allocate_array :: fn(*mut self, size: u64, n: u64) -> *mut void;
@@ -80,19 +138,19 @@ deinit :: fn!<T>(t: *const T) where T: Deinit {
   t.deinit();
 }
 
-Hash :: interface {
+Hash :: trait {
   hash :: fn(self) -> u64;
 }
 
-AsSlice :: interface!<T> {
+AsSlice :: trait!<T> {
   as_slice :: fn(self, range: Range) -> Slice!<T>;
 }
 
-AsCharSlice :: interface {
+AsCharSlice :: trait {
   as_char_slice :: fn(self) -> Slice!<u32>;
 }
 
-AsByteSlice :: interface {
+AsByteSlice :: trait {
   as_byte_slice :: fn(self) -> Slice!<u8>;
 }
 
