@@ -1,14 +1,14 @@
 // all of your basic types.
 #include "typedef.ela"
-// many more basic types, mainly interfaces.
-#include "interfaces.ela";
+// many more basic types, mainly traits.
+#include "traits.ela";
 // Option!<T>
 #include "option.ela";
 // Result!<Ok, Err>
 #include "result.ela";
 // Iterator<T> and Iterable<T>
 #include "iter.ela";
-// impls for numeric types, mostly marker interfaces.
+// impls for numeric types, mostly marker traits.
 #include "numeric.ela"; 
 // RangeBase!<T> and Range, Range_s32... etc.
 #include "range.ela";

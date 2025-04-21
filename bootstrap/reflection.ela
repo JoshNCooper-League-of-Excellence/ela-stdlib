@@ -15,7 +15,7 @@ Type :: struct {
   element_type: *const Type,                                        // the type this type has a pointer to, is an array of, etc.
 
   generic_args: List!<*const Type>,                                 // a list of the generic arguments.
-  interfaces: List!<*const Type>,                                   // a list of implemented interfaces.
+  traits: List!<*const Type>,                                       // a list of implemented traits.
 
   //// TODO: maybe we can make this more type safe in the future.
   methods:    List!<(str, *const void)>,                                   // a list of method function pointers, 
@@ -71,13 +71,13 @@ Type :: struct {
   POINTER,
   SIGNED,
   UNSIGNED,
-  INTERFACE,
+  TRAIT,
   UNION,
 }
 
 impl Type  {
-  is_interface :: fn(*const self) -> bool {
-    return self.flags & TypeFlags::INTERFACE != 0;
+  is_trait :: fn(*const self) -> bool {
+    return self.flags & TypeFlags::TRAIT != 0;
   }
   is_signed :: fn(*const self) -> bool {
     return self.flags & TypeFlags::SIGNED != 0;
@@ -277,9 +277,9 @@ impl Type {
 }
 
 impl Type {
-  implements :: fn(*const self, interface_name: str) -> bool {
-    for iface in self.interfaces {
-      if iface.name == interface_name {
+  implements :: fn(*const self, trait_name: str) -> bool {
+    for _trait in self.traits {
+      if _trait.name == trait_name {
         return true;
       }
     }

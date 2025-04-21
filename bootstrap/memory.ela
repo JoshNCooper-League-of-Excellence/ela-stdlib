@@ -1,6 +1,8 @@
-// This is a 'dynamic' because we don't support dynamic dispatch interfaces yet.
+// This is a 'dynamic' because we don't support dynamic dispatch traits yet.
 // This is soon to come, but we want to model our standard library around it too,
 // so this is a nice placeholder.
+
+/// * We do support dyn trait objects now. We just need to convert this.
 Dyn_Allocator :: struct {
   instance:         *mut void,
   p_allocate:       fn * (*mut void, u64) -> *mut void,

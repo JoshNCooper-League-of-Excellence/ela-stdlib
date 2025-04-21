@@ -1,5 +1,5 @@
 /* 
-  * Marker interfaces for numerical type constraints.
+  * Marker traits for numerical type constraints.
 */
 
 IsNumeric :: trait {}
