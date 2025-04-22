@@ -28,8 +28,8 @@ struct Stat {
   __glibc_reserved: s64[3],
 };
 
-#foreign fn fstat(fd: s32, stat: *mut Stat) -> s32;
-#foreign fn fileno(file: *const FILE) -> s32;
+extern fn fstat(fd: s32, stat: *mut Stat) -> s32;
+extern fn fileno(file: *const FILE) -> s32;
 
 
 /* Idk the validity of these methods, just written by chatgpt */
@@ -93,17 +93,17 @@ enum SeekPosition {
   End,
 }
 
-#foreign fn fread(ptr: *mut void, size: u64, count: u64, stream: *mut FILE) -> u64;
-#foreign fn fwrite(ptr: *const void, size: u64, count: u64, stream: *mut FILE) -> u64;
-#foreign fn fseek(stream: *mut FILE, offset: s64, origin: s32) -> s32;
-#foreign fn ftell(stream: *const FILE) -> s64;
-#foreign fn rewind(stream: *mut FILE) -> void;
-#foreign fn fopen(fname: *const u8, flags: *const u8) -> *mut FILE;
-#foreign fn fclose(file: *mut FILE) -> void;
-#foreign fn fgetc(file: *mut FILE) -> s8;
-#foreign fn putc(ch: u8, file: *mut FILE) -> void;
-#foreign fn fprintf(stream: *mut FILE, format: c_str, ...) -> s32;
-#foreign fn fflush(f: *const FILE);
+extern fn fread(ptr: *mut void, size: u64, count: u64, stream: *mut FILE) -> u64;
+extern fn fwrite(ptr: *const void, size: u64, count: u64, stream: *mut FILE) -> u64;
+extern fn fseek(stream: *mut FILE, offset: s64, origin: s32) -> s32;
+extern fn ftell(stream: *const FILE) -> s64;
+extern fn rewind(stream: *mut FILE) -> void;
+extern fn fopen(fname: *const u8, flags: *const u8) -> *mut FILE;
+extern fn fclose(file: *mut FILE) -> void;
+extern fn fgetc(file: *mut FILE) -> s8;
+extern fn putc(ch: u8, file: *mut FILE) -> void;
+extern fn fprintf(stream: *mut FILE, format: c_str, ...) -> s32;
+extern fn fflush(f: *const FILE);
 
 // TODO: add a way to do Binary stuff.
 #flags enum FileOpenFlags {
@@ -235,8 +235,8 @@ impl File {
   }
 }
 
-#export struct DIR;
-#foreign fn getcwd(buf: c_str, size: u64) -> c_str;
+struct DIR;
+extern fn getcwd(buf: c_str, size: u64) -> c_str;
 
 struct dirent {
   d_ino: u64,
@@ -246,9 +246,9 @@ struct dirent {
   d_name: u8[256],
 }
 
-#foreign fn opendir(name: *const u8) -> *mut DIR;
-#foreign fn readdir(dir: *mut DIR) -> *const dirent;
-#foreign fn closedir(dir: *const void) -> s32;
+extern fn opendir(name: *const u8) -> *mut DIR;
+extern fn readdir(dir: *mut DIR) -> *const dirent;
+extern fn closedir(dir: *const void) -> s32;
 
 struct Directory {
   path: String,
@@ -330,7 +330,7 @@ impl Deinit for Directory {
 */
 const PATH_MAX := 4096;
 
-#foreign fn realpath(path: *const u8, result: *mut u8) -> *const u8;
+extern fn realpath(path: *const u8, result: *mut u8) -> *const u8;
 
 fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsByteSlice {
   slice := path.as_byte_slice();
@@ -344,8 +344,8 @@ fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsByteSlice 
   return Some(String::from_ptr(resolved_path));
 }
 
-#foreign fn chdir(path: *const u8) -> s32;
-#foreign fn dirname(path: *const u8) -> *mut u8;
+extern fn chdir(path: *const u8) -> s32;
+extern fn dirname(path: *const u8) -> *mut u8;
 
 /* 
   The option return type simply says when it .is_none(), it has failed in some capacity.

@@ -22,14 +22,9 @@ struct Iter!<V> {
 }
 
 /* 
-  A basic iterator, can be used as a general purpose way to iterate over
-  collections that are implemented as contiguous chunks of memory, and 
-  a pointer just needs to be incremented until an end point to fully traverse it.
+  a mutable version of Iter!<>, where it returns a pointer to each element, instead of dereferencing it.
 */
 struct IterMut!<V> {
-  // Pointer to the current element in the collection.
-  // Of course, this has to be mutable because we use pointer arithmetic
-  // to advance the iterator.
   ptr: *mut V,  
   end: *const V,  // Pointer to the end of the collection.
 }

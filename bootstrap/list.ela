@@ -87,13 +87,16 @@ fn panic(msg: str);
     */
     fn push_front(*mut self, v: T) {
       if self.length + 1 >= self.capacity {
-
-      if self.capacity == 0 then self.capacity = 4;
+        if self.capacity == 0 {
+          self.capacity = 4;
+        }
         self.resize(self.capacity * 2);
       }
-
+  
+      // Shift elements to the right to make space at the front
       memmove(self.data + 1, self.data, sizeof(T) * self.length);
-
+  
+      // Insert the new value at the front
       self.data[0] = v;
       self.length++;
     }

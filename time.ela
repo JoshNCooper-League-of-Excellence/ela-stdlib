@@ -1,12 +1,12 @@
 
-#foreign fn time(value: *const void) -> s32;
+extern fn time(value: *const void) -> s32;
 
 struct timespec_t {
   tv_sec: s64,
   tv_nsec: s64,
 }
 
-#foreign fn clock_gettime(clock_id: s32, tp: *mut timespec_t) -> s32;
+extern fn clock_gettime(clock_id: s32, tp: *mut timespec_t) -> s32;
 
 struct tm_t {
   tm_sec: s32,
@@ -20,7 +20,7 @@ struct tm_t {
   tm_isdst: s32,
 }
 
-#foreign fn localtime_r(timep: *const s64, result: *mut tm_t) -> *mut tm_t;
+extern fn localtime_r(timep: *const s64, result: *mut tm_t) -> *mut tm_t;
 
 struct Timing;
 
