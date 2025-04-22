@@ -1,26 +1,33 @@
-
 impl StringUtils for String {}
-
 
 #ifndef FREESTANDING {
   impl String {
+    @[inline]
+    fn get_allocator_if_needed(*mut self) {
+      if !self.allocator {
+        self.allocator = get_default_allocator();
+      }
+    }  
+  }
+
+  impl String {
     fn replace!<Old, Replacement>(*mut self, old_arg: Old, replacement_arg: Replacement) -> String
       where Old: AsByteSlice,
-            Replacement: AsByteSlice
-    {
+            Replacement: AsByteSlice {
       old := old_arg.as_byte_slice();
       replacement := replacement_arg.as_byte_slice();
-      
 
-      mut result : String = .{};
+      self.get_allocator_if_needed();
+
+      mut result : String;
       for i in 0..self.length {
         if strncmp(self.data + i, old.data, old.length as s32) == 0 {
-          result.data = realloc(result.data, result.length + replacement.length + 1);
+          result.data = self.allocator.resize(result.data, result.length + replacement.length + 1);
           memcpy(result.data + result.length, replacement.data, replacement.length);
           result.length += replacement.length;
           i += old.length - 1;
         } else {
-          result.data = realloc(result.data, result.length + 1 + 1);
+          result.data = self.allocator.resize(result.data, result.length + 1 + 1);
           result.data[result.length] = self.data[i];
           result.length++;
         }
@@ -30,7 +37,7 @@ impl StringUtils for String {}
     }
 
     fn from!<T>(data: T) -> #self
-    where T: AsByteSlice {
+      where T: AsByteSlice {
       slice := data.as_byte_slice();
 
       if slice.is_empty() {
@@ -38,7 +45,8 @@ impl StringUtils for String {}
       }
       
       return .{
-        data: strdup(slice.data),
+        allocator: get_default_allocator(),
+        data: get_default_allocator().copy(slice.data, sizeof(u8), slice.length),
         capacity: slice.length,
         length: slice.length,
       };
@@ -47,7 +55,8 @@ impl StringUtils for String {}
     fn from_ptr(data: c_str) -> #self {
       length := strlen(data);
       return .{
-        data: strdup(data),
+        allocator: get_default_allocator(),
+        data: get_default_allocator().copy(data, sizeof(u8), length),
         capacity: length,
         length: length,
       };
@@ -59,7 +68,8 @@ impl StringUtils for String {}
 
       if self.length + slice.length >= self.capacity 
         then self.resize(self.capacity * 3 + slice.length);
-
+      
+      self.get_allocator_if_needed();
       memcpy(self.data + self.length, slice.data, slice.length);
 
       self.length += slice.length;
@@ -80,9 +90,7 @@ impl StringUtils for String {}
       if new_size < self.length then self.length = new_size;
       self.capacity = new_size;
 
-      if self.allocator == null {
-        self.allocator = get_default_allocator();
-      }
+      self.get_allocator_if_needed();
 
       self.data = self.allocator.resize(self.data, sizeof(u8), new_size + 1);
       self.data[self.length] = 0;
@@ -90,8 +98,6 @@ impl StringUtils for String {}
 
     fn push(*mut self, ch: u8) {
       if self.capacity == 0 then self.capacity = 256 / 3;
-      // ! BUG: why do we have to check !data here?
-      // ! i was getting a large capacity with null data. Not sure how.
       if !self.data || self.length + 1 >= self.capacity {
         self.resize(self.capacity * 3 + 1);
       }
@@ -159,8 +165,9 @@ impl StringUtils for String {}
     fn substr(self, start: u64, mut length: u64) -> String {
       if start >= self.length then return .{};
 
-      if start + length > self.length then 
-        length = self.length - start;
+      if start + length > self.length 
+        then length = self.length - start;
+
       return .{
         data: self.allocator.copy(self.data + start, sizeof(u8), length),
         capacity: length,
@@ -209,8 +216,6 @@ impl StringUtils for String {}
       self.length--;
       self.data[self.length] = '\0';
     }
-
-    
   }
 
   impl Clone for String {
@@ -230,18 +235,12 @@ impl StringUtils for String {}
 
   impl Deinit for String {
     fn deinit(*mut self) {
-      if self.allocator == null {
-        self.allocator = get_default_allocator();
-      }
+      self.get_allocator_if_needed();
       self.allocator.free(self.data);
       self.data = null;
       self.capacity = 0;
       self.length = 0;
     }
-  }
-
-  impl String {
-
   }
 }
 
@@ -255,19 +254,21 @@ impl Subscript!<u8> for String {
 }
 
 impl String {
-  // THIS IS JUST A VIEW OF THE CURRENT STRING, PERFORM A CLONE ON THE STR TO GET AN OWNED COPY.
+  // this is just a view of the current string, we still own the memory in the 'str'
   fn as_str(self) -> str {
     return .{
       data: self.data,
       length: self.length,
     }
   }
+
   fn slice(self, range: Range) -> Slice!<u8> {
     return .{
       data: self.data + range.begin,
       length: range.end - range.begin,
     }
   }
+
   fn slice_mut(self, range: Range) -> SliceMut!<u8> {
     return .{
       data: (self.data + range.begin) as *mut u8,
@@ -308,7 +309,8 @@ impl AsCharSlice for String {
   fn as_char_slice(self) -> Slice!<u32> {
     return .{
       data: self.data,
-      length: self.length / 4, // we do this because we're reinterpreting a c_str as a u32* which effectively packs it and quarters the "length"
+      length: self.length / 4, 
+      // we do this because we're reinterpreting a c_str as a u32* which effectively packs it and quarters the "length"
     }
   }
 }

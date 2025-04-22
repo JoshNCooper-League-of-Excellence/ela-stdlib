@@ -74,13 +74,14 @@ impl Dyn_Allocator {
     fn free(*mut self, ptr: *mut void) {
       free(ptr);
     }
-    fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
-      return calloc(size, n);
-    }
     fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
       return realloc(ptr, element_size * new_size);
     }
+    fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
+      return calloc(size, n);
+    }
     fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
+      printf("memcpy via libc allocator, ptr: %p, element_size: %zu, n: %zu\n"c, ptr, element_size, n);
       newptr := self.allocate_array(element_size, n);
       memcpy(newptr, ptr, n * element_size);
       return newptr;

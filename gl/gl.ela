@@ -512,4 +512,3 @@ extern fn glMultiTexCoord4iARB(target: GLenum, s: GLint, t: GLint, r: GLint, q: 
 extern fn glMultiTexCoord4ivARB(target: GLenum, v: *const GLint) -> void;
 extern fn glMultiTexCoord4sARB(target: GLenum, s: GLshort, t: GLshort, r: GLshort, q: GLshort) -> void;
 extern fn glMultiTexCoord4svARB(target: GLenum, v: *const GLshort) -> void;
-

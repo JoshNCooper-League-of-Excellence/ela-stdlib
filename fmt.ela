@@ -390,7 +390,6 @@ impl StringBuilder {
   }
 }
 
-@[inline]
 fn to_string!<T>(value: T) -> String {
   type := typeof(T);
   mut format : str;
@@ -449,7 +448,6 @@ fn to_string!<T>(value: T) -> String {
   return String::from_ptr(buffer);
 }
 
-@[inline]
 fn format_struct(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   builder.append(value.type.name);
   builder.append(" {");
@@ -490,7 +488,6 @@ fn format_struct(value: any, builder: *mut StringBuilder, options: FormatOptions
   }
 }
 
-@[inline]
 fn format_tuple(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   builder.append("(");
   for i in 0..value.type.fields.length {
@@ -508,7 +505,6 @@ fn format_tuple(value: any, builder: *mut StringBuilder, options: FormatOptions)
   builder.append(")");
 }
 
-@[inline]
 fn format_any(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   if value.type.implements("Format") {
     dyn_format := new_dyn_format(value);
@@ -568,7 +564,6 @@ fn format_any(value: any, builder: *mut StringBuilder, options: FormatOptions) {
   }
 }
 
-@[inline]
 fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
   if fmt.length == 0 then
     return .{};
@@ -616,27 +611,23 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String wher
 /* 
   Quick format. avoid passing settings.
 */
-@[inline]
 fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
   return format(fmt, tuple, *FormatOptions::current());
 }
 
 
-@[inline]
 fn print!<T>(message: T) {
   mut formatted := format("%", (message,), *FormatOptions::current());
   printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
-@[inline]
 fn println!<T>(message: T) {
   mut formatted := format("%", (message,), *FormatOptions::current());
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
-@[inline]
 fn printlnf!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   mut formatted := format(fmt, tuple, *FormatOptions::current());
   printf("%s\n"c, formatted.data);

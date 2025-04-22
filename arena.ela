@@ -1,6 +1,15 @@
+
 #flags enum ArenaFlags {
-  None,               // default.
-  Align,              // if self flag is set, the allocator will fix alignment automatically when a misaligned allocation is found. Else it will naively allocate regardless of size.
+  /*
+    default.
+  */
+  None,
+  /*
+    if self flag is set, the allocator will fix alignment
+    automatically when a misaligned allocation is found.
+    Else it will naively allocate regardless of size.
+  */
+  Align,
 }
 
 // Super basic arena allocator, with a constructor that allocates a big block,
@@ -12,7 +21,7 @@ struct Arena {
   flags: ArenaFlags,
   alignment: u64,
   next: *mut Arena,
-} 
+}
 
 impl Arena {
   fn new(size: u64, flags: ArenaFlags) -> #self {
@@ -33,33 +42,32 @@ impl Arena {
     if size > self.size {
       buffer: u8[1024];
       len := snprintf(
-        buffer, 
-        1024, 
-        "attempted to allocate %d bytes in an arena where each chunk is maximum %d bytes. this would lead to splits in the data."c, 
+        buffer,
+        1024,
+        "attempted to allocate %d bytes in an arena where each chunk is maximum %d bytes. this would lead to splits in the data."c,
         size, self.size
       );
       panic(.{ data: buffer, length: len });
     }
-    
+
     mut aligned_ptr := self.ptr;
     if self.flags & ArenaFlags::Align != 0 {
       aligned_ptr = (self.ptr + self.alignment - 1) & ~(self.alignment - 1);
     }
-    
+
     oom := aligned_ptr + size > self.size;
-    
+
     if oom  {
       if !self.next {
         self.next = new(Arena::new(self.size, self.flags));
       }
       return self.next.alloc(size);
     }
-    
+
     result := self.memory + aligned_ptr;
     self.ptr += aligned_ptr + size;
     return result;
   }
-
 }
 
 impl Allocator for Arena {
@@ -67,16 +75,12 @@ impl Allocator for Arena {
     return self.alloc(size);
   }
   fn free(*mut self, ptr: *mut void) {}
-
   fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
     return self.alloc(size * n);
   }
-
   fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
-    // return self.allocate_array(element_size, new_size);
     return null;
   }
-
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
     new_ptr := self.alloc(element_size * n);
     memcpy(new_ptr, ptr, n);
@@ -89,9 +93,7 @@ impl Allocator for Arena {
       free(self.next);
       self.next = null;
     }
-
     free(self.memory);
-
     self.memory = null;
   }
 }
