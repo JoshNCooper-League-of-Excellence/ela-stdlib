@@ -22,35 +22,39 @@ impl!<T> Serializable for List!<T> {
   }
 }
 
-impl!<K, V> Serializable for Map!<K, V> where K: String {
-  fn serialize(*const self) -> JsonResult {
-    mut value := JsonValue::new();
-    value.type = JsonValueType::Object;
-    for key, v in *self {
-      result := serialize!<V>(v);
-      if result.is_err() {
-        return result;
-      }
-      value.object.insert(key, result.unwrap());
-    }
-    return JsonResult::Ok(value);
-  }
 
-  fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
-    println(object.type as JsonValueType);
+// We need a way to do this for any key value, we have to constrain it to !<String, V>
+// in some way, but using a where will just make it so you cannot use Map!<> with anything but String
+// in a project where you are also using Json.
+// impl!<K, V> Serializable for Map!<K, V> {
+//   fn serialize(*const self) -> JsonResult {
+//     mut value := JsonValue::new();
+//     value.type = JsonValueType::Object;
+//     for key, v in *self {
+//       result := serialize!<V>(v);
+//       if result.is_err() {
+//         return result;
+//       }
+//       value.object.insert(key, result.unwrap());
+//     }
+//     return JsonResult::Ok(value);
+//   }
 
-    if object.type != JsonValueType::Object 
-      then return Some(String::from("invalid json type, expected an object to deserialize into Map."));
+//   fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
+//     println(object.type as JsonValueType);
 
-    for key, value in object.object {
-      mut v: V;
-      err := deserialize!<V>(value, &mut v);
-      if err.is_some() {
-        return err;
-      }
-      self.insert(key, v);
-    }
+//     if object.type != JsonValueType::Object 
+//       then return Some(String::from("invalid json type, expected an object to deserialize into Map."));
 
-    return None();
-  }
-}
+//     for key, value in object.object {
+//       mut v: V;
+//       err := deserialize!<V>(value, &mut v);
+//       if err.is_some() {
+//         return err;
+//       }
+//       self.insert(key, v);
+//     }
+
+//     return None();
+//   }
+// }
