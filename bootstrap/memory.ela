@@ -173,7 +173,6 @@ impl Dyn_Allocator {
   }
 }
 
-
 #ifndef FREESTANDING {
   // TODO: make this less stupid.
   // you can also overwrite this if you want, just be sure to free the old one.

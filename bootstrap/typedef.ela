@@ -5,7 +5,7 @@ alias c_str :: *const u8;
 
 struct Type;
 
-// This is a string literal type. "..." will return this type. 
+// This is a string literal type. "..." will return this type.
 // It's meant to be an immutable constant string.
 
 // to get a 'u8*' literal, use `"..."c` the little `c` postfix.                              ^
@@ -24,8 +24,8 @@ struct String {
   allocator: *mut Dyn_Allocator,
 }
 
-// This is what is produced when you do 
-// .[0, 1, 2, 3] (or {0, 1, 2, 3})
+// This is what is produced when you do
+// .[0, 1, 2, 3]
 // it is stack allocated and does not need to be freed, nor
 // should it ever be held on to.
 struct InitList!<V> {
@@ -40,7 +40,6 @@ struct List!<V> {
   capacity: u64,
   allocator: *mut Dyn_Allocator,
 }
-
 
 // A semi-type-erased pointer that carries the RTTI (Runtime type information)
 // with it for a way to do "duck typing" in a way.
@@ -63,16 +62,12 @@ struct SliceMut!<V> {
   length: u64,
 }
 
+const RESULT_IS_ERR: u8 =  0;
+const RESULT_IS_OK: u8 =  1;
 
-RESULT_IS_ERR : u8 =  0;
-RESULT_IS_OK  : u8 =  1;
-
-struct Result!<_Ok, _Err> {
-  index: u8,
-  #anon :: union {
-    err:  _Err,
-    ok:   _Ok,
-  },
+choice Result!<_Ok, _Err> {
+  Ok(_Ok),
+  Err(_Err),
 }
 
 choice Option!<T> {
