@@ -33,10 +33,10 @@ impl!<_Ok, _Err> Format for Result!<_Ok, _Err> {
       builder.appendf("%::", (typeof(Result!<_Ok, _Err>).name,), options);
       options.quote_strings = old;
     }
-    if self.is_ok() {
-      builder.appendf("Ok(%)", (self.ok,), options);
-    } else {
-      builder.appendf("Err(%)", (self.err,), options);
+    if self is Result!<_Ok, _Err>::Ok(ok) {
+      builder.appendf("Ok(%)", (ok,), options);
+    } else if self is Result!<_Ok, _Err>::Err(err) {
+      builder.appendf("Err(%)", (err,), options);
     }
   }
 }

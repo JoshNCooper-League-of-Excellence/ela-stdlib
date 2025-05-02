@@ -1,45 +1,38 @@
 
 impl!<_Ok, _Err> Result!<_Ok, _Err> {
-  fn Ok(v: _Ok) -> #self {
-    return .{
-      index: RESULT_IS_OK,
-      ok: v,
-    };
-  }
-
-  fn Err(v: _Err) -> #self {
-    return .{
-      index: RESULT_IS_ERR,
-      err: v
-    }
-  }
-
   fn unwrap(self) -> _Ok {
-    if self.index == RESULT_IS_ERR {
-      panic("called 'unwrap' on an Err result");
+    if self is Result!<_Ok, _Err>::Ok(ok) {
+      return ok;
     }
-    return self.ok;
+    panic("called 'unwrap' on an Err result");
+    default: _Ok;
+    return default;
   }
 
   fn expect(self, handler: fn* (_Err)) -> _Ok {
-    if self.index == RESULT_IS_ERR {
-      handler(self.err);
+    if self is Result!<_Ok, _Err>::Err(err) {
+      handler(err);
       panic("unwrapped a 'Err' result.");
     } 
-    return self.ok;
+    return self.unwrap();
   }
 
   fn is_ok(self) -> bool {
-    return self.index == RESULT_IS_OK;
+    if self is Result!<_Ok, _Err>::Ok {
+      return true;
+    }
+    return false;
   }
 
   fn is_err(self) -> bool {
-    return self.index == RESULT_IS_ERR;
+    if self is Result!<_Ok, _Err>::Err {
+      return true;
+    }
+    return false;
   }
 
   // we can use this to propagate the error/ok into a new result type,
   // to create a hierarchy
-
   // for example
   /* 
       fn getter(..) -> Result!<(), String> ... // this function returns a Result that has a String for an error.
@@ -59,12 +52,20 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
       }
   */
   fn propagate!<NewErrorT>(self) -> NewErrorT {
-    return NewErrorT::Err(self.err);
+    if self is Result!<_Ok, _Err>::Err(err) {
+      return NewErrorT::Err(err);
+    }
+    default: NewErrorT;
+    return default;
   }
 
   // this does the same thing as propagate, but it just does it for the ok.
   // I don't know good names for these, so obviously suggestions are welcome
   fn coerce!<NewOkT>(self) -> NewOkT {
-    return NewErrorT::Ok(self.ok);
+    if self is Result!<_Ok, _Err>::Err(err) {
+      return NewErrorT::Ok(err);
+    }
+    default: NewErrorT;
+    return default;
   }
 }

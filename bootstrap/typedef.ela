@@ -10,7 +10,7 @@ struct Type;
 
 // to get a 'u8*' literal, use `"..."c` the little `c` postfix.                              ^
 struct str {
-  data:    c_str,
+  data: c_str,
   length:  u64,
 }
 
@@ -62,8 +62,6 @@ struct SliceMut!<V> {
   length: u64,
 }
 
-const RESULT_IS_ERR: u8 =  0;
-const RESULT_IS_OK: u8 =  1;
 
 choice Result!<_Ok, _Err> {
   Ok(_Ok),
