@@ -1,7 +1,7 @@
 
 #ifndef FREESTANDING {
   impl!<T> Slice!<T> {
-    fn clone!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | Dyn_Allocator {
+    fn clone!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
       data : *mut T = allocator.allocate_array(sizeof(T), self.length);
       memcpy(data, self.data, self.length * sizeof(T));
       return .{
@@ -14,7 +14,7 @@
     // To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
     // since Slice!<T> is supposed to be like blatantly non-owning.
     // it's confusing and muddles the intended purpose and clarity of having the type in the standard.
-    fn deinit!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | Dyn_Allocator {
+    fn deinit!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
       allocator.free(self.data);
     }
   }

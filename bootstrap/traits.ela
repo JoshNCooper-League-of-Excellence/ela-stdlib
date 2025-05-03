@@ -123,15 +123,6 @@ trait Deinit {
   fn deinit(*mut self);
 }
 
-trait Allocator {
-  fn allocate(*mut self, size: u64) -> *mut void;
-  fn free(*mut self, ptr: *mut void);
-  fn allocate_array(*mut self, size: u64, n: u64) -> *mut void;
-  fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
-  fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
-  fn deinit(*mut self);
-}
-
 
 // just a free function version for those who might prefer a C like 'free' style api.
 fn deinit!<T>(t: *const T) where T: Deinit {

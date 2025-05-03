@@ -1,7 +1,7 @@
 impl StringUtils for str {}
 
 impl str {
-  fn to_string!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | Dyn_Allocator {
+  fn to_string!<Alloc>(self, allocator: *mut Alloc) -> String where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
     return .{
       data: allocator.copy(self.data, sizeof(u8), self.length),
       length: self.length,

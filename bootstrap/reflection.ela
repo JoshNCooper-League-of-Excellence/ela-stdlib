@@ -175,7 +175,7 @@ impl any {
 
 #ifndef FREESTANDING {
   impl any {
-    fn new!<T, Alloc>(t: T, alloc: *mut Alloc) -> #self where Alloc: Allocator | Dyn_Allocator {
+    fn new!<T, Alloc>(t: T, alloc: *mut Alloc) -> #self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator  {
       ptr : *mut T = alloc.allocate(sizeof(T));
       *ptr = t;
       return .{

@@ -5,6 +5,16 @@ alias c_str :: *const u8;
 
 struct Type;
 
+// this is used by many foundational types so it has to be defined first.
+trait Allocator {
+  fn allocate(*mut self, size: u64) -> *mut void;
+  fn free(*mut self, ptr: *mut void);
+  fn allocate_array(*mut self, size: u64, n: u64) -> *mut void;
+  fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
+  fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
+  fn deinit(*mut self);
+}
+
 // This is a string literal type. "..." will return this type.
 // It's meant to be an immutable constant string.
 
@@ -21,7 +31,7 @@ struct String {
   data: *mut u8,
   length: u64,
   capacity: u64,
-  allocator: *mut Dyn_Allocator,
+  allocator: *mut dyn Allocator,
 }
 
 // This is what is produced when you do
@@ -38,7 +48,7 @@ struct List!<V> {
   data:     *mut V,
   length:   u64,
   capacity: u64,
-  allocator: *mut Dyn_Allocator,
+  allocator: *mut dyn Allocator,
 }
 
 // A semi-type-erased pointer that carries the RTTI (Runtime type information)
@@ -61,7 +71,6 @@ struct SliceMut!<V> {
   data:  *mut V,
   length: u64,
 }
-
 
 choice Result!<_Ok, _Err> {
   Ok(_Ok),

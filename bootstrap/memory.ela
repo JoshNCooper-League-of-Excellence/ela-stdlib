@@ -1,69 +1,3 @@
-// This is a 'dynamic' because we don't support dynamic dispatch traits yet.
-// This is soon to come, but we want to model our standard library around it too,
-// so this is a nice placeholder.
-
-/// * We do support dyn trait objects now. We just need to convert this.
-struct Dyn_Allocator {
-  instance:         *mut void,
-  p_allocate:       fn * (*mut void, u64) -> *mut void,
-  p_free:           fn * (*mut void, *const void),
-  p_allocate_array: fn * (*mut void, u64, u64) -> *mut void,
-  p_resize:         fn * (*mut void, *const void, u64, u64) -> *mut void,
-  p_copy:           fn * (*mut void, *const void, u64, u64) -> *mut void,
-  p_deinit:         fn * (*mut void),
-}
-
-impl Dyn_Allocator {
-  fn new!<T>(t: *mut T) -> #self where T: Allocator {
-    return .{
-      instance: t,
-      p_allocate:       &mut T::allocate,
-      p_free:           &mut T::free,
-      p_allocate_array: &mut T::allocate_array,
-      p_resize:         &mut T::resize,
-      p_copy:           &mut T::copy,
-      p_deinit:         &mut T::deinit,
-    };
-  }
-}
-
-impl Dyn_Allocator {
-  fn new_ptr!<T>(*mut self, value: T) -> *mut T {
-    mut mem : *mut T = self.allocate(sizeof(T));
-    *mem = value;
-    return mem;
-  }
-
-  fn allocate(*mut self, size: u64) -> *mut void {
-    p_allocate := self.p_allocate;
-    return p_allocate(self.instance, size);
-  }
-
-  fn free(*mut self, ptr: *mut void) {
-    p_free := self.p_free;
-    p_free(self.instance, ptr);
-  }
-
-  fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
-    p_allocate_array := self.p_allocate_array;
-    return p_allocate_array(self.instance, size, n);
-  }
-
-  fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
-    p_resize := self.p_resize;
-    return p_resize(self.instance, ptr, element_size, new_size);
-  }
-
-  fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
-    p_copy := self.p_copy;
-    return p_copy(self.instance, ptr, element_size, n);
-  }
-
-  fn deinit(*mut self) {
-    p_deinit := self.p_deinit;
-    p_deinit(self.instance);
-  }
-}
 
 #ifndef FREESTANDING {
   struct Libc_Allocator {}
@@ -93,7 +27,6 @@ impl Dyn_Allocator {
       return self;
     }
   }
-
   struct Tracking_Allocator {
     pointers: *mut *mut void,
     length: u64,
@@ -174,14 +107,18 @@ impl Dyn_Allocator {
 }
 
 #ifndef FREESTANDING {
-  // TODO: make this less stupid.
-  // you can also overwrite this if you want, just be sure to free the old one.
-  fn get_default_allocator() -> *mut Dyn_Allocator {
+  fn get_default_allocator() -> *mut dyn Allocator {
     #static mut allocator: Libc_Allocator;
-    #static mut dynamic: *mut Dyn_Allocator = null;
-    if dynamic == null {
-      dynamic = new(Dyn_Allocator::new(&mut allocator));
-    }
-    return dynamic;
+    #static mut instance: *mut dyn Allocator = null;
+
+    if !instance 
+      then instance = new(dynof(&mut allocator, Allocator));
+      
+    return instance;
+  }
+} else {
+  fn get_default_allocator() -> *mut dyn Allocator {
+    #static mut allocator: *mut dyn Allocator;
+    return allocator;
   }
 }

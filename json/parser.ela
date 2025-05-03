@@ -111,11 +111,12 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
 
 fn parse_file(file: str) -> JsonResult {
   result := File::read_all(file);
-  if result.is_err() {
-    return JsonResult::Err(result.err.to_string(get_default_allocator()))
+
+  if result is Result!<String, str>::Err(err) {
+    return JsonResult::Err(err.to_string(get_default_allocator()));
   }
 
-  mut lexer := JsonLexer::create(file.to_string(get_default_allocator()), result.unwrap());
+  mut lexer := JsonLexer::create(file, result.unwrap());
   return parse(&mut lexer);
 }
 
