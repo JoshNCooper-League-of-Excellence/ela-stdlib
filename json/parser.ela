@@ -113,7 +113,7 @@ fn parse_file(file: str) -> JsonResult {
   result := File::read_all(file);
 
   if result is Result!<String, str>::Err(err) {
-    return JsonResult::Err(err.to_string(get_default_allocator()));
+    return JsonResult::Err(err.to_string(get_global_allocator()));
   }
 
   mut lexer := JsonLexer::create(file, result.unwrap());
@@ -121,6 +121,6 @@ fn parse_file(file: str) -> JsonResult {
 }
 
 fn parse_string(s: str) -> JsonResult {
-  mut lexer := JsonLexer::create(":<loaded from string>:".to_string(get_default_allocator()), s.to_string(get_default_allocator()));
+  mut lexer := JsonLexer::create(":<loaded from string>:".to_string(get_global_allocator()), s.to_string(get_global_allocator()));
   return parse(&mut lexer);
 }

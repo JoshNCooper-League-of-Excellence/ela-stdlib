@@ -106,19 +106,57 @@
   }
 }
 
-#ifndef FREESTANDING {
-  fn get_default_allocator() -> *mut dyn Allocator {
-    #static mut allocator: Libc_Allocator;
-    #static mut instance: *mut dyn Allocator = null;
 
-    if !instance 
-      then instance = new(dynof(&mut allocator, Allocator));
-      
-    return instance;
+/* 
+  TODO:
+    explore how we could make this (the global allocator system) thread safe.
+    It relies heavily on pointers/function pointers, which i highly doubt are just thread safe.
+*/
+
+mut global_libc_allocator: Libc_Allocator;
+mut global_dyn_libc_allocator: dyn Allocator;
+mut global_allocator: dyn Allocator;
+
+impl dyn Allocator {
+  fn has_instance(self) -> bool => self.instance != null;
+}
+
+fn set_global_allocator(allocator: dyn Allocator) {
+  global_allocator = allocator;
+}
+
+#ifndef FREESTANDING {
+  fn get_global_allocator() -> dyn Allocator {
+    /* 
+      We have to initialize the global data here conditionally because we don't have
+      global static initializers.
+
+      Also, if this ever gets invalidated, (a user carelessly setting this to null)
+      we just rectify it -- many container types such as List!<T> and String rely heavily
+      on this global allocator, and we can't have it in an invalid state.
+
+      Of course that's not guaranteed protection, but it's a measure.
+
+      An alternative would be beginning every program with 'set_global_allocator()' 
+      which would just be annoying
+    */
+
+    // check .instance here to see if this even points to anything.
+    if !global_allocator.has_instance() {
+
+      // we have to setup the dynof here because of static initializer limitations.
+      if !global_dyn_libc_allocator.has_instance() {
+        global_dyn_libc_allocator = dynof(&mut global_libc_allocator, Allocator);
+      }
+
+      global_allocator = global_dyn_libc_allocator;
+    }
+    return global_allocator;
   }
+
 } else {
-  fn get_default_allocator() -> *mut dyn Allocator {
-    #static mut allocator: *mut dyn Allocator;
-    return allocator;
+  // If you're freestanding, it's totally up to you to set the global allocators up.
+  fn get_global_allocator() -> dyn Allocator {
+    return global_allocator;
   }
 }

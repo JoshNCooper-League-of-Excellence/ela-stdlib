@@ -4,8 +4,8 @@ impl StringUtils for String {}
   impl String {
     @[inline]
     fn get_allocator_if_needed(*mut self) {
-      if !self.allocator {
-        self.allocator = get_default_allocator();
+      if !self.allocator.has_instance() {
+        self.allocator = get_global_allocator();
       }
     }  
   }
@@ -45,8 +45,8 @@ impl StringUtils for String {}
       }
       
       return .{
-        allocator: get_default_allocator(),
-        data: get_default_allocator().copy(slice.data, sizeof(u8), slice.length),
+        allocator: get_global_allocator(),
+        data: get_global_allocator().copy(slice.data, sizeof(u8), slice.length),
         capacity: slice.length,
         length: slice.length,
       };
@@ -55,8 +55,8 @@ impl StringUtils for String {}
     fn from_ptr(data: c_str) -> #self {
       length := strlen(data);
       return .{
-        allocator: get_default_allocator(),
-        data: get_default_allocator().copy(data, sizeof(u8), length),
+        allocator: get_global_allocator(),
+        data: get_global_allocator().copy(data, sizeof(u8), length),
         capacity: length,
         length: length,
       };
@@ -221,8 +221,8 @@ impl StringUtils for String {}
   impl Clone for String {
     fn clone(self) -> #self {
       mut allocator := self.allocator;
-      if allocator == null {
-        allocator = get_default_allocator();
+      if !allocator.has_instance() {
+        allocator = get_global_allocator();
       }
       return .{
         data: allocator.copy(self.data, sizeof(u8), self.length),

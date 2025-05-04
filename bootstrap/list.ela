@@ -3,6 +3,12 @@ fn panic(msg: str);
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
     @[inline]
+    fn get_allocator_if_needed(*mut self) {
+      if !self.allocator.has_instance() 
+        then self.allocator = get_global_allocator();
+    }
+
+    @[inline]
     fn clear(*mut self) {
       free(self.data);
       self.capacity = 0;
@@ -44,11 +50,7 @@ fn panic(msg: str);
         self.length = new_capacity; 
       }
       self.capacity = new_capacity;
-
-      if self.allocator == null {
-        self.allocator = get_default_allocator();
-      }
-
+      self.get_allocator_if_needed();
       self.data = self.allocator.resize(self.data, sizeof(T), self.capacity);
     }
     
@@ -157,8 +159,9 @@ fn panic(msg: str);
       This is sure to change, but for now, you do have to do the obnoxious:
         `my_list := List!<s32>::init(.[0,1,2,3])`
       or whatever you need.
-
-      of course, this allocates.
+      
+      of course, this allocates. it will default to using the global allocator.
+      When we have optional parameters, this will be much more intuitive.
     */
     @[inline]
     fn init(init: InitList!<T>) -> #self {
@@ -310,6 +313,14 @@ impl!<T> AsSlice!<T> for List!<T> {
 }
 
 impl!<T> List!<T> {
+  @[inline]
+  fn new(allocator: dyn Allocator) -> List!<T> {
+    return .{ 
+      allocator: allocator,
+    };
+  }
+
+
   @[inline]
   fn back(self) -> Option!<T> {
     if self.length > 0 {

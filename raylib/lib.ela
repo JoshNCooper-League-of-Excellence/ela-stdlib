@@ -40,6 +40,7 @@ impl Color {
       a: (a.a + (b.a - a.a) * t) as u8,
     };
   }
+
 }
 
 impl Vector2 {
@@ -110,6 +111,28 @@ impl Vector2 {
       x: clamp(self.x, min.x, max.x) as f32,
       y: clamp(self.y, min.y, max.y) as f32
     };
+  }
+
+  fn reflect(self, normal: #self) -> #self {
+    dot := self.dot(normal);
+    return self.sub(normal.mul(2.0 * dot));
+  }
+
+  fn rotate(self, angle: f32) -> #self {
+    cos_theta := cos(angle);
+    sin_theta := sin(angle);
+    return .{
+      x: self.x * cos_theta - self.y * sin_theta,
+      y: self.x * sin_theta + self.y * cos_theta
+    };
+  }
+
+  fn comp_add(*mut self, other: Vector2) {
+    *self = self.add(other);
+  }
+
+  fn neg(self) -> #self {
+    return .{x: -self.x, y: -self.y};
   }
 }
 

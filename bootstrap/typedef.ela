@@ -31,7 +31,7 @@ struct String {
   data: *mut u8,
   length: u64,
   capacity: u64,
-  allocator: *mut dyn Allocator,
+  allocator: dyn Allocator,
 }
 
 // This is what is produced when you do
@@ -48,7 +48,7 @@ struct List!<V> {
   data:     *mut V,
   length:   u64,
   capacity: u64,
-  allocator: *mut dyn Allocator,
+  allocator: dyn Allocator,
 }
 
 // A semi-type-erased pointer that carries the RTTI (Runtime type information)
