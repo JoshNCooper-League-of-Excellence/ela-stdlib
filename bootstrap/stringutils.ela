@@ -44,7 +44,7 @@ trait StringUtils {
   fn is_empty_or_whitespace(self) -> bool {
     for i in 0..self.length {
       ch := self.data[i];
-      if !isspace(ch) {
+      if ch != ' ' {
         return false;
       }
     }

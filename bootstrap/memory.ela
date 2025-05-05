@@ -113,7 +113,9 @@
     It relies heavily on pointers/function pointers, which i highly doubt are just thread safe.
 */
 
-mut global_libc_allocator: Libc_Allocator;
+#ifndef FREESTANDING {
+  mut global_libc_allocator: Libc_Allocator;
+}
 mut global_dyn_libc_allocator: dyn Allocator;
 mut global_allocator: dyn Allocator;
 

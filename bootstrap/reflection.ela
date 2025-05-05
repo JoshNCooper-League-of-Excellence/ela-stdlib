@@ -232,13 +232,13 @@ impl Type {
       element_type := self.generic_args[0];
       end := data + length * element_type.size;
       return .{ptr: data as *mut u8, end: end, element_type: element_type};
-    } else {
-      return .{
-        ptr: ptr as *mut u8,
-        end: ptr + self.size,
-        element_type: self.element_type,
-      };
     }
+    
+    return .{
+      ptr: ptr as *mut u8,
+      end: ptr + self.size,
+      element_type: self.element_type,
+    };
   }
 }
 
