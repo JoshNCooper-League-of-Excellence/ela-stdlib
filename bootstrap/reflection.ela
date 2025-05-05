@@ -101,7 +101,7 @@ impl Type  {
   }
 
   fn is_scalar(*const self) -> bool {
-    return Type::has_no_extension(self) &&
+    return self.has_no_extension() &&
           (self.flags & TypeFlags::INTEGER != 0 ||
             self.flags & TypeFlags::FLOAT != 0   ||
             self.flags & TypeFlags::BOOL != 0    ||

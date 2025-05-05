@@ -11,6 +11,7 @@
     fn calloc(num: u64, size: u64) -> *mut void;
     fn realloc(ptr: *const void, size: u64) -> *mut void;
 
+    fn vprintf(format: *const u8, args: va_list) -> s32;
     fn printf(format: *const u8, ...) -> s32;
     fn exit(code: s32);
 

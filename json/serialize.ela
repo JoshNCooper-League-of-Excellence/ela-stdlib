@@ -40,7 +40,7 @@ fn new_dyn_serializable(value: any) -> dyn Serializable {
 
 fn serialize_scalar(object: any) -> JsonResult {
   val := JsonValue::new();
-  if Type::is_float(object.type) {
+  if object.type.is_float() {
     val.type = JsonValueType::Number;
     if object.type.size == 8 {
       val.number = *(object.ptr as *const f64);
@@ -48,9 +48,9 @@ fn serialize_scalar(object: any) -> JsonResult {
       val.number = *(object.ptr as *const f32);
     }
     return JsonResult::Ok(val);
-  } else if Type::is_integral(object.type) {
+  } else if object.type.is_integral() {
     val.type = JsonValueType::Number;
-    if Type::is_signed(object.type) {
+    if object.type.is_signed() {
       val.number = switch object.type.size {
         8 => *(object.ptr as *const s64),
         4 => *(object.ptr as *const s32),
@@ -66,7 +66,7 @@ fn serialize_scalar(object: any) -> JsonResult {
       };
     }
     return JsonResult::Ok(val);
-  } else if Type::is_bool(object.type) {
+  } else if object.type.is_bool() {
     val.type = JsonValueType::Boolean;
     val.boolean = *(object.ptr as *const bool);
     return JsonResult::Ok(val);
@@ -115,12 +115,13 @@ fn serialize_tuple(object: any) -> JsonResult {
 }
 
 fn serialize_any(object: any) -> JsonResult {
-  if Type::implements(object.type, "Serializable") {
+
+  if object.type.implements("Serializable") {
     dynamic := new_dyn_serializable(object);
     return dynamic.serialize();
   }
 
-  if Type::has_no_extension(object.type) {
+  if object.type.has_no_extension() {
     if object.type == typeof(str) {
       val := JsonValue::new();
       val.type = JsonValueType::String;
@@ -138,14 +139,14 @@ fn serialize_any(object: any) -> JsonResult {
       val.type = JsonValueType::String;
       val.string = String::from_ptr(*(object.ptr as *const *const u8));
       return JsonResult::Ok(val);
-    } else if Type::is_scalar(object.type) {
+    } else if object.type.is_scalar() {
       return serialize_scalar(object);
-    } else if Type::is_struct(object.type) {
+    } else if object.type.is_struct() {
       return serialize_struct(object);
-    } else if Type::is_tuple(object.type) {
+    } else if object.type.is_tuple() {
       return serialize_tuple(object);
     }
-  } else if Type::is_array(object.type) {
+  } else if object.type.is_array() {
     return serialize_array(object);
   }
   return JsonResult::Err(format("Unsupported type :: '%'", (object.type.name, ), FormatOptions::default()));
