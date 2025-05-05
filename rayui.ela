@@ -3,14 +3,14 @@ import fmt::*;
 
 // * used for UI styling.
 struct Style {
-  foreground:           Color,
-  background:           Color,
-  highlighted:          Color,
+  foreground:           Color = WHITE,
+  background:           Color = BLACK,
+  highlighted:          Color = ORANGE,
 
-  line_thickness:       f32,
-  font_size:            s32,
-  font_color_override:  Option!<Color>,
-  font:                 Font,
+  line_thickness:       f32 = 2,
+  font_size:            s32 = 16,
+  font_color_override:  Option!<Color> = Some(GRAY),
+  font:                 Font = GetFontDefault(),
 
   // TODO: probably don't do this here?
   // It's just kind of a silly thing, we don't need to support that for everything.
@@ -353,8 +353,7 @@ fn drop_down!<O, UserArg>(
   user_arg:               *mut UserArg,
 ) {
   // Draw the DropDown box
-  DrawRectangleRec(
-    rectangle, style.background);
+  DrawRectangleRec(rectangle, style.background);
 
   // Draw the selected option, instead of the label text.
   if state.selected_index.is_some() && (text.is_none() || prefer_selected_option) {
@@ -466,7 +465,7 @@ trait IWidget {
   // tell the context about the layout of our object, primarily.
   fn layout(*mut self, ctx: *mut Ctx);
 
-  fn get_metadata(self) -> (u32, u32) {
+  fn get_metadata(*mut self) -> (u32, u32) {
     return self.metadata;
   }
 }
@@ -636,6 +635,36 @@ impl Widget {
       Widget::Slider(&mut slider) => slider.draw(),
       Widget::CheckButton(&mut chk_btn) => chk_btn.draw(),
       Widget::DropDown(&mut drp_dwn) => drp_dwn.draw(),
+    }
+  }
+}
+
+
+struct Window {
+  widgets: List!<dyn IWidget>,
+  background_color: Color,
+}
+
+impl Window {
+  fn new(title: str = "Rayui Window", 
+        size: Vector2 = .{x: 800, y: 600}, 
+        target_fps: u8 = 60, 
+        background_color: Color = .{ r:0, g:0, b:0, a:255}) -> Window {
+    InitWindow(size.x as s32, size.y as s32, title.data);
+    SetTargetFPS(target_fps);
+    return .{
+      background_color: background_color
+    };
+  }
+
+  fn run(*mut self) {
+    while !WindowShouldClose() {
+      BeginDrawing();
+      ClearBackground(self.background_color);
+      for widget in self.widgets.iter_mut() {
+        widget.draw();
+      }
+      EndDrawing();
     }
   }
 }

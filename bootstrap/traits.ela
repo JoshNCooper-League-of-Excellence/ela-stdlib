@@ -125,7 +125,7 @@ trait Deinit {
 
 
 // just a free function version for those who might prefer a C like 'free' style api.
-fn deinit!<T>(t: *const T) where T: Deinit {
+fn deinit!<T>(t: T) where T: Deinit {
   t.deinit();
 }
 

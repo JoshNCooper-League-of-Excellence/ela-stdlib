@@ -307,6 +307,16 @@ impl!<T> List!<T> {
     }
     return None();
   }
+  @[inline]
+  fn filter(*const self, filter: fn * (*const T) -> bool) -> #self {
+    mut list: #self;
+    for value in *self {
+      if filter(&const value) {
+        list.push(value);
+      }
+    }
+    return list;
+  }
 }
 
 impl!<T> List!<T> {
