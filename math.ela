@@ -30,6 +30,9 @@ const RAND_MAX := 2147483647;
 const PI := 3.141592653589793;
 
 impl Random {
+  fn seed(seed: u32) {
+    srand(seed);
+  }
   fn next(max: f32) -> f32 {
     return (rand() as f32) / (RAND_MAX as f32) * max;
   }
