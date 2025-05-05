@@ -109,14 +109,29 @@ impl Env {
     return Env::current().args_slice;
   }
   
+  fn env_strlen(s: *const u8) -> u32 {
+    mut i := 0;
+    while *s {
+      ++i;
+      ++s;
+    }
+    return i;
+  }
+
   fn initialize(argc: s32, argv: *const c_str) {
     self := Env::current();
-    mut data : *mut str = malloc(argc * sizeof(str));
+
+    #ifndef FREESTANDING {
+      mut data : *mut str = malloc(argc * sizeof(str));
+    } else {
+      #static mut data : str[48]; // This is just a hack. idk what a reasonable value to put here is.
+    }
     
+
     for i in 0..argc {
       data[i] = .{
         data: argv[i],
-        length: strlen(argv[i]),
+        length: Env::env_strlen(argv[i]),
       };
     }
 

@@ -21,39 +21,40 @@ struct Type {
   methods:    List!<(str, *const void)>,                                   // a list of method function pointers, 
 };
 
-#ifndef FREESTANDING {
-  impl Field {
-    fn set!<T, T1>(*const self, target: *mut T, data: T1) {
-      memcpy((target as *mut u8) + self.offset, (&const data) as *const u8, sizeof(T1));
-    }
-    fn get!<T>(*const self, source: *const T) -> *mut u8 {
-      return source as *mut u8 + self.offset;
+_type_info: List!<*const Type>;
+
+impl Field {
+  fn set!<T, T1>(*const self, target: *mut T, data: T1) {
+    for i in 0..sizeof(T1) {
+      *((target as *mut u8) + self.offset + i) = *((&const data as *const u8) + i);
     }
   }
 
-  _type_info: List!<*const Type>;
+  fn get!<T>(*const self, source: *const T) -> *mut u8 {
+    return source as *mut u8 + self.offset;
+  }
+}
 
-  impl Type {
-    fn get_field!<Path>(*const self, name: Path) -> *const Field where Path: AsByteSlice {
-      slice := name.as_byte_slice();
-      for i in 0..self.fields.length {
-        field := &mut self.fields[i];
-        string : str = .{data: slice.data, length:  slice.length};
-        if field.name == string {
-          return field;
-        }
+impl Type {
+  fn get_field!<Path>(*const self, name: Path) -> *const Field where Path: AsByteSlice {
+    slice := name.as_byte_slice();
+    for i in 0..self.fields.length {
+      field := &mut self.fields[i];
+      string : str = .{data: slice.data, length:  slice.length};
+      if field.name == string {
+        return field;
       }
-      return null;
     }
+    return null;
+  }
 
-    fn offset(*const self, member: str) -> u64 {
-      for field in self.fields {
-        if field.name == member  {
-          return field.offset;
-        }
+  fn offset(*const self, member: str) -> u64 {
+    for field in self.fields {
+      if field.name == member  {
+        return field.offset;
       }
-      return -1;
     }
+    return -1;
   }
 }
 
@@ -233,7 +234,7 @@ impl Type {
       end := data + length * element_type.size;
       return .{ptr: data as *mut u8, end: end, element_type: element_type};
     }
-    
+
     return .{
       ptr: ptr as *mut u8,
       end: ptr + self.size,

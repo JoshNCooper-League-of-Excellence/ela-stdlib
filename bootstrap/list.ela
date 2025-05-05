@@ -172,43 +172,6 @@ fn panic(msg: str);
       return self;
     }
   }
-
-
-  impl!<T> List!<T>  {
-    alias Comparator :: fn*(T, T) -> bool;
-    /* 
-      Check if the list contains an item. This uses the `a == b` operator, so this is only valid
-      on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
-
-      Right now we don't have a good way to check if a type is a pointer with an trait and a where constraint, 
-      so we can't really put a type constraint on this function yet. in the future!
-    */
-    @[inline]
-    fn contains(self, seek: T, comparator: Comparator) -> bool {
-      for idx in 0..self.length {
-        if comparator(self.data[idx], seek) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    /* 
-      erase the first element from the list that == value;
-      this doesn't deallocate the old memory.
-    */
-    @[inline]
-    fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
-      for idx in 0..self.length {
-        if comparator(self.data[idx], seek) {
-          memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
-          self.length -= 1;
-          return true;
-        }
-      }
-      return false;
-    }
-  }
 }
 
 impl!<T> Iterable for List!<T> {
@@ -269,25 +232,33 @@ impl!<T> AsSlice!<T> for List!<T> {
 impl!<T> List!<T> {
   alias Ordering_Predicate :: fn*(*const T, *const T) -> bool;
 
-  /* 
-    return a new list with the order specified by the predicate.
+  /*
+    Remove an element at a specific index from the list.
+    This doesn't deallocate the old memory.
   */
-  fn order_by(self, predicate: Ordering_Predicate) -> List!<T> {
-    mut new_list := self.clone();
-    for i in 0..new_list.length {
-      for j in (i+1)..new_list.length {
-        if predicate(&const new_list.data[i], &const new_list.data[j]) {
-          temp := new_list.data[i];
-          new_list.data[i] = new_list[j];
-          new_list.data[j] = temp;
+  fn remove_at(*mut self, index: u64) -> bool {
+    if index >= self.length {
+      return false;
+    }
+
+    fn memmove(list: *mut List!<T>, index: u64) {
+      if (list.data + index) < (list.data + index + 1) {
+        for i in 0..(list.length - index - 1) {
+          list.data[index + i] = list.data[index + i + 1];
+        }
+      } else {
+        for i in (list.length - index - 2)..-1 {
+          list.data[index + i] = list.data[index + i + 1];
         }
       }
     }
-    return new_list;
+    
+    memmove(self, index);
+
+    self.length -= 1;
+    return true;
   }
-
-
-
+  
   fn find_first_of(self, finder: fn*(*const T) -> bool) -> *const T {
     for idx in 0..self.length {
       if finder(&const self.data[idx]) {
@@ -299,18 +270,6 @@ impl!<T> List!<T> {
 }
 
 impl!<T> List!<T> {
-  /*
-    Remove an element at a specific index from the list.
-    This doesn't deallocate the old memory.
-  */
-  fn remove_at(*mut self, index: u64) -> bool {
-    if index >= self.length {
-      return false;
-    }
-    memmove(self.data + index, self.data + index + 1, sizeof(T) * (self.length - index - 1));
-    self.length -= 1;
-    return true;
-  }
 
   @[inline]
   fn new(allocator: dyn Allocator) -> List!<T> {
@@ -357,5 +316,63 @@ impl!<T> List!<T> {
       idx: 0,
       iterator: self.iter(),
     };
+  }
+}
+
+
+#ifndef FREESTANDING {
+
+  impl!<T> List!<T>  {
+    alias Ordering_Predicate :: fn*(*const T, *const T) -> bool;
+    /* 
+      return a new list with the order specified by the predicate.
+    */
+    fn order_by(self, predicate: Ordering_Predicate) -> List!<T> {
+      mut new_list := self.clone();
+      for i in 0..new_list.length {
+        for j in (i+1)..new_list.length {
+          if predicate(&const new_list.data[i], &const new_list.data[j]) {
+            temp := new_list.data[i];
+            new_list.data[i] = new_list[j];
+            new_list.data[j] = temp;
+          }
+        }
+      }
+      return new_list;
+    }
+
+    alias Comparator :: fn*(T, T) -> bool;
+    /* 
+      Check if the list contains an item. This uses the `a == b` operator, so this is only valid
+      on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
+
+      Right now we don't have a good way to check if a type is a pointer with an trait and a where constraint, 
+      so we can't really put a type constraint on this function yet. in the future!
+    */
+    @[inline]
+    fn contains(self, seek: T, comparator: Comparator) -> bool {
+      for idx in 0..self.length {
+        if comparator(self.data[idx], seek) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /* 
+      erase the first element from the list that == value;
+      this doesn't deallocate the old memory.
+    */
+    @[inline]
+    fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
+      for idx in 0..self.length {
+        if comparator(self.data[idx], seek) {
+          memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
+          self.length -= 1;
+          return true;
+        }
+      }
+      return false;
+    }
   }
 }

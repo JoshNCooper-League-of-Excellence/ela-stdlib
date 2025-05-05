@@ -264,7 +264,7 @@ impl Directory {
 
   fn open!<T>(path: T) -> Option!<Directory> where T: AsByteSlice {
     dir := opendir(path.as_byte_slice().data);
-    if !dir => Option!<Directory>::None();
+    if !dir => Option!<Directory>::None;
 
     mut entries: List!<String>;
     mut entry: *mut void;
