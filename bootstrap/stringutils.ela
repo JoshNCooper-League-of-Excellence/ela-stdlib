@@ -33,6 +33,7 @@ trait StringUtils {
 
     return true;
   }
+  
   fn ends_with!<Prefix>(self, suffix: Prefix) -> bool where Prefix: AsByteSlice {
     data, length := suffix.as_byte_slice();
     if self.length < length then return false;
@@ -41,6 +42,7 @@ trait StringUtils {
     }
     return true;
   }
+
   fn is_empty_or_whitespace(self) -> bool {
     for i in 0..self.length {
       ch := self.data[i];

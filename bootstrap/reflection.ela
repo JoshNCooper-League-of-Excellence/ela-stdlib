@@ -26,7 +26,7 @@ _type_info: List!<*const Type>;
 impl Field {
   fn set!<T, T1>(*const self, target: *mut T, data: T1) {
     for i in 0..sizeof(T1) {
-      *((target as *mut u8) + self.offset + i) = *((&const data as *const u8) + i);
+      *((target as *mut u8) + self.offset + i) = *(((&const data) as *const u8) + i);
     }
   }
 

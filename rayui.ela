@@ -138,8 +138,8 @@ fn button_pro!<Data, T>(text: Data, rect: Rectangle, style: Style, callback: fn*
 
 struct SliderState!<T> {
   held : bool,
-  min_value: T,
-  max_value: T,
+  min_value: T = 0,
+  max_value: T = 1,
   value: *mut T,
 }
 
@@ -234,9 +234,9 @@ fn slider!<T>(
     }
 
     if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
-      *state.value = clamp(*state.value + increment, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
+      *state.value = clamp(*state.value + increment, state.min_value, state.max_value);
     } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
-      *state.value = clamp(*state.value - increment, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
+      *state.value = clamp(*state.value - increment, state.min_value, state.max_value);
     }
 
     // Handle mouse input
@@ -639,7 +639,6 @@ impl Widget {
   }
 }
 
-
 struct Window {
   widgets: List!<dyn IWidget>,
   background_color: Color,
@@ -666,5 +665,9 @@ impl Window {
       }
       EndDrawing();
     }
+  }
+
+  fn add_widget!<T>(*mut self, t: *mut T) where T: IWidget {
+    self.widgets.push(dynof(t, IWidget));
   }
 }
