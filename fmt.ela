@@ -209,9 +209,10 @@ impl FormatOptions {
 }
 
 struct StringBuilder;
+struct Formatter;
 
 trait Format {
-  fn format(*const self, builder: *mut StringBuilder, options: FormatOptions);
+  fn format(*const self, formatter: *mut Formatter);
 }
 
 fn new_dyn_format(value: any) -> dyn Format {
@@ -222,75 +223,91 @@ fn new_dyn_format(value: any) -> dyn Format {
     }
   )
   if !tuple {
-    printf("unable to find 'format' in type %s\n"c, type.name);
+    std::c::printf("unable to find 'format' in type %s\n"c, type.name);
     panic("DynFormat failure");
   }
   _, method := *tuple;
 
   mut dynamic: dyn Format;
   dynamic.instance = instance;
-  dynamic.format =  method as fn * (*const void, *mut StringBuilder, FormatOptions);
+  dynamic.format =  method as fn * (*const void, *mut Formatter);
   return dynamic;
 }
 
 // This seems pretty chunky,
 // it might be more performant for building large strings,
 // but perhaps this is a setting we can have the user pass in.
-const STRING_BUILDER_BLOCK_MAX_LEN := 8192;
+
 
 struct StringBuilderBlock {
   data: *mut u8,
   length: u64,
   next: *mut StringBuilderBlock,
+  block_size: u64,
+  allocator: dyn Allocator,
 }
 
 impl StringBuilderBlock {
-  fn new() -> *mut #self {
-    mut self : *mut #self =  malloc(sizeof(StringBuilderBlock));
-    self.data = calloc(STRING_BUILDER_BLOCK_MAX_LEN, sizeof(u8));
+  fn new(allocator: dyn Allocator, size: u64) -> *mut #self {
+    mut self : *mut #self =  allocator.allocate(sizeof(StringBuilderBlock));
+    self.allocator = allocator;
+    self.data = allocator.allocate_array(sizeof(u8), size);
     self.length = 0;
     self.next = null;
+    self.block_size = size;
     return self;
   }
 }
 
 impl Deinit for StringBuilderBlock {
   fn deinit(*mut self) {
-    if self.data then free(self.data);
+    if self.data then self.allocator.free(self.data);
     if self.next {
       self.next.deinit();
-      free(self.next);
+      self.allocator.free(self.next);
     }
   }
 }
 
 struct StringBuilder {
-  root:    *mut StringBuilderBlock,
-  current: *mut StringBuilderBlock,
+  root:       *mut StringBuilderBlock,
+  current:    *mut StringBuilderBlock,
+  allocator:  dyn Allocator = get_global_allocator(),
+  block_size: u64 = 8192,
 }
 
 impl Deinit for StringBuilder {
   fn deinit(*mut self) {
     if self.root {
       self.root.deinit();
-      free(self.root);
+      self.allocator.free(self.root);
     } 
   }
 }
 
+struct Formatter {
+  writer: *mut StringBuilder,
+  indentation: u32,
+  options: FormatOptions,
+}
+
 fn to_string!<T>(value: T) -> String;
-fn format_any(list: any, builder: *mut StringBuilder, options: FormatOptions);
+fn format_any(list: any, formatter: *mut Formatter);
 fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
 
+import math;
 
 impl StringBuilder {
   // just here for 'clarity' xd
+  @[inline]
   fn clear(*mut self) {
     self.deinit();
   }
 
+  @[inline]
   fn length(*mut self) -> u64 {
-    if !self.root then return 0;
+    if !self.root 
+      then return 0;
     mut current := self.root;
     mut len: u64;
     while current {
@@ -300,14 +317,22 @@ impl StringBuilder {
     return len;
   }
 
-  fn get_string(*mut self) -> String {
+  @[inline]
+  fn get_string(*mut self, allocator: Option!<dyn Allocator> = None()) -> String {
     length := self.length();
-    data : *mut u8 = malloc(sizeof(u8) * length + 1);
+    mut data: *mut u8;
+
+    if allocator is Option!<dyn Allocator>::None {
+      data = self.allocator.allocate(sizeof(u8) * length + 1);
+    } else {
+      data = allocator.unwrap().allocate(sizeof(u8) * length + 1);
+    }
+
     data[length] = '\0'; // Null-terminate the final str
     mut current := self.root;
     mut offset := 0;
     while current {
-      memcpy(data + offset, current.data, current.length);
+      std::c::memcpy(data + offset, current.data, current.length);
       offset += current.length;
       current = current.next;
     }
@@ -323,34 +348,33 @@ impl StringBuilder {
     if slice.length <= 0 then return;
 
     if !self.root {
-      self.root = StringBuilderBlock::new();
+      self.root = StringBuilderBlock::new(self.allocator, self.block_size);
       self.current = self.root;
     }
 
     mut slice_index := 0;
     mut length := slice.length;
 
+    // Ignore null-terminator-only strings
     if length == 1 && slice.data[0] == '\0' then return;
-    mut remaining := STRING_BUILDER_BLOCK_MAX_LEN - self.current.length;
+
+    mut remaining := self.block_size - self.current.length;
 
     while length > 0 {
-      // Simple append, no overflow
-      if length <= remaining {
-        memcpy(self.current.data + self.current.length, slice.data, length);
-        self.current.length += length;
-        break;
+      if remaining == 0 {
+        self.current.next = StringBuilderBlock::new(self.allocator, self.block_size);
+        self.current = self.current.next;
+        remaining = self.block_size;
       }
 
-      // Append with overflow
-      if self.current.data != null && slice.data != null {
-          memcpy(self.current.data + self.current.length, slice.data + slice_index, remaining);
-          self.current.length += remaining;
-      }
-      slice_index += remaining;
-      length -= remaining;
-      self.current.next = StringBuilderBlock::new();
-      self.current = self.current.next;
-      remaining = STRING_BUILDER_BLOCK_MAX_LEN;
+      mut to_copy := math::min(length, remaining);
+
+      std::c::memcpy(self.current.data + self.current.length, slice.data + slice_index, to_copy);
+      self.current.length += to_copy;
+
+      slice_index += to_copy;
+      length -= to_copy;
+      remaining -= to_copy;
     }
   }
 
@@ -362,14 +386,15 @@ impl StringBuilder {
     value.deinit();
   }
 
+  @[inline]
   fn append_byte(*mut self, ch: u8) {
     if !self.root {
-      self.root = StringBuilderBlock::new();
+      self.root = StringBuilderBlock::new(self.allocator, self.block_size);
       self.current = self.root;
     }
 
-    if self.current.length == STRING_BUILDER_BLOCK_MAX_LEN {
-      self.current.next = StringBuilderBlock::new();
+    if self.current.length == self.block_size {
+      self.current.next = StringBuilderBlock::new(self.allocator, self.block_size);
       self.current = self.current.next;
     }
 
@@ -382,6 +407,8 @@ impl StringBuilder {
     self.append(formatted);
     formatted.deinit();
   }
+
+  @[inline]
   fn append_utf8(*mut self, ch: u32) {
     bytes := utf8_encode(ch);
     for byte in bytes {
@@ -390,22 +417,27 @@ impl StringBuilder {
   }
 }
 
-fn to_string!<T>(value: T) -> String {
+/* 
+  This is really just for numerical values,
+  and anything that can use the negate operator. i.e pointers, strings, whatever.
+  Structs by value will cause this function to fail.
+*/
+fn to_string!<T>(value: T, allocator: dyn Allocator = get_global_allocator()) -> String {
   type := typeof(T);
   mut format : str;
 
   if type.is_bool() {
     if value {
-      return "true".to_string(get_global_allocator());
+      return "true".to_string(allocator);
     } else {
-      return "false".to_string(get_global_allocator());
+      return "false".to_string(allocator);
     }
   }
 
   if type.is_enum() {
     for field in type.fields {
       if value == field.enum_value {
-        return String::from(field.name);
+        return field.name.to_string(allocator);
       }
     }
   }
@@ -436,153 +468,166 @@ fn to_string!<T>(value: T) -> String {
       i++;
     }
   } else if type == typeof(f32) {
-    sprintf(format_buffer, "%%.%df"c, FormatOptions::current().digits_after_decimal);
+    std::c::sprintf(format_buffer, "%%.%df"c, FormatOptions::current().digits_after_decimal);
   } else if type == typeof(f64) {
-    sprintf(format_buffer, "%%.%dlf"c, FormatOptions::current().digits_after_decimal);
+    std::c::sprintf(format_buffer, "%%.%dlf"c, FormatOptions::current().digits_after_decimal);
   } else {
     return .{};
   }
 
-  buffer: u8[1024]; // this is wayyy over allocated, but it's not a big deal.
-  snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
-  return String::from_ptr(buffer);
+  buffer: u8[1024];
+  length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
+  return String.{
+    data: allocator.copy(buffer, sizeof(u8), length),
+    length: length,
+  };
 }
 
-fn format_struct(value: any, builder: *mut StringBuilder, options: FormatOptions) {
-  builder.append(value.type.name);
-  builder.append(" {");
+fn format_struct(value: any, formatter: *mut Formatter) {
+  formatter.writer.append(value.type.name);
+  formatter.writer.append(" {");
 
-  if options.indented {
-    builder.append("\n");
+  if formatter.options.indented {
+    formatter.writer.append("\n");
   }
 
   mut idx := 0;
   for field in value.type.fields {
-    if options.indented {
-      builder.append("  ");
+    if formatter.options.indented {
+      formatter.writer.append("  ");
     }
 
-    builder.append(" ");
-    builder.append(field.name);
-    builder.append(": ");
+    formatter.writer.append(" ");
+    formatter.writer.append(field.name);
+    formatter.writer.append(": ");
 
     format_any(any.{
       type: field.type,
       ptr: field.get(value.ptr),
-    }, builder, options);
+    }, formatter);
 
     if idx != value.type.fields.length - 1 {
-      builder.append(",");
+      formatter.writer.append(",");
     }
 
-    if options.indented {
-      builder.append("\n");
+    if formatter.options.indented {
+      formatter.writer.append("\n");
     } 
     idx++;
   }
 
-  if !options.indented {
-    builder.append(" }");
+  if formatter.options.indented {
+    formatter.writer.append("}");
   } else {
-    builder.append("}");
+    formatter.writer.append(" }");
   }
 }
 
-fn format_tuple(value: any, builder: *mut StringBuilder, options: FormatOptions) {
-  builder.append("(");
+fn format_tuple(value: any, formatter: *mut Formatter) {
+  formatter.writer.append("(");
   for i in 0..value.type.fields.length {
     field := value.type.fields[i];
 
     format_any(any.{
       type: field.type,
       ptr: field.get(value.ptr),
-    }, builder, options);
+    }, formatter);
 
     if i != value.type.fields.length - 1 {
-      builder.append(", ");
+      formatter.writer.append(", ");
     }
   }
-  builder.append(")");
+  formatter.writer.append(")");
 }
 
-fn format_any(value: any, builder: *mut StringBuilder, options: FormatOptions) {
+fn format_any(value: any, formatter: *mut Formatter) {
   if value.type.implements("Format") {
     dyn_format := new_dyn_format(value);
-    dyn_format.format(builder, options);
+    dyn_format.format(formatter);
     return;
   }
 
   if value.type == typeof(String)  {
-    if options.quote_strings
-      then builder.append("\"");
-    builder.append(*(value.ptr as *const String));
-    if options.quote_strings
-      then builder.append("\"");
+    if formatter.options.quote_strings
+      then formatter.writer.append("\"");
+    formatter.writer.append(*(value.ptr as *const String));
+    if formatter.options.quote_strings
+      then formatter.writer.append("\"");
   } else if value.type == typeof(str) {
-    if options.quote_strings
-      then builder.append("\"");
-    builder.append((*(value.ptr as *const str)));
-    if options.quote_strings
-      then builder.append("\"");
+    if formatter.options.quote_strings
+      then formatter.writer.append("\"");
+    formatter.writer.append((*(value.ptr as *const str)));
+    if formatter.options.quote_strings
+      then formatter.writer.append("\"");
   } else if value.type.is_pointer() {
-    builder.append_then_free(to_string(value.ptr));
+    formatter.writer.append_then_free(to_string(value.ptr));
   } else if value.type.is_struct() {
-    format_struct(value, builder, options);
+    format_struct(value, formatter);
   } else if value.type.is_tuple() {
-    format_tuple(value, builder, options);
+    format_tuple(value, formatter);
   } else if value.ptr == null {
-    builder.append("null");
+    formatter.writer.append("null");
   } else if value.type == typeof(c_str) {
-    builder.append(String::from_ptr(value.unwrap!<*const u8>()));
+    formatter.writer.append(String::from_ptr(value.unwrap!<*const u8>()));
   } else if value.type.is_enum() {
-    if options.enum_parent_name {
-      builder.append(value.type.name);
-      builder.append("::");
+    if formatter.options.enum_parent_name {
+      formatter.writer.append(value.type.name);
+      formatter.writer.append("::");
     }
     for field in value.type.fields {
       if field.enum_value == value.unwrap!<s32>() {
-        builder.append(field.name);
+        formatter.writer.append(field.name);
         return;
       }
     }
-    builder.append("(invalid enum value)");
+    formatter.writer.append("(invalid enum value)");
   } else {
     switch value.type {
-      typeof(u8):      { builder.append_then_free(to_string(value.unwrap!<u8>()));        }
-      typeof(u16):     { builder.append_then_free(to_string(value.unwrap!<u16>()));       }
-      typeof(u32):     { builder.append_then_free(to_string(value.unwrap!<u32>()));       }
-      typeof(u64):     { builder.append_then_free(to_string(value.unwrap!<u64>()));       }
-      typeof(s8):      { builder.append_then_free(to_string(value.unwrap!<s8>()));        }
-      typeof(s16):     { builder.append_then_free(to_string(value.unwrap!<s16>()));       }
-      typeof(s32):     { builder.append_then_free(to_string(value.unwrap!<s32>()));       }
-      typeof(s64):     { builder.append_then_free(to_string(value.unwrap!<s64>()));       }
-      typeof(f32):     { builder.append_then_free(to_string(value.unwrap!<f32>()));       }
-      typeof(f64):     { builder.append_then_free(to_string(value.unwrap!<f64>()));       }
-      typeof(bool):    { builder.append_then_free(to_string(value.unwrap!<bool>()));      }
-      else:            { builder.append("(unsupported)");                                 }
+      typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>()));        }
+      typeof(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>()));       }
+      typeof(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>()));       }
+      typeof(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>()));       }
+      typeof(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>()));        }
+      typeof(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>()));       }
+      typeof(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>()));       }
+      typeof(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>()));       }
+      typeof(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>()));       }
+      typeof(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>()));       }
+      typeof(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>()));      }
+      else:            { formatter.writer.append("$$(unsupported fmt type)$$");                                 }
     }
   }
 }
 
-fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple {
+fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple {
   if fmt.length == 0 then
     return .{};
 
-  mut builder: StringBuilder;
+  mut builder: StringBuilder = .{
+    allocator: allocator,
+    block_size: 8192
+  };
+  mut formatter: Formatter = .{
+    indentation: 0,
+    writer: &mut builder,
+    options: options,
+  };
 
-  defer builder.deinit();
+  defer {
+    formatter.writer.deinit();
+  }
 
   value_index := 0;
 
   fields := typeof(Tuple).fields;
 
   if fields.is_empty() {
-    return String::from("()");
+    return "()".to_string(allocator);
   }
 
   while *fmt.data {
     if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
-      builder.append('%');
+      formatter.writer.append('%');
       fmt.data += 2;
       continue;
     }
@@ -597,24 +642,23 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions) -> String wher
         type: field.type,
         ptr: field.get(&const tuple),
       };
-      format_any(value, &mut builder, options);
+      format_any(value, &mut formatter);
       value_index++;
     } else {
-      builder.append((*fmt.data) as u32);
+      formatter.writer.append((*fmt.data) as u32);
     }
     fmt.data++;
   }
 
-  return builder.get_string();
+  return formatter.writer.get_string(Some(allocator));
 }
 
 /* 
   Quick format. avoid passing settings.
 */
 fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
-  return format(fmt, tuple, *FormatOptions::current());
+  return format(fmt, tuple, *FormatOptions::current(), get_global_allocator());
 }
-
 
 fn print!<T>(message: T) {
   mut formatted := format("%", (message,), *FormatOptions::current());
@@ -633,6 +677,12 @@ fn printlnf!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
   printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
+
+// fn printf!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
+//   mut formatted := format(fmt, tuple, *FormatOptions::current());
+//   printf("%s"c, formatted.data);
+//   formatted.deinit();
+// }
 
 #region UTF8.2 {
   /*

@@ -3,7 +3,7 @@
   impl!<T> Slice!<T> {
     fn clone!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
       data : *mut T = allocator.allocate_array(sizeof(T), self.length);
-      memcpy(data, self.data, self.length * sizeof(T));
+      std::c::memcpy(data, self.data, self.length * sizeof(T));
       return .{
         data: data,
         length: self.length,

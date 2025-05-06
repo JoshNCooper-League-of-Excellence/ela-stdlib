@@ -1,42 +1,25 @@
-impl Format for s32 {
-  @[inline]
-  fn format(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
-    buffer: u8[32];
-    len := snprintf(buffer, 32, "%d"c, *self);
-    builder.append(Slice!<u8>::from(buffer, len));
-    // builder.append_then_free(to_string(*self));
-  }
-}
-
-
 impl!<T> Format for Option!<T> {
-  fn format(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
-    if options.enum_parent_name {
-      old := options.quote_strings;
-      options.quote_strings = false;
-      builder.appendf("%::", (typeof(Option!<T>).name,), options);
-      options.quote_strings = old;
+  fn format(*const self, formatter: *mut Formatter) {
+    if formatter.options.enum_parent_name {
+      formatter.writer.appendf("%::", (typeof(Option!<T>).name,), formatter.options.unquoted());
     }
     if self.is_some() {
-      builder.appendf("Some(%)", (self.unwrap(), ), options);
+      formatter.writer.appendf("Some(%)", (self.unwrap(), ), formatter.options);
     } else {
-      builder.append("None()");
+      formatter.writer.append("None()");
     }
   }
 }
 
 impl!<_Ok, _Err> Format for Result!<_Ok, _Err> {
-  fn format(*const self, builder: *mut StringBuilder, mut options: FormatOptions) {
-    if options.enum_parent_name {
-      old := options.quote_strings;
-      options.quote_strings = false;
-      builder.appendf("%::", (typeof(Result!<_Ok, _Err>).name,), options);
-      options.quote_strings = old;
+  fn format(*const self, formatter: *mut Formatter) {
+    if formatter.options.enum_parent_name {
+      formatter.writer.appendf("%::", (typeof(Result!<_Ok, _Err>).name,), formatter.options.unquoted());
     }
     if self is Result!<_Ok, _Err>::Ok(ok) {
-      builder.appendf("Ok(%)", (ok,), options);
+      formatter.writer.appendf("Ok(%)", (ok,), formatter.options);
     } else if self is Result!<_Ok, _Err>::Err(err) {
-      builder.appendf("Err(%)", (err,), options);
+      formatter.writer.appendf("Err(%)", (err,), formatter.options);
     }
   }
 }

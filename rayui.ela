@@ -1,6 +1,5 @@
 import raylib::*;
 import fmt::*;
-
 // * used for UI styling.
 struct Style {
   foreground:           Color = WHITE,
@@ -11,13 +10,6 @@ struct Style {
   font_size:            s32 = 16,
   font_color_override:  Option!<Color> = Some(GRAY),
   font:                 Font = GetFontDefault(),
-
-  // TODO: probably don't do this here?
-  // It's just kind of a silly thing, we don't need to support that for everything.
-  // we should have some more extensible settings so you can achieve whatever you want rather simply.
-  use_jiggly_text:      bool,
-  jiggle_intensity:     f32,
-  jiggle_rate:          f32,
 }
 
 impl Style {
@@ -48,19 +40,26 @@ fn measure_jiggly_text!<Data>(text: Data, style: Style) -> f32 where Data: AsByt
 
 // * Draw wavy jiggly text.
 @[inline]
-fn jiggly_text!<Data>(data: Data, rect: Rectangle, style: Style) where Data: AsByteSlice {
-  text := data.as_byte_slice();
+
+fn jiggly_text!<Data>(
+  data: Data, 
+  rect: Rectangle, 
+  style: Style,
+  jiggle_intensity: f32 = 1.0, 
+  jiggle_rate: f32 = 1.0
+) where Data: AsByteSlice {
   time: f32 = GetTime() as f32;
-  intensity := style.jiggle_intensity;
-  rate := style.jiggle_rate;
+  text := data.as_byte_slice();
+
+  fn draw_character(char: u8, x: s32, y: s32, style: Style) {
+    temp : u8[2] = .[char, '\0' as u8];
+    DrawText(temp, x, y, style.font_size, style.foreground);    
+  }
+
   for i in 0..text.length {
-    pos_x := rect.x + (i * style.font_size) as f32;
-    pos_y := rect.y + intensity * sin(rate * time + (i as f32));
-    temp : u8[2] = .[
-      text.data[i],
-      '\0' as u8
-    ];
-    DrawText(temp, pos_x as s32, pos_y as s32, style.font_size, style.foreground);
+    pos_x: s32 = (rect.x + (i * style.font_size) as f32) as s32;
+    pos_y: s32 = (rect.y + jiggle_intensity * sin(jiggle_rate * time + (i as f32))) as s32;
+    draw_character(text.data[i], pos_x, pos_y, style);
   }
 }
 
@@ -80,12 +79,8 @@ fn button!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: 
   };
 
   mut text_width : f32;
-
-  if style.use_jiggly_text {
-    text_width = measure_jiggly_text(text, style);
-  } else {
-    text_width = MeasureText(text_bytes.data, style.font_size);
-  }
+  
+  text_width = MeasureText(text_bytes.data, style.font_size);
 
   text_height : f32 = style.font_size;
   if text_width > rect.width {
@@ -111,17 +106,7 @@ fn button!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: 
     DrawRectangleV(position, size, style.background);
   }
 
-  if !style.use_jiggly_text {
-    DrawText(text_bytes.data, text_x as s32, text_y as s32, style.font_size, style.foreground);
-  } else {
-    rect : Rectangle = .{
-      x: text_x,
-      y: text_y,
-      width: new_rect.width,
-      height: new_rect.height
-    };
-    jiggly_text(text, rect, style);
-  }
+  DrawText(text_bytes.data, text_x as s32, text_y as s32, style.font_size, style.foreground);
 
   return false;
 }

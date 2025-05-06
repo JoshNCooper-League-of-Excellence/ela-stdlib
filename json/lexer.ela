@@ -96,7 +96,7 @@ impl JsonLexer {
       if c == '\n' || c == '\r' {
         self.line_start = self.position;
         self.cur_line++;
-      } else if !isspace(c) {
+      } else if !std::c::isspace(c) {
         break;
       }
       self.position++;
@@ -137,7 +137,7 @@ impl JsonLexer {
 
     // I had to inline isdigit for some reason.
     // it causes C errors.
-    if c >= '0' && c <= '9' /* || isdigit(c) */ {
+    if std::c::isdigit(c) {
       // numbers
       len : s32;
       start : s32 = self.position;
@@ -148,7 +148,7 @@ impl JsonLexer {
       }
 
       token.value = .{
-        data: strndup(self.input.data + start, len),
+        data: std::c::strndup(self.input.data + start, len),
         length: len
       };
 
@@ -202,23 +202,23 @@ impl JsonLexer {
       self.position++;
 
       token.value = .{
-        data: strndup(self.input.data + start, len),
+        data: std::c::strndup(self.input.data + start, len),
         length: len
       };
 
       token.type = TokenType::String;
       return Result::Ok(token);
-    } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "true"c, 4) == 0 {
+    } else if self.position + 4 <= self.input.length && std::c::strncmp(self.input.data + self.position, "true"c, 4) == 0 {
       token.value = String::from("true"); 
       token.type = TokenType::True;
       self.position += 4;
       return Result::Ok(token);
-    } else if self.position + 5 <= self.input.length && strncmp(self.input.data + self.position, "false"c, 5) == 0 {
+    } else if self.position + 5 <= self.input.length && std::c::strncmp(self.input.data + self.position, "false"c, 5) == 0 {
       token.value = String::from("false");
       token.type = TokenType::False;
       self.position += 5;
       return Result::Ok(token);
-    } else if self.position + 4 <= self.input.length && strncmp(self.input.data + self.position, "null"c, 4) == 0 {
+    } else if self.position + 4 <= self.input.length && std::c::strncmp(self.input.data + self.position, "null"c, 4) == 0 {
       token.value = String::from("null");
       token.type = TokenType::Null;
       self.position += 4;

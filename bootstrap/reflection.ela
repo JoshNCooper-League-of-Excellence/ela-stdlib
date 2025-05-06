@@ -189,7 +189,7 @@ impl any {
       // this should only be used for an any created with any::new()
     // clearly because it memcpy's it into place.
     fn deinit(*mut self) {
-      free(self.ptr);
+      std::c::free(self.ptr);
     }
   }
 }

@@ -351,7 +351,7 @@ impl Color {
 // ? A simple timer that can be used in update loops to get a tick every N seconds.
 // * interval: f32 = seconds between each tick.
 struct Timer {
-  interval : f32,
+  interval: f32,
   last_tick_time: f32,
 }
 

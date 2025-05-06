@@ -92,7 +92,7 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
   
   if token.type == TokenType::Number {
     value.type = JsonValueType::Number;
-    value.number = atof(token.value.data);
+    value.number = std::c::atof(token.value.data);
   } else if token.type == TokenType::String {
     value.type = JsonValueType::String;
     value.string = token.value;

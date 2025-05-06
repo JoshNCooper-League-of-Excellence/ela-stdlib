@@ -83,17 +83,17 @@ impl Allocator for Arena {
   }
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
     new_ptr := self.alloc(element_size * n);
-    memcpy(new_ptr, ptr, n);
+    std::c::memcpy(new_ptr, ptr, n);
     return new_ptr;
 
   }
   fn deinit(*mut self) {
     if self.next {
       self.next.deinit();
-      free(self.next);
+      std::c::free(self.next);
       self.next = null;
     }
-    free(self.memory);
+    std::c::free(self.memory);
     self.memory = null;
   }
 }

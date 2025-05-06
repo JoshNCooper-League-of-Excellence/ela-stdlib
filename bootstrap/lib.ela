@@ -39,8 +39,8 @@
 #ifndef FREESTANDING {
   fn assert(message: str, condition: bool) {
     if !condition {
-      printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
-      exit(1);
+      std::c::printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
+      std::c::exit(1);
     }
   }
 
@@ -48,9 +48,9 @@
     if a != b {
       // TODO: we should have a better way to do this.
       // I don't want to import format here, probably should just have an 'assert' library.
-      printf("\033[1;34mnumerical condition\033[0m :: \033[1;31m%d\033[0m == \033[1;31m%d\033[0m\n"c, a, b);
-      printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
-      exit(1);
+      std::c::printf("\033[1;34mnumerical condition\033[0m :: \033[1;31m%d\033[0m == \033[1;31m%d\033[0m\n"c, a, b);
+      std::c::printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
+      std::c::exit(1);
     }
   }
 
@@ -58,9 +58,9 @@
     if a == b {
       // TODO: we should have a better way to do this.
       // I don't want to import format here, probably should just have an 'assert' library.
-      printf("numerical condition :: \033[1;31m%d\033[0m==\033[1;31m%d\033[0m\n"c, a, b);
-      printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
-      exit(1);
+      std::c::printf("numerical condition :: \033[1;31m%d\033[0m==\033[1;31m%d\033[0m\n"c, a, b);
+      std::c::printf("\033[1;31massertion failed\033[0m: \033[1;34m\"%s\"\033[0m\n"c, message.data);
+      std::c::exit(1);
     }
   }
 }
@@ -77,8 +77,8 @@ fn panic(msg: str) {
   if !panic_handler {
     #ifndef FREESTANDING {
       panic_handler = fn(msg: str) {
-        printf("panic(): %s\n"c, msg.data);
-        exit(1);
+        std::c::printf("panic(): %s\n"c, msg.data);
+        std::c::exit(1);
       };
     } else {
       panic_handler = fn(msg: str) {
@@ -122,7 +122,7 @@ impl Env {
     self := Env::current();
 
     #ifndef FREESTANDING {
-      mut data : *mut str = malloc(argc * sizeof(str));
+      mut data : *mut str = std::c::malloc(argc * sizeof(str));
     } else {
       #static mut data : str[48]; // This is just a hack. idk what a reasonable value to put here is.
     }
@@ -189,7 +189,7 @@ impl AsByteSlice for u32 {
     };
   */
   fn new!<T>(initial_value: T) -> *mut T {
-    ptr: *mut T = malloc(sizeof(T));
+    ptr: *mut T = get_global_allocator().allocate(sizeof(T));
     *ptr = initial_value;
     return ptr;
   }

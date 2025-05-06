@@ -39,7 +39,7 @@ fn start_thread(arg: *mut void) -> *mut void {
   tuple := *tuple_ptr;
   function, user_arg := tuple;
   function(user_arg);
-  free(arg);   // allocated by Thread::start();
+  std::c::free(arg);   // allocated by Thread::start();
   return null;
 }
   

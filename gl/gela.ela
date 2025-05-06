@@ -13,10 +13,10 @@ impl Shader {
     if success == 0 {
       mut length: s32;
       glGetShaderiv(shader, GL::INFO_LOG_LENGTH, &const length);
-      info_log: c_str = malloc(sizeof(c_str) * length);
+      info_log: c_str = std::c::malloc(sizeof(c_str) * length);
       glGetShaderInfoLog(shader, length, &mut length, info_log);
-      printf("Shader compilation failed: %s\n"c, info_log);
-      free(info_log);
+      std::printf("Shader compilation failed: %s\n", info_log);
+      std::c::free(info_log);
       return 0;
     }
     return shader;
@@ -40,10 +40,10 @@ impl Shader {
     if success == 0 {
       mut length: s32;
       glGetProgramiv(program, GL::INFO_LOG_LENGTH, &mut length);
-      info_log: c_str = malloc(sizeof(c_str) * length);
+      info_log: c_str = std::c::malloc(sizeof(c_str) * length);
       glGetProgramInfoLog(program, length, &mut length, info_log);
-      printf("Program linking failed: %s\n"c, info_log);
-      free(info_log);
+      std::printf("Program linking failed: %s\n", info_log);
+      std::c::free(info_log);
       return 0 as u32;
     }
 
@@ -70,7 +70,7 @@ impl Shader {
     if index != -1 {
       glUniformMatrix4fv(index, 1, false, v.values);
     } else {
-      printf("failed to get uniform : %s\n"c, name.data);
+      std::printf("failed to get uniform : %s\n", name.data);
     }
   }
   
@@ -79,7 +79,7 @@ impl Shader {
     if index != -1 {
       glUniform4fv(index, 1, v.values);
     } else {
-      printf("failed to get uniform : %s\n"c, name.data);
+      std::printf("failed to get uniform : %s\n", name.data);
     }
   }
   
@@ -88,7 +88,7 @@ impl Shader {
     if index != -1 {
       glUniform3fv(index, 1, v.values);
     } else {
-      printf("failed to get uniform : %s\n"c, name.data);
+      std::printf("failed to get uniform : %s\n", name.data);
     }
   }
   
@@ -97,7 +97,7 @@ impl Shader {
     if index != -1 {
       glUniform2fv(index, 1, v.values);
     } else {
-      printf("failed to get uniform : %s\n"c, name.data);
+      std::printf("failed to get uniform : %s\n", name.data);
     }
   }
   
@@ -106,7 +106,7 @@ impl Shader {
     if index != -1 {
       glUniform1f(index, v);
     } else {
-      printf("failed to get uniform : %s\n"c, name.data);
+      std::printf("failed to get uniform : %s\n", name.data);
     }
   }
 
@@ -133,7 +133,7 @@ impl Shader {
         return;
       }
     }
-    printf("incompatible type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n"c);
+    std::printf("incompatible type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n");
   }
 }
 
@@ -152,14 +152,14 @@ impl Window {
     mut self: #self;
     
     if !glfwInit() {
-      printf("Failed to initialize glfw\n"c);
+      std::printf("Failed to initialize glfw\n");
       return self;
     }
     
     self.handle = glfwCreateWindow(width, height, title.data, null, null);
     
     if self.handle == null {
-      printf("Failed to create window\n"c);
+      std::printf("Failed to create window\n");
       glfwTerminate();
       return self;
     }
@@ -167,7 +167,7 @@ impl Window {
     glfwMakeContextCurrent(self.handle);
     
     if glewInit() != 0 {
-      printf("Failed to initialize glew\n"c);
+      std::printf("Failed to initialize glew\n");
       glfwTerminate();
       return self;
     }

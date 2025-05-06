@@ -1,13 +1,13 @@
 
 
 impl!<T> Format for List!<T> {
-  fn format(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+  fn format(*const self, formatter: *mut Formatter) {
     element_type := typeof(T);
-    builder.appendf("List!<%>", (element_type.name,), options.unquoted());
+    formatter.writer.appendf("List!<%>", (element_type.name,), formatter.options.unquoted());
+    formatter.writer.append(" [");
 
-    builder.append(" [");
-    if options.indented {
-      builder.append("\n  ");
+    if formatter.options.indented {
+      formatter.writer.append("\n  ");
     }
 
     for i, val in self.enumerate() {
@@ -15,18 +15,18 @@ impl!<T> Format for List!<T> {
         ptr: &mut self.data[i]
         type: element_type,
       };
-      format_any(value, builder, options);
-      if options.indented && i != self.length - 1 {
-        builder.append(",\n  ");
+      format_any(value, formatter);
+      if formatter.options.indented && i != self.length - 1 {
+        formatter.writer.append(",\n  ");
       } else if i != self.length - 1 {
-        builder.append(", ");
+        formatter.writer.append(", ");
       }
     }
 
-    if options.indented {
-      builder.append("\n]");
+    if formatter.options.indented {
+      formatter.writer.append("\n]");
     } else {
-      builder.append("]");
+      formatter.writer.append("]");
     }
   }
 }

@@ -36,14 +36,14 @@ impl Deinit for JsonValue {
         for key, value in self.object {
           key.deinit();
           value.deinit();
-          free(value);
+          std::c::free(value);
         }
         self.object.deinit();
       }
       JsonValueType::Array: {
         for val in self.array {
           val.deinit();
-          free(val);
+          std::c::free(val);
         }
         self.array.deinit();
       }
@@ -275,17 +275,17 @@ impl JsonValue {
   }
 
   fn new() -> *mut JsonValue {
-    ptr: *mut JsonValue = malloc(sizeof(JsonValue));
+    ptr: *mut JsonValue = std::c::malloc(sizeof(JsonValue));
     *ptr = .{};
     return ptr;
   }
 }
 
 impl Format for JsonValue {
-  fn format(*const self, mut builder: *mut StringBuilder, _: FormatOptions) {
+  fn format(*const self, formatter: *mut Formatter) {
     mut writer := Writer::new();
-    writer.builder = *builder;
+    writer.builder = *formatter.writer;
     self.to_string(&mut writer);
-    *builder = writer.builder;
+    *formatter.writer = writer.builder;
   }
 }

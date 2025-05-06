@@ -10,7 +10,7 @@ fn panic(msg: str);
 
     @[inline]
     fn clear(*mut self) {
-      free(self.data);
+      std::c::free(self.data);
       self.capacity = 0;
       self.data = null;
       self.length = 0;
@@ -28,7 +28,7 @@ fn panic(msg: str);
     fn subarray(self, range: Range) -> #self {
       len := range.end - range.begin;
       new_data := self.allocator.allocate_array(sizeof(T), len);
-      memcpy(new_data, self.data + range.begin, sizeof(T) * len);
+      std::c::memcpy(new_data, self.data + range.begin, sizeof(T) * len);
       return .{
         data: new_data,
         length: len,
@@ -63,7 +63,7 @@ fn panic(msg: str);
     @[inline]
     fn initialize(*mut self, num_to_fill: u64) {
       self.resize(num_to_fill);
-      memset(self.data, 0, sizeof(T) * self.capacity);
+      std::c::memset(self.data, 0, sizeof(T) * self.capacity);
       self.length = num_to_fill;
     }
     
@@ -103,7 +103,7 @@ fn panic(msg: str);
       }
   
       // Shift elements to the right to make space at the front
-      memmove(self.data + 1, self.data, sizeof(T) * self.length);
+      std::c::memmove(self.data + 1, self.data, sizeof(T) * self.length);
   
       // Insert the new value at the front
       self.data[0] = v;
@@ -116,7 +116,7 @@ fn panic(msg: str);
     @[inline]
     fn pop_front(*mut self) -> T {
       value := self.data[0];
-      memmove(self.data, self.data + 1, sizeof(T) * (self.length - 1));
+      std::c::memmove(self.data, self.data + 1, sizeof(T) * (self.length - 1));
       self.length -= 1;
       return value;
     }
@@ -130,7 +130,7 @@ fn panic(msg: str);
     */
     @[inline]
     fn deinit(*mut self) {
-      free(self.data);
+      std::c::free(self.data);
       self.data = null;
       self.length = 0;
       self.capacity = 0;
@@ -144,7 +144,7 @@ fn panic(msg: str);
     @[inline]
     fn clone(self) -> #self {
       new_data := self.allocator.allocate_array(sizeof(T), self.capacity);
-      memcpy(new_data, self.data, sizeof(T) * self.length);
+      std::c::memcpy(new_data, self.data, sizeof(T) * self.length);
       return .{
         data: new_data,
         length: self.length,
@@ -167,7 +167,7 @@ fn panic(msg: str);
     fn init(init: InitList!<T>) -> #self {
       mut self: #self;
       self.resize(init.length);
-      memcpy(self.data, init.data, sizeof(T) * init.length);
+      std::c::memcpy(self.data, init.data, sizeof(T) * init.length);
       self.length = init.length;
       return self;
     }
@@ -377,7 +377,7 @@ impl!<T> List!<T> {
     fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
       for idx in 0..self.length {
         if comparator(self.data[idx], seek) {
-          memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
+          std::c::memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
           self.length -= 1;
           return true;
         }

@@ -3,47 +3,133 @@
 // this is very limited to what i've done in the language so far and a ton is missing.
 
 #ifndef FREESTANDING {
-  extern { 
-    fn system(cmd: *const u8) -> s32;
+  module std {
+    module c {
+      extern {
+        fn system(cmd: *const u8) -> s32;
 
-    fn free(ptr: *const void) -> void;
-    fn malloc(nbytes: u64) -> *mut void;
-    fn calloc(num: u64, size: u64) -> *mut void;
-    fn realloc(ptr: *const void, size: u64) -> *mut void;
+        fn free(ptr: *const void) -> void;
+        fn malloc(nbytes: u64) -> *mut void;
+        fn calloc(num: u64, size: u64) -> *mut void;
+        fn realloc(ptr: *const void, size: u64) -> *mut void;
 
-    fn vprintf(format: *const u8, args: va_list) -> s32;
-    fn printf(format: *const u8, ...) -> s32;
-    fn exit(code: s32);
+        fn vprintf(format: *const u8, args: va_list) -> s32;
+        fn printf(format: *const u8, ...) -> s32;
+        fn exit(code: s32);
 
-    fn scanf(format: *const u8, ...) -> s32;
-    fn getchar() -> s32;
+        fn scanf(format: *const u8, ...) -> s32;
+        fn getchar() -> s32;
 
-    fn sleep(seconds: s32);
-    fn usleep(c: s32);
+        fn sleep(seconds: s32);
+        fn usleep(c: s32);
 
-    fn snprintf(buffer: *const u8, buffer_size: u64, format: *const u8, ...) -> s32;
-    fn sprintf(buffer: *const u8, format: *const u8, ...) -> s32;
+        fn snprintf(buffer: *const u8, buffer_size: u64, format: *const u8, ...) -> s32;
+        fn sprintf(buffer: *const u8, format: *const u8, ...) -> s32;
+        
+        fn strdup(s: *const u8) -> *mut u8;
+        fn strndup(s: *const u8, n: u64) -> *mut u8;
+        fn strerror(errnum: s32) -> *mut u8;
+
+        fn strtok(s: *const u8, delim: *const u8) -> *mut u8;
+        fn strcat(dest: *const u8, src: *const u8) -> *mut u8;
+        fn strncat(dest: *const u8, src: *const u8, n: u64) -> *mut u8;
+
+        fn atoi(v: *const u8) -> s32;
+        fn atof(v: *const u8) -> f64;
+        
+        fn memmove(dest: *const void, src: *const void, nbytes: s64) -> s32;
+        fn memcpy(dest: *const void, src: *const void, n: u64) -> *mut void;
+        fn memset(dest: *const void, c: s32, n: u64) -> *mut void;
+        fn memcmp(ptr1: *const void, ptr2: *const void, n: u64) -> s32;
+
+        fn strncmp(s: *const u8, str2: *const u8, len: s32) -> s32;
+        fn strcmp(str1: *const u8, str2: *const u8) -> s32;
+        fn strlen(string: *const u8) -> u32;
+        
+        fn isalnum(c: s32) -> s32;
+        fn isalpha(c: s32) -> s32;
+        fn isspace(c: s32) -> s32;
+        fn isdigit(c: s32) -> s32;
+        fn islower(c: s32) -> s32;
+        fn isupper(c: s32) -> s32;
+        fn isprint(c: s32) -> s32;
+        fn ispunct(c: s32) -> s32;
+        fn isxdigit(c: s32) -> s32;
+        fn iscntrl(c: s32) -> s32;
+        fn isgraph(c: s32) -> s32;
+        fn tolower(c: s32) -> s32;
+        fn toupper(c: s32) -> s32;
+      }
+    }
+
+    fn system(cmd: str) -> s32 {
+      return c::system(cmd.data);
+    }
+
+    fn free(ptr: *const void) -> void {
+      return c::free(ptr);
+    }
+
+    fn malloc!<T>() -> *mut T {
+      return c::malloc(sizeof(T));
+    }
+
+    fn calloc!<T>(num: u64) -> *mut T {
+      return c::calloc(num, sizeof(T));
+    }
+
+    fn realloc!<T>(ptr: *const T, n: u64) -> *mut T {
+      return c::realloc(ptr, n * sizeof(T));
+    }
+
+    @[inline]
+    fn vprintf(format: str, args: va_list) -> s32 {
+      return c::vprintf(format.data, args);
+    }
+
+    @[inline]
+    fn printf(format: str, ...) -> s32 {
+      list: va_list;
+      va_start(list);
+      result := c::vprintf(format.data, list);
+      va_end(list);
+      return result;
+    }
+
+    @[inline]
+    fn exit(code: s32) {
+      return c::exit(code);
+    }
+
+    @[inline]
+    fn scanf(format: str, ...) -> s32 {
+      list: va_list;
+      va_start(list);
+      result := c::scanf(format.data, list);
+      va_end(list);
+      return result;
+    }
+
+    @[inline]
+    fn snprintf(buffer: *const u8, buffer_size: u64, format: str, ...) -> s32 {
+      list: va_list;
+      va_start(list);
+      result := c::snprintf(buffer, buffer_size, format.data, list);
+      va_end(list);
+      return result;
+    }
+
+    @[inline]
+    fn sprintf(buffer: *const u8, format: str, ...) -> s32 {
+      list: va_list;
+      va_start(list);
+      result := c::sprintf(buffer, format.data, list);
+      va_end(list);
+      return result;
+    }
     
-    fn strdup(s: *const u8) -> *mut u8;
-    fn strndup(s: *const u8, n: u64) -> *mut u8;
-    fn strerror(errnum: s32) -> *mut u8;
-
-    fn strtok(s: *const u8, delim: *const u8) -> *mut u8;
-    fn strcat(dest: *const u8, src: *const u8) -> *mut u8;
-    fn strncat(dest: *const u8, src: *const u8, n: u64) -> *mut u8;
-
-    fn atoi(v: *const u8) -> s32;
-    fn atof(v: *const u8) -> f64;
     
-    fn memmove(dest: *const void, src: *const void, nbytes: s64) -> s32;
-    fn memcpy(dest: *const void, src: *const void, n: u64) -> *mut void;
-    fn memset(dest: *const void, c: s32, n: u64) -> *mut void;
-    fn memcmp(ptr1: *const void, ptr2: *const void, n: u64) -> s32;
-
-    fn strncmp(s: *const u8, str2: *const u8, len: s32) -> s32;
-    fn strcmp(str1: *const u8, str2: *const u8) -> s32;
-    fn strlen(string: *const u8) -> u32;
-    
+    // TODO: these should be static associated functions on the 'char' and u8 types.
     fn isalnum(c: s32) -> s32;
     fn isalpha(c: s32) -> s32;
     fn isspace(c: s32) -> s32;
@@ -57,5 +143,7 @@
     fn isgraph(c: s32) -> s32;
     fn tolower(c: s32) -> s32;
     fn toupper(c: s32) -> s32;
+
+    fn __() {}
   }
 }

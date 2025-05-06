@@ -3,20 +3,20 @@
   struct Libc_Allocator {}
   impl Allocator for Libc_Allocator {
     fn allocate(*mut self, size: u64) -> *mut void {
-      return malloc(size);
+      return std::c::malloc(size);
     }
     fn free(*mut self, ptr: *mut void) {
-      free(ptr);
+      std::c::free(ptr);
     }
     fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
-      return realloc(ptr, element_size * new_size);
+      return std::c::realloc(ptr, element_size * new_size);
     }
     fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
-      return calloc(size, n);
+      return std::c::calloc(size, n);
     }
     fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
       newptr := self.allocate_array(element_size, n);
-      memcpy(newptr, ptr, n * element_size);
+      std::c::memcpy(newptr, ptr, n * element_size);
       return newptr;
     }
     fn deinit(*mut self) {}
@@ -38,7 +38,7 @@
       if self.length + 1 > self.capacity {
         if self.capacity == 0 then self.capacity = 4;
         self.capacity *= 2;
-        self.pointers = realloc(self.pointers, sizeof(*const void) * self.capacity);
+        self.pointers = std::c::realloc(self.pointers, sizeof(*const void) * self.capacity);
       }
       self.pointers[self.length] = ptr;
       self.length += 1;
@@ -56,7 +56,7 @@
     fn remove_pointer(*mut self, ptr: *const void) {
       for i in 0..self.length {
         if self.pointers[i] == ptr {
-          memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
+          std::c::memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
           self.length -= 1;
           break;
         }
@@ -66,41 +66,41 @@
   impl Allocator for Tracking_Allocator {
     fn deinit(*mut self) {
       while self.length > 0 {
-        free(self.pointers[self.length - 1]);
+        std::c::free(self.pointers[self.length - 1]);
         self.length -= 1;
       }
-      free(self.pointers);
+      std::c::free(self.pointers);
       self.pointers = null;
       self.capacity = 0;
     }
 
     fn allocate(*mut self, size: u64) -> *mut void {
-      ptr := malloc(size);
+      ptr := std::c::malloc(size);
       self.push_pointer(ptr);
       return ptr;
     }
 
     fn free(*mut self, ptr: *mut void) {
       self.remove_pointer(ptr);
-      free(ptr);
+      std::c::free(ptr);
     }
 
     fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
-      ptr := calloc(size, n);
+      ptr := std::c::calloc(size, n);
       self.push_pointer(ptr);
       return ptr;
     }
 
     fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
       self.remove_pointer(ptr);
-      pointer := realloc(ptr, element_size * new_size);
+      pointer := std::c::realloc(ptr, element_size * new_size);
       self.push_pointer(pointer);
       return pointer;
     }
 
     fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void {
       new_ptr := self.allocate_array(element_size, n);
-      memcpy(new_ptr, ptr, n * element_size);
+      std::c::memcpy(new_ptr, ptr, n * element_size);
       return new_ptr;
     }
   }
