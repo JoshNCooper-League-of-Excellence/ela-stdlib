@@ -1,0 +1,84 @@
+/* 
+  A future API for when we have a build system embedded 
+  in the language as a compile time 'build()' function
+
+  It's not that we can't do it now, but we should let the compiler mature more before diving into it,
+  less stuff to change when we want to radically shift the way AST and various IR stages are represented.
+*/
+enum Output {
+  Executable,
+  SharedLibrary,
+  StaticLibrary,
+}
+
+enum OptimizationLevel {
+  None, // Nothing.
+  O1,   // basic
+  O2,   // medium
+  O3,   // highest level
+  Oz,   // size (more intense)
+  Os    // size
+}
+
+struct Compiler {
+  output:               Output,
+  output_path:          str,
+  load_library_path:    str = "/usr/local/lib/ela",
+  optimization:         OptimizationLevel,
+
+  debug:                bool = true,
+  use_stdlib:           bool = true,
+
+  testing:              bool = false,
+  freestanding:         bool = false,
+
+  linker_flags:         List!<str> = List!<str>::init(.[" -lc -lm "]),
+}
+
+impl Compiler {
+  @[inline]
+  fn set_output(*mut self, output: Output, path: str) -> Compiler {
+    self.output = output;
+    self.output_path = path;
+    return *self;
+  }
+  @[inline]
+  fn set_load_library_path(*mut self, path: str) -> Compiler {
+    self.load_library_path = path;
+    return *self;
+  }
+  @[inline]
+  fn set_debug(*mut self, debug: bool) -> Compiler {
+    self.debug = debug;
+    return *self;
+  }
+  @[inline]
+  fn set_testing(*mut self, enabled: bool) -> Compiler {
+    self.testing = enabled;
+    return *self;
+  }
+  @[inline]
+  fn set_optimization(*mut self, level: OptimizationLevel) -> Compiler {
+    self.optimization = level;
+    return *self;
+  }
+  @[inline]
+  fn set_use_stdlib(*mut self, use_stdlib: bool) -> Compiler {
+    self.use_stdlib = use_stdlib;
+    return *self;
+  }
+  @[inline]
+  fn set_freestanding(*mut self, freestanding: bool) -> Compiler {
+    self.freestanding = freestanding;
+    return *self;
+  }
+  @[inline]
+  fn set_linker_flags(*mut self, flags: List!<str>) -> Compiler {
+    self.linker_flags = flags;
+    return *self;
+  }
+  @[inline]
+  fn build(*mut self) -> Compiler {
+    return *self;
+  }
+}

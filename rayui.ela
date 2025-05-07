@@ -7,7 +7,10 @@ struct Style {
   highlighted:          Color = ORANGE,
 
   line_thickness:       f32 = 2,
+
+  // Text stuff.
   font_size:            s32 = 16,
+  font_spacing:         f32 = 1,
   font_color_override:  Option!<Color> = Some(GRAY),
   font:                 Font = GetFontDefault(),
 }
@@ -26,6 +29,40 @@ impl Style {
   }
 }
 
+fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions = FormatOptions::default()) where Tuple: IsTuple {
+  text := format(fmt, tuple, format_options);
+  defer {
+    text.deinit();
+  }
+
+  DrawTextEx(
+    style.font, 
+    text.data,
+    position, 
+    style.font_size, 
+    style.font_spacing, 
+    style.font_color_override.or_else(style.foreground)
+  );
+}
+
+fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsByteSlice {
+  DrawTextEx(
+    style.font, 
+    text.as_byte_slice().data, 
+    position, 
+    style.font_size, 
+    style.font_spacing, 
+    style.font_color_override.or_else(style.foreground)
+  );
+}
+
+// for drawing a single char. useful for custom text layouts.
+fn draw_character(char: u8, position: Vector2, style: Style) {
+  temp : u8[2] = .[char, '\0' as u8];
+  slice := Slice!<u8>.{data: temp, length: 1};
+  draw_text!<Slice!<u8>>(slice, position, style);
+}
+
 // * Measure the width of a jiggly text of 'text' and 'style'
 @[inline]
 fn measure_jiggly_text!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
@@ -40,7 +77,6 @@ fn measure_jiggly_text!<Data>(text: Data, style: Style) -> f32 where Data: AsByt
 
 // * Draw wavy jiggly text.
 @[inline]
-
 fn jiggly_text!<Data>(
   data: Data, 
   rect: Rectangle, 
@@ -50,11 +86,6 @@ fn jiggly_text!<Data>(
 ) where Data: AsByteSlice {
   time: f32 = GetTime() as f32;
   text := data.as_byte_slice();
-
-  fn draw_character(char: u8, x: s32, y: s32, style: Style) {
-    temp : u8[2] = .[char, '\0' as u8];
-    DrawText(temp, x, y, style.font_size, style.foreground);    
-  }
 
   for i in 0..text.length {
     pos_x: s32 = (rect.x + (i * style.font_size) as f32) as s32;
@@ -95,8 +126,6 @@ fn button!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: 
     height: size.y
   };
 
-  text_x : f32 = position.x + (size.x - text_width) / 2;
-  text_y : f32 = position.y + (size.y - text_height) / 2;
   mouse_over := CheckCollisionPointRec(GetMousePosition(), new_rect);
 
   if mouse_over {
@@ -106,7 +135,12 @@ fn button!<Data>(text: Data, rect: Rectangle, style: Style) -> bool where Data: 
     DrawRectangleV(position, size, style.background);
   }
 
-  DrawText(text_bytes.data, text_x as s32, text_y as s32, style.font_size, style.foreground);
+  text_position: Vector2 = .{
+    x: position.x + (size.x - text_width) / 2,
+    y: position.y + (size.y - text_height) / 2,
+  };
+
+  draw_text(text, text_position, style);
 
   return false;
 }
@@ -142,9 +176,8 @@ fn slider!<T>(
   format_options: Option!<FormatOptions>,
 ) where T: IsNumeric {
   { // * Draw the slider.
-    DrawRectangleV(
-      Vector2.{ x: rectangle.x, y: rectangle.y},
-      Vector2.{ x: rectangle.width, y: rectangle.height},
+    DrawRectangleRec(
+      rectangle,
       style.background,
     );
 
@@ -152,8 +185,7 @@ fn slider!<T>(
     min_f := state.min_value as f32;
     max_f := state.max_value as f32;
 
-    slider_width: f32 = rectangle.width *
-                        clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
+    slider_width: f32 = rectangle.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
 
     slider_rect: Rectangle = .{
       x: rectangle.x,
@@ -172,18 +204,19 @@ fn slider!<T>(
 
     mut font_color: Color = style.font_color_override.or_else(style.foreground);
 
-    mut text_x: s32;
-    mut text_y: s32;
+    mut text_position: Vector2;
     if text.is_some() {
       the_text := text.unwrap();
-      text_x = (rectangle.x - 15 + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2) as s32;
-      text_y = (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
-      DrawText(
-        the_text.data,
-        text_x,
-        text_y,
-        style.font_size,
-        font_color
+
+      text_position = .{
+        x: (rectangle.x - 15 + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2),
+        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+      };
+
+      draw_text(
+        the_text,
+        text_position,
+        style,
       );
     }
 
@@ -196,18 +229,17 @@ fn slider!<T>(
     }
 
     mut value_text := format("%", (*state.value,), options);
-    defer value_text.deinit();
+    defer {
+      value_text.deinit();
+    }
 
     // 10 pixels padding
-    value_text_x: s32 = (text_x + 30 + MeasureText(value_text.data, style.font_size)) as s32;
+    text_position = .{
+      x: text_position.x + 30 + MeasureText(value_text.data, style.font_size),
+      y: text_position.y,
+    };
 
-    DrawText(
-      value_text.data,
-      value_text_x,
-      text_y,
-      style.font_size,
-      font_color
-    );
+    draw_text(value_text, text_position, style);
   }
 
   { // * Update the slider.
@@ -284,11 +316,12 @@ fn check_button(
   }
 
   if text.is_some() {
-    font_color := style.font_color_override.or_else(style.foreground);
     the_text := text.unwrap();
-    text_x := (rectangle.x + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2) as s32;
-    text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
-    DrawText(the_text.data, text_x, text_y, style.font_size, font_color);
+    text_position: Vector2 = .{
+      x: (rectangle.x + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2),
+      y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+    };
+    draw_text(the_text, text_position, style);
   }
 
   hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
@@ -342,29 +375,26 @@ fn drop_down!<O, UserArg>(
 
   // Draw the selected option, instead of the label text.
   if state.selected_index.is_some() && (text.is_none() || prefer_selected_option) {
-    index := state.selected_index.unwrap();
-    text_data := options[index].as_byte_slice();
-
-    text_x := (rectangle.x + (rectangle.width - MeasureText(text_data.data, style.font_size)) / 2) as s32;
-    text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
-
-    DrawText(
-      text_data.data,
-      text_x,
-      text_y,
-      style.font_size,
-      style.font_color_override.or_else(style.foreground),
+    the_text := options[state.selected_index.unwrap()];
+    text_position: Vector2 = . {
+      x: (rectangle.x + (rectangle.width - MeasureText(the_text.as_byte_slice().data, style.font_size)) / 2),
+      y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+    };
+    draw_text(
+      the_text, 
+      text_position, 
+      style
     );
   } else if text.is_some() {
-    label := text.unwrap();
-    text_x := (rectangle.x + (rectangle.width - MeasureText(label.data, style.font_size)) / 2) as s32;
-    text_y := (rectangle.y + (rectangle.height - style.font_size) / 2) as s32;
-    DrawText(
-      label.data,
-      text_x,
-      text_y,
-      style.font_size,
-      style.font_color_override.or_else(style.foreground),
+    the_text := text.unwrap();
+    text_position: Vector2 = . {
+      x: (rectangle.x + (rectangle.width - MeasureText(the_text.as_byte_slice().data, style.font_size)) / 2),
+      y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+    };
+    draw_text(
+      the_text, 
+      text_position, 
+      style
     );
   }
 
@@ -376,7 +406,6 @@ fn drop_down!<O, UserArg>(
 
   mut hit_option := false;
   if state.is_open {
-
     // copy for mutating.
     mut option_rect: Rectangle = rectangle;
     option_rect.y += rectangle.height;
@@ -393,16 +422,12 @@ fn drop_down!<O, UserArg>(
       DrawRectangleRec(option_rect, option_color);
 
       text := options[i].as_byte_slice();
-      text_x := (option_rect.x + (option_rect.width - MeasureText(text.data, style.font_size)) / 2) as s32;
-      text_y := (option_rect.y + (option_rect.height - style.font_size) / 2) as s32;
+      text_position: Vector2 = .{
+        x: option_rect.x + (option_rect.width - MeasureText(text.data, style.font_size)) / 2,
+        y: option_rect.y + (option_rect.height - style.font_size) / 2,
+      };
 
-      DrawText(
-        text.data,
-        text_x ,
-        text_y,
-        style.font_size,
-        style.font_color_override.or_else(style.foreground),
-      );
+      draw_text(text, text_position, style);
 
       if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
         state.selected_index = Some(i as u32);
@@ -443,16 +468,6 @@ trait IWidget {
   // draw the widget it,
   // and inform the caller about the dimensions that this widget required to be drawn.
   fn draw(*mut self);
-
-  // handle the events this widget provides.
-  fn events(*mut self, ctx: *mut Ctx);
-
-  // tell the context about the layout of our object, primarily.
-  fn layout(*mut self, ctx: *mut Ctx);
-
-  fn get_metadata(*mut self) -> (u32, u32) {
-    return self.metadata;
-  }
 }
 
 struct Button {
@@ -461,7 +476,6 @@ struct Button {
   style:        Style,
   user_arg:     *mut void,
   on_clicked:   fn * (*mut void),
-  metadata:     (u32, u32),
 }
 
 impl IWidget for Button {
@@ -471,11 +485,6 @@ impl IWidget for Button {
     }
   }
 
-  fn events(*mut self, ctx: *mut Ctx) {
-  }
-
-  fn layout(*mut self, ctx: *mut Ctx) {
-  }
 }
 
 struct Slider {
@@ -484,7 +493,6 @@ struct Slider {
   style:          Style,
   state:          *mut SliderState!<f32>,
   format_options: Option!<FormatOptions>,
-  metadata:       (u32, u32),
 }
 
 impl IWidget for Slider {
@@ -498,11 +506,6 @@ impl IWidget for Slider {
     );
   }
 
-  fn events(*mut self, ctx: *mut Ctx) {
-  }
-
-  fn layout(*mut self, ctx: *mut Ctx) {
-  }
   
 }
 
@@ -532,7 +535,6 @@ struct CheckButton {
   style:        Style,
   allow_hold:   bool,
   value:        bool,         // whether the button is toggled or not.
-  metadata:     (u32, u32),
 }
 
 impl IWidget for CheckButton {
@@ -546,11 +548,6 @@ impl IWidget for CheckButton {
     );
   }
 
-  fn events(*mut self, ctx: *mut Ctx) {
-  }
-
-  fn layout(*mut self, ctx: *mut Ctx) {
-  }
 }
 
 struct DropDown {
@@ -564,7 +561,6 @@ struct DropDown {
   user_arg:               *mut void,
 
                           // layer, id;
-  metadata:               (u32, u32),
 }
 
 impl IWidget for DropDown {
@@ -581,10 +577,23 @@ impl IWidget for DropDown {
     );
   }
 
-  fn events(*mut self, ctx: *mut Ctx) {
-  }
+}
 
-  fn layout(*mut self, ctx: *mut Ctx) {
+struct LabelBase!<Data> where Data: AsByteSlice {
+  data: Data,
+  style: Style,
+  rectangle: Rectangle,
+}
+
+impl!<Data> IWidget for LabelBase!<Data> {
+  fn draw(*mut self) {
+    x, y := (self.rectangle.x, self.rectangle.y);
+    DrawRectangleRec(self.rectangle, self.style.background);
+    draw_text!<Data>(
+      self.data,
+      .{x: x, y: y},
+      self.style,
+    );
   }
 }
 
@@ -596,24 +605,6 @@ choice Widget {
 }
 
 impl Widget {
-  fn events(*mut self, ctx: *mut Ctx) {
-    switch is self {
-      Widget::Button(&mut btn) => btn.events(ctx),
-      Widget::Slider(&mut slider) => slider.events(ctx),
-      Widget::CheckButton(&mut chk_btn) => chk_btn.events(ctx),
-      Widget::DropDown(&mut drp_dwn) => drp_dwn.events(ctx),
-    }
-  }
-
-  fn layout(*mut self, ctx: *mut Ctx) {
-    switch is self {
-      Widget::Button(&mut btn) => btn.layout(ctx),
-      Widget::Slider(&mut slider) => slider.layout(ctx),
-      Widget::CheckButton(&mut chk_btn) => chk_btn.layout(ctx),
-      Widget::DropDown(&mut drp_dwn) => drp_dwn.layout(ctx),
-    }
-  }
-
   fn draw(*mut self) {
     switch is self {
       Widget::Button(&mut btn) => btn.draw(),
@@ -624,9 +615,19 @@ impl Widget {
   }
 }
 
+struct Window;
+
+alias RenderHook :: fn * (*mut Window)
+
+enum RenderHookPriority {
+  PreWidgetRender,
+  PostWidgetRender
+}
+
 struct Window {
   widgets: List!<dyn IWidget>,
   background_color: Color,
+  render_hooks: List!<(RenderHookPriority, RenderHook)>
 }
 
 impl Window {
@@ -645,14 +646,34 @@ impl Window {
     while !WindowShouldClose() {
       BeginDrawing();
       ClearBackground(self.background_color);
+
+      for priority, hook in self.render_hooks {
+        if priority == RenderHookPriority::PreWidgetRender {
+          hook(self);
+        }
+      }
+
       for widget in self.widgets.iter_mut() {
         widget.draw();
       }
+
+      for priority, hook in self.render_hooks {
+        if priority == RenderHookPriority::PostWidgetRender {
+          hook(self);
+        }
+      }
+
       EndDrawing();
     }
   }
 
-  fn add_widget!<T>(*mut self, t: *mut T) where T: IWidget {
+  fn add_widget!<T>(*mut self, t: *mut T) -> Window where T: IWidget {
     self.widgets.push(dynof(t, IWidget));
+    return *self;
+  }
+
+  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> Window {
+    self.render_hooks.push((priority, hook));
+    return *self;
   }
 }
