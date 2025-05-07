@@ -617,7 +617,7 @@ impl Widget {
 
 struct Window;
 
-alias RenderHook :: fn * (*mut Window)
+alias RenderHook :: fn * (*mut void)
 
 enum RenderHookPriority {
   PreWidgetRender,
@@ -627,7 +627,10 @@ enum RenderHookPriority {
 struct Window {
   widgets: List!<dyn IWidget>,
   background_color: Color,
-  render_hooks: List!<(RenderHookPriority, RenderHook)>
+  render_hooks: List!<(RenderHookPriority, RenderHook)>,
+  init_hooks: List!<fn * (*mut void)>,
+  // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
+  user_context: *mut void, 
 }
 
 impl Window {
@@ -643,13 +646,18 @@ impl Window {
   }
 
   fn run(*mut self) {
+
+    for hook in self.init_hooks {
+      hook(self.user_context);
+    }
+
     while !WindowShouldClose() {
       BeginDrawing();
       ClearBackground(self.background_color);
 
       for priority, hook in self.render_hooks {
         if priority == RenderHookPriority::PreWidgetRender {
-          hook(self);
+          hook(self.user_context);
         }
       }
 
@@ -659,7 +667,7 @@ impl Window {
 
       for priority, hook in self.render_hooks {
         if priority == RenderHookPriority::PostWidgetRender {
-          hook(self);
+          hook(self.user_context);
         }
       }
 
@@ -674,6 +682,16 @@ impl Window {
 
   fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> Window {
     self.render_hooks.push((priority, hook));
+    return *self;
+  }
+
+  fn set_user_context!<T>(*mut self, ctx: *mut T) -> Window {
+    self.user_context = ctx as *mut void;
+    return *self;
+  }
+
+  fn add_on_init_hook(*mut self, hook: RenderHook) -> Window {
+    self.init_hooks.push(hook);
     return *self;
   }
 }
