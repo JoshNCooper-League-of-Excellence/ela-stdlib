@@ -1,0 +1,42 @@
+
+/* 
+  TODO:
+    right now we can't really have a varargs fold expression to actually have a nice clean api for 
+    invoking these C# style event hooks.
+
+    This would be nice, but right now, the focus is on making the api cleaner for the subscriber,
+    not the invoker.
+*/
+
+struct Event!<Fn>
+  where Fn: IsFn
+{
+  invokees: List!<*mut Fn>,
+}
+
+impl!<Fn> Deinit for Event!<Fn> {
+  fn deinit(*mut self) {
+    self.invokees.deinit();
+  }
+}
+
+impl!<Fn> Event!<Fn> {
+  fn comp_add(*mut self, invokee: *mut Fn) {
+    self.invokees.push(invokee);
+  }
+
+  fn comp_sub(*mut self, to_remove: *mut Fn) {
+    mut index: s32 = -1;
+    for i, invokee in self.invokees.enumerate() {
+      if invokee == to_remove {
+        index = i as s32;
+        break;
+      }
+    }
+
+    if index != -1 {
+      self.invokees.remove_at(index);
+    }
+  }
+
+}

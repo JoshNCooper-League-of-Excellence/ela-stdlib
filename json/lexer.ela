@@ -135,9 +135,7 @@ impl JsonLexer {
     }
 
 
-    // I had to inline isdigit for some reason.
-    // it causes C errors.
-    if std::c::isdigit(c) {
+    if c.is_digit() {
       // numbers
       len : s32;
       start : s32 = self.position;

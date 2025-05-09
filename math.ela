@@ -1,6 +1,6 @@
 extern fn rand() -> s32;
 extern fn srand(seed: u32);
-extern fn fmod(l: f32, r: f32) -> f32;
+extern fn fmod(l: f64, r: f64) -> f64;
 extern fn fabs(f: f64) -> f64;
 extern fn isinf(arg: f64) -> bool;
 extern fn isnan(arg: f64) -> bool;

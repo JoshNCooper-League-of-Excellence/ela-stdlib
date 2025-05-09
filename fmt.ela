@@ -660,29 +660,29 @@ fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
   return format(fmt, tuple, *FormatOptions::current(), get_global_allocator());
 }
 
-fn print!<T>(message: T) {
-  mut formatted := format("%", (message,), *FormatOptions::current());
-  printf("%s"c, formatted.data);
+fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
+  mut formatted := format("%", (message,), options);
+  std::c::printf("%s"c, formatted.data);
   formatted.deinit();
 }
 
-fn println!<T>(message: T) {
-  mut formatted := format("%", (message,), *FormatOptions::current());
-  printf("%s\n"c, formatted.data);
+fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
+  mut formatted := format("%", (message,), options);
+  std::c::printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
-fn printlnf!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
-  mut formatted := format(fmt, tuple, *FormatOptions::current());
-  printf("%s\n"c, formatted.data);
+fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple {
+  mut formatted := format(fmt, tuple, options);
+  std::c::printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
-// fn printf!<Tuple>(fmt: str, tuple: Tuple) where Tuple: IsTuple {
-//   mut formatted := format(fmt, tuple, *FormatOptions::current());
-//   printf("%s"c, formatted.data);
-//   formatted.deinit();
-// }
+fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple {
+  mut formatted := format(fmt, tuple, options);
+  std::c::printf("%s"c, formatted.data);
+  formatted.deinit();
+}
 
 #region UTF8.2 {
   /*

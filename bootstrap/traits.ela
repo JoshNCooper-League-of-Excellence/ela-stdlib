@@ -1,9 +1,9 @@
 // equivalent to an explicit cast operator overload in C++,
 // allow an object to be constructed from another.
 // Except it's not done via casting, just a call.
-trait From {
+trait From!<T> {
   // construct a self type from T.
-  fn from!<T>(v: T) -> #self;
+  fn from(v: T) -> #self;
 }
 
 // A deep clone, versus assignment always being a shallow clone in Ela. (think C memory semantics)

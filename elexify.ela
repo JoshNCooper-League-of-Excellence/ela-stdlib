@@ -47,7 +47,7 @@
     mut lexer := Lexer::new(
       (1) (a Map!<str, u32> of keywords),
       (2) (a Map!<str, u32> of operators),
-      (3) (a List!<str>       of reserved words),
+      (3) (a List!<str>     of reserved words),
     );
 
     (4) mut state := State::from_file("input_file.json");

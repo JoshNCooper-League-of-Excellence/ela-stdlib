@@ -1,0 +1,44 @@
+trait CharUtils {
+  fn is_alpha(self) -> bool {
+    return std::c::isalpha(self) != 0;
+  }
+  fn is_alphanumeric(self) -> bool {
+    return std::c::isalnum(self) != 0;
+  }
+  fn is_whitespace(self) -> bool {
+    return std::c::isspace(self) != 0;
+  }
+  fn is_digit(self) -> bool {
+    return std::c::isdigit(self) != 0;
+  }
+  fn is_lowercase(self) -> bool {
+    return std::c::islower(self) != 0;
+  }
+  fn is_uppercase(self) -> bool {
+    return std::c::isupper(self) != 0;
+  }
+  fn is_printable(self) -> bool {
+    return std::c::isprint(self) != 0;
+  }
+  fn is_ascii_punctuation(self) -> bool {
+    return std::c::ispunct(self) != 0;
+  }
+  fn is_hex_digit(self) -> bool {
+    return std::c::isxdigit(self) != 0;
+  }
+  fn is_control(self) -> bool {
+    return std::c::iscntrl(self) != 0;
+  }
+  fn is_graph(self) -> bool {
+    return std::c::isgraph(self) != 0;
+  }
+  fn to_lower(self) -> #self {
+    return std::c::tolower(self) as #self;
+  }
+  fn to_upper(self) -> #self {
+    return std::c::toupper(self) as #self;
+  }
+}
+
+impl CharUtils for char {}
+impl CharUtils for u8 {}

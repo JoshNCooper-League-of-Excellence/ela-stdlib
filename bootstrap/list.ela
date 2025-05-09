@@ -230,7 +230,7 @@ impl!<T> AsSlice!<T> for List!<T> {
 }
 
 impl!<T> List!<T> {
-  alias Ordering_Predicate :: fn*(*const T, *const T) -> bool;
+  alias OrderingPredicate :: fn*(*const T, *const T) -> bool;
 
   /*
     Remove an element at a specific index from the list.
@@ -333,22 +333,33 @@ impl!<T> List!<T> {
 #ifndef FREESTANDING {
 
   impl!<T> List!<T>  {
-    alias Ordering_Predicate :: fn*(*const T, *const T) -> bool;
+    alias OrderingPredicate :: fn*(*const T) -> u32;
     /* 
       return a new list with the order specified by the predicate.
     */
-    fn order_by(self, predicate: Ordering_Predicate) -> List!<T> {
-      mut new_list := self.clone();
-      for i in 0..new_list.length {
-        for j in (i+1)..new_list.length {
-          if predicate(&const new_list.data[i], &const new_list.data[j]) {
-            temp := new_list.data[i];
-            new_list.data[i] = new_list[j];
-            new_list.data[j] = temp;
+    fn sort(*mut self, predicate: OrderingPredicate) {
+      if self.is_empty() {
+        return;
+      }
+
+      mut swapped: bool;
+      mut n := self.length;
+      while {
+        mut swapped := false;
+        for i in 0..(n - 1) {
+          a := predicate(&const (*self)[i]);
+          b := predicate(&const (*self)[i + 1]);
+
+          if b > a {
+            temp := self[i];
+            self[i] = self[i + 1];
+            self[i + 1] = temp;
+            swapped = true;
           }
         }
+        if !swapped then break;
+        --n;
       }
-      return new_list;
     }
 
     alias Comparator :: fn*(T, T) -> bool;

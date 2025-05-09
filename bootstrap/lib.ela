@@ -34,7 +34,8 @@
 #include "reflection.ela";
 // basic hashing functions implemented for numerical and string types.
 #include "hash.ela";
-
+// char utils
+#include "char.ela";
 
 #ifndef FREESTANDING {
   fn assert(message: str, condition: bool) {
