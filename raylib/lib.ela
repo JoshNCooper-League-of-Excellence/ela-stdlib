@@ -333,6 +333,20 @@ impl Vector4 {
   }
 }
 
+impl Rectangle {
+  fn position(self) -> Vector2 {
+    return .{
+      x: self.x,
+      y: self.y,
+    };
+  }
+  fn size(self) -> Vector2 {
+    return .{
+      x: self.width,
+      y: self.height,
+    };
+  }
+}
 
 impl Quaternion {
   fn from_euler(x: f32, y: f32, z: f32) -> #self {

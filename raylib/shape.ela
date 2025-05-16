@@ -24,15 +24,13 @@ choice SolidShape {
 impl SolidShape {
   fn draw(self, mut position: Vector2, color: Color) {
     switch is self {
-      Shape::Circle.{radius: radius}: {
-        position.x -= radius / 2.0;
-        position.y -= radius / 2.0;
+      SolidShape::Circle.{radius: radius}: {
         DrawCircleV(position, radius, color);
       }
-      Shape::Square.{scale: scale}: {
+      SolidShape::Square.{scale: scale}: {
         DrawRectangleV(position - (scale / 2.0), scale, color);
       }
-      Shape::Triangle.{points: points, scale: scale}: {
+      SolidShape::Triangle.{points: points, scale: scale}: {
         mut cpy: Vector2[3];
         for i in 0..3 {
           // TODO: make sure the half-width scaling is correct here.
@@ -45,8 +43,8 @@ impl SolidShape {
 
   fn get_size(self) -> Vector2 =>
     switch is self {
-      Shape::Circle.{radius: radius} => Vector2.{x: radius, y: radius},
-      Shape::Square.{scale: scale} => scale,
-      Shape::Triangle.{points: points, scale: scale} => scale,
+      SolidShape::Circle.{radius: radius} => Vector2.{x: radius, y: radius},
+      SolidShape::Square.{scale: scale} => scale,
+      SolidShape::Triangle.{points: points, scale: scale} => scale,
     };
 }

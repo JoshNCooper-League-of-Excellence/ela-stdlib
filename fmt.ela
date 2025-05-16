@@ -215,6 +215,12 @@ impl FormatOptions {
     return copy;
   }
 
+  fn with_digits_after_decimal(self, n_digits: u8) -> #self {
+    mut copy := self;
+    copy.digits_after_decimal = n_digits;
+    return copy;
+  }
+
   // fn without_typename(self) -> #self {
   //   mut copy := self;
   //   copy.enum_parent_name = false;

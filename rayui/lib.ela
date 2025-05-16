@@ -11,8 +11,8 @@ struct Style {
   // Text stuff.
   font_size:            s32 = 16,
   font_spacing:         f32 = 1,
-  font_color_override:  Option!<Color> = Some(GRAY),
-  font:                 Font = GetFontDefault(),
+  font_color_override:  Option!<Color>,
+  font:                 Font,
 }
 
 impl Style {
@@ -57,12 +57,18 @@ struct WidgetBase {
   state: WidgetState = WidgetState::Active,
   // the general style of this.
   style: Style,
-  // the bounds and position.
+  // the bounds and position. (Do not modify! set the model_rectangle with 0 to 1 values, in percentage of screen space)
   rectangle: Rectangle,
 
-  on_pressed:   fn * (MouseButton) -> bool,
-  on_released:  fn * (MouseButton) -> bool,
-  on_hovered:   fn * (Vector2) -> bool,
+  // a normalized screen space (0 to 1) rectangle representing the target size.
+  // To read tha "Actual size" read `rectangle`.
+  model_rectangle: Rectangle,
+
+  on_pressed:   fn * (*mut WidgetBase, s32) -> bool,
+  on_released:  fn * (*mut WidgetBase, s32) -> bool,
+  on_hovered:   fn * (*mut WidgetBase, Vector2),
+
+  children: List!<*mut WidgetBase>,
 };
 
 trait Widget {
@@ -82,8 +88,26 @@ trait Widget {
     return (self.get_base().input_state & InputState::Held) != 0;
   }
 
-  // draw with no stateful logic.
+  fn get_children(*const self) -> *mut List!<dyn Widget>;
+
   fn draw(*mut self);
+
+  fn on_window_resized(*mut self, screen: Rectangle) {
+    base := self.get_base()
+
+    base.rectangle.x = base.model_rectangle.x * screen.width;
+    base.rectangle.y = base.model_rectangle.y * screen.height;
+    base.rectangle.width = base.model_rectangle.width * screen.width;
+    base.rectangle.height = base.model_rectangle.height * screen.height;
+
+    children := self.get_children();
+
+    if children {
+      for child in children.iter_mut() {
+        child.on_window_resized(screen);
+      }
+    }
+  }
 }
 
 choice Event {
@@ -130,7 +154,7 @@ struct CheckButton {
 struct DropDown!<TString, UserArg> where TString: AsByteSlice {
   base:                   WidgetBase,
   // optional label to show in the base rect.
-  text:                   Option!<String>,
+  text:                   Option!<TString>,
   // list of the options that can be selected.
   // maybe this should be a list of widgets.s
   options:                List!<TString>,
@@ -143,7 +167,7 @@ struct DropDown!<TString, UserArg> where TString: AsByteSlice {
   // a user arg that's used for the on_selected callback.
   user_arg:               *mut UserArg,
   // called when an option is selected via the dropdown.
-  on_option_selected:     fn * (String, *mut UserArg) -> void,
+  on_option_selected:     fn * (TString, *mut UserArg) -> void,
 }
 
 struct Label!<TString> where TString: AsByteSlice {
@@ -163,10 +187,22 @@ struct Window!<Ctx> {
   init_hooks: List!<fn * (*mut void)>,
   // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
   user_context: *mut Ctx,
+  on_resized_callbacks: List!<(*mut void, fn * (*mut void, Rectangle, Rectangle))>,
+  screen_size: Rectangle,
 }
 
 impl!<Ctx> Window!<Ctx> {
   alias RenderHook :: fn * (*mut Ctx);
+
+  fn on_resized(*mut self, new_size: Rectangle) {
+    for widget in self.widgets.iter_mut() {
+      widget.on_window_resized(new_size);
+    }
+    for arg, callback in self.on_resized_callbacks {
+      callback(arg, self.screen_size, new_size);
+    }
+    self.screen_size = new_size;
+  }
 
   fn new(title: str = "Rayui Window",
         size: Vector2 = .{x: 800, y: 600},
@@ -175,10 +211,15 @@ impl!<Ctx> Window!<Ctx> {
     InitWindow(size.x as s32, size.y as s32, title.data);
     SetTargetFPS(target_fps);
     return .{
+      screen_size: .{
+        x: 0,
+        y: 0,
+        width: GetScreenWidth(),
+        height: GetScreenHeight(),
+      }
       background_color: background_color
     };
   }
-
   fn run(*mut self) {
     for hook in self.init_hooks {
       hook(self.user_context);
@@ -187,6 +228,14 @@ impl!<Ctx> Window!<Ctx> {
     while !WindowShouldClose() {
       BeginDrawing();
       ClearBackground(self.background_color);
+
+      if IsWindowResized() {
+        self.on_resized(.{
+          x: 0, y: 0,
+          width: GetScreenWidth(),
+          height: GetScreenHeight(),
+        });
+      }
 
       for priority, hook in self.render_hooks {
         if priority == RenderHookPriority::PreWidgetRender {
@@ -198,19 +247,63 @@ impl!<Ctx> Window!<Ctx> {
         return widget.get_base().layer;
       });
 
-      {
-        mouse_position := GetMousePosition();
-        for widget in self.widgets.iter_mut() {
-          base := widget.get_base();
-          base.input_state = InputState::None;
-          if CheckCollisionPointRec(mouse_position, base.rectangle) {
-            base.input_state = InputState::Hovered;
+      fn handle_events(mouse_position: Vector2, widget: *mut dyn Widget) -> bool {
+        base := widget.get_base();
+        mut hovered := false;
+        mut lmb_pressed := false;
+        mut rmb_pressed := false;
 
-            if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-              base.input_state |= InputState::Pressed;
+        was_pressed := base.input_state & InputState::Pressed;
+
+        base.input_state = InputState::None;
+        if CheckCollisionPointRec(mouse_position, base.rectangle) {
+          base.input_state = InputState::Hovered;
+          hovered = true;
+
+          if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+            base.input_state |= InputState::Pressed;
+            lmb_pressed = true;
+          }
+          if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_RIGHT) {
+            base.input_state |= InputState::Pressed;
+            rmb_pressed = true;
+          }
+        }
+
+        children := widget.get_children();
+        if children {
+          for child in children.iter_mut() {
+            if handle_events(mouse_position, child) {
+              base.input_state = InputState::None;
             }
           }
+        }
+      
+        if base.input_state & InputState::Hovered && base.on_hovered {
+          base.on_hovered(widget.get_base(), mouse_position);
+        }
 
+        if was_pressed && base.input_state & InputState::Pressed == 0 && base.on_released {
+          // ! THIS IS ALWAYS WRONG
+          base.on_released(widget.get_base(), 0);
+        }
+
+        if base.input_state & InputState::Pressed && base.on_pressed {
+          if lmb_pressed {
+            base.on_pressed(widget.get_base(), MouseButton::MOUSE_BUTTON_LEFT);
+          }
+          if rmb_pressed {
+            base.on_pressed(widget.get_base(), MouseButton::MOUSE_BUTTON_RIGHT);
+          }
+        }
+
+        return hovered || lmb_pressed || rmb_pressed;
+      }
+
+      { // Handle events.
+        mouse_position := GetMousePosition();
+        for widget in self.widgets.iter_mut() {
+          handle_events(mouse_position, widget);
         }
       }
 
@@ -229,7 +322,14 @@ impl!<Ctx> Window!<Ctx> {
   }
 
   fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {
-    self.widgets.push(dynof(t, Widget));
+    trait_obj := dynof(t, Widget);
+    trait_obj.on_window_resized(.{
+      x: 0, y: 0,
+      width: GetScreenWidth(),
+      height: GetScreenHeight(),
+    });
+    self.widgets.push(trait_obj);
+
     return *self;
   }
 
@@ -321,209 +421,202 @@ impl!<UserArg> Widget for Button!<UserArg> {
       draw_text(text, text_position, self.base.style);
     }
   }
+
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return null;
+  }
 }
  
-// ! This stuff needs to be reimplemented
-#if 0 {
-  // * Measure the width of a jiggly text of 'text' and 'style'
-  @[inline]
-  fn measure_jiggly_text!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
-    slice := text.as_byte_slice();
-    if slice.length == 0 then return 0.0;
-    mut total_width: f32 = 0.0;
-    for i in 0 as u64..slice.length {
-      total_width += style.font_size;
-    }
-    return total_width;
-  }
 
-  // * Draw wavy jiggly text.
-  @[inline]
-  fn jiggly_text!<Data>(
-    data: Data,
-    rect: Rectangle,
-    style: Style,
-    jiggle_intensity: f32 = 1.0,
-    jiggle_rate: f32 = 1.0
-  ) where Data: AsByteSlice {
-    time: f32 = GetTime() as f32;
-    text := data.as_byte_slice();
+struct ListBox {
+  base: WidgetBase,
+  children: List!<dyn Widget>,
+}
 
-    for i in 0..text.length {
-      pos_x: s32 = (rect.x + (i * style.font_size) as f32) as s32;
-      pos_y: s32 = (rect.y + jiggle_intensity * sin(jiggle_rate * time + (i as f32))) as s32;
-      draw_character(text.data[i], pos_x, pos_y, style);
+impl Widget for ListBox {
+  fn draw(*mut self) {
+    DrawRectangleRec(self.base.rectangle, self.base.style.background.with_alpha(20));
+    DrawRectangleLinesEx(self.base.rectangle, self.base.style.line_thickness, self.base.style.background);
+    const MARGIN := 10.0;
+    position: Vector2 = .{ x: self.base.rectangle.x, y: self.base.rectangle.y  };
+    for child in self.children.iter_mut() {
+      base := child.get_base();
+      rect := &mut base.rectangle;
+      rect.x = position.x + (MARGIN / 2);
+      rect.y = position.y + (MARGIN / 2);
+      rect.width = self.base.rectangle.width - MARGIN;
+      rect.height = (self.base.rectangle.height / self.children.length as f32) - MARGIN;
+      position.y += rect.height + MARGIN / 2;
+      child.draw();
     }
   }
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return &mut self.children;
+  }
+}
 
-  /*
-    draws a draggable slider, and adjusts a value of type $T.
+impl ListBox {
+  fn add_child!<T>(*mut self, widget: *mut T) where T: Widget {
+    self.base.children.push(widget.get_base());
+    self.children.push(dynof(widget, Widget));
+  }
+}
 
-    TODO: add vertical sliders.
-  */
-  @[inline]
-  fn slider!<T>(
-    text: Option!<String>,
-    rectangle: Rectangle,
-    style: Style,
-    state: *mut SliderState!<T>,
-    format_options: Option!<FormatOptions>,
-  ) where T: IsNumeric {
-    { // * Draw the slider.
-      DrawRectangleRec(
-        rectangle,
-        style.background,
-      );
+impl!<TString, T> Widget for Slider!<TString, T> where TString: AsByteSlice, T: IsNumeric {
+  fn draw(*mut self) {
+    // Draw the slider background
+    DrawRectangleRec(
+      self.base.rectangle,
+      self.base.style.background,
+    );
 
-      v_f := (*state.value) as f32;
-      min_f := state.min_value as f32;
-      max_f := state.max_value as f32;
+    v_f := (*self.value) as f32;
+    min_f := self.min_value as f32;
+    max_f := self.max_value as f32;
 
-      slider_width: f32 = rectangle.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
+    slider_width: f32 = self.base.rectangle.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
 
-      slider_rect: Rectangle = .{
-        x: rectangle.x,
-        y: rectangle.y,
-        width: slider_width,
-        height: rectangle.height
-      };
+    slider_rect: Rectangle = .{
+      x: self.base.rectangle.x,
+      y: self.base.rectangle.y,
+      width: slider_width,
+      height: self.base.rectangle.height
+    };
 
-      DrawRectangleRec(slider_rect, style.foreground);
+    DrawRectangleRec(slider_rect, self.base.style.foreground);
 
-      DrawRectangleLinesEx(
-        rectangle,
-        style.line_thickness,
-        style.foreground
-      );
+    DrawRectangleLinesEx(
+      self.base.rectangle,
+      self.base.style.line_thickness,
+      self.base.style.foreground
+    );
 
-      mut font_color: Color = style.font_color_override.or_else(style.foreground);
+    mut font_color: Color = self.base.style.font_color_override.or_else(self.base.style.foreground);
 
-      mut text_position: Vector2;
-      if text.is_some() {
-        the_text := text.unwrap();
+    mut text_position: Vector2 = .{ x: self.base.rectangle.x, y: self.base.rectangle.y };
 
-        text_position = .{
-          x: (rectangle.x - 15 + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2),
-          y: (rectangle.y + (rectangle.height - style.font_size) / 2),
-        };
+    if self.text.is_some() {
+      the_text := self.text.unwrap();
 
-        draw_text(
-          the_text,
-          text_position,
-          style,
-        );
-      }
-
-      mut options: FormatOptions;
-
-      if format_options.is_some() {
-        options = format_options.unwrap();
-      } else {
-        options = *FormatOptions::current();
-      }
-
-      mut value_text := format("%", (*state.value,), options);
-      defer {
-        value_text.deinit();
-      }
-
-      // 10 pixels padding
       text_position = .{
-        x: text_position.x + 30 + MeasureText(value_text.data, style.font_size),
-        y: text_position.y,
+        x: (self.base.rectangle.x - 15 + (self.base.rectangle.width - MeasureText(the_text.as_byte_slice().data, self.base.style.font_size)) / 2),
+        y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
 
-      draw_text(value_text, text_position, style);
+      draw_text(
+        the_text,
+        text_position,
+        self.base.style,
+      );
     }
 
-    { // * Update the slider.
-      mut increment: T;
-      if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
-        increment = (state.max_value - state.min_value) / 100;
+    mut options: FormatOptions;
+    if self.format_options.is_some() {
+      options = self.format_options.unwrap();
+    } else {
+      options = *FormatOptions::current();
+    }
+
+    mut value_text := format("%", (*self.value,), options);
+    defer {
+      value_text.deinit();
+    }
+
+    // 10 pixels padding
+    text_position = .{
+      x: text_position.x + 30 + MeasureText(value_text.data, self.base.style.font_size),
+      y: text_position.y,
+    };
+
+    draw_text(value_text, text_position, self.base.style);
+
+    // Update logic
+    mut increment: T;
+    if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
+      increment = (self.max_value - self.min_value) / 100;
+    } else {
+      increment = (self.max_value - self.min_value) / 50;
+    }
+
+    if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
+      *self.value = clamp(*self.value + increment, self.min_value, self.max_value);
+    } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
+      *self.value = clamp(*self.value - increment, self.min_value, self.max_value);
+    }
+
+    // Handle mouse input
+    mouse_pos := GetMousePosition();
+
+    if CheckCollisionPointRec(mouse_pos, self.base.rectangle) {
+      if IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
+        self.held = true;
+      }
+    }
+
+    if self.held {
+      if !IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
+        self.held = false;
       } else {
-        increment = (state.max_value - state.min_value) / 50;
-      }
-
-      if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
-        *state.value = clamp(*state.value + increment, state.min_value, state.max_value);
-      } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
-        *state.value = clamp(*state.value - increment, state.min_value, state.max_value);
-      }
-
-      // Handle mouse input
-      mouse_pos := GetMousePosition();
-
-      if CheckCollisionPointRec(mouse_pos, rectangle) {
-        if IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
-          state.held = true;
-        }
-      }
-
-      if state.held {
-        if !IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
-          state.held = false;
-        } else {
-          new_value := state.min_value + ((mouse_pos.x - rectangle.x) / rectangle.width) * (state.max_value - state.min_value);
-          *state.value = clamp(new_value, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
-        }
+        new_value := self.min_value + ((mouse_pos.x - self.base.rectangle.x) / self.base.rectangle.width) * (self.max_value - self.min_value);
+        *self.value = clamp(new_value, min(self.min_value, self.max_value), max(self.min_value, self.max_value));
       }
     }
   }
 
-  /*
-    Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return null;
+  }
+}
 
-    NOTE:
-      the 'allow_hold' parameter has significant effect on the behaviour of the button.
 
-      if it is false:
-        clicking once will toggle the button on (LMB).
-        clicking it again, will toggle it off   (LMB).
-        holding the button has no effect.
+/*
+  Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
 
-      if it is true:
-        clicking the button will toggle the button on (LMB).
-        mousing over the button while (LMB) is held down will toggle it on.
-        clicking the button again, will toggle the button off (RMB)
-        mousing over the button while (RMB) is held down will toggle it off.
+  NOTE:
+    the 'allow_hold' parameter has significant effect on the behaviour of the button.
 
-      It's very likely you'd never utilize the 'allow_hold: true' behaviour, unless you're creating some grid of buttons,
-      where  you want to quickly enable large ranges of them, or disable them alike. (such as the 'sequencer' project).
+    if it is false:
+      clicking once will toggle the button on (LMB).
+      clicking it again, will toggle it off   (LMB).
+      holding the button has no effect.
 
-      perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
-  */
-  @[inline]
-  fn check_button(
-    text: Option!<String>,
-    rectangle: Rectangle,
-    style: Style,
-    allow_hold: bool,
-    value: *mut bool,         // whether the button is toggled or not.
-  ) {
-    if *value {
+    if it is true:
+      clicking the button will toggle the button on (LMB).
+      mousing over the button while (LMB) is held down will toggle it on.
+      clicking the button again, will toggle the button off (RMB)
+      mousing over the button while (RMB) is held down will toggle it off.
+
+    It's very likely you'd never utilize the 'allow_hold: true' behaviour, unless you're creating some grid of buttons,
+    where you want to quickly enable large ranges of them, or disable them alike. (such as the 'sequencer' project).
+
+    perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
+*/
+impl Widget for CheckButton {
+  fn draw(*mut self) {
+    if *self.value {
       DrawRectangleRec(
-        rectangle,
-        style.highlighted
+        self.base.rectangle,
+        self.base.style.highlighted
       );
     } else {
-      DrawRectangleRec(rectangle, style.background);
+      DrawRectangleRec(self.base.rectangle, self.base.style.background);
     }
 
-    if text.is_some() {
-      the_text := text.unwrap();
+    if self.text.is_some() {
+      the_text := self.text.unwrap();
       text_position: Vector2 = .{
-        x: (rectangle.x + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2),
-        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.data, self.base.style.font_size)) / 2),
+        y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
-      draw_text(the_text, text_position, style);
+      draw_text(the_text, text_position, self.base.style);
     }
 
-    hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
+    hit := CheckCollisionPointRec(GetMousePosition(), self.base.rectangle);
 
     if hit {
       DrawRectangleLinesEx(
-        rectangle,
-        style.line_thickness,
+        self.base.rectangle,
+        self.base.style.line_thickness,
         ORANGE
       );
     }
@@ -531,98 +624,93 @@ impl!<UserArg> Widget for Button!<UserArg> {
     mut left := false;
     mut right := false;
 
-    if allow_hold {
+    if self.allow_hold {
       left = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT);
       right = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_RIGHT);
       if hit && left {
-        *value = true;
+        *self.value = true;
       } else if hit && right {
-        *value = false;
+        *self.value = false;
       }
     } else if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-      *value = !*value;
+      *self.value = !*self.value;
     }
   }
 
-  /*
-    'prefer_selected_option'
-      will prefer presenting the string value of the selected option when one is selected, over the label.
-  */
-  @[inline]
-  fn drop_down!<O, UserArg>(
-    text:                   Option!<String>,
-    rectangle:              Rectangle,
-    style:                  Style,
-    prefer_selected_option: bool,
-    state:                  *mut DropDownState!<O>,
-    options:                List!<O>,
-    on_option_selected:     fn * (O, *mut UserArg) -> void,
-    user_arg:               *mut UserArg,
-  ) {
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return null;
+  }
+}
+
+/*
+  'prefer_selected_option'
+    will prefer presenting the string value of the selected option when one is selected, over the label.
+*/
+impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: AsByteSlice {
+  fn draw(*mut self) {
     // Draw the DropDown box
-    DrawRectangleRec(rectangle, style.background);
+    DrawRectangleRec(self.base.rectangle, self.base.style.background);
 
     // Draw the selected option, instead of the label text.
-    if state.selected_index.is_some() && (text.is_none() || prefer_selected_option) {
-      the_text := options[state.selected_index.unwrap()];
-      text_position: Vector2 = . {
-        x: (rectangle.x + (rectangle.width - MeasureText(the_text.as_byte_slice().data, style.font_size)) / 2),
-        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+    if self.selected_index.is_some() && (self.text.is_none() || self.prefer_selected_option) {
+      the_text := self.options[self.selected_index.unwrap()];
+      text_position: Vector2 = .{
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.as_byte_slice().data, self.base.style.font_size)) / 2),
+        y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
       draw_text(
         the_text,
         text_position,
-        style
+        self.base.style
       );
-    } else if text.is_some() {
-      the_text := text.unwrap();
-      text_position: Vector2 = . {
-        x: (rectangle.x + (rectangle.width - MeasureText(the_text.as_byte_slice().data, style.font_size)) / 2),
-        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+    } else if self.text.is_some() {
+      the_text := self.text.unwrap();
+      text_position: Vector2 = .{
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.as_byte_slice().data, self.base.style.font_size)) / 2),
+        y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
       draw_text(
         the_text,
         text_position,
-        style
+        self.base.style
       );
     }
 
-    hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
+    hit := CheckCollisionPointRec(GetMousePosition(), self.base.rectangle);
 
     if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-      state.is_open = !state.is_open;
+      self.is_open = !self.is_open;
     }
 
     mut hit_option := false;
-    if state.is_open {
+    if self.is_open {
       // copy for mutating.
-      mut option_rect: Rectangle = rectangle;
-      option_rect.y += rectangle.height;
+      mut option_rect: Rectangle = self.base.rectangle;
+      option_rect.y += self.base.rectangle.height;
 
-      for i in 0..options.length {
-
-        mut option_color := style.background;
+      for i in 0..self.options.length {
+        mut option_color := self.base.style.background;
         hit := CheckCollisionPointRec(GetMousePosition(), option_rect);
         if hit {
-          option_color = style.highlighted;
+          option_color = self.base.style.highlighted;
           hit_option = true;
         }
 
         DrawRectangleRec(option_rect, option_color);
 
-        text := options[i].as_byte_slice();
+        text := self.options[i].as_byte_slice();
         text_position: Vector2 = .{
-          x: option_rect.x + (option_rect.width - MeasureText(text.data, style.font_size)) / 2,
-          y: option_rect.y + (option_rect.height - style.font_size) / 2,
+          x: option_rect.x + (option_rect.width - MeasureText(text.data, self.base.style.font_size)) / 2,
+          y: option_rect.y + (option_rect.height - self.base.style.font_size) / 2,
         };
 
-        draw_text(text, text_position, style);
+        draw_text(text, text_position, self.base.style);
 
         if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-          state.selected_index = Some(i as u32);
-          state.is_open = false;
-          if on_option_selected {
-            on_option_selected(options[i], user_arg);
+          self.selected_index = Some(i as u32);
+          self.is_open = false;
+          if self.on_option_selected {
+            self.on_option_selected(self.options[i], self.user_arg);
           }
         }
 
@@ -631,7 +719,11 @@ impl!<UserArg> Widget for Button!<UserArg> {
     }
 
     if !hit && !hit_option {
-      state.is_open = false;
+      self.is_open = false;
     }
+  }
+
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return null;
   }
 }
