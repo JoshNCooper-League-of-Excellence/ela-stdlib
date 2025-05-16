@@ -19,7 +19,7 @@ impl Subscript!<u8> for str {
 }
 
 impl str {
-  fn slice(*mut self, range: Range) -> Slice!<u8> {
+  fn slice(*const self, range: Range) -> Slice!<u8> {
     start, end := (range.begin, range.end);
     length := end - start;
 

@@ -319,8 +319,7 @@ impl!<T> List!<T> {
   }
 }
 
-impl!<T> List!<T> {
-  @[inline]
+impl!<T> Enumerable!<T> for List!<T> {
   fn enumerate(self) -> Enumerate!<T, Iter!<T>> {
     return .{
       idx: 0,

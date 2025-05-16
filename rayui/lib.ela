@@ -1,0 +1,637 @@
+import raylib::*;
+import fmt::*;
+
+struct Style {
+  foreground:           Color = WHITE,
+  background:           Color = BLACK,
+  highlighted:          Color = ORANGE,
+
+  line_thickness:       f32 = 2,
+
+  // Text stuff.
+  font_size:            s32 = 16,
+  font_spacing:         f32 = 1,
+  font_color_override:  Option!<Color> = Some(GRAY),
+  font:                 Font = GetFontDefault(),
+}
+
+impl Style {
+  fn default() -> Style {
+    return .{
+      foreground: WHITE,
+      background: BLACK,
+      highlighted: ORANGE,
+      font_color_override: Some(GRAY),
+      font_size: 16,
+      line_thickness: 2,
+      font: GetFontDefault(),
+    };
+  }
+}
+
+#flags enum InputState {
+  None,
+  Hovered,
+  Pressed,
+  Held,
+}
+
+#flags enum WidgetState {
+  Inactive, // Completely off.
+  Active,   // on.
+
+  Disabled, // Uninteractable.
+  Enabled,  // interactable.
+}
+
+#static widget_id: u32 = 0;
+
+struct WidgetBase {
+  // unique id.
+  id:    u32 = widget_id++,
+  // Z index.
+  layer: u32,
+  // various input states
+  input_state: InputState = InputState::None,
+  // general, option-like states.
+  state: WidgetState = WidgetState::Active,
+  // the general style of this.
+  style: Style,
+  // the bounds and position.
+  rectangle: Rectangle,
+
+  on_pressed:   fn * (MouseButton) -> bool,
+  on_released:  fn * (MouseButton) -> bool,
+  on_hovered:   fn * (Vector2) -> bool,
+};
+
+trait Widget {
+  fn get_base(*const self) -> *mut WidgetBase {
+    return &mut self.base;
+  }
+
+  fn is_hovered(*const self) -> bool {
+    return (self.get_base().input_state & InputState::Hovered) != 0;
+  }
+
+  fn is_pressed(*const self) -> bool {
+    return (self.get_base().input_state & InputState::Pressed) != 0;
+  }
+
+  fn is_held(*const self) -> bool {
+    return (self.get_base().input_state & InputState::Held) != 0;
+  }
+
+  // draw with no stateful logic.
+  fn draw(*mut self);
+}
+
+choice Event {
+  // dyn Widget field is always sender.
+  MouseDown(MouseButton),
+  MouseUp(MouseButton),
+  MouseMoved(Vector2),
+  KeyPressed(KeyboardKey),
+}
+
+struct Button!<UserArg> {
+  base:         WidgetBase,
+  label:        Option!<String>,
+
+  // callback argument.
+  user_arg:     *mut UserArg,
+  on_clicked:   fn * (*mut UserArg),
+}
+
+struct Slider!<TString, T> where TString: AsByteSlice {
+  base:             WidgetBase,
+  text:             Option!<TString, >,
+  format_options:   Option!<FormatOptions>,
+
+  // is the mouse holding this ish.
+  held:             bool,
+
+  // numerical state.
+  min_value:        T,
+  max_value:        T,
+  value:            *mut T,
+}
+
+struct CheckButton {
+  base:         WidgetBase,
+  // A possible label.
+  text:         Option!<String>,
+  // this has crazy behaviour. it should be removed.
+  allow_hold:   bool,
+  // is checked or not.
+  value:        *mut bool,
+}
+
+struct DropDown!<TString, UserArg> where TString: AsByteSlice {
+  base:                   WidgetBase,
+  // optional label to show in the base rect.
+  text:                   Option!<String>,
+  // list of the options that can be selected.
+  // maybe this should be a list of widgets.s
+  options:                List!<TString>,
+  // Some(selected_index), None() none selected.
+  selected_index:         Option!<u32>,
+  // if this is enabled, the label will prefer the option that's selected, instead of a constant label.
+  prefer_selected_option: bool,
+  // is currently expanded.
+  is_open:                bool,
+  // a user arg that's used for the on_selected callback.
+  user_arg:               *mut UserArg,
+  // called when an option is selected via the dropdown.
+  on_option_selected:     fn * (String, *mut UserArg) -> void,
+}
+
+struct Label!<TString> where TString: AsByteSlice {
+  base: WidgetBase,
+  text: TString,
+}
+
+enum RenderHookPriority {
+  PreWidgetRender,
+  PostWidgetRender
+}
+
+struct Window!<Ctx> {
+  widgets: List!<dyn Widget>,
+  background_color: Color,
+  render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
+  init_hooks: List!<fn * (*mut void)>,
+  // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
+  user_context: *mut Ctx,
+}
+
+impl!<Ctx> Window!<Ctx> {
+  alias RenderHook :: fn * (*mut Ctx);
+
+  fn new(title: str = "Rayui Window",
+        size: Vector2 = .{x: 800, y: 600},
+        target_fps: u8 = 60,
+        background_color: Color = .{ r:0, g:0, b:0, a:255}) -> #self {
+    InitWindow(size.x as s32, size.y as s32, title.data);
+    SetTargetFPS(target_fps);
+    return .{
+      background_color: background_color
+    };
+  }
+
+  fn run(*mut self) {
+    for hook in self.init_hooks {
+      hook(self.user_context);
+    }
+
+    while !WindowShouldClose() {
+      BeginDrawing();
+      ClearBackground(self.background_color);
+
+      for priority, hook in self.render_hooks {
+        if priority == RenderHookPriority::PreWidgetRender {
+          hook(self.user_context);
+        }
+      }
+
+      self.widgets.sort(fn(widget: *const dyn Widget) -> u32 {
+        return widget.get_base().layer;
+      });
+
+      {
+        mouse_position := GetMousePosition();
+        for widget in self.widgets.iter_mut() {
+          base := widget.get_base();
+          base.input_state = InputState::None;
+          if CheckCollisionPointRec(mouse_position, base.rectangle) {
+            base.input_state = InputState::Hovered;
+
+            if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+              base.input_state |= InputState::Pressed;
+            }
+          }
+
+        }
+      }
+
+      for widget in self.widgets.iter_mut() {
+        widget.draw();
+      }
+
+      for priority, hook in self.render_hooks {
+        if priority == RenderHookPriority::PostWidgetRender {
+          hook(self.user_context);
+        }
+      }
+
+      EndDrawing();
+    }
+  }
+
+  fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {
+    self.widgets.push(dynof(t, Widget));
+    return *self;
+  }
+
+  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> #self {
+    self.render_hooks.push((priority, hook));
+    return *self;
+  }
+
+  fn set_user_context(*mut self, ctx: *mut Ctx) -> #self {
+    self.user_context = ctx;
+    return *self;
+  }
+
+  fn add_on_init_hook(*mut self, hook: RenderHook) -> #self {
+    self.init_hooks.push(hook);
+    return *self;
+  }
+}
+
+fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple {
+  text := format(fmt, tuple, format_options);
+  defer {
+    text.deinit();
+  }
+
+  DrawTextEx(
+    style.font,
+    text.data,
+    position,
+    style.font_size,
+    style.font_spacing,
+    style.font_color_override.or_else(style.foreground)
+  );
+}
+
+fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsByteSlice {
+  DrawTextEx(
+    style.font,
+    text.as_byte_slice().data,
+    position,
+    style.font_size,
+    style.font_spacing,
+    style.font_color_override.or_else(style.foreground)
+  );
+}
+
+// for drawing a single char. useful for custom text layouts.
+fn draw_character(char: u8, position: Vector2, style: Style) {
+  temp : u8[2] = .[char, '\0' as u8];
+  slice := Slice!<u8>.{data: temp, length: 1};
+  draw_text!<Slice!<u8>>(slice, position, style);
+}
+
+impl!<UserArg> Widget for Button!<UserArg> {
+  fn draw(*mut self) {
+    mut position: Vector2 = .{
+      x: self.base.rectangle.x,
+      y: self.base.rectangle.y
+    };
+
+    mut size: Vector2 = .{
+      x: self.base.rectangle.width,
+      y: self.base.rectangle.height
+    };
+
+    if self.base.input_state & InputState::Hovered {
+      DrawRectangleV(position, size, self.base.style.highlighted);
+      if self.base.input_state & InputState::Pressed {
+        self.on_clicked(self.user_arg);
+      }
+    } else {
+      DrawRectangleV(position, size, self.base.style.background);
+    }
+
+    if self.label is Option!<String>::Some(text) {
+      text_width: f32 = MeasureText(text.data, self.base.style.font_size);
+      text_height: f32 = self.base.style.font_size;
+      
+      if text_width > self.base.rectangle.width {
+        size.x = text_width;
+        position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
+      }
+
+      text_position: Vector2 = .{
+        x: position.x + (size.x - text_width) / 2,
+        y: position.y + (size.y - text_height) / 2,
+      };
+
+      draw_text(text, text_position, self.base.style);
+    }
+  }
+}
+ 
+// ! This stuff needs to be reimplemented
+#if 0 {
+  // * Measure the width of a jiggly text of 'text' and 'style'
+  @[inline]
+  fn measure_jiggly_text!<Data>(text: Data, style: Style) -> f32 where Data: AsByteSlice {
+    slice := text.as_byte_slice();
+    if slice.length == 0 then return 0.0;
+    mut total_width: f32 = 0.0;
+    for i in 0 as u64..slice.length {
+      total_width += style.font_size;
+    }
+    return total_width;
+  }
+
+  // * Draw wavy jiggly text.
+  @[inline]
+  fn jiggly_text!<Data>(
+    data: Data,
+    rect: Rectangle,
+    style: Style,
+    jiggle_intensity: f32 = 1.0,
+    jiggle_rate: f32 = 1.0
+  ) where Data: AsByteSlice {
+    time: f32 = GetTime() as f32;
+    text := data.as_byte_slice();
+
+    for i in 0..text.length {
+      pos_x: s32 = (rect.x + (i * style.font_size) as f32) as s32;
+      pos_y: s32 = (rect.y + jiggle_intensity * sin(jiggle_rate * time + (i as f32))) as s32;
+      draw_character(text.data[i], pos_x, pos_y, style);
+    }
+  }
+
+  /*
+    draws a draggable slider, and adjusts a value of type $T.
+
+    TODO: add vertical sliders.
+  */
+  @[inline]
+  fn slider!<T>(
+    text: Option!<String>,
+    rectangle: Rectangle,
+    style: Style,
+    state: *mut SliderState!<T>,
+    format_options: Option!<FormatOptions>,
+  ) where T: IsNumeric {
+    { // * Draw the slider.
+      DrawRectangleRec(
+        rectangle,
+        style.background,
+      );
+
+      v_f := (*state.value) as f32;
+      min_f := state.min_value as f32;
+      max_f := state.max_value as f32;
+
+      slider_width: f32 = rectangle.width * clamp(abs(v_f - min_f) / abs(max_f - min_f), 0.0, 1.0);
+
+      slider_rect: Rectangle = .{
+        x: rectangle.x,
+        y: rectangle.y,
+        width: slider_width,
+        height: rectangle.height
+      };
+
+      DrawRectangleRec(slider_rect, style.foreground);
+
+      DrawRectangleLinesEx(
+        rectangle,
+        style.line_thickness,
+        style.foreground
+      );
+
+      mut font_color: Color = style.font_color_override.or_else(style.foreground);
+
+      mut text_position: Vector2;
+      if text.is_some() {
+        the_text := text.unwrap();
+
+        text_position = .{
+          x: (rectangle.x - 15 + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2),
+          y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+        };
+
+        draw_text(
+          the_text,
+          text_position,
+          style,
+        );
+      }
+
+      mut options: FormatOptions;
+
+      if format_options.is_some() {
+        options = format_options.unwrap();
+      } else {
+        options = *FormatOptions::current();
+      }
+
+      mut value_text := format("%", (*state.value,), options);
+      defer {
+        value_text.deinit();
+      }
+
+      // 10 pixels padding
+      text_position = .{
+        x: text_position.x + 30 + MeasureText(value_text.data, style.font_size),
+        y: text_position.y,
+      };
+
+      draw_text(value_text, text_position, style);
+    }
+
+    { // * Update the slider.
+      mut increment: T;
+      if IsKeyDown(KeyboardKey::KEY_LEFT_SHIFT) {
+        increment = (state.max_value - state.min_value) / 100;
+      } else {
+        increment = (state.max_value - state.min_value) / 50;
+      }
+
+      if IsKeyPressed(KeyboardKey::KEY_RIGHT) {
+        *state.value = clamp(*state.value + increment, state.min_value, state.max_value);
+      } else if IsKeyPressed(KeyboardKey::KEY_LEFT) {
+        *state.value = clamp(*state.value - increment, state.min_value, state.max_value);
+      }
+
+      // Handle mouse input
+      mouse_pos := GetMousePosition();
+
+      if CheckCollisionPointRec(mouse_pos, rectangle) {
+        if IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
+          state.held = true;
+        }
+      }
+
+      if state.held {
+        if !IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT) {
+          state.held = false;
+        } else {
+          new_value := state.min_value + ((mouse_pos.x - rectangle.x) / rectangle.width) * (state.max_value - state.min_value);
+          *state.value = clamp(new_value, min(state.min_value, state.max_value), max(state.min_value, state.max_value));
+        }
+      }
+    }
+  }
+
+  /*
+    Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
+
+    NOTE:
+      the 'allow_hold' parameter has significant effect on the behaviour of the button.
+
+      if it is false:
+        clicking once will toggle the button on (LMB).
+        clicking it again, will toggle it off   (LMB).
+        holding the button has no effect.
+
+      if it is true:
+        clicking the button will toggle the button on (LMB).
+        mousing over the button while (LMB) is held down will toggle it on.
+        clicking the button again, will toggle the button off (RMB)
+        mousing over the button while (RMB) is held down will toggle it off.
+
+      It's very likely you'd never utilize the 'allow_hold: true' behaviour, unless you're creating some grid of buttons,
+      where  you want to quickly enable large ranges of them, or disable them alike. (such as the 'sequencer' project).
+
+      perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
+  */
+  @[inline]
+  fn check_button(
+    text: Option!<String>,
+    rectangle: Rectangle,
+    style: Style,
+    allow_hold: bool,
+    value: *mut bool,         // whether the button is toggled or not.
+  ) {
+    if *value {
+      DrawRectangleRec(
+        rectangle,
+        style.highlighted
+      );
+    } else {
+      DrawRectangleRec(rectangle, style.background);
+    }
+
+    if text.is_some() {
+      the_text := text.unwrap();
+      text_position: Vector2 = .{
+        x: (rectangle.x + (rectangle.width - MeasureText(the_text.data, style.font_size)) / 2),
+        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+      };
+      draw_text(the_text, text_position, style);
+    }
+
+    hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
+
+    if hit {
+      DrawRectangleLinesEx(
+        rectangle,
+        style.line_thickness,
+        ORANGE
+      );
+    }
+
+    mut left := false;
+    mut right := false;
+
+    if allow_hold {
+      left = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_LEFT);
+      right = IsMouseButtonDown(MouseButton::MOUSE_BUTTON_RIGHT);
+      if hit && left {
+        *value = true;
+      } else if hit && right {
+        *value = false;
+      }
+    } else if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+      *value = !*value;
+    }
+  }
+
+  /*
+    'prefer_selected_option'
+      will prefer presenting the string value of the selected option when one is selected, over the label.
+  */
+  @[inline]
+  fn drop_down!<O, UserArg>(
+    text:                   Option!<String>,
+    rectangle:              Rectangle,
+    style:                  Style,
+    prefer_selected_option: bool,
+    state:                  *mut DropDownState!<O>,
+    options:                List!<O>,
+    on_option_selected:     fn * (O, *mut UserArg) -> void,
+    user_arg:               *mut UserArg,
+  ) {
+    // Draw the DropDown box
+    DrawRectangleRec(rectangle, style.background);
+
+    // Draw the selected option, instead of the label text.
+    if state.selected_index.is_some() && (text.is_none() || prefer_selected_option) {
+      the_text := options[state.selected_index.unwrap()];
+      text_position: Vector2 = . {
+        x: (rectangle.x + (rectangle.width - MeasureText(the_text.as_byte_slice().data, style.font_size)) / 2),
+        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+      };
+      draw_text(
+        the_text,
+        text_position,
+        style
+      );
+    } else if text.is_some() {
+      the_text := text.unwrap();
+      text_position: Vector2 = . {
+        x: (rectangle.x + (rectangle.width - MeasureText(the_text.as_byte_slice().data, style.font_size)) / 2),
+        y: (rectangle.y + (rectangle.height - style.font_size) / 2),
+      };
+      draw_text(
+        the_text,
+        text_position,
+        style
+      );
+    }
+
+    hit := CheckCollisionPointRec(GetMousePosition(), rectangle);
+
+    if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+      state.is_open = !state.is_open;
+    }
+
+    mut hit_option := false;
+    if state.is_open {
+      // copy for mutating.
+      mut option_rect: Rectangle = rectangle;
+      option_rect.y += rectangle.height;
+
+      for i in 0..options.length {
+
+        mut option_color := style.background;
+        hit := CheckCollisionPointRec(GetMousePosition(), option_rect);
+        if hit {
+          option_color = style.highlighted;
+          hit_option = true;
+        }
+
+        DrawRectangleRec(option_rect, option_color);
+
+        text := options[i].as_byte_slice();
+        text_position: Vector2 = .{
+          x: option_rect.x + (option_rect.width - MeasureText(text.data, style.font_size)) / 2,
+          y: option_rect.y + (option_rect.height - style.font_size) / 2,
+        };
+
+        draw_text(text, text_position, style);
+
+        if hit && IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+          state.selected_index = Some(i as u32);
+          state.is_open = false;
+          if on_option_selected {
+            on_option_selected(options[i], user_arg);
+          }
+        }
+
+        option_rect.y += option_rect.height;
+      }
+    }
+
+    if !hit && !hit_option {
+      state.is_open = false;
+    }
+  }
+}

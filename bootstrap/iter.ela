@@ -21,6 +21,15 @@ struct Iter!<V> {
   end: *const V,  // Pointer to the end of the collection.
 }
 
+impl!<V> Iter!<V> {
+  fn peek(*const self) -> Option!<V> {
+    if self.ptr != self.end {
+      return Some(*self.ptr);
+    }
+    return None();
+  }
+}
+
 /* 
   a mutable version of Iter!<>, where it returns a pointer to each element, instead of dereferencing it.
 */
@@ -56,6 +65,28 @@ impl!<V> Iterator!<*mut V> for IterMut!<V> {
   }
 }
 
+
+struct Enumerate!<V, I> where I: Iterator!<V> {
+  idx: u64,
+  iterator: I,
+}
+
+/*
+  TODO: we need deeper generic comparisons in trait returns,
+  we should be able to return Enumerate!<T, Iterator!<T>>
+
+  where:
+    - enumerate is a Enumerate!<...> is a concrete type,
+    - T is a concrete type
+    - Iterator!<T> is a trait -- not concrete. but we resolve this to be a trait bounds / constraint.
+
+  for now, we'll just use Iter!<T> because it's overwhelmingly common.
+*/
+trait Enumerable!<T> {
+  @[inline]
+  fn enumerate(self) -> Enumerate!<T, Iter!<T>>;
+}
+
 /* 
   Iterable is a generic trait that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
@@ -64,11 +95,6 @@ trait Iterable {
   // Returns an iterator for the collection.
   fn iter(*const self) -> Iterator;
   fn iter_mut(*mut self) -> Iterator;
-}
-
-struct Enumerate!<V, I> where I: Iterator!<V> {
-  idx: u64,
-  iterator: I,
 }
 
 impl!<V, I> Iterator!<(u64, V)> for Enumerate!<V, I> {

@@ -15,3 +15,12 @@ impl!<T> Iterable for InitList!<T> {
     }
   }
 }
+
+impl!<T> Enumerable!<T> for InitList!<T> {
+  fn enumerate(self) -> Enumerate!<T, Iter!<T>> {
+    return .{
+      idx: 0,
+      iterator: self.iter(),
+    };
+  }
+}

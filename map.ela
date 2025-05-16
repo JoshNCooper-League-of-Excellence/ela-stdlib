@@ -175,3 +175,50 @@ impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
     return self;
   } 
 }
+
+import fmt::*;
+
+impl!<Key, Value> Format for Map!<Key, Value> {
+  fn format(*const self, formatter: *mut Formatter) { 
+    key_type := typeof(Key);
+    value_type := typeof(Value);
+    formatter.writer.appendf("Map!<%, %>", (key_type.name, value_type.name), formatter.options.unquoted());
+    formatter.writer.append(" {");
+
+    if formatter.options.indented {
+      formatter.writer.append("\n  ");
+    }
+
+    mut first := true;
+    for key, value in self.iter() {
+      if !first {
+        if formatter.options.indented {
+          formatter.writer.append(",\n ");
+        } else {
+          formatter.writer.append(",");
+        }
+      }
+      first = false;
+
+      key_any : any = any.{
+        ptr: &mut key,
+        type: key_type,
+      };
+      value_any : any = any.{
+        ptr: &mut value,
+        type: value_type,
+      };
+
+      formatter.writer.append_byte(' ');
+      format_any(key_any, formatter);
+      formatter.writer.append(": ");
+      format_any(value_any, formatter);
+    }
+
+    if formatter.options.indented {
+      formatter.writer.append("\n}");
+    } else {
+      formatter.writer.append("}");
+    }
+  }
+}

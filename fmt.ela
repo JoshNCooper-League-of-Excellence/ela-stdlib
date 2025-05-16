@@ -170,28 +170,30 @@
   }
 }
 
+enum NumberStyle {
+  Decimal = 0,
+  Binary,
+  Hexadecimal,
+}
+
 struct FormatOptions {
-  digits_after_decimal: u8,
-  indented: bool,
-  quote_strings: bool,
-  enum_parent_name: bool,
+  digits_after_decimal: u8 = 2,
+  indented: bool = false,
+  quote_strings: bool = true,
+  enum_parent_name: bool = true,
+  number_style: NumberStyle,
 }
 
 impl FormatOptions {
   fn default() -> #self => .{
     digits_after_decimal: 2,
     indented: false,
-    quote_strings: false,
+    quote_strings: true,
     enum_parent_name: true,
   };
 
   fn current() -> *mut #self {
-    #static mut current := FormatOptions.{
-      digits_after_decimal: 2,
-      indented: false,
-      quote_strings: false,
-      enum_parent_name: true,
-    };
+    #static mut current: FormatOptions;
     return &mut current;
   }
 
@@ -206,6 +208,18 @@ impl FormatOptions {
     copy.quote_strings = true;
     return copy;
   }
+
+  fn with_number_style(self, style: NumberStyle) -> #self {
+    mut copy := self;
+    copy.number_style = style;
+    return copy;
+  }
+
+  // fn without_typename(self) -> #self {
+  //   mut copy := self;
+  //   copy.enum_parent_name = false;
+  //   return copy;
+  // }
 }
 
 struct StringBuilder;
@@ -422,7 +436,7 @@ impl StringBuilder {
   and anything that can use the negate operator. i.e pointers, strings, whatever.
   Structs by value will cause this function to fail.
 */
-fn to_string!<T>(value: T, allocator: dyn Allocator = get_global_allocator()) -> String {
+fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String {
   type := typeof(T);
   mut format : str;
 
@@ -453,14 +467,21 @@ fn to_string!<T>(value: T, allocator: dyn Allocator = get_global_allocator()) ->
     format_buffer[1] = 'c';
     format_buffer[2] = '\0';
   } else if type.is_signed() || type.is_unsigned() {
-    string := switch type {
-      typeof(s16) => "%d",
-      typeof(s32) => "%d",
-      typeof(s64) => "%ld",
-      typeof(u8) =>  "%u",
-      typeof(u16) => "%u",
-      typeof(u32) => "%u",
-      typeof(u64) => "%lu",
+    mut string: str;
+    switch options.number_style {
+      NumberStyle::Decimal: {
+        switch type {
+          typeof(s16): { string = "%d"; }
+          typeof(s32): { string = "%d"; }
+          typeof(s64): { string = "%ld"; }
+          typeof(u8): { string =  "%u"; }
+          typeof(u16): { string = "%u"; }
+          typeof(u32): { string = "%u"; }
+          typeof(u64): { string = "%lu"; }
+        }
+      }
+      NumberStyle::Binary: { string = "0b%b"; }
+      NumberStyle::Hexadecimal: { string = "%#0%dX"; }
     };
     mut i := 0;
     for ch in string {
@@ -468,9 +489,9 @@ fn to_string!<T>(value: T, allocator: dyn Allocator = get_global_allocator()) ->
       i++;
     }
   } else if type == typeof(f32) {
-    std::c::sprintf(format_buffer, "%%.%df"c, FormatOptions::current().digits_after_decimal);
+    std::c::sprintf(format_buffer, "%%.%df"c, options.digits_after_decimal);
   } else if type == typeof(f64) {
-    std::c::sprintf(format_buffer, "%%.%dlf"c, FormatOptions::current().digits_after_decimal);
+    std::c::sprintf(format_buffer, "%%.%dlf"c, options.digits_after_decimal);
   } else {
     return .{};
   }
@@ -560,7 +581,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
   } else if value.type.is_pointer() {
-    formatter.writer.append_then_free(to_string(value.ptr));
+    formatter.writer.append_then_free(to_string(value.ptr, formatter.options));
   } else if value.type.is_struct() {
     format_struct(value, formatter);
   } else if value.type.is_tuple() {
@@ -583,17 +604,17 @@ fn format_any(value: any, formatter: *mut Formatter) {
     formatter.writer.append("(invalid enum value)");
   } else {
     switch value.type {
-      typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>()));        }
-      typeof(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>()));       }
-      typeof(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>()));       }
-      typeof(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>()));       }
-      typeof(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>()));        }
-      typeof(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>()));       }
-      typeof(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>()));       }
-      typeof(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>()));       }
-      typeof(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>()));       }
-      typeof(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>()));       }
-      typeof(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>()));      }
+      typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
+      typeof(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>(), formatter.options, get_global_allocator()));       }
+      typeof(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>(), formatter.options, get_global_allocator()));       }
+      typeof(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>(), formatter.options, get_global_allocator()));       }
+      typeof(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>(), formatter.options, get_global_allocator()));        }
+      typeof(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>(), formatter.options, get_global_allocator()));       }
+      typeof(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>(), formatter.options, get_global_allocator()));       }
+      typeof(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>(), formatter.options, get_global_allocator()));       }
+      typeof(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>(), formatter.options, get_global_allocator()));       }
+      typeof(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>(), formatter.options, get_global_allocator()));       }
+      typeof(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>(), formatter.options, get_global_allocator()));      }
       else:            { formatter.writer.append("$$(unsupported fmt type)$$");                                 }
     }
   }
@@ -730,3 +751,4 @@ fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
 #include "formatters/number.ela"  // Barely implemented.
 #include "formatters/strings.ela" // Not yet implemented.
 #include "formatters/list.ela"    // List!<T>
+#include "formatters/range.ela"   // 0..10

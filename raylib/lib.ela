@@ -18,9 +18,9 @@ import math::*;
 impl Color {
   fn scaled_rgb(self, scale: f32) -> #self {
     return .{
-      r: clamp((self.r as f32) * scale as u8, 0, 255) as u8,
-      g: clamp((self.g as f32) * scale as u8, 0, 255) as u8,
-      b: clamp((self.b as f32) * scale as u8, 0, 255) as u8,
+      r: clamp!<u8>(self.r, 0, 255),
+      g: clamp!<u8>(self.g, 0, 255),
+      b: clamp!<u8>(self.b, 0, 255),
       a: self.a,
     };
   }
@@ -52,79 +52,127 @@ impl Color {
 
 impl Vector2 {
 
+  @[inline]
+  fn smooth_step(self, target: #self, mut t: f32) -> #self {
+    t = math::clamp(t, 0.0, 1.0);
+    t = t * t * (3.0 - 2.0 * t);
+    return .{
+      x: self.x + (target.x - self.x) * t,
+      y: self.y + (target.y - self.y) * t,
+    };
+  }
+
+  @[inline]
+  fn move_towards(self, target: #self, max_distance_delta: f32) -> #self {
+    delta := target.sub(self);
+    distance := delta.length();
+    if distance <= max_distance_delta || distance == 0.0 {
+      return target;
+    }
+    return self.add(delta.normalize().mul(max_distance_delta));
+  }
+
+  @[inline]
   fn zero() -> #self {
     return .{ x: 0.0, y: 0.0 };
   }
 
+  @[inline]
   fn one() -> #self {
     return .{ x: 1.0, y: 1.0 };
   }
 
+  @[inline]
   fn scalar(value: f32) -> #self {
     return .{ x: value, y: value };
   }
 
+  @[inline]
   fn add(self, other: #self) -> #self {
     return .{ x: self.x + other.x, y: self.y + other.y };
   }
 
+  @[inline]
   fn sub(self, other: #self) -> #self {
     return .{ x: self.x - other.x, y: self.y - other.y };
   }
 
+  @[inline]
   fn mul(self, scalar: f64) -> #self {
     return .{ x: self.x * scalar, y: self.y * scalar };
   }
 
+  @[inline]
   fn div(self, scalar: f64) -> #self {
     return .{ x: self.x / scalar, y: self.y / scalar };
   }
 
+  @[inline]
   fn length(self) -> f32 {
     return sqrt(self.x * self.x + self.y * self.y) as f32;
   }
 
+  @[inline]
   fn length_sqr(self) -> f32 {
     return self.x * self.x + self.y * self.y;
   }
 
+  @[inline]
   fn normalize(self) -> #self {
     len := self.length();
     return .{ x: self.x / len, y: self.y / len };
   }
 
+  @[inline]
   fn dot(self, other: #self) -> f32 {
-    return self.x * other.x + self.y * other.y;
+    return (self.x * other.x) + (self.y * other.y);
   }
 
-  fn scale(self, scalar: f32) -> #self {
-    return .{ x: self.x * scalar, y: self.y * scalar };
+  @[inline]
+  fn cross(self, other: #self) -> f32 {
+    return self.x * other.y - self.y * other.x;
   }
 
-  fn equals(self, other: #self) -> bool {
+  @[inline]
+  fn scale(self, scalar: Vector2) -> #self {
+    return .{ x: self.x * scalar.x, y: self.y * scalar.y };
+  }
+
+  @[inline]
+  fn eq(self, other: #self) -> bool {
     return self.x == other.x && self.y == other.y;
   }
 
+  @[inline]
+  fn neq(self, other: #self) -> bool {
+    return !self.eq(other);
+  }
+
+  @[inline]
   fn distance(self, other: #self) -> f32 {
     return sqrt((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)) as f32;
   }
 
+  @[inline]
   fn random(scale: s32) -> #self {
     return .{ x: GetRandomValue(-scale, scale) as f32, y: GetRandomValue(-scale, scale) as f32 };
   }
 
+  @[inline]
   fn clamp(self, min: #self, max: #self) -> #self {
     return .{
-      x: clamp(self.x, min.x, max.x) as f32,
-      y: clamp(self.y, min.y, max.y) as f32
+      x: math::clamp(self.x, min.x, max.x),
+      y: math::clamp(self.y, min.y, max.y)
     };
   }
 
+  @[inline]
   fn reflect(self, normal: #self) -> #self {
     dot := self.dot(normal);
     return self.sub(normal.mul(2.0 * dot));
   }
 
+  @[inline]
   fn rotate(self, angle: f32) -> #self {
     cos_theta := cos(angle);
     sin_theta := sin(angle);
@@ -134,14 +182,17 @@ impl Vector2 {
     };
   }
 
+  @[inline]
   fn comp_add(*mut self, other: Vector2) {
     *self = self.add(other);
   }
 
+  @[inline]
   fn comp_mul(*mut self, other: f64) {
     *self = self.mul(other);
   }
 
+  @[inline]
   fn neg(self) -> #self {
     return .{x: -self.x, y: -self.y};
   }
@@ -385,3 +436,6 @@ impl Timer {
     return false;
   }
 }
+
+// Simple shape drawing API using choice types.
+#include "shape.ela"
