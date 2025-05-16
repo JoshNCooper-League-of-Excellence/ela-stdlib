@@ -81,16 +81,18 @@ fn jiggly_text!<Data>(
   data: Data, 
   rect: Rectangle, 
   style: Style,
-  jiggle_intensity: f32 = 1.0, 
-  jiggle_rate: f32 = 1.0
+  jiggle_intensity: f32, 
+  jiggle_rate: f32
 ) where Data: AsByteSlice {
   time: f32 = GetTime() as f32;
   text := data.as_byte_slice();
 
   for i in 0..text.length {
-    pos_x: s32 = (rect.x + (i * style.font_size) as f32) as s32;
-    pos_y: s32 = (rect.y + jiggle_intensity * sin(jiggle_rate * time + (i as f32))) as s32;
-    draw_character(text.data[i], pos_x, pos_y, style);
+    pos: Vector2 = .{
+      x: rect.x + (i * style.font_size) as f32, 
+      y: rect.y + jiggle_intensity * sin(jiggle_rate * time + (i as f32))
+    };
+    draw_character(text.data[i], pos, style);
   }
 }
 

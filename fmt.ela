@@ -716,12 +716,17 @@ fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
       }
     }
   }
+  
+  impl str {
+    fn chars(self) -> UTF8_Iter => .{
+        slice: self.as_byte_slice(),
+        position: 0,
+        current_char: '\0',
+      };
+  }
 }
 
 #include "formatters/other.ela"   // Option!<T> Result!<Ok, Err>.
 #include "formatters/number.ela"  // Barely implemented.
 #include "formatters/strings.ela" // Not yet implemented.
 #include "formatters/list.ela"    // List!<T>
-
-
-

@@ -47,8 +47,8 @@
 
         fn getchar() -> s32;
 
-        fn sleep(seconds: s32);
-        fn usleep(c: s32);
+        fn sleep(seconds: u32);
+        fn usleep(c: u32);
 
         fn strdup(s: *const u8) -> *mut u8;
         fn strndup(s: *const u8, n: u64) -> *mut u8;
