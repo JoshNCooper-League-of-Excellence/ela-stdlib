@@ -174,6 +174,18 @@ struct Label!<TString> where TString: AsByteSlice {
   base: WidgetBase,
   text: TString,
 }
+ 
+struct ListBox {
+  base: WidgetBase,
+  children: List!<dyn Widget>,
+}
+
+struct TextField {
+  base:         WidgetBase,
+  label:        Option!<String>,
+  in_edit_mode: bool = false,
+  pre_edit_style: Style,
+}
 
 enum RenderHookPriority {
   PreWidgetRender,
@@ -181,14 +193,14 @@ enum RenderHookPriority {
 }
 
 struct Window!<Ctx> {
-  widgets: List!<dyn Widget>,
   background_color: Color,
-  render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
-  init_hooks: List!<fn * (*mut void)>,
   // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
   user_context: *mut Ctx,
-  on_resized_callbacks: List!<(*mut void, fn * (*mut void, Rectangle, Rectangle))>,
   screen_size: Rectangle,
+  widgets: List!<dyn Widget>,
+  render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
+  init_hooks: List!<fn * (*mut void)>,
+  on_resized_callbacks: List!<(*mut void, fn * (*mut void, Rectangle, Rectangle))>,
 }
 
 impl!<Ctx> Window!<Ctx> {
@@ -205,11 +217,13 @@ impl!<Ctx> Window!<Ctx> {
   }
 
   fn new(title: str = "Rayui Window",
+        config_flags: ConfigFlags = 0,
         size: Vector2 = .{x: 800, y: 600},
         target_fps: u8 = 60,
         background_color: Color = .{ r:0, g:0, b:0, a:255}) -> #self {
-    InitWindow(size.x as s32, size.y as s32, title.data);
+    SetConfigFlags(config_flags);
     SetTargetFPS(target_fps);
+    InitWindow(size.x as s32, size.y as s32, title.data);
     return .{
       screen_size: .{
         x: 0,
@@ -220,6 +234,7 @@ impl!<Ctx> Window!<Ctx> {
       background_color: background_color
     };
   }
+
   fn run(*mut self) {
     for hook in self.init_hooks {
       hook(self.user_context);
@@ -319,6 +334,11 @@ impl!<Ctx> Window!<Ctx> {
 
       EndDrawing();
     }
+
+    self.widgets.deinit();
+    self.render_hooks.deinit();
+    self.init_hooks.deinit();
+    self.on_resized_callbacks.deinit();
   }
 
   fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {
@@ -329,7 +349,6 @@ impl!<Ctx> Window!<Ctx> {
       height: GetScreenHeight(),
     });
     self.widgets.push(trait_obj);
-
     return *self;
   }
 
@@ -349,12 +368,11 @@ impl!<Ctx> Window!<Ctx> {
   }
 }
 
-fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple {
+fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions) where Tuple: IsTuple {
   text := format(fmt, tuple, format_options);
   defer {
     text.deinit();
   }
-
   DrawTextEx(
     style.font,
     text.data,
@@ -425,12 +443,6 @@ impl!<UserArg> Widget for Button!<UserArg> {
   fn get_children(*const self) -> *mut List!<dyn Widget> {
     return null;
   }
-}
- 
-
-struct ListBox {
-  base: WidgetBase,
-  children: List!<dyn Widget>,
 }
 
 impl Widget for ListBox {
@@ -567,7 +579,6 @@ impl!<TString, T> Widget for Slider!<TString, T> where TString: AsByteSlice, T: 
     return null;
   }
 }
-
 
 /*
   Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
@@ -720,6 +731,80 @@ impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: As
 
     if !hit && !hit_option {
       self.is_open = false;
+    }
+  }
+
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return null;
+  }
+}
+
+impl Widget for TextField {
+  fn draw(*mut self) {
+    mut position: Vector2 = .{
+      x: self.base.rectangle.x,
+      y: self.base.rectangle.y
+    };
+
+    mut size: Vector2 = .{
+      x: self.base.rectangle.width,
+      y: self.base.rectangle.height
+    };
+
+    DrawRectangleV(position, size, self.base.style.background);
+
+    if self.label is Option!<String>::Some(text) {
+      text_width: f32 = MeasureText(text.data, self.base.style.font_size);
+      text_height: f32 = self.base.style.font_size;
+      
+      if text_width > self.base.rectangle.width {
+        size.x = text_width;
+        position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
+      }
+
+      text_position: Vector2 = .{
+        x: position.x + (size.x - text_width) / 2,
+        y: position.y + (size.y - text_height) / 2,
+      };
+
+      draw_text(text, text_position, self.base.style);
+    }
+
+    if !self.in_edit_mode && self.base.input_state & InputState::Hovered && IsKeyDown(KeyboardKey::KEY_F2) {
+      self.in_edit_mode = true;
+      self.pre_edit_style = self.base.style;
+      self.base.style.font_color_override = Some(WHITE);
+      self.base.style.background = YELLOW.with_alpha(25);
+      self.base.style.highlighted = CLEAR;
+    }
+
+    if self.in_edit_mode && IsKeyPressed(KeyboardKey::KEY_ENTER) {
+      self.in_edit_mode = false;
+      self.base.style = self.pre_edit_style;
+    }
+
+    if self.in_edit_mode {
+      if self.label.is_none() {
+        string: String = .{};
+        self.label = Some(string);
+      }
+
+      ch := GetCharPressed() as u8;
+      if IsKeyPressed(KeyboardKey::KEY_BACKSPACE) {
+        if self.label is Option!<String>::Some(&mut value) {
+          if !value.is_empty() {
+            value.pop();
+          }
+        }
+      } else if IsKeyPressed(KeyboardKey::KEY_SPACE) {
+        if self.label is Option!<String>::Some(&mut value) {
+          value.push(' ');
+        }
+      } else if ch.is_alpha() || ch.is_ascii_punctuation() {
+        if self.label is Option!<String>::Some(&mut value) {
+          value.push(ch);
+        }
+      }
     }
   }
 
