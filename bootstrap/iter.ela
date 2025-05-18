@@ -85,6 +85,9 @@ struct Enumerate!<V, I> where I: Iterator!<V> {
 trait Enumerable!<T> {
   @[inline]
   fn enumerate(self) -> Enumerate!<T, Iter!<T>>;
+
+  @[inline]
+  fn enumerate_mut(*mut self) -> Enumerate!<*mut T, IterMut!<T>>;
 }
 
 /* 

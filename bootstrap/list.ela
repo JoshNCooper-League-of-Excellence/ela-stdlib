@@ -326,6 +326,12 @@ impl!<T> Enumerable!<T> for List!<T> {
       iterator: self.iter(),
     };
   }
+  fn enumerate_mut(*mut self) -> Enumerate!<*mut T, IterMut!<T>> {
+    return .{
+      idx: 0,
+      iterator: self.iter_mut(),
+    };
+  }
 }
 
 

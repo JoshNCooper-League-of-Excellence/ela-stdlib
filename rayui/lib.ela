@@ -13,6 +13,9 @@ struct Style {
   font_spacing:         f32 = 1,
   font_color_override:  Option!<Color>,
   font:                 Font,
+
+  // Layout stuff
+  margin:               f32 = 10.0, // only really used for ListBox right now. Should've been added to all elements.
 }
 
 impl Style {
@@ -174,17 +177,30 @@ struct Label!<TString> where TString: AsByteSlice {
   base: WidgetBase,
   text: TString,
 }
- 
+
+choice LayoutStyle {
+  Vertical(),
+  Horizontal(),
+  Grid {
+    // if both of these are zero, it will just do row first.
+    items_per_row:    s32, // >0 for row-first, ==0 to ignore
+    items_per_column: s32, // >0 for column-first, ==0 to ignore
+  }
+}
+
 struct ListBox {
   base: WidgetBase,
+  // 'items' would be a more apt name.
   children: List!<dyn Widget>,
+  layout_style: LayoutStyle,
+  scroll_offset: f32,
 }
 
 struct TextField {
   base:         WidgetBase,
-  label:        Option!<String>,
+  text:        *mut String,
   in_edit_mode: bool = false,
-  pre_edit_style: Style,
+  style_override: Option!<Style>,
 }
 
 enum RenderHookPriority {
@@ -449,17 +465,82 @@ impl Widget for ListBox {
   fn draw(*mut self) {
     DrawRectangleRec(self.base.rectangle, self.base.style.background.with_alpha(20));
     DrawRectangleLinesEx(self.base.rectangle, self.base.style.line_thickness, self.base.style.background);
-    const MARGIN := 10.0;
-    position: Vector2 = .{ x: self.base.rectangle.x, y: self.base.rectangle.y  };
-    for child in self.children.iter_mut() {
-      base := child.get_base();
-      rect := &mut base.rectangle;
-      rect.x = position.x + (MARGIN / 2);
-      rect.y = position.y + (MARGIN / 2);
-      rect.width = self.base.rectangle.width - MARGIN;
-      rect.height = (self.base.rectangle.height / self.children.length as f32) - MARGIN;
-      position.y += rect.height + MARGIN / 2;
-      child.draw();
+
+    count := self.children.length as f32;
+
+    if count == 0 
+      then return;
+
+    rect := self.base.rectangle;
+
+    switch is self.layout_style {
+      LayoutStyle::Vertical(): {
+        item_height := 64.0; // TODO: we need to style this.
+        mut y := rect.y + self.base.style.margin - self.scroll_offset;
+        for child in self.children.iter_mut() {
+          base := child.get_base();
+          base.rectangle = .{
+            x: rect.x + self.base.style.margin,
+            y: y,
+            width: rect.width - 2 * self.base.style.margin,
+            height: item_height,
+          };
+          y += item_height + self.base.style.margin;
+          // Only draw if visible
+          if base.rectangle.y + base.rectangle.height > rect.y && base.rectangle.y < rect.y + rect.height {
+            child.draw();
+          }
+        }
+      }
+      LayoutStyle::Horizontal(): {
+        item_width := 128.0; // TODO: we need this to come from style
+        mut x := rect.x + self.base.style.margin - self.scroll_offset;
+        for child in self.children.iter_mut() {
+          base := child.get_base();
+          base.rectangle = .{
+            x: x,
+            y: rect.y + self.base.style.margin,
+            width: item_width,
+            height: rect.height - 2 * self.base.style.margin,
+          };
+          x += item_width + self.base.style.margin;
+          // Only draw if visible
+          if base.rectangle.x + base.rectangle.width > rect.x && base.rectangle.x < rect.x + rect.width {
+            child.draw();
+          }
+        }
+      }
+      LayoutStyle::Grid.{ items_per_row: items_per_row, items_per_column: items_per_column }: {
+        // No scrolling for grid
+        mut rows := 1;
+        mut cols := 1;
+        if items_per_row > 0 {
+          cols = items_per_row;
+          rows = (count + cols - 1) / cols;
+        } else if items_per_column > 0 {
+          rows = items_per_column;
+          cols = (count + rows - 1) / rows;
+        } else {
+          cols = count;
+          rows = 1;
+        }
+    
+        item_width := (rect.width - (self.base.style.margin * (cols + 1))) / cols as f32;
+        item_height := (rect.height - (self.base.style.margin * (rows + 1))) / rows as f32;
+    
+        for i, child in self.children.enumerate_mut() {
+          row := i / cols;
+          col := i % cols;
+          base := child.get_base();
+          base.rectangle = .{
+            x: rect.x + self.base.style.margin + col as f32 * (item_width + self.base.style.margin),
+            y: rect.y + self.base.style.margin + row as f32 * (item_height + self.base.style.margin),
+            width: item_width,
+            height: item_height,
+          };
+          child.draw();
+        }
+      }
     }
   }
   fn get_children(*const self) -> *mut List!<dyn Widget> {
@@ -741,6 +822,22 @@ impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: As
 
 impl Widget for TextField {
   fn draw(*mut self) {
+    fn enter_edit_mode(this: *mut TextField) {
+      this.in_edit_mode = true;
+      mut copy := this.base.style;
+      copy.font_color_override = Some(WHITE);
+      copy.background = YELLOW.with_alpha(25);
+      copy.highlighted = CLEAR;
+      this.style_override = Some(copy);
+    }
+
+    fn exit_edit_mode(this: *mut TextField) {
+      this.in_edit_mode = false;
+      this.style_override = None();
+    }
+
+    style := self.style_override.or_else(self.base.style);
+
     mut position: Vector2 = .{
       x: self.base.rectangle.x,
       y: self.base.rectangle.y
@@ -751,59 +848,56 @@ impl Widget for TextField {
       y: self.base.rectangle.height
     };
 
-    DrawRectangleV(position, size, self.base.style.background);
+    if self.base.input_state & InputState::Hovered {
+      DrawRectangleLinesEx(self.base.rectangle, style.line_thickness, style.highlighted);
 
-    if self.label is Option!<String>::Some(text) {
-      text_width: f32 = MeasureText(text.data, self.base.style.font_size);
-      text_height: f32 = self.base.style.font_size;
-      
-      if text_width > self.base.rectangle.width {
-        size.x = text_width;
-        position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
+      if !self.in_edit_mode && self.base.input_state & InputState::Pressed {
+        enter_edit_mode(self);
       }
-
-      text_position: Vector2 = .{
-        x: position.x + (size.x - text_width) / 2,
-        y: position.y + (size.y - text_height) / 2,
-      };
-
-      draw_text(text, text_position, self.base.style);
+    } else if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+      exit_edit_mode(self);
     }
 
+
+    if !self.text {
+      return;
+    }
+
+    DrawRectangleV(position, size, style.background);
+
+    text_width: f32 = MeasureText(self.text.data, style.font_size);
+    text_height: f32 = style.font_size;
+    
+    if text_width > self.base.rectangle.width {
+      size.x = text_width;
+      position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
+    }
+
+    text_position: Vector2 = .{
+      x: position.x + (size.x - text_width) / 2,
+      y: position.y + (size.y - text_height) / 2,
+    };
+
+    draw_text(*self.text, text_position, style);
+
     if !self.in_edit_mode && self.base.input_state & InputState::Hovered && IsKeyDown(KeyboardKey::KEY_F2) {
-      self.in_edit_mode = true;
-      self.pre_edit_style = self.base.style;
-      self.base.style.font_color_override = Some(WHITE);
-      self.base.style.background = YELLOW.with_alpha(25);
-      self.base.style.highlighted = CLEAR;
+      enter_edit_mode(self);
     }
 
     if self.in_edit_mode && IsKeyPressed(KeyboardKey::KEY_ENTER) {
-      self.in_edit_mode = false;
-      self.base.style = self.pre_edit_style;
+      exit_edit_mode(self);
     }
 
     if self.in_edit_mode {
-      if self.label.is_none() {
-        string: String = .{};
-        self.label = Some(string);
-      }
-
       ch := GetCharPressed() as u8;
       if IsKeyPressed(KeyboardKey::KEY_BACKSPACE) {
-        if self.label is Option!<String>::Some(&mut value) {
-          if !value.is_empty() {
-            value.pop();
-          }
+        if !self.text.is_empty() {
+          self.text.pop();
         }
       } else if IsKeyPressed(KeyboardKey::KEY_SPACE) {
-        if self.label is Option!<String>::Some(&mut value) {
-          value.push(' ');
-        }
+        self.text.push(' ');
       } else if ch.is_alpha() || ch.is_ascii_punctuation() {
-        if self.label is Option!<String>::Some(&mut value) {
-          value.push(ch);
-        }
+        self.text.push(ch);
       }
     }
   }
