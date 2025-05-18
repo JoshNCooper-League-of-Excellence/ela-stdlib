@@ -108,7 +108,7 @@ fn serialize_tuple(object: any) -> JsonResult {
   for element in object.type.tuple_elements(object.ptr as *mut u8) {
     result := serialize_any(element);
     if result.is_err() then return result;
-    val.object.insert(to_string(index), result.unwrap());
+    val.object.insert(to_string(index, *FormatOptions::current()), result.unwrap());
     index += 1;
   }
   return JsonResult::Ok(val);

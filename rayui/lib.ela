@@ -1,6 +1,7 @@
 import raylib::*;
 import fmt::*;
 
+
 struct Style {
   foreground:           Color = WHITE,
   background:           Color = BLACK,
@@ -16,20 +17,6 @@ struct Style {
 
   // Layout stuff
   margin:               f32 = 10.0, // only really used for ListBox right now. Should've been added to all elements.
-}
-
-impl Style {
-  fn default() -> Style {
-    return .{
-      foreground: WHITE,
-      background: BLACK,
-      highlighted: ORANGE,
-      font_color_override: Some(GRAY),
-      font_size: 16,
-      line_thickness: 2,
-      font: GetFontDefault(),
-    };
-  }
 }
 
 #flags enum InputState {
@@ -89,6 +76,11 @@ trait Widget {
 
   fn is_held(*const self) -> bool {
     return (self.get_base().input_state & InputState::Held) != 0;
+  }
+
+  // Coordinates should be 0 to 1, a percentage of the screen.
+  fn set_size(*mut self, rectangle: Rectangle) {
+    self.base.model_rectangle = rectangle;
   }
 
   fn get_children(*const self) -> *mut List!<dyn Widget>;
@@ -857,7 +849,6 @@ impl Widget for TextField {
     } else if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
       exit_edit_mode(self);
     }
-
 
     if !self.text {
       return;
