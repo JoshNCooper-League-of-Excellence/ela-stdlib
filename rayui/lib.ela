@@ -205,6 +205,7 @@ struct Window!<Ctx> {
   // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
   user_context: *mut Ctx,
   screen_size: Rectangle,
+
   widgets: List!<dyn Widget>,
   render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
   init_hooks: List!<fn * (*mut void)>,
@@ -347,6 +348,7 @@ impl!<Ctx> Window!<Ctx> {
     self.render_hooks.deinit();
     self.init_hooks.deinit();
     self.on_resized_callbacks.deinit();
+    CloseWindow();
   }
 
   fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {

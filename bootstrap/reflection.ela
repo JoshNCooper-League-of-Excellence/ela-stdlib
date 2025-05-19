@@ -174,26 +174,6 @@ impl any {
   }
 }
 
-#ifndef FREESTANDING {
-  impl any {
-    fn new!<T, Alloc>(t: T, alloc: *mut Alloc) -> #self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator  {
-      ptr : *mut T = alloc.allocate(sizeof(T));
-      *ptr = t;
-      return .{
-        ptr: ptr,
-        type: typeof(T),
-      }
-    }
-  }
-  impl Deinit for any {
-      // this should only be used for an any created with any::new()
-    // clearly because it memcpy's it into place.
-    fn deinit(*mut self) {
-      std::c::free(self.ptr);
-    }
-  }
-}
-
 struct ElementIter {
   ptr: *mut u8,
   end: *const u8,
