@@ -443,71 +443,96 @@ impl StringBuilder {
   Structs by value will cause this function to fail.
 */
 fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String {
-  type := typeof(T);
-  mut format : str;
-
-  if type.is_bool() {
+  where T: bool {
     if value {
       return "true".to_string(allocator);
     } else {
       return "false".to_string(allocator);
     }
-  }
-
-  if type.is_enum() {
+  } else where T: IsEnum {
     for field in type.fields {
       if value == field.enum_value {
         return field.name.to_string(allocator);
       }
     }
-  }
-
-  mut format_buffer: u8[255];
-
-  if type.is_pointer() {
-    format_buffer[0] = '%';
-    format_buffer[1] = 'p';
-    format_buffer[2] = '\0';
-  } else if type == typeof(u8) {
-    format_buffer[0] = '%';
-    format_buffer[1] = 'c';
-    format_buffer[2] = '\0';
-  } else if type.is_signed() || type.is_unsigned() {
-    mut string: str;
-    switch options.number_style {
-      NumberStyle::Decimal: {
-        switch type {
-          typeof(s16): { string = "%d"; }
-          typeof(s32): { string = "%d"; }
-          typeof(s64): { string = "%ld"; }
-          typeof(u8): { string =  "%u"; }
-          typeof(u16): { string = "%u"; }
-          typeof(u32): { string = "%u"; }
-          typeof(u64): { string = "%lu"; }
+  } else where T: Format {
+    mut builder: StringBuilder;
+    mut formatter := Formatter.{
+      options: *FormatOptions::current(),
+      writer: &mut builder, 
+    };
+    value.format(&mut formatter);
+  } else {
+    type := typeof(T);
+    mut format : str;
+    mut format_buffer: u8[255];
+    where T: IsPointer {
+      format_buffer[0] = '%';
+      format_buffer[1] = 'p';
+      format_buffer[2] = '\0';
+    } else where T: u8 {
+      format_buffer[0] = '%';
+      format_buffer[1] = 'c';
+      format_buffer[2] = '\0';
+    } else where T: IsInteger {
+      where T: s16 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%d"c, 3); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+        }
+      } else where T: s32 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%d"c, 3); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+        }
+      } else where T: s64 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%ld"c, 4); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+        }
+      } else where T: u8 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%u"c, 3); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+        }
+      } else where T: u16 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%u"c, 3); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+        }
+      } else where T: u32 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%u"c, 3); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+        }
+      } else where T: u64 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%lu"c, 4); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
         }
       }
-      NumberStyle::Binary: { string = "0b%b"; }
-      NumberStyle::Hexadecimal: { string = "%#0%dX"; }
-    };
-    mut i := 0;
-    for ch in string {
-      format_buffer[i] = ch;
-      i++;
+    } else where T: f32 {
+      std::c::sprintf(format_buffer, "%%.%df"c, options.digits_after_decimal);
+    } else where T: f64 {
+      std::c::sprintf(format_buffer, "%%.%dlf"c, options.digits_after_decimal);
+    } else {
+      panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", type.name).as_str());
+      return .{};
     }
-  } else if type == typeof(f32) {
-    std::c::sprintf(format_buffer, "%%.%df"c, options.digits_after_decimal);
-  } else if type == typeof(f64) {
-    std::c::sprintf(format_buffer, "%%.%dlf"c, options.digits_after_decimal);
-  } else {
-    return .{};
+    buffer: u8[1024];
+    length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
+    return String.{
+      data: allocator.copy(buffer, sizeof(u8), length),
+      length: length,
+    };
   }
-
-  buffer: u8[1024];
-  length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
-  return String.{
-    data: allocator.copy(buffer, sizeof(u8), length),
-    length: length,
-  };
 }
 
 fn format_struct(value: any, formatter: *mut Formatter) {

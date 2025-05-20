@@ -19,6 +19,40 @@ struct Style {
   margin:               f32 = 10.0, // only really used for ListBox right now. Should've been added to all elements.
 }
 
+fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions) where Tuple: IsTuple {
+  text := format(fmt, tuple, format_options);
+  defer {
+    text.deinit();
+  }
+  DrawTextEx(
+    style.font,
+    text.data,
+    position,
+    style.font_size,
+    style.font_spacing,
+    style.font_color_override.or_else(style.foreground)
+  );
+}
+
+fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsByteSlice {
+  DrawTextEx(
+    style.font,
+    text.as_byte_slice().data,
+    position,
+    style.font_size,
+    style.font_spacing,
+    style.font_color_override.or_else(style.foreground)
+  );
+}
+
+// for drawing a single char. useful for custom text layouts.
+fn draw_character(char: u8, position: Vector2, style: Style) {
+  temp : u8[2] = .[char, '\0' as u8];
+  slice := Slice!<u8>.{data: temp, length: 1};
+  draw_text!<Slice!<u8>>(slice, position, style);
+}
+
+
 #flags enum InputState {
   None,
   Hovered,
@@ -61,7 +95,13 @@ struct WidgetBase {
   children: List!<*mut WidgetBase>,
 };
 
-trait Widget {
+impl Deinit for WidgetBase {
+  fn deinit(*mut self) {
+    self.children.deinit();
+  }
+}
+
+trait Widget where #self: Deinit {
   fn get_base(*const self) -> *mut WidgetBase {
     return &mut self.base;
   }
@@ -85,7 +125,7 @@ trait Widget {
 
   fn get_children(*const self) -> *mut List!<dyn Widget>;
 
-  fn draw(*mut self);
+  fn draw(*mut self);  
 
   fn on_window_resized(*mut self, screen: Rectangle) {
     base := self.get_base()
@@ -113,18 +153,18 @@ choice Event {
   KeyPressed(KeyboardKey),
 }
 
-struct Button!<UserArg> {
+struct Button!<TString = String, UserArg = ()> where TString: AsByteSlice {
   base:         WidgetBase,
-  label:        Option!<String>,
+  label:        Option!<TString>,
 
   // callback argument.
   user_arg:     *mut UserArg,
   on_clicked:   fn * (*mut UserArg),
 }
 
-struct Slider!<TString, T> where TString: AsByteSlice {
+struct Slider!<TString = String, T = f32> where TString: AsByteSlice {
   base:             WidgetBase,
-  text:             Option!<TString, >,
+  text:             Option!<TString>,
   format_options:   Option!<FormatOptions>,
 
   // is the mouse holding this ish.
@@ -136,22 +176,24 @@ struct Slider!<TString, T> where TString: AsByteSlice {
   value:            *mut T,
 }
 
-struct CheckButton {
+struct CheckButton!<TString = String> where TString: AsByteSlice {
   base:         WidgetBase,
   // A possible label.
-  text:         Option!<String>,
+  text:         Option!<TString>,
   // this has crazy behaviour. it should be removed.
   allow_hold:   bool,
   // is checked or not.
   value:        *mut bool,
 }
 
-struct DropDown!<TString, UserArg> where TString: AsByteSlice {
+struct DropDown!<TString = String, UserArg = ()> where TString: AsByteSlice {
   base:                   WidgetBase,
   // optional label to show in the base rect.
+  // this is released on deinit() if Some()
   text:                   Option!<TString>,
   // list of the options that can be selected.
   // maybe this should be a list of widgets.s
+  // this is released on deinit().
   options:                List!<TString>,
   // Some(selected_index), None() none selected.
   selected_index:         Option!<u32>,
@@ -165,9 +207,19 @@ struct DropDown!<TString, UserArg> where TString: AsByteSlice {
   on_option_selected:     fn * (TString, *mut UserArg) -> void,
 }
 
-struct Label!<TString> where TString: AsByteSlice {
+struct Label!<TString = String> where TString: AsByteSlice {
   base: WidgetBase,
   text: TString,
+}
+
+impl!<TString> Deinit for Label!<TString> {
+  fn deinit(*mut self) {
+    if self.text is Option!<TString>::Some(v) {
+      v.deinit();
+    }
+    self.base.deinit();
+
+  }
 }
 
 choice LayoutStyle {
@@ -200,218 +252,73 @@ enum RenderHookPriority {
   PostWidgetRender
 }
 
-struct Window!<Ctx> {
-  background_color: Color,
-  // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
-  user_context: *mut Ctx,
-  screen_size: Rectangle,
+/* 
+  DEINIT IMPLEMENTATIONS MUST GO BEFORE WIDGET IMPLEMENTATIONS!
+*/
 
-  widgets: List!<dyn Widget>,
-  render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
-  init_hooks: List!<fn * (*mut void)>,
-  on_resized_callbacks: List!<(*mut void, fn * (*mut void, Rectangle, Rectangle))>,
+impl Deinit for ListBox {
+  fn deinit(*mut self) {
+    self.children.deinit();
+    self.base.deinit();
+  }
 }
 
-impl!<Ctx> Window!<Ctx> {
-  alias RenderHook :: fn * (*mut Ctx);
-
-  fn on_resized(*mut self, new_size: Rectangle) {
-    for widget in self.widgets.iter_mut() {
-      widget.on_window_resized(new_size);
+impl!<TString, T> Deinit for Slider!<TString, T> {
+  fn deinit(*mut self) {
+    where self.text.unwrap(): Deinit {
+      if self.text is Option!<TString>::Some(&mut v) {
+        v.deinit();
+      }
     }
-    for arg, callback in self.on_resized_callbacks {
-      callback(arg, self.screen_size, new_size);
+    self.base.deinit();
+  }
+}
+
+impl!<TString, UserArg> Deinit for Button!<TString, UserArg> {
+  fn deinit(*mut self) {
+    self.base.deinit();
+    where self.label.unwrap(): Deinit {
+      if self.label is Option!<TString>::Some(&mut v) {
+        v.deinit();
+      }
     }
-    self.screen_size = new_size;
   }
+}
 
-  fn new(title: str = "Rayui Window",
-        config_flags: ConfigFlags = 0,
-        size: Vector2 = .{x: 800, y: 600},
-        target_fps: u8 = 60,
-        background_color: Color = .{ r:0, g:0, b:0, a:255}) -> #self {
-    SetConfigFlags(config_flags);
-    SetTargetFPS(target_fps);
-    InitWindow(size.x as s32, size.y as s32, title.data);
-    return .{
-      screen_size: .{
-        x: 0,
-        y: 0,
-        width: GetScreenWidth(),
-        height: GetScreenHeight(),
+impl!<TString> Deinit for CheckButton!<TString> {
+  fn deinit(*mut self) {
+    where self.text.unwrap(): Deinit {
+      if self.text is Option!<TString>::Some(&mut v) {
+        v.deinit();
       }
-      background_color: background_color
-    };
-  }
-
-  fn run(*mut self) {
-    for hook in self.init_hooks {
-      hook(self.user_context);
     }
+    self.base.deinit();
+  }
+}
 
-    while !WindowShouldClose() {
-      BeginDrawing();
-      ClearBackground(self.background_color);
-
-      if IsWindowResized() {
-        self.on_resized(.{
-          x: 0, y: 0,
-          width: GetScreenWidth(),
-          height: GetScreenHeight(),
-        });
+impl!<TString, UserArg> Deinit for DropDown!<TString, UserArg> {
+  fn deinit(*mut self) {
+    where self.text.unwrap(): Deinit {
+      if self.text is Option!<TString>::Some(&mut v) {
+        v.deinit();
       }
-
-      for priority, hook in self.render_hooks {
-        if priority == RenderHookPriority::PreWidgetRender {
-          hook(self.user_context);
-        }
-      }
-
-      self.widgets.sort(fn(widget: *const dyn Widget) -> u32 {
-        return widget.get_base().layer;
-      });
-
-      fn handle_events(mouse_position: Vector2, widget: *mut dyn Widget) -> bool {
-        base := widget.get_base();
-        mut hovered := false;
-        mut lmb_pressed := false;
-        mut rmb_pressed := false;
-
-        was_pressed := base.input_state & InputState::Pressed;
-
-        base.input_state = InputState::None;
-        if CheckCollisionPointRec(mouse_position, base.rectangle) {
-          base.input_state = InputState::Hovered;
-          hovered = true;
-
-          if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
-            base.input_state |= InputState::Pressed;
-            lmb_pressed = true;
-          }
-          if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_RIGHT) {
-            base.input_state |= InputState::Pressed;
-            rmb_pressed = true;
-          }
-        }
-
-        children := widget.get_children();
-        if children {
-          for child in children.iter_mut() {
-            if handle_events(mouse_position, child) {
-              base.input_state = InputState::None;
-            }
-          }
-        }
-      
-        if base.input_state & InputState::Hovered && base.on_hovered {
-          base.on_hovered(widget.get_base(), mouse_position);
-        }
-
-        if was_pressed && base.input_state & InputState::Pressed == 0 && base.on_released {
-          // ! THIS IS ALWAYS WRONG
-          base.on_released(widget.get_base(), 0);
-        }
-
-        if base.input_state & InputState::Pressed && base.on_pressed {
-          if lmb_pressed {
-            base.on_pressed(widget.get_base(), MouseButton::MOUSE_BUTTON_LEFT);
-          }
-          if rmb_pressed {
-            base.on_pressed(widget.get_base(), MouseButton::MOUSE_BUTTON_RIGHT);
-          }
-        }
-
-        return hovered || lmb_pressed || rmb_pressed;
-      }
-
-      { // Handle events.
-        mouse_position := GetMousePosition();
-        for widget in self.widgets.iter_mut() {
-          handle_events(mouse_position, widget);
-        }
-      }
-
-      for widget in self.widgets.iter_mut() {
-        widget.draw();
-      }
-
-      for priority, hook in self.render_hooks {
-        if priority == RenderHookPriority::PostWidgetRender {
-          hook(self.user_context);
-        }
-      }
-
-      EndDrawing();
     }
-
-    self.widgets.deinit();
-    self.render_hooks.deinit();
-    self.init_hooks.deinit();
-    self.on_resized_callbacks.deinit();
-    CloseWindow();
-  }
-
-  fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {
-    trait_obj := dynof(t, Widget);
-    trait_obj.on_window_resized(.{
-      x: 0, y: 0,
-      width: GetScreenWidth(),
-      height: GetScreenHeight(),
-    });
-    self.widgets.push(trait_obj);
-    return *self;
-  }
-
-  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> #self {
-    self.render_hooks.push((priority, hook));
-    return *self;
-  }
-
-  fn set_user_context(*mut self, ctx: *mut Ctx) -> #self {
-    self.user_context = ctx;
-    return *self;
-  }
-
-  fn add_on_init_hook(*mut self, hook: RenderHook) -> #self {
-    self.init_hooks.push(hook);
-    return *self;
+    self.options.deinit();
+    self.base.deinit();
   }
 }
 
-fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions) where Tuple: IsTuple {
-  text := format(fmt, tuple, format_options);
-  defer {
-    text.deinit();
+impl Deinit for TextField {
+  fn deinit(*mut self) {
+    self.base.deinit();
   }
-  DrawTextEx(
-    style.font,
-    text.data,
-    position,
-    style.font_size,
-    style.font_spacing,
-    style.font_color_override.or_else(style.foreground)
-  );
 }
 
-fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsByteSlice {
-  DrawTextEx(
-    style.font,
-    text.as_byte_slice().data,
-    position,
-    style.font_size,
-    style.font_spacing,
-    style.font_color_override.or_else(style.foreground)
-  );
-}
+/* 
+  WIDGET IMPLEMENTATIONS
+*/
 
-// for drawing a single char. useful for custom text layouts.
-fn draw_character(char: u8, position: Vector2, style: Style) {
-  temp : u8[2] = .[char, '\0' as u8];
-  slice := Slice!<u8>.{data: temp, length: 1};
-  draw_text!<Slice!<u8>>(slice, position, style);
-}
-
-impl!<UserArg> Widget for Button!<UserArg> {
+impl!<TString, UserArg> Widget for Button!<TString, UserArg> {
   fn draw(*mut self) {
     mut position: Vector2 = .{
       x: self.base.rectangle.x,
@@ -432,7 +339,7 @@ impl!<UserArg> Widget for Button!<UserArg> {
       DrawRectangleV(position, size, self.base.style.background);
     }
 
-    if self.label is Option!<String>::Some(text) {
+    if self.label is Option!<TString>::Some(text) {
       text_width: f32 = MeasureText(text.data, self.base.style.font_size);
       text_height: f32 = self.base.style.font_size;
       
@@ -655,29 +562,7 @@ impl!<TString, T> Widget for Slider!<TString, T> where TString: AsByteSlice, T: 
   }
 }
 
-/*
-  Draws a check button, one that is stateful-- it stores whether it's 'on' or 'off'. a toggle button.
-
-  NOTE:
-    the 'allow_hold' parameter has significant effect on the behaviour of the button.
-
-    if it is false:
-      clicking once will toggle the button on (LMB).
-      clicking it again, will toggle it off   (LMB).
-      holding the button has no effect.
-
-    if it is true:
-      clicking the button will toggle the button on (LMB).
-      mousing over the button while (LMB) is held down will toggle it on.
-      clicking the button again, will toggle the button off (RMB)
-      mousing over the button while (RMB) is held down will toggle it off.
-
-    It's very likely you'd never utilize the 'allow_hold: true' behaviour, unless you're creating some grid of buttons,
-    where you want to quickly enable large ranges of them, or disable them alike. (such as the 'sequencer' project).
-
-    perhaps we should remove this, but this is where this widget came from, and it was neccesary there.
-*/
-impl Widget for CheckButton {
+impl!<TString> Widget for CheckButton!<TString> {
   fn draw(*mut self) {
     if *self.value {
       DrawRectangleRec(
@@ -689,12 +574,11 @@ impl Widget for CheckButton {
     }
 
     if self.text.is_some() {
-      the_text := self.text.unwrap();
       text_position: Vector2 = .{
-        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.data, self.base.style.font_size)) / 2),
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(self.text.unwrap().as_byte_slice().data, self.base.style.font_size)) / 2),
         y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
-      draw_text(the_text, text_position, self.base.style);
+      draw_text(self.text.unwrap(), text_position, self.base.style);
     }
 
     hit := CheckCollisionPointRec(GetMousePosition(), self.base.rectangle);
@@ -728,10 +612,6 @@ impl Widget for CheckButton {
   }
 }
 
-/*
-  'prefer_selected_option'
-    will prefer presenting the string value of the selected option when one is selected, over the label.
-*/
 impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: AsByteSlice {
   fn draw(*mut self) {
     // Draw the DropDown box
@@ -897,5 +777,188 @@ impl Widget for TextField {
 
   fn get_children(*const self) -> *mut List!<dyn Widget> {
     return null;
+  }
+}
+
+
+struct Window!<Ctx> {
+  background_color: Color,
+  // TODO: when we have default generics, we can have a default stub here. for now, just *mut void.
+  user_context: *mut Ctx,
+  screen_size: Rectangle,
+
+  widgets: List!<dyn Widget>,
+  render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
+  init_hooks: List!<fn * (*mut void)>,
+  on_resized_callbacks: List!<(*mut void, fn * (*mut void, Rectangle, Rectangle))>,
+}
+
+impl!<Ctx> Window!<Ctx> {
+  alias RenderHook :: fn * (*mut Ctx);
+
+  fn on_resized(*mut self, new_size: Rectangle) {
+    for widget in self.widgets.iter_mut() {
+      widget.on_window_resized(new_size);
+    }
+    for arg, callback in self.on_resized_callbacks {
+      callback(arg, self.screen_size, new_size);
+    }
+    self.screen_size = new_size;
+  }
+
+  fn new(title: str = "Rayui Window",
+        config_flags: ConfigFlags = 0,
+        size: Vector2 = .{x: 800, y: 600},
+        target_fps: u8 = 60,
+        background_color: Color = .{ r:0, g:0, b:0, a:255}) -> #self {
+    SetConfigFlags(config_flags);
+    SetTargetFPS(target_fps);
+    InitWindow(size.x as s32, size.y as s32, title.data);
+    return .{
+      screen_size: .{
+        x: 0,
+        y: 0,
+        width: GetScreenWidth(),
+        height: GetScreenHeight(),
+      }
+      background_color: background_color
+    };
+  }
+
+  fn run(*mut self) {
+    for hook in self.init_hooks {
+      hook(self.user_context);
+    }
+
+    while !WindowShouldClose() {
+      BeginDrawing();
+      ClearBackground(self.background_color);
+
+      if IsWindowResized() {
+        self.on_resized(.{
+          x: 0, y: 0,
+          width: GetScreenWidth(),
+          height: GetScreenHeight(),
+        });
+      }
+
+      for priority, hook in self.render_hooks {
+        if priority == RenderHookPriority::PreWidgetRender {
+          hook(self.user_context);
+        }
+      }
+
+      self.widgets.sort(fn(widget: *const dyn Widget) -> u32 {
+        return widget.get_base().layer;
+      });
+
+      fn handle_events(mouse_position: Vector2, widget: *mut dyn Widget) -> bool {
+        base := widget.get_base();
+        mut hovered := false;
+        mut lmb_pressed := false;
+        mut rmb_pressed := false;
+
+        was_pressed := base.input_state & InputState::Pressed;
+
+        base.input_state = InputState::None;
+        if CheckCollisionPointRec(mouse_position, base.rectangle) {
+          base.input_state = InputState::Hovered;
+          hovered = true;
+
+          if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_LEFT) {
+            base.input_state |= InputState::Pressed;
+            lmb_pressed = true;
+          }
+          if IsMouseButtonPressed(MouseButton::MOUSE_BUTTON_RIGHT) {
+            base.input_state |= InputState::Pressed;
+            rmb_pressed = true;
+          }
+        }
+
+        children := widget.get_children();
+        if children {
+          for child in children.iter_mut() {
+            if handle_events(mouse_position, child) {
+              base.input_state = InputState::None;
+            }
+          }
+        }
+      
+        if base.input_state & InputState::Hovered && base.on_hovered {
+          base.on_hovered(widget.get_base(), mouse_position);
+        }
+
+        if was_pressed && base.input_state & InputState::Pressed == 0 && base.on_released {
+          // ! THIS IS ALWAYS WRONG
+          base.on_released(widget.get_base(), 0);
+        }
+
+        if base.input_state & InputState::Pressed && base.on_pressed {
+          if lmb_pressed {
+            base.on_pressed(widget.get_base(), MouseButton::MOUSE_BUTTON_LEFT);
+          }
+          if rmb_pressed {
+            base.on_pressed(widget.get_base(), MouseButton::MOUSE_BUTTON_RIGHT);
+          }
+        }
+
+        return hovered || lmb_pressed || rmb_pressed;
+      }
+
+      { // Handle events.
+        mouse_position := GetMousePosition();
+        for widget in self.widgets.iter_mut() {
+          handle_events(mouse_position, widget);
+        }
+      }
+
+      for widget in self.widgets.iter_mut() {
+        widget.draw();
+      }
+
+      for priority, hook in self.render_hooks {
+        if priority == RenderHookPriority::PostWidgetRender {
+          hook(self.user_context);
+        }
+      }
+
+      EndDrawing();
+    }
+
+    for widget in self.widgets {
+      widget.deinit();
+    }
+
+    self.widgets.deinit();
+    self.render_hooks.deinit();
+    self.init_hooks.deinit();
+    self.on_resized_callbacks.deinit();
+    CloseWindow();
+  }
+
+  fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {
+    trait_obj := dynof(t, Widget);
+    trait_obj.on_window_resized(.{
+      x: 0, y: 0,
+      width: GetScreenWidth(),
+      height: GetScreenHeight(),
+    });
+    self.widgets.push(trait_obj);
+    return *self;
+  }
+
+  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> #self {
+    self.render_hooks.push((priority, hook));
+    return *self;
+  }
+
+  fn set_user_context(*mut self, ctx: *mut Ctx) -> #self {
+    self.user_context = ctx;
+    return *self;
+  }
+
+  fn add_on_init_hook(*mut self, hook: RenderHook) -> #self {
+    self.init_hooks.push(hook);
+    return *self;
   }
 }
