@@ -1,6 +1,6 @@
 impl!<T> Format for Option!<T> {
   fn format(*const self, formatter: *mut Formatter) {
-    if formatter.options.enum_parent_name {
+    if formatter.options.typename {
       formatter.writer.appendf("%::", (typeof(Option!<T>).name,), formatter.options.unquoted());
     }
     if self.is_some() {
@@ -13,7 +13,7 @@ impl!<T> Format for Option!<T> {
 
 impl!<_Ok, _Err> Format for Result!<_Ok, _Err> {
   fn format(*const self, formatter: *mut Formatter) {
-    if formatter.options.enum_parent_name {
+    if formatter.options.typename {
       formatter.writer.appendf("%::", (typeof(Result!<_Ok, _Err>).name,), formatter.options.unquoted());
     }
     if self is Result!<_Ok, _Err>::Ok(ok) {

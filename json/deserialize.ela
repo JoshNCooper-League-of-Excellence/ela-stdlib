@@ -4,7 +4,9 @@ fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
   for key, value in value.object {
     struct_field := object.type.get_field(key);
 
-    if !struct_field => Some(format("Could not find field % in type %", (key, object.type.name), FormatOptions::default()));
+    if !struct_field {
+      Some(format("Could not find field % in type %", (key, object.type.name), FormatOptions::default()));
+    }
 
     any_value : any = .{
       ptr: object.ptr as *mut u8 + object.type.offset(struct_field.name),
@@ -86,13 +88,18 @@ fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String> {
     string = string.clone();
     *(object.ptr as *mut str) = string.as_str();
     return None();
-  } 
+  }
   return deserialize_scalar(value, object);
 }
 
 fn deserialize!<T>(value: *mut JsonValue, object: *mut T) -> Option!<String> {
-  return deserialize_any(value, any.{
-    ptr: object,
-    type: typeof(T),
-  });
+  where T: Serializable {
+    return object.deserialize(value);
+  }
+  else {
+    return deserialize_any(value, any.{
+      ptr: object,
+      type: typeof(T),
+    });
+  }
 }

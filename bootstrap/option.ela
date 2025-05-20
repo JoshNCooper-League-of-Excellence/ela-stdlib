@@ -36,6 +36,15 @@ impl!<_Some> Option!<_Some> {
       return fallback;
     }
   }
+
+  fn expect(self, func: fn * ()) -> _Some {
+    if self.is_none() {
+      func();
+      default: _Some;
+      return default;
+    }
+    return self.unwrap();
+  }
 }
 
 /* 

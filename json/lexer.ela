@@ -18,8 +18,8 @@ enum TokenType {
 }
 
 struct Token {
-  type : s32,
-  value : String,
+  type: TokenType,
+  value: String,
   line: s32,
   column: s32,
 }
@@ -30,22 +30,6 @@ impl Token {
     return v;
   }
 }
-
-#static json_token_type_names := str.[
-  "Invalid",
-  "True",
-  "False",
-  "Null",
-  "Eof",
-  "Colon",
-  "Number",
-  "String",
-  "LCurly",
-  "RCurly",
-  "LBracket",
-  "RBracket",
-  "Comma",
-];
 
 struct JsonLexer {
   line_start: s32,
@@ -135,10 +119,18 @@ impl JsonLexer {
     }
 
 
-    if c.is_digit() {
+    if c.is_digit() || c == '-' {
       // numbers
       len : s32;
       start : s32 = self.position;
+
+      mut is_negative: bool;
+      if c == '-' {
+        self.position++;
+        is_negative = true;
+        c = self.input[self.position];
+      }
+
       while (c >= '0' && c <= '9' || c == '.') && self.position < self.input.length {
         len++;
         self.position++;
@@ -149,6 +141,11 @@ impl JsonLexer {
         data: std::c::strndup(self.input.data + start, len),
         length: len
       };
+
+      // Since we don't have operators we just handle the only case, negative numbers, here.
+      if is_negative {
+        token.value.push_front('-');
+      }
 
       token.type = TokenType::Number;
       return Result::Ok(token);
@@ -227,6 +224,12 @@ impl JsonLexer {
   }
 }
 
+/* 
+TODO: 
+  we could use the 'elexify' library, it's a port of the lexer that parses Ela itself.
+  Should be pretty reliable and thorough.
+*/
+
 impl JsonLexer {
 
   fn ensure_buffer_is_full(*mut self) {
@@ -250,46 +253,37 @@ impl JsonLexer {
     return self.lookahead_buffer[0];
   }
 
-  fn expect_types(*mut self, types: InitList!<s32>) -> Result!<Token, String> {
+  fn expect_types(*mut self, types: InitList!<TokenType>) -> Result!<Token, String> {
     token := self.eat();
 
     // this should never happen.
     // we are the consumer of this API, but I guess maybe someone might want to use this?
+
+    // Edit: no one should use this. they should use 'elexify' if they need a lexer.
     if types.length == 0 {
       loc := #location;
       panic(format("json lexers `expect_types` got an empty set of types to expect, at \"%\"", (loc,), FormatOptions::default(),).as_str());
     }
 
-    // We do this without the string building so that we can only do that expensive heavy allocating procedure if we
-    // fail. this should be much more performant.
     for i in 0..types.length {
       type := types.data[i];
       if token.type == type {
         return Result!<Token, String>::Ok(token);
       }
     }
-
-    mut builder: StringBuilder;
-    defer builder.deinit();
-
-    for i in 0..types.length {
-      builder.append_then_free(format("| %", (json_token_type_names.data[types.data[i]],), FormatOptions::default(),));
-    }
-
-    types_string := builder.get_string();
-
-    error := format("at: \"%:%:%\" :: unexpected token, expected \"%\", got \"%\"", (
+  
+    error := format("at: \"%:%:%\" :: unexpected token, expected %, got %", (
         self.file, token.line, token.column,
-        types_string,
-        json_token_type_names.data[token.type]
+        types,
+        token.type,
       ),
-      FormatOptions::default(),
+      *FormatOptions::current(),
     );
 
     return Result!<Token, String>::Err(error);
   }
 
-  fn expect_type(*mut self, type: s32) -> Result!<Token, String> {
+  fn expect_type(*mut self, type: TokenType) -> Result!<Token, String> {
     // TODO: it's much cheaper if we just check this, instead of making list lol.
     // saves a stack alloc and a function call.
     return self.expect_types(.[type]);

@@ -179,8 +179,8 @@ enum NumberStyle {
 struct FormatOptions {
   digits_after_decimal: u8 = 2,
   indented: bool = false,
-  quote_strings: bool = true,
-  enum_parent_name: bool = true,
+  quote_strings: bool = false,
+  typename: bool = false,
   number_style: NumberStyle,
 }
 
@@ -189,7 +189,7 @@ impl FormatOptions {
     digits_after_decimal: 2,
     indented: false,
     quote_strings: true,
-    enum_parent_name: true,
+    typename: true,
   };
 
   fn current() -> *mut #self {
@@ -221,11 +221,11 @@ impl FormatOptions {
     return copy;
   }
 
-  // fn without_typename(self) -> #self {
-  //   mut copy := self;
-  //   copy.enum_parent_name = false;
-  //   return copy;
-  // }
+  fn without_typename(self) -> #self {
+    mut copy := self;
+    copy.typename = false;
+    return copy;
+  }
 }
 
 struct StringBuilder;
@@ -622,7 +622,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
   } else if value.type == typeof(c_str) {
     formatter.writer.append(String::from_ptr(value.unwrap!<*const u8>()));
   } else if value.type.is_enum() {
-    if formatter.options.enum_parent_name {
+    if formatter.options.typename {
       formatter.writer.append(value.type.name);
       formatter.writer.append("::");
     }
