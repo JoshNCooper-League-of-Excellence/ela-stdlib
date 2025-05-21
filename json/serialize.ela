@@ -8,33 +8,30 @@ trait Serializable {
 fn new_dyn_serializable(value: any) -> dyn Serializable {
   instance, type := value;
 
-  serialize_tuple := type.methods.find_first_of(
-    fn(tuple: *const (str, *const void)) -> bool {
-      return tuple.0 == "serialize";
+  serialize_method := type.methods.find_first_of(
+    fn(method: *const Method) -> bool {
+      return method.name == "serialize";
     }
   )
 
-  if !serialize_tuple {
+  if !serialize_method {
     panic(format("unable to find 'serialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
   }
 
-  deserialize_tuple := type.methods.find_first_of(
-    fn(tuple: *const (str, *const void)) -> bool {
-      return tuple.0 == "deserialize";
+  deserialize_method := type.methods.find_first_of(
+    fn(method: *const Method) -> bool {
+      return method.name == "deserialize";
     }
   );
 
-  if !deserialize_tuple {
+  if !deserialize_method {
     panic(format("unable to find 'deserialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
   }
 
-  _0, serialize := *serialize_tuple;
-  _1, deserialize := *deserialize_tuple;
-
   mut dynamic: dyn Serializable;
   dynamic.instance = instance;
-  dynamic.serialize = serialize as fn * (*const void) -> JsonResult;
-  dynamic.deserialize = deserialize as fn *(*mut void, *mut JsonValue) -> Option!<String>;
+  dynamic.serialize = serialize_method.pointer as fn * (*const void) -> JsonResult;
+  dynamic.deserialize = deserialize_method.pointer as fn *(*mut void, *mut JsonValue) -> Option!<String>;
   return dynamic;
 }
 

@@ -6,6 +6,11 @@ struct Field {
   enum_value: s64,
 };
 
+struct Method {
+  name: str,
+  pointer: *mut void,
+}
+
 struct Type {
   id: s32,                                                          // the integer ID used to identify this type.
   name: str,
@@ -17,8 +22,7 @@ struct Type {
   generic_args: List!<*const Type>,                                 // a list of the generic arguments.
   traits: List!<*const Type>,                                       // a list of implemented traits.
 
-  //// TODO: maybe we can make this more type safe in the future.
-  methods:    List!<(str, *const void)>,                                   // a list of method function pointers, 
+  methods:    List!<Method>,                                   // a list of method function pointers, 
 };
 
 _type_info: List!<*const Type>;
