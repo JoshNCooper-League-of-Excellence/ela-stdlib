@@ -25,8 +25,6 @@ struct Type {
   methods:    List!<Method>,                                   // a list of method function pointers, 
 };
 
-_type_info: List!<*const Type>;
-
 impl Field {
   fn set!<T, T1>(*const self, target: *mut T, data: T1) {
     for i in 0..sizeof(T1) {

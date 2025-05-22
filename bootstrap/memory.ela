@@ -23,7 +23,7 @@
   }
   impl Libc_Allocator {
     fn get() -> #self {
-      #static self: #self;
+      #static self: Libc_Allocator;
       return self;
     }
   }

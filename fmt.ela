@@ -1,5 +1,6 @@
+const UTF8_ERROR: u32 = 0xFFFD;
+
 #region UTF8 {
-  UTF8_ERROR : u32 = 0xFFFD;
   /*
     Copyright 2024 Kang-Che Sung
 
@@ -254,11 +255,6 @@ fn new_dyn_format(value: any) -> dyn Format {
   dynamic.format =  method.pointer as fn * (*const void, *mut Formatter);
   return dynamic;
 }
-
-// This seems pretty chunky,
-// it might be more performant for building large strings,
-// but perhaps this is a setting we can have the user pass in.
-
 
 struct StringBuilderBlock {
   data: *mut u8,
@@ -660,6 +656,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
     allocator: allocator,
     block_size: 8192
   };
+
   mut formatter: Formatter = .{
     indentation: 0,
     writer: &mut builder,
@@ -671,7 +668,6 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
   }
 
   value_index := 0;
-
   fields := typeof(Tuple).fields;
 
   if fields.is_empty() {

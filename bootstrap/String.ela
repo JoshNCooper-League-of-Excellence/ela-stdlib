@@ -297,7 +297,7 @@ impl Iterable for String {
       end: self.data + self.length,
     }
   }
-  fn iter_mut(*mut self) -> Iter!<u8> {
+  fn iter_mut(*mut self) -> IterMut!<u8> {
     return .{
       ptr: self.data,
       end: self.data + self.length,
