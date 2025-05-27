@@ -648,7 +648,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
   }
 }
 
-fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple {
+fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple | Format {
   if fmt.length == 0 then
     return .{};
 
@@ -667,36 +667,63 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
     formatter.writer.deinit();
   }
 
-  value_index := 0;
-  fields := typeof(Tuple).fields;
+  where tuple: Format {
+    mut value_written := false;
+    while *fmt.data {
+      if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
+        formatter.writer.append('%');
+        fmt.data += 2;
+        continue;
+      }
 
-  if fields.is_empty() {
-    return "()".to_string(allocator);
-  }
+      if (*fmt.data) == '%' && value_written {
+        panic("too few data arguments provided to 'format'");
+      }
 
-  while *fmt.data {
-    if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
-      formatter.writer.append('%');
-      fmt.data += 2;
-      continue;
+      if (*fmt.data) == '%' {
+        tuple.format(&mut formatter);
+        value_written = true;
+      } else {
+        formatter.writer.append((*fmt.data) as u32);
+      }
+
+      fmt.data++;
+    }
+  } else {
+
+
+    value_index := 0;
+
+    fields := typeof(Tuple).fields;
+
+    if fields.is_empty() {
+      return "()".to_string(allocator);
     }
 
-    if (*fmt.data) == '%' && value_index >= fields.length {
-      panic("too few data arguments provided to 'format'");
-    }
+    while *fmt.data {
+      if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
+        formatter.writer.append('%');
+        fmt.data += 2;
+        continue;
+      }
 
-    if (*fmt.data) == '%' && value_index < fields.length {
-      field := fields[value_index];
-      value :any = .{
-        type: field.type,
-        ptr: field.get(&const tuple),
-      };
-      format_any(value, &mut formatter);
-      value_index++;
-    } else {
-      formatter.writer.append((*fmt.data) as u32);
+      if (*fmt.data) == '%' && value_index >= fields.length {
+        panic("too few data arguments provided to 'format'");
+      }
+
+      if (*fmt.data) == '%' && value_index < fields.length {
+        field := fields[value_index];
+        value :any = .{
+          type: field.type,
+          ptr: field.get(&const tuple),
+        };
+        format_any(value, &mut formatter);
+        value_index++;
+      } else {
+        formatter.writer.append((*fmt.data) as u32);
+      }
+      fmt.data++;
     }
-    fmt.data++;
   }
 
   return formatter.writer.get_string(Some(allocator));
@@ -710,24 +737,55 @@ fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
 }
 
 fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
-  mut formatted := format("%", (message,), options);
-  std::c::printf("%s"c, formatted.data);
-  formatted.deinit();
+  where T: Format {
+    mut builder: StringBuilder;
+    mut formatter: Formatter = .{
+      writer: &mut builder,
+      options: options,
+    };
+    message.format(&mut formatter);
+    formatted := builder.get_string();
+    defer {
+      formatted.deinit();
+      builder.deinit();
+    }
+    std::c::printf("%s"c, formatted.data);
+  } else {
+    mut formatted := format("%", (message,), options);
+    std::c::printf("%s"c, formatted.data);
+    formatted.deinit();
+  }
 }
 
 fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
-  mut formatted := format("%", (message,), options);
-  std::c::printf("%s\n"c, formatted.data);
-  formatted.deinit();
+  where T: Format {
+    mut builder: StringBuilder;
+    mut formatter: Formatter = .{
+      writer: &mut builder,
+      options: options,
+    };
+    message.format(&mut formatter);
+    formatted := builder.get_string();
+    defer {
+      formatted.deinit();
+      builder.deinit();
+    }
+    std::c::printf("%s\n"c, formatted.data);
+  } else {
+    mut formatted := format("%", (message,), options);
+    std::c::printf("%s\n"c, formatted.data);
+    formatted.deinit();
+  }
 }
 
-fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple {
+
+fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s\n"c, formatted.data);
   formatted.deinit();
 }
 
-fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple {
+fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s"c, formatted.data);
   formatted.deinit();
