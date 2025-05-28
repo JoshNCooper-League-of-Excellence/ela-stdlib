@@ -16,6 +16,7 @@ enum JsonValueType {
   Null,
 }
 
+// TODO: this should just be a choice type.
 struct JsonValue {
   type : s32,
   #anon :: union {
