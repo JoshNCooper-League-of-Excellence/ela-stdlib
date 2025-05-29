@@ -95,12 +95,34 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
   }
 }
 
-impl!<Key, Value> Deinit for Map!<Key, Value> {
-  fn deinit(*mut self) {
-    for bucket in self.buckets {
-      bucket.deinit();
+impl!<Key, Value> Destroy for Map!<Key, Value> {
+  fn destroy(*mut self, recursive: bool = true) {
+    
+    where Key: Destroy, Value: Destroy {
+      if recursive {
+        for key, value in *self {
+          key.destroy();
+          value.destroy();
+        }
+      }
+    } else where Key: Destroy {
+      if recursive {
+        for key, _ in *self {
+          key.destroy();
+        }
+      }
+    } else where Value: Destroy {
+      if recursive {
+        for _, value in *self {
+          value.destroy();
+        }
+      }
     }
-    self.buckets.deinit();
+
+    for bucket in self.buckets {
+      bucket.destroy();
+    }
+    self.buckets.destroy();
     self.length = 0;
   }
 }

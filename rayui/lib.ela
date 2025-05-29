@@ -22,7 +22,7 @@ struct Style {
 fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions) where Tuple: IsTuple {
   text := format(fmt, tuple, format_options);
   defer {
-    text.deinit();
+    text.destroy();
   }
   DrawTextEx(
     style.font,
@@ -71,6 +71,7 @@ fn draw_character(char: u8, position: Vector2, style: Style) {
 #static widget_id: u32 = 0;
 
 struct WidgetBase {
+  is_active: bool = true,
   // unique id.
   id:    u32 = widget_id++,
   // Z index.
@@ -95,15 +96,19 @@ struct WidgetBase {
   children: List!<*mut WidgetBase>,
 };
 
-impl Deinit for WidgetBase {
-  fn deinit(*mut self) {
-    self.children.deinit();
+impl Destroy for WidgetBase {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.children.destroy();
   }
 }
 
-trait Widget where #self: Deinit {
+trait Widget where #self: Destroy {
   fn get_base(*const self) -> *mut WidgetBase {
     return &mut self.base;
+  }
+
+  fn is_active(*const self) -> bool {
+    return self.get_base().is_active;
   }
 
   fn is_hovered(*const self) -> bool {
@@ -145,14 +150,6 @@ trait Widget where #self: Deinit {
   }
 }
 
-choice Event {
-  // dyn Widget field is always sender.
-  MouseDown(MouseButton),
-  MouseUp(MouseButton),
-  MouseMoved(Vector2),
-  KeyPressed(KeyboardKey),
-}
-
 struct Button!<TString = String, UserArg = ()> where TString: AsByteSlice {
   base:         WidgetBase,
   label:        Option!<TString>,
@@ -189,11 +186,11 @@ struct CheckButton!<TString = String> where TString: AsByteSlice {
 struct DropDown!<TString = String, UserArg = ()> where TString: AsByteSlice {
   base:                   WidgetBase,
   // optional label to show in the base rect.
-  // this is released on deinit() if Some()
+  // this is released on destroy() if Some()
   text:                   Option!<TString>,
   // list of the options that can be selected.
   // maybe this should be a list of widgets.s
-  // this is released on deinit().
+  // this is released on destroy().
   options:                List!<TString>,
   // Some(selected_index), None() none selected.
   selected_index:         Option!<u32>,
@@ -212,12 +209,14 @@ struct Label!<TString = String> where TString: AsByteSlice {
   text: TString,
 }
 
-impl!<TString> Deinit for Label!<TString> {
-  fn deinit(*mut self) {
-    if self.text is Option!<TString>::Some(v) {
-      v.deinit();
+impl!<TString> Destroy for Label!<TString> {
+  fn destroy(*mut self, recursive: bool = true) {
+     where self.text.unwrap(): Destroy {
+      if self.text is Option!<TString>::Some(&mut v) {
+        v.destroy();
+      }
     }
-    self.base.deinit();
+    self.base.destroy();
 
   }
 }
@@ -255,69 +254,67 @@ enum RenderHookPriority {
 /* 
   DEINIT IMPLEMENTATIONS MUST GO BEFORE WIDGET IMPLEMENTATIONS!
 */
-
-impl Deinit for ListBox {
-  fn deinit(*mut self) {
-    self.children.deinit();
-    self.base.deinit();
+impl Destroy for ListBox {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.children.destroy();
+    self.base.destroy();
   }
 }
 
-impl!<TString, T> Deinit for Slider!<TString, T> {
-  fn deinit(*mut self) {
-    where self.text.unwrap(): Deinit {
+impl!<TString, T> Destroy for Slider!<TString, T> {
+  fn destroy(*mut self, recursive: bool = true) {
+    where self.text.unwrap(): Destroy {
       if self.text is Option!<TString>::Some(&mut v) {
-        v.deinit();
+        v.destroy();
       }
     }
-    self.base.deinit();
+    self.base.destroy();
   }
 }
 
-impl!<TString, UserArg> Deinit for Button!<TString, UserArg> {
-  fn deinit(*mut self) {
-    self.base.deinit();
-    where self.label.unwrap(): Deinit {
+impl!<TString, UserArg> Destroy for Button!<TString, UserArg> {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.base.destroy();
+    where self.label.unwrap(): Destroy {
       if self.label is Option!<TString>::Some(&mut v) {
-        v.deinit();
+        v.destroy();
       }
     }
   }
 }
 
-impl!<TString> Deinit for CheckButton!<TString> {
-  fn deinit(*mut self) {
-    where self.text.unwrap(): Deinit {
+impl!<TString> Destroy for CheckButton!<TString> {
+  fn destroy(*mut self, recursive: bool = true) {
+    where self.text.unwrap(): Destroy {
       if self.text is Option!<TString>::Some(&mut v) {
-        v.deinit();
+        v.destroy();
       }
     }
-    self.base.deinit();
+    self.base.destroy();
   }
 }
 
-impl!<TString, UserArg> Deinit for DropDown!<TString, UserArg> {
-  fn deinit(*mut self) {
-    where self.text.unwrap(): Deinit {
+impl!<TString, UserArg> Destroy for DropDown!<TString, UserArg> {
+  fn destroy(*mut self, recursive: bool = true) {
+    where self.text.unwrap(): Destroy {
       if self.text is Option!<TString>::Some(&mut v) {
-        v.deinit();
+        v.destroy();
       }
     }
-    self.options.deinit();
-    self.base.deinit();
+    self.options.destroy();
+    self.base.destroy();
   }
 }
 
-impl Deinit for TextField {
-  fn deinit(*mut self) {
-    self.base.deinit();
+impl Destroy for TextField {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.base.destroy();
   }
 }
 
 /* 
   WIDGET IMPLEMENTATIONS
 */
-
 impl!<TString, UserArg> Widget for Button!<TString, UserArg> {
   fn draw(*mut self) {
     mut position: Vector2 = .{
@@ -513,7 +510,7 @@ impl!<TString, T> Widget for Slider!<TString, T> where TString: AsByteSlice, T: 
 
     mut value_text := format("%", (*self.value,), options);
     defer {
-      value_text.deinit();
+      value_text.destroy();
     }
 
     // 10 pixels padding
@@ -908,12 +905,16 @@ impl!<Ctx> Window!<Ctx> {
       { // Handle events.
         mouse_position := GetMousePosition();
         for widget in self.widgets.iter_mut() {
-          handle_events(mouse_position, widget);
+          if widget.is_active() {
+            handle_events(mouse_position, widget);
+          }
         }
       }
 
       for widget in self.widgets.iter_mut() {
-        widget.draw();
+        if widget.is_active() {
+          widget.draw();
+        }
       }
 
       for priority, hook in self.render_hooks {
@@ -926,13 +927,13 @@ impl!<Ctx> Window!<Ctx> {
     }
 
     for widget in self.widgets {
-      widget.deinit();
+      widget.destroy(true);
     }
 
-    self.widgets.deinit();
-    self.render_hooks.deinit();
-    self.init_hooks.deinit();
-    self.on_resized_callbacks.deinit();
+    self.widgets.destroy();
+    self.render_hooks.destroy();
+    self.init_hooks.destroy();
+    self.on_resized_callbacks.destroy();
     CloseWindow();
   }
 

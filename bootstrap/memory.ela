@@ -19,7 +19,7 @@
       std::c::memcpy(newptr, ptr, n * element_size);
       return newptr;
     }
-    fn deinit(*mut self) {}
+    fn destroy(*mut self) {}
   }
   impl Libc_Allocator {
     fn get() -> #self {
@@ -64,7 +64,7 @@
     }
   }
   impl Allocator for Tracking_Allocator {
-    fn deinit(*mut self) {
+    fn destroy(*mut self) {
       while self.length > 0 {
         std::c::free(self.pointers[self.length - 1]);
         self.length -= 1;

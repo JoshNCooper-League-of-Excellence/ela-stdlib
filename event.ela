@@ -14,9 +14,9 @@ struct Event!<Fn>
   invokees: List!<*mut Fn>,
 }
 
-impl!<Fn> Deinit for Event!<Fn> {
-  fn deinit(*mut self) {
-    self.invokees.deinit();
+impl!<Fn> Destroy for Event!<Fn> {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.invokees.destroy();
   }
 }
 

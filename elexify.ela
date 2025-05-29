@@ -232,10 +232,10 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
       .as_slice(clamped_begin..clamped_end);
 
   defer {
-    builder.deinit();
-    file_data.deinit();
+    builder.destroy();
+    file_data.destroy();
     for line in lines {
-      line.deinit();
+      line.destroy();
     }
   }
 
@@ -260,8 +260,8 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
   }
 
   mut string := builder.get_string();
-  defer builder.deinit();
-  defer string.deinit();
+  defer builder.destroy();
+  defer string.destroy();
   panic(string.as_str());
 }
 
@@ -328,7 +328,7 @@ impl Format for Token {
 impl Token {
   fn to_string(self) -> String {
     mut builder: StringBuilder;
-    defer builder.deinit();
+    defer builder.destroy();
     self.format(&mut builder, FormatOptions::default());
     return builder.get_string();
   }
@@ -401,14 +401,14 @@ impl Lexer {
   }
 }
 
-impl Deinit for Lexer {
-  fn deinit(*mut self) {
-    self.operators.deinit();
-    self.keywords.deinit();
-    self.reserved.deinit();
-    self.states.deinit();
-    self.lookahead_buffer.deinit();
-    self.reserved_placeholder.deinit();
+impl Destroy for Lexer {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.operators.destroy();
+    self.keywords.destroy();
+    self.reserved.destroy();
+    self.states.destroy();
+    self.lookahead_buffer.destroy();
+    self.reserved_placeholder.destroy();
   }
 }
 
@@ -456,7 +456,7 @@ impl Lexer {
 
   fn get_token(*mut self, state: *mut State) {
     mut token_builder: StringBuilder;
-    defer token_builder.deinit();
+    defer token_builder.destroy();
 
     while state.pos < state.input.length {
       token_builder.clear();
@@ -720,7 +720,7 @@ impl Lexer {
         
         if self.keywords.contains(value.as_str()) {
           self.lookahead_buffer.push(Token::new(location, None(), self.keywords.get(value.as_str()).unwrap()));
-          value.deinit();
+          value.destroy();
           return;
         } else if self.reserved.contains(value.as_str(), fn (a: str, b: str) -> bool {
           return a == b;
@@ -729,7 +729,7 @@ impl Lexer {
           // and target languages
           mut new_value := self.reserved_placeholder.clone();
           new_value.append(value);
-          value.deinit();
+          value.destroy();
           value = new_value;
         }
         self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_IDENTIFIER));

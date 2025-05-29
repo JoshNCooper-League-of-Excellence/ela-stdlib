@@ -137,8 +137,8 @@ impl Shader {
   }
 }
 
-impl Deinit for Shader {
-  fn deinit(*mut self) {
+impl Destroy for Shader {
+  fn destroy(*mut self, recursive: bool = true) {
     glDeleteProgram(self.handle);
   }
 }

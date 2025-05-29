@@ -87,9 +87,9 @@ impl Allocator for Arena {
     return new_ptr;
 
   }
-  fn deinit(*mut self) {
+  fn destroy(*mut self) {
     if self.next {
-      self.next.deinit();
+      self.next.destroy();
       std::c::free(self.next);
       self.next = null;
     }

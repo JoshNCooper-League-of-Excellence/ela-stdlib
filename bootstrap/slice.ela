@@ -14,7 +14,7 @@
     // To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
     // since Slice!<T> is supposed to be like blatantly non-owning.
     // it's confusing and muddles the intended purpose and clarity of having the type in the standard.
-    fn deinit!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
+    fn destroy!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
       allocator.free(self.data);
     }
   }

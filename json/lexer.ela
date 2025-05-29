@@ -99,7 +99,7 @@ impl JsonLexer {
       self.position++;
       if self.position >= self.input.length {
         mut location := self.get_location_string();
-        defer location.deinit();
+        defer location.destroy();
         return Result::Err(format("at \"%\" unexpected end of input %", (location, c), FormatOptions::default(),))
       }
       c = self.input[self.position];

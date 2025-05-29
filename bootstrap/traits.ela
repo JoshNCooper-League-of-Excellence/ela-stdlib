@@ -119,14 +119,19 @@ trait Subscript!<T> {
   fn subscript_mut(*mut self, index: u64) -> *mut T;
 }
 
-trait Deinit {
-  fn deinit(*mut self);
-}
+/*  
+  Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
+  often paired with defer blocks, to emulate a nice 'RAII' type behaviour.
 
+  recursive is defaulted to true. we set a precedent that this is the expected behaviour when calling destroy in most cases;
+  every subobject that needs to be freed, will be.
 
-// just a free function version for those who might prefer a C like 'free' style api.
-fn deinit!<T>(t: T) where T: Deinit {
-  t.deinit();
+  if you pass false, say to a List!<T>, where T implements Destroy,
+  the destroy function will not call destroy on the objects in the list.
+*/
+trait Destroy {
+  fn destroy(*mut self, recursive: bool = true);
+  // fn destroy(*mut self);
 }
 
 trait Hash {

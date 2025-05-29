@@ -12,7 +12,7 @@ trait Allocator {
   fn allocate_array(*mut self, size: u64, n: u64) -> *mut void;
   fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
-  fn deinit(*mut self);
+  fn destroy(*mut self);
 }
 
 // This is a string literal type. "..." will return this type.

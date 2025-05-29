@@ -123,22 +123,6 @@ fn panic(msg: str);
     }
   }
 
-  impl!<T> Deinit for List!<T> {
-
-    /* 
-      This does not actually deinit any of members in the list. 
-      it just empties the list by freeing the memory used to store the elements.
-    */
-    @[inline]
-    fn deinit(*mut self) {
-      self.get_allocator_if_needed();
-      self.allocator.free(self.data);
-      self.data = null;
-      self.length = 0;
-      self.capacity = 0;
-    }
-  }
-
   impl!<T> Clone for List!<T> {
     /* 
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
@@ -209,6 +193,28 @@ impl!<T> Iterable for List!<T> {
     }
   }
 }
+  impl!<T> Destroy for List!<T> {
+
+    /* 
+      This does not actually destroy any of members in the list. 
+      it just empties the list by freeing the memory used to store the elements.
+    */
+    @[inline]
+    fn destroy(*mut self, recursive: bool = true) {
+      where T: Destroy {
+        if recursive {
+          for v in *self {
+            v.destroy();
+          }
+        }
+      }
+      self.get_allocator_if_needed();
+      self.allocator.free(self.data);
+      self.data = null;
+      self.length = 0;
+      self.capacity = 0;
+    }
+  }
 
 impl!<T> Subscript!<T> for List!<T> {
   fn subscript(*const self, idx: u64) -> *const T {

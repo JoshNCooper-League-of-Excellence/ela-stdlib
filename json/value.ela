@@ -30,26 +30,26 @@ struct JsonValue {
   },
 }
 
-impl Deinit for JsonValue {
-  fn deinit(*mut self) {
+impl Destroy for JsonValue {
+  fn destroy(*mut self, recursive: bool = true) {
     switch self.type {
       JsonValueType::Object: {
         for key, value in self.object {
-          key.deinit();
-          value.deinit();
+          key.destroy();
+          value.destroy();
           std::c::free(value);
         }
-        self.object.deinit();
+        self.object.destroy();
       }
       JsonValueType::Array: {
         for val in self.array {
-          val.deinit();
+          val.destroy();
           std::c::free(val);
         }
-        self.array.deinit();
+        self.array.destroy();
       }
       JsonValueType::String: {
-        self.string.deinit();
+        self.string.destroy();
       }
     }
   }
@@ -138,9 +138,9 @@ impl Writer {
   }
 }
 
-impl Deinit for Writer {
-  fn deinit(*mut self) {
-    self.builder.deinit();
+impl Destroy for Writer {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.builder.destroy();
   }
 }
 
@@ -211,7 +211,7 @@ impl JsonValue {
     mut writer := Writer::new();
     self.to_string(&mut writer);
     data := writer.builder.get_string();
-    writer.deinit();
+    writer.destroy();
     return data;
   }
 

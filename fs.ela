@@ -31,7 +31,6 @@ struct Stat {
 extern fn fstat(fd: s32, stat: *mut Stat) -> s32;
 extern fn fileno(file: *const FILE) -> s32;
 
-
 /* Idk the validity of these methods, just written by chatgpt */
 impl Stat {
   fn new!<T>(path: T) -> Option!<#self> where T: AsByteSlice {
@@ -133,15 +132,22 @@ struct File {
 }
 
 impl File {
+  fn stat(*mut self) -> Option!<Stat> {
+    alias Option :: Option!<Stat>;
+    mut stat: Stat;
+    if fstat(fileno(self.fd), &mut stat) != 0 {
+      return Option::None;
+    }
+    return Option::Some(stat);
+  }
+
   fn open!<T>(path: T, flags: FileOpenFlags) -> #self where T: AsByteSlice {
     slice := path.as_byte_slice();
     self: #self;
     self.fd = fopen(slice.data, flags.as_str());
     return self;
   }
-}
 
-impl File {
   fn flush(*mut self) {
     fflush(self.fd);
   }
@@ -218,20 +224,9 @@ impl File {
   }
 }
 
-impl Deinit for File {
-  fn deinit(*mut self) {
+impl Destroy for File {
+  fn destroy(*mut self, recursive: bool = true) {
     self.close();
-  }
-}
-
-impl File {
-  fn stat(*mut self) -> Option!<Stat> {
-    alias Option :: Option!<Stat>;
-    mut stat: Stat;
-    if fstat(fileno(self.fd), &mut stat) != 0 {
-      return Option::None;
-    }
-    return Option::Some(stat);
   }
 }
 
@@ -309,13 +304,13 @@ impl Directory {
   }
 }
 
-impl Deinit for Directory {
-  fn deinit(*mut self) {
-    self.path.deinit();
+impl Destroy for Directory {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.path.destroy();
     for path in self.entries {
-      path.deinit();
+      path.destroy();
     }
-    self.entries.deinit();
+    self.entries.destroy();
   }
 }
 

@@ -276,11 +276,11 @@ impl StringBuilderBlock {
   }
 }
 
-impl Deinit for StringBuilderBlock {
-  fn deinit(*mut self) {
+impl Destroy for StringBuilderBlock {
+  fn destroy(*mut self, recursive: bool = true) {
     if self.data then self.allocator.free(self.data);
     if self.next {
-      self.next.deinit();
+      self.next.destroy();
       self.allocator.free(self.next);
     }
   }
@@ -293,10 +293,10 @@ struct StringBuilder {
   block_size: u64 = 8192,
 }
 
-impl Deinit for StringBuilder {
-  fn deinit(*mut self) {
+impl Destroy for StringBuilder {
+  fn destroy(*mut self, recursive: bool = true) {
     if self.root {
-      self.root.deinit();
+      self.root.destroy();
       self.allocator.free(self.root);
     } 
   }
@@ -318,7 +318,7 @@ impl StringBuilder {
   // just here for 'clarity' xd
   @[inline]
   fn clear(*mut self) {
-    self.deinit();
+    self.destroy();
   }
 
   @[inline]
@@ -398,9 +398,9 @@ impl StringBuilder {
   // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
   // this is helpful for doing a builder.append_then_free(some_allocating_function());
   // so you don't leak.
-  fn append_then_free!<T>(*mut self, mut value: T) where T: Deinit {
+  fn append_then_free!<T>(*mut self, mut value: T) where T: Destroy {
     self.append(value);
-    value.deinit();
+    value.destroy();
   }
 
   @[inline]
@@ -422,7 +422,7 @@ impl StringBuilder {
   fn appendf!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {
     mut formatted := format(fmt, values, options);
     self.append(formatted);
-    formatted.deinit();
+    formatted.destroy();
   }
 
   @[inline]
@@ -664,7 +664,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
   };
 
   defer {
-    formatter.writer.deinit();
+    formatter.writer.destroy();
   }
 
   where tuple: Format {
@@ -746,14 +746,14 @@ fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
     message.format(&mut formatter);
     formatted := builder.get_string();
     defer {
-      formatted.deinit();
-      builder.deinit();
+      formatted.destroy();
+      builder.destroy();
     }
     std::c::printf("%s"c, formatted.data);
   } else {
     mut formatted := format("%", (message,), options);
     std::c::printf("%s"c, formatted.data);
-    formatted.deinit();
+    formatted.destroy();
   }
 }
 
@@ -767,14 +767,14 @@ fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
     message.format(&mut formatter);
     formatted := builder.get_string();
     defer {
-      formatted.deinit();
-      builder.deinit();
+      formatted.destroy();
+      builder.destroy();
     }
     std::c::printf("%s\n"c, formatted.data);
   } else {
     mut formatted := format("%", (message,), options);
     std::c::printf("%s\n"c, formatted.data);
-    formatted.deinit();
+    formatted.destroy();
   }
 }
 
@@ -782,13 +782,13 @@ fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
 fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s\n"c, formatted.data);
-  formatted.deinit();
+  formatted.destroy();
 }
 
 fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s"c, formatted.data);
-  formatted.deinit();
+  formatted.destroy();
 }
 
 #region UTF8.2 {

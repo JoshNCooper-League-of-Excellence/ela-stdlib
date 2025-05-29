@@ -76,9 +76,9 @@ impl StringUtils for String {}
       self.data[self.length] = '\0';
     }
 
-    fn append_then_free!<T>(*mut self, mut other: T) where T: AsByteSlice & Deinit {
+    fn append_then_free!<T>(*mut self, mut other: T) where T: AsByteSlice & Destroy {
       self.append(other);
-      other.deinit();
+      other.destroy();
     }
   }
 
@@ -233,8 +233,8 @@ impl StringUtils for String {}
     }
   }
 
-  impl Deinit for String {
-    fn deinit(*mut self) {
+  impl Destroy for String {
+    fn destroy(*mut self, recursive: bool = true) {
       self.get_allocator_if_needed();
       self.allocator.free(self.data);
       self.data = null;
