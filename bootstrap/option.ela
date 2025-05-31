@@ -1,5 +1,6 @@
 
 // forward declare panic.
+@[no_return]
 fn panic(msg: str);
 
 impl!<_Some> Option!<_Some> {
@@ -15,13 +16,14 @@ impl!<_Some> Option!<_Some> {
   }
 
   fn unwrap(self) -> _Some {
-    if self is Option!<_Some>::Some(v) {
-      return v;
-    } else {
-      panic("unwrapped a 'none' option");
-      default: _Some;
-      return default;
-    }
+    switch is self {
+      Option!<_Some>::Some(v): {
+        return v;
+      }
+      else: {
+        panic("unwrapped a 'none' option");
+      }
+    } 
   }
 
   fn or_else(self, fallback: _Some) -> _Some {
