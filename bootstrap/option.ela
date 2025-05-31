@@ -23,8 +23,10 @@ impl!<_Some> Option!<_Some> {
         panic("unwrapped a 'none' option");
       }
     }
-    
 
+    // TODO! We should have better control flow analysis to where this is not neccesary.
+    // ! We need some kind of @[unreachable/!/no_return]
+    // ! or a fn () -> ! {...} like rust. this may be easier to analyze.
     default: _Some;
     return default;
   }

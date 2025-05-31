@@ -28,7 +28,7 @@ impl Arena {
     return .{
       size: size,
       flags: flags,
-      memory: calloc(sizeof(u8), size),
+      memory: std::c::calloc(sizeof(u8), size),
       alignment: sizeof(*const void),
       next: null,
     }
@@ -41,7 +41,7 @@ impl Arena {
 
     if size > self.size {
       buffer: u8[1024];
-      len := snprintf(
+      len := std::c::snprintf(
         buffer,
         1024,
         "attempted to allocate %d bytes in an arena where each chunk is maximum %d bytes. this would lead to splits in the data."c,

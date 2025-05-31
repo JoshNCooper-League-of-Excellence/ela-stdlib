@@ -67,12 +67,13 @@ import fmt::{
   StringBuilder,
   FormatOptions
 };
+
 impl!<T> Format for Interned!<T> {
-  fn format(*const self, builder: *mut StringBuilder, options: FormatOptions) {
+  fn format(*const self, f: *mut fmt::Formatter) {
     if self.data {
-      builder.appendf("Interned { % }", (*self.data,), options.quoted());
+      f.writer.appendf("Interned { % }", (*self.data,), f.options.quoted());
     } else {
-      builder.append("Interned { null }");
+      f.writer.append("Interned { null }");
     }
   }
 }

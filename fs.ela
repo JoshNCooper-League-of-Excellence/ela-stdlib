@@ -363,8 +363,8 @@ fn parent_path!<Path>(path: Path) -> Option!<String> where Path: AsByteSlice {
   if slice.length == 0 {
     return None();
   }
-  mut data := strdup(slice.data);
-  defer free(data);
+  mut data := std::c::strdup(slice.data);
+  defer std::c::free(data);
   name := dirname(data);
   if !name {
     return None();

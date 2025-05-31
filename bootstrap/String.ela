@@ -181,11 +181,11 @@ impl StringUtils for String {}
       mut result: List!<String>;
       mut start: u64;
 
-      for i in 0..self.length {
-        if i + slice.length <= self.length && std::c::memcmp(self.data + i, slice.data, slice.length) == 0 {
-          result.push(self.substr(start, i - start));
-          start = i + slice.length;
-          i += slice.length - 1;
+      for i in (0..self.length).iter_mut() {
+        if *i + slice.length <= self.length && std::c::memcmp(self.data + *i, slice.data, slice.length) == 0 {
+          result.push(self.substr(start, *i - start));
+          start = *i + slice.length;
+          *i += slice.length - 1;
         }
       }
       result.push(self.substr(start, self.length - start));

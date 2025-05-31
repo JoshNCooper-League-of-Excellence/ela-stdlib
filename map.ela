@@ -95,38 +95,6 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
   }
 }
 
-impl!<Key, Value> Destroy for Map!<Key, Value> {
-  fn destroy(*mut self, recursive: bool = true) {
-    
-    where Key: Destroy, Value: Destroy {
-      if recursive {
-        for key, value in *self {
-          key.destroy();
-          value.destroy();
-        }
-      }
-    } else where Key: Destroy {
-      if recursive {
-        for key, _ in *self {
-          key.destroy();
-        }
-      }
-    } else where Value: Destroy {
-      if recursive {
-        for _, value in *self {
-          value.destroy();
-        }
-      }
-    }
-
-    for bucket in self.buckets {
-      bucket.destroy();
-    }
-    self.buckets.destroy();
-    self.length = 0;
-  }
-}
-
 struct MapIter!<Key, Value> {
   map: *const Map!<Key, Value>,
   bucket_index: u64,
@@ -197,6 +165,39 @@ impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
     }
     return self;
   } 
+}
+
+
+impl!<Key, Value> Destroy for Map!<Key, Value> {
+  fn destroy(*mut self, recursive: bool = true) {
+    // where Key: Destroy, 
+    //       Value: Destroy {
+    //   if recursive {
+    //     for key, value in *self {
+    //       key.destroy();
+    //       value.destroy();
+    //     }
+    //   }
+    // } else where Key: Destroy {
+    //   if recursive {
+    //     for key, _ in *self {
+    //       key.destroy();
+    //     }
+    //   }
+    // } else where Value: Destroy {
+    //   if recursive {
+    //     for _, value in *self {
+    //       value.destroy();
+    //     }
+    //   }
+    // }
+
+    for bucket in self.buckets {
+      bucket.destroy();
+    }
+    self.buckets.destroy();
+    self.length = 0;
+  }
 }
 
 impl!<Key, Value> Map!<Key, Value> {
