@@ -15,20 +15,13 @@ impl!<_Some> Option!<_Some> {
   }
 
   fn unwrap(self) -> _Some {
-    switch is self { 
-      Option!<_Some>::Some(v): {
-        return v;
-      }
-      else: {
-        panic("unwrapped a 'none' option");
-      }
+    if self is Option!<_Some>::Some(v) {
+      return v;
+    } else {
+      panic("unwrapped a 'none' option");
+      default: _Some;
+      return default;
     }
-
-    // TODO! We should have better control flow analysis to where this is not neccesary.
-    // ! We need some kind of @[unreachable/!/no_return]
-    // ! or a fn () -> ! {...} like rust. this may be easier to analyze.
-    default: _Some;
-    return default;
   }
 
   fn or_else(self, fallback: _Some) -> _Some {
