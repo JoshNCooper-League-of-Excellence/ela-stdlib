@@ -68,27 +68,22 @@
 
 alias Panic_Handler :: fn*(str);
 
-mut panic_handler: Panic_Handler;
+
+#ifndef FREESTANDING {
+  mut panic_handler: Panic_Handler = fn(msg: str) {
+    std::c::printf("panic(): %s\n"c, msg.data);
+    std::c::exit(1);
+  };
+} else {
+  mut panic_handler: Panic_Handler;
+}
 
 fn set_panic_handler(handler: Panic_Handler) {
   panic_handler = handler;
 }
 
+@[no_return]
 fn panic(msg: str) {
-  if !panic_handler {
-    #ifndef FREESTANDING {
-      panic_handler = fn(msg: str) {
-        std::c::printf("panic(): %s\n"c, msg.data);
-        std::c::exit(1);
-      };
-    } else {
-      panic_handler = fn(msg: str) {
-        // idk, segfault on panic?
-        n : *mut s32 = null;
-        *n = 10;;
-      };
-    }
-  }
   panic_handler(msg);
 }
 

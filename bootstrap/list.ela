@@ -1,5 +1,6 @@
 fn panic(msg: str);
 
+
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
     @[inline]
