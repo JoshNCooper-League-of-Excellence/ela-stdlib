@@ -34,7 +34,7 @@ trait StringUtils {
     return true;
   }
   
-  fn ends_with!<Prefix>(self, suffix: Prefix) -> bool where Prefix: AsByteSlice {
+  fn ends_with!<Suffix>(self, suffix: Suffix) -> bool where Suffix: AsByteSlice {
     data, length := suffix.as_byte_slice();
     if self.length < length then return false;
     for i in 0..length {
@@ -51,5 +51,28 @@ trait StringUtils {
       }
     }
     return true;
+  }
+
+  fn contains!<TString>(self, search: TString) -> bool where TString: AsByteSlice {
+    self_data, self_len := self.as_byte_slice();
+    search_data, search_len := search.as_byte_slice();
+  
+    if search_len == 0 || self_len < search_len {
+      return false;
+    }
+    
+    for i in 0..(self_len - search_len + 1) {
+      mut found := true;
+      for j in 0..search_len {
+        if self_data[i + j] != search_data[j] {
+          found = false;
+          break;
+        }
+      }
+      if found {
+        return true;
+      }
+    }
+    return false;
   }
 }

@@ -307,9 +307,6 @@ impl Directory {
 impl Destroy for Directory {
   fn destroy(*mut self, recursive: bool = true) {
     self.path.destroy();
-    for path in self.entries {
-      path.destroy();
-    }
     self.entries.destroy();
   }
 }
