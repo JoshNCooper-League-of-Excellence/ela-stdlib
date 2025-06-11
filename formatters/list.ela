@@ -14,7 +14,7 @@ impl!<T> Format for InitList!<T> {
     for i, val in self.enumerate() {
       value : any = any.{
         ptr: &mut self.data[i]
-        type: element_type,
+        _type: element_type,
       };
       format_any(value, formatter);
       if formatter.options.indented && i != self.length - 1 {
@@ -48,7 +48,7 @@ impl!<T> Format for List!<T> {
     for i, val in self.enumerate() {
       value : any = any.{
         ptr: &mut self.data[i]
-        type: element_type,
+        _type: element_type,
       };
       format_any(value, formatter);
       if formatter.options.indented && i != self.length - 1 {
@@ -80,7 +80,7 @@ impl!<T> Format for Slice!<T> {
     for val in *self {
       value : any = any.{
         ptr: &mut self.data[i]
-        type: element_type,
+        _type: element_type,
       };
       format_any(value, formatter);
       if formatter.options.indented && i != self.length - 1 {

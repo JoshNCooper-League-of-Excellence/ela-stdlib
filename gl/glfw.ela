@@ -1,36 +1,36 @@
 #c_flags " -lglfw "
 
-alias GLFWglproc :: fn*() -> void;
-alias GLFWvkproc :: fn*() -> void;
+type GLFWglproc :: fn*() -> void;
+type GLFWvkproc :: fn*() -> void;
 struct GLFWmonitor {
 };
 struct GLFWwindow {
 };
 struct GLFWcursor {
 };
-alias GLFWallocatefun :: fn*(u64, *mut void) -> *mut void;
-alias GLFWreallocatefun :: fn*(*mut void, u64, *mut void) -> *mut void;
-alias GLFWdeallocatefun :: fn*(*mut void, *mut void) -> void;
-alias GLFWerrorfun :: fn*(s32, *const u8) -> void;
-alias GLFWwindowposfun :: fn*(*mut GLFWwindow, s32, s32) -> void;
-alias GLFWwindowsizefun :: fn*(*mut GLFWwindow, s32, s32) -> void;
-alias GLFWwindowclosefun :: fn*(*mut GLFWwindow) -> void;
-alias GLFWwindowrefreshfun :: fn*(*mut GLFWwindow) -> void;
-alias GLFWwindowfocusfun :: fn*(*mut GLFWwindow, s32) -> void;
-alias GLFWwindowiconifyfun :: fn*(*mut GLFWwindow, s32) -> void;
-alias GLFWwindowmaximizefun :: fn*(*mut GLFWwindow, s32) -> void;
-alias GLFWframebuffersizefun :: fn*(*mut GLFWwindow, s32, s32) -> void;
-alias GLFWwindowcontentscalefun :: fn*(*mut GLFWwindow, f32, f32) -> void;
-alias GLFWmousebuttonfun :: fn*(*mut GLFWwindow, s32, s32, s32) -> void;
-alias GLFWcursorposfun :: fn*(*mut GLFWwindow, f64, f64) -> void;
-alias GLFWcursorenterfun :: fn*(*mut GLFWwindow, s32) -> void;
-alias GLFWscrollfun :: fn*(*mut GLFWwindow, f64, f64) -> void;
-alias GLFWkeyfun :: fn*(*mut GLFWwindow, s32, s32, s32, s32) -> void;
-alias GLFWcharfun :: fn*(*mut GLFWwindow, u32) -> void;
-alias GLFWcharmodsfun :: fn*(*mut GLFWwindow, u32, s32) -> void;
-alias GLFWdropfun :: fn*(*mut GLFWwindow, s32, *const *const u8) -> void;
-alias GLFWmonitorfun :: fn*(*mut GLFWmonitor, s32) -> void;
-alias GLFWjoystickfun :: fn*(s32, s32) -> void;
+type GLFWallocatefun :: fn*(u64, *mut void) -> *mut void;
+type GLFWreallocatefun :: fn*(*mut void, u64, *mut void) -> *mut void;
+type GLFWdeallocatefun :: fn*(*mut void, *mut void) -> void;
+type GLFWerrorfun :: fn*(s32, *const u8) -> void;
+type GLFWwindowposfun :: fn*(*mut GLFWwindow, s32, s32) -> void;
+type GLFWwindowsizefun :: fn*(*mut GLFWwindow, s32, s32) -> void;
+type GLFWwindowclosefun :: fn*(*mut GLFWwindow) -> void;
+type GLFWwindowrefreshfun :: fn*(*mut GLFWwindow) -> void;
+type GLFWwindowfocusfun :: fn*(*mut GLFWwindow, s32) -> void;
+type GLFWwindowiconifyfun :: fn*(*mut GLFWwindow, s32) -> void;
+type GLFWwindowmaximizefun :: fn*(*mut GLFWwindow, s32) -> void;
+type GLFWframebuffersizefun :: fn*(*mut GLFWwindow, s32, s32) -> void;
+type GLFWwindowcontentscalefun :: fn*(*mut GLFWwindow, f32, f32) -> void;
+type GLFWmousebuttonfun :: fn*(*mut GLFWwindow, s32, s32, s32) -> void;
+type GLFWcursorposfun :: fn*(*mut GLFWwindow, f64, f64) -> void;
+type GLFWcursorenterfun :: fn*(*mut GLFWwindow, s32) -> void;
+type GLFWscrollfun :: fn*(*mut GLFWwindow, f64, f64) -> void;
+type GLFWkeyfun :: fn*(*mut GLFWwindow, s32, s32, s32, s32) -> void;
+type GLFWcharfun :: fn*(*mut GLFWwindow, u32) -> void;
+type GLFWcharmodsfun :: fn*(*mut GLFWwindow, u32, s32) -> void;
+type GLFWdropfun :: fn*(*mut GLFWwindow, s32, *const *const u8) -> void;
+type GLFWmonitorfun :: fn*(*mut GLFWmonitor, s32) -> void;
+type GLFWjoystickfun :: fn*(s32, s32) -> void;
 struct GLFWvidmode {
   width: s32,
   height: s32,

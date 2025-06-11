@@ -240,7 +240,7 @@ impl!<T> AsSlice!<T> for List!<T> {
 }
 
 impl!<T> List!<T> {
-  alias OrderingPredicate :: fn*(*const T, *const T) -> bool;
+  type OrderingPredicate :: fn*(*const T, *const T) -> bool;
 
   /*
     Remove an element at a specific index from the list.
@@ -353,7 +353,7 @@ impl!<T> Enumerable!<T> for List!<T> {
 #ifndef FREESTANDING {
 
   impl!<T> List!<T>  {
-    alias OrderingPredicate :: fn*(*const T) -> u32;
+    type OrderingPredicate :: fn*(*const T) -> u32;
     /* 
       return a new list with the order specified by the predicate.
     */
@@ -382,13 +382,13 @@ impl!<T> Enumerable!<T> for List!<T> {
       }
     }
 
-    alias Comparator :: fn*(T, T) -> bool;
+    type Comparator :: fn*(T, T) -> bool;
     /* 
       Check if the list contains an item. This uses the `a == b` operator, so this is only valid
       on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
 
-      Right now we don't have a good way to check if a type is a pointer with an trait and a where constraint, 
-      so we can't really put a type constraint on this function yet. in the future!
+      Right now we don't have a good way to check if a _type is a pointer with an trait and a where constraint, 
+      so we can't really put a _type constraint on this function yet. in the future!
     */
     @[inline]
     fn contains(self, seek: T, comparator: Comparator) -> bool {

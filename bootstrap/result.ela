@@ -31,7 +31,7 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return false;
   }
 
-  // we can use this to propagate the error/ok into a new result type,
+  // we can use this to propagate the error/ok into a new result _type,
   // to create a hierarchy
   // for example
   /* 

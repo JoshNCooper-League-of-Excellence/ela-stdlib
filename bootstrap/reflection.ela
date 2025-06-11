@@ -1,6 +1,6 @@
 struct Field {
   name: str,
-  type: *const Type,
+  _type: *const Type,
   size: u64,
   offset: u64,
   enum_value: s64,
@@ -12,17 +12,15 @@ struct Method {
 }
 
 struct Type {
-  id: s32,                                                          // the integer ID used to identify this type.
+  id: s32,                                                          // the integer ID used to identify this _type.
   name: str,
   size: u64,                                                        // sizeof(T)
   flags: u64,                                                       // defined in reflection.ela and emit.cpp, the values of the flags.
-  fields: List!<Field>,                                                  // get a list of struct fields, enum variants.
-  element_type: *const Type,                                        // the type this type has a pointer to, is an array of, etc.
-
-  generic_args: List!<*const Type>,                                 // a list of the generic arguments.
+  element_type: *const Type,                                        // the _type this _type has a pointer to, is an array of, etc.
+  fields: List!<Field>,                                             // get a list of struct fields, enum variants.
   traits: List!<*const Type>,                                       // a list of implemented traits.
-
-  methods:    List!<Method>,                                   // a list of method function pointers, 
+  generic_args: List!<*const Type>,                                 // a list of the generic arguments.
+  methods:    List!<Method>,                                        // a list of method function pointers, 
 };
 
 impl Field {
@@ -150,21 +148,21 @@ impl any {
   fn from!<T>(t: *mut T) -> #self {
     return .{
       ptr: t,
-      type: typeof(T),
+      _type: typeof(T),
     }
   }
 
-  // return the pointer behind this any, or if the type isn't matched,
+  // return the pointer behind this any, or if the _type isn't matched,
   // return null.
   fn cast!<T>(*const self) -> *mut T {
-    if !type then type = typeof(T);
-    if type != self.type then return null;
+    if !_type then _type = typeof(T);
+    if _type != self._type then return null;
     return self.ptr as *mut T;
   }
 
   // an unchecked version of the 'cast' method.
-  // this will return junk data, or worse, if you pass in the wrong type to cast to.
-  // use cast anywhere you can, it's much more type safe.
+  // this will return junk data, or worse, if you pass in the wrong _type to cast to.
+  // use cast anywhere you can, it's much more _type safe.
   fn unwrap!<T>(*const self) -> T {
     return *(self.ptr as *const T);
   }
@@ -182,7 +180,7 @@ impl Iterator!<any> for ElementIter {
     if self.ptr >= self.end {
       return None();
     }
-    value := Some(any.{ptr: self.ptr, type: self.element_type});
+    value := Some(any.{ptr: self.ptr, _type: self.element_type});
     self.ptr += self.element_type.size;
     return value;
   }
@@ -232,11 +230,11 @@ impl Iterator!<any> for TupleElementIter {
     }
     field := self.tuple_type.fields[self.element_index];
 
-    element_type := field.type;
+    element_type := field._type;
     offset := self.tuple_type.offset(field.name);
     value : any = .{
       ptr: self.ptr + offset,
-      type: element_type
+      _type: element_type
     };
     self.element_index++;
     return Some(value);

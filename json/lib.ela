@@ -7,7 +7,7 @@
 impl Serializable for String {
   fn serialize(*const self) -> JsonResult {
     mut jstring := JsonValue::new();
-    jstring.type = JsonValueType::String;
+    jstring._type = JsonValueType::String;
     jstring.string = self.clone();
     return JsonResult::Ok(jstring);
   }
@@ -24,7 +24,7 @@ impl!<T> Serializable for List!<T> {
   }
 
   fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
-    if object.type != JsonValueType::Array then return Some(String::from("invalid json type, expected array."));
+    if object._type != JsonValueType::Array then return Some(String::from("invalid json _type, expected array."));
     self.initialize(object.array.length);
     for i in 0..object.array.length {
       err := deserialize(object.array[i], &mut (*self)[i]);
@@ -42,7 +42,7 @@ impl!<T> Serializable for List!<T> {
 // impl!<K, V> Serializable for Map!<K, V> {
 //   fn serialize(*const self) -> JsonResult {
 //     mut value := JsonValue::new();
-//     value.type = JsonValueType::Object;
+//     value._type = JsonValueType::Object;
 //     for key, v in *self {
 //       result := serialize!<V>(v);
 //       if result.is_err() {
@@ -53,10 +53,10 @@ impl!<T> Serializable for List!<T> {
 //     return JsonResult::Ok(value);
 //   }
 //   fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
-//     println(object.type as JsonValueType);
+//     println(object._type as JsonValueType);
 
-//     if object.type != JsonValueType::Object 
-//       then return Some(String::from("invalid json type, expected an object to deserialize into Map."));
+//     if object._type != JsonValueType::Object 
+//       then return Some(String::from("invalid json _type, expected an object to deserialize into Map."));
 
 //     for key, value in object.object {
 //       mut v: V;

@@ -1,5 +1,5 @@
 /* 
-  * Marker traits for numerical type constraints.
+  * Marker traits for numerical _type constraints.
 */
 
 trait IsNumeric {}

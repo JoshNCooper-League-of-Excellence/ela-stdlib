@@ -1,7 +1,7 @@
 
-alias char :: u32; // this represents a single UTF-8 scalar.
+type char :: u32; // this represents a single UTF-8 scalar.
 
-alias c_str :: *const u8;
+type c_str :: *const u8;
 
 struct Type;
 
@@ -15,7 +15,7 @@ trait Allocator {
   fn destroy(*mut self);
 }
 
-// This is a string literal type. "..." will return this type.
+// This is a string literal _type. "..." will return this _type.
 // It's meant to be an immutable constant string.
 
 // to get a 'u8*' literal, use `"..."c` the little `c` postfix.                              ^
@@ -26,7 +26,7 @@ struct str {
 
 // This is basically just a List!<u8>
 // but it has some particularly special methods for dealing with strings,
-// so it gets it's own distinct type.
+// so it gets it's own distinct _type.
 struct String {
   data: *mut u8,
   length: u64,
@@ -51,11 +51,11 @@ struct List!<V> {
   allocator: dyn Allocator,
 }
 
-// A semi-type-erased pointer that carries the RTTI (Runtime type information)
+// A semi-_type-erased pointer that carries the RTTI (Runtime _type information)
 // with it for a way to do "duck typing" in a way.
 struct any {
   ptr:  *mut void,
-  type: *const Type
+  _type: *const Type
 };
 
 // A non-owning immutable fat pointer. This should just be a view into a pointer, that tracks length.

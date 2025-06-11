@@ -133,7 +133,7 @@ impl Shader {
         return;
       }
     }
-    std::printf("incompatible type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n");
+    std::printf("incompatible _type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n");
   }
 }
 

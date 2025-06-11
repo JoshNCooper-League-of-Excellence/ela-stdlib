@@ -39,7 +39,7 @@ struct IterMut!<V> {
 }
 
 impl!<V> Iterator!<V> for Iter!<V> {
-  alias Option :: Option!<V>;
+  type Option :: Option!<V>;
   // Advances the iterator to the next element in the collection.
   @[inline]
   fn next(*mut self) -> Option {
@@ -53,7 +53,7 @@ impl!<V> Iterator!<V> for Iter!<V> {
 }
 
 impl!<V> Iterator!<*mut V> for IterMut!<V> {
-  alias Option :: Option!<*mut V>;
+  type Option :: Option!<*mut V>;
   // Advances the iterator to the next element in the collection.
   fn next(*mut self) -> Option {
     if self.ptr >= self.end {
@@ -84,8 +84,8 @@ impl!<T> Iterator!<T> {
   we should be able to return Enumerate!<T, Iterator!<T>>
 
   where:
-    - enumerate is a Enumerate!<...> is a concrete type,
-    - T is a concrete type
+    - enumerate is a Enumerate!<...> is a concrete _type,
+    - T is a concrete _type
     - Iterator!<T> is a trait -- not concrete. but we resolve this to be a trait bounds / constraint.
 
   for now, we'll just use Iter!<T> because it's overwhelmingly common.

@@ -2,15 +2,15 @@ fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String>;
 
 fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
   for key, value in value.object {
-    struct_field := object.type.get_field(key);
+    struct_field := object._type.get_field(key);
 
     if !struct_field {
-      Some(format("Could not find field % in type %", (key, object.type.name), FormatOptions::default()));
+      Some(format("Could not find field % in _type %", (key, object._type.name), FormatOptions::default()));
     }
 
     any_value : any = .{
-      ptr: object.ptr as *mut u8 + object.type.offset(struct_field.name),
-      type: struct_field.type,
+      ptr: object.ptr as *mut u8 + object._type.offset(struct_field.name),
+      _type: struct_field._type,
     };
 
     result := deserialize_any(value, any_value);
@@ -21,18 +21,18 @@ fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
 }
 
 fn deserialize_scalar(value: *mut JsonValue, object: any) -> Option!<String> {
-  if (!object.type.has_no_extension()) => Some(String::from("Unable to deserialize into pointer type with 'deserialize_scalar'"));
-  if object.type.is_bool() {
+  if (!object._type.has_no_extension()) => Some(String::from("Unable to deserialize into pointer _type with 'deserialize_scalar'"));
+  if object._type.is_bool() {
     *(object.ptr as *mut bool) = value.as_boolean().unwrap();
-  } else if (object.type.is_float()) {
-    if (object.type.size == 8) {
+  } else if (object._type.is_float()) {
+    if (object._type.size == 8) {
       *(object.ptr as *mut f64) = value.as_number().unwrap();
     } else {
       *(object.ptr as *mut f32) = value.as_number().unwrap() as f32;
     }
-  } else if (object.type.is_integral()) {
-    is_signed := object.type.is_signed();
-    switch object.type.size {
+  } else if (object._type.is_integral()) {
+    is_signed := object._type.is_signed();
+    switch object._type.size {
         8: {
           if is_signed {
             *(object.ptr as *mut s64) = value.as_number().unwrap();
@@ -63,27 +63,27 @@ fn deserialize_scalar(value: *mut JsonValue, object: any) -> Option!<String> {
         }
     }
   } else {
-    return Some(format("Unable to deserialize into type %", (object.type.name,), FormatOptions::default()));
+    return Some(format("Unable to deserialize into _type %", (object._type.name,), FormatOptions::default()));
   }
   return None();
 }
 
 fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String> {
-  if object.type.implements("Serializable") {
+  if object._type.implements("Serializable") {
     dynamic := new_dyn_serializable(object);
     return dynamic.deserialize(value);
   }
 
   if value.is_object() {
-    if object.type.is_struct() {
+    if object._type.is_struct() {
       return deserialize_struct(value, object);
     } else {
-      return Some(format("Type mismatch: object to %", (object.type.name,), FormatOptions::default()));
+      return Some(format("Type mismatch: object to %", (object._type.name,), FormatOptions::default()));
     }
-  } else if object.type == typeof(String) {
+  } else if object._type == typeof(String) {
     *(object.ptr as *mut String) = value.as_string().unwrap().clone();
     return None();
-  } else if object.type == typeof(str) {
+  } else if object._type == typeof(str) {
     mut string := value.as_string().unwrap();
     string = string.clone();
     *(object.ptr as *mut str) = string.as_str();
@@ -99,7 +99,7 @@ fn deserialize!<T>(value: *mut JsonValue, object: *mut T) -> Option!<String> {
   else {
     return deserialize_any(value, any.{
       ptr: object,
-      type: typeof(T),
+      _type: typeof(T),
     });
   }
 }

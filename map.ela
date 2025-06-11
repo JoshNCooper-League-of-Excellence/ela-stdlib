@@ -11,7 +11,7 @@ struct Map!<Key, Value> {
 }
 
 impl!<Key, Value> Map!<Key, Value> where Key: Hash {
-  alias Pair :: (Key, Value);
+  type Pair :: (Key, Value);
   fn new() -> #self {
     const INITIAL_CAPACITY := 16;
     mut buckets: List!<List!<Pair>>;
@@ -238,11 +238,11 @@ impl!<Key, Value> Format for Map!<Key, Value> {
 
       key_any : any = any.{
         ptr: &mut key,
-        type: key_type,
+        _type: key_type,
       };
       value_any : any = any.{
         ptr: &mut value,
-        type: value_type,
+        _type: value_type,
       };
 
       formatter.writer.append_byte(' ');

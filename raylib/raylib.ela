@@ -31,14 +31,14 @@ struct Texture {
   mipmaps: s32,
   format: s32,
 };
-alias Texture2D :: Texture;
-alias TextureCubemap :: Texture;
+type Texture2D :: Texture;
+type TextureCubemap :: Texture;
 struct RenderTexture {
   id: u32,
   texture: Texture,
   depth: Texture,
 };
-alias RenderTexture2D :: RenderTexture;
+type RenderTexture2D :: RenderTexture;
 struct NPatchInfo {
   source: Rectangle,
   left: s32,
@@ -71,7 +71,7 @@ struct Camera3D {
   projection: s32,
 };
 
-alias Camera :: Camera3D;
+type Camera :: Camera3D;
 
 struct Camera2D {
   offset: Vector2,
@@ -211,7 +211,7 @@ struct FilePathList {
 };
 struct AutomationEvent {
   frame: u32,
-  type: u32,
+  _type: u32,
   params: s32[4],
 };
 struct AutomationEventList {
@@ -566,11 +566,11 @@ enum NPatchLayout {
   NPATCH_THREE_PATCH_VERTICAL = 1,
   NPATCH_THREE_PATCH_HORIZONTAL = 2,
 };
-alias TraceLogCallback :: fn*(s32, *const u8) -> void;
-alias LoadFileDataCallback :: fn*(*const u8, *const s32) -> *const u8;
-alias SaveFileDataCallback :: fn*(*const u8, *const void, s32) -> bool;
-alias LoadFileTextCallback :: fn*(*const u8) -> *const u8;
-alias SaveFileTextCallback :: fn*(*const u8, *const u8) -> bool;
+type TraceLogCallback :: fn*(s32, *const u8) -> void;
+type LoadFileDataCallback :: fn*(*const u8, *const s32) -> *const u8;
+type SaveFileDataCallback :: fn*(*const u8, *const void, s32) -> bool;
+type LoadFileTextCallback :: fn*(*const u8) -> *const u8;
+type SaveFileTextCallback :: fn*(*const u8, *const u8) -> bool;
 extern fn InitWindow(width: s32, height: s32, title: *const u8) -> void;
 extern fn CloseWindow() -> void;
 extern fn WindowShouldClose() -> bool;
@@ -967,7 +967,7 @@ extern fn LoadFontEx(fileName: *const u8, fontSize: s32, codepoints: *const s32,
 extern fn LoadFontFromImage(image: Image, key: Color, firstChar: s32) -> Font;
 extern fn LoadFontFromMemory(fileType: *const u8, fileData: *const u8, dataSize: s32, fontSize: s32, codepoints: *const s32, codepointCount: s32) -> Font;
 extern fn IsFontValid(font: Font) -> bool;
-extern fn LoadFontData(fileData: *const u8, dataSize: s32, fontSize: s32, codepoints: *const s32, codepointCount: s32, type: s32) -> *const GlyphInfo;
+extern fn LoadFontData(fileData: *const u8, dataSize: s32, fontSize: s32, codepoints: *const s32, codepointCount: s32, _type: s32) -> *const GlyphInfo;
 extern fn GenImageFontAtlas(glyphs: *const GlyphInfo, glyphRecs: *const *const Rectangle, glyphCount: s32, fontSize: s32, padding: s32, packMethod: s32) -> Image;
 extern fn UnloadFontData(glyphs: *const GlyphInfo, glyphCount: s32) -> void;
 extern fn UnloadFont(font: Font) -> void;
@@ -1087,7 +1087,7 @@ extern fn GetRayCollisionBox(ray: Ray, box: BoundingBox) -> RayCollision;
 extern fn GetRayCollisionMesh(ray: Ray, mesh: Mesh, transform: Matrix) -> RayCollision;
 extern fn GetRayCollisionTriangle(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3) -> RayCollision;
 extern fn GetRayCollisionQuad(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3, p4: Vector3) -> RayCollision;
-alias AudioCallback :: fn*(*const void, u32) -> void;
+type AudioCallback :: fn*(*const void, u32) -> void;
 extern fn InitAudioDevice() -> void;
 extern fn CloseAudioDevice() -> void;
 extern fn IsAudioDeviceReady() -> bool;

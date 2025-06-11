@@ -16,10 +16,10 @@ enum JsonValueType {
   Null,
 }
 
-// TODO: this should just be a choice type.
+// TODO: this should just be a choice _type.
 struct JsonValue {
-  type : s32,
-  #anon :: union {
+  _type : s32,
+  union {
     number: f64,
     boolean: bool,
 
@@ -32,7 +32,7 @@ struct JsonValue {
 
 impl Destroy for JsonValue {
   fn destroy(*mut self, recursive: bool = true) {
-    switch self.type {
+    switch self._type {
       JsonValueType::Object: {
         for key, value in self.object {
           key.destroy();
@@ -57,7 +57,7 @@ impl Destroy for JsonValue {
 
 impl Subscript!<JsonValue> for JsonValue {
   fn subscript(*const self, index: u64) -> *const JsonValue {
-    if self.type != JsonValueType::Array
+    if self._type != JsonValueType::Array
       then return null;
 
     if index < 0 || index >= self.array.length
@@ -67,7 +67,7 @@ impl Subscript!<JsonValue> for JsonValue {
   }
 
   fn subscript_mut(*mut self, index: u64) -> *mut JsonValue {
-    if self.type != JsonValueType::Array
+    if self._type != JsonValueType::Array
       then return null;
     if index < 0 || index >= self.array.length
       then return null;
@@ -146,7 +146,7 @@ impl Destroy for Writer {
 
 impl JsonValue {
   fn to_string(*const self, writer: *mut Writer) {
-    switch self.type {
+    switch self._type {
       JsonValueType::Object: {
         writer.write_byte('{');
         writer.indent(1);
@@ -200,7 +200,7 @@ impl JsonValue {
         writer.write("null");
       }
       else: {
-        panic("unsupported json type, probably a corrupted JsonValue");
+        panic("unsupported json _type, probably a corrupted JsonValue");
       }
     }
   }
@@ -216,60 +216,60 @@ impl JsonValue {
   }
 
   fn get(*mut self, key: String) -> Option!<*mut JsonValue> {
-    if self.type != JsonValueType::Object {
+    if self._type != JsonValueType::Object {
       return None();
     }
     return self.object.get(key);
   }
 
   fn is_number(*mut self)  -> bool
-    => self.type == JsonValueType::Number;
+    => self._type == JsonValueType::Number;
 
   fn is_string(*mut self)  -> bool
-    => self.type == JsonValueType::String;
+    => self._type == JsonValueType::String;
 
   fn is_object(*mut self)  -> bool
-    => self.type == JsonValueType::Object;
+    => self._type == JsonValueType::Object;
 
   fn is_array(*mut self)   -> bool
-    => self.type == JsonValueType::Array;
+    => self._type == JsonValueType::Array;
 
   fn is_boolean(*mut self) -> bool
-    => self.type == JsonValueType::Boolean;
+    => self._type == JsonValueType::Boolean;
 
   fn is_null(*mut self)    -> bool
-    => self.type == JsonValueType::Null;
+    => self._type == JsonValueType::Null;
 
   fn as_number(*mut self) -> Option!<f64> {
-    if self.type == JsonValueType::Number {
+    if self._type == JsonValueType::Number {
       return Some(self.number);
     }
     return None();
   }
 
   fn as_string(*mut self) -> Option!<String> {
-    if self.type == JsonValueType::String {
+    if self._type == JsonValueType::String {
       return Some(self.string);
     }
     return None()
   }
 
   fn as_object(*mut self) -> Option!<Map!<String, *mut JsonValue>> {
-    if self.type == JsonValueType::Object {
+    if self._type == JsonValueType::Object {
       return Some(self.object);
     }
     return None();
   }
 
   fn as_array(*mut self) -> Option!<List!<*mut JsonValue>> {
-    if self.type == JsonValueType::Array {
+    if self._type == JsonValueType::Array {
       return Some(self.array);
     }
     return None();
   }
 
   fn as_boolean(*mut self) -> Option!<bool> {
-    if self.type == JsonValueType::Boolean {
+    if self._type == JsonValueType::Boolean {
       return Some(self.boolean);
     }
     return None();

@@ -8,7 +8,7 @@ struct RangeBase!<V> where V: Eq | IsNumeric {
 
 
 // default range for most things.
-alias Range :: RangeBase!<s32>;
+type Range :: RangeBase!<s32>;
 
 
 impl!<T> RangeBase!<T> {
@@ -30,7 +30,7 @@ struct RangeIterMut!<V> where V: Eq| IsNumeric | IsPointer {
 }
 
 impl!<V> Iterator!<V> for RangeIter!<V>  {
-  alias Option :: Option!<V>;
+  type Option :: Option!<V>;
   fn next(*mut self) -> Option {
     if self.idx == self.end
       then return Option::None;
@@ -48,7 +48,7 @@ impl!<V> Iterator!<V> for RangeIter!<V>  {
 }
 
 impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
-  alias Option :: Option!<*mut V>;
+  type Option :: Option!<*mut V>;
   fn next(*mut self) -> Option {
     if self.idx == self.end
       then return Option::None;

@@ -791,7 +791,7 @@ struct Window!<Ctx> {
 }
 
 impl!<Ctx> Window!<Ctx> {
-  alias RenderHook :: fn * (*mut Ctx);
+  type RenderHook :: fn * (*mut Ctx);
 
   fn on_resized(*mut self, new_size: Rectangle) {
     for widget in self.widgets.iter_mut() {

@@ -16,7 +16,7 @@ struct Vector4 {
   z: f32,
   w: f32,
 };
-alias Quaternion :: Vector4;
+type Quaternion :: Vector4;
 struct Matrix {
   m0: f32,
   m4: f32,

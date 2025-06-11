@@ -2,7 +2,7 @@
 // allow an object to be constructed from another.
 // Except it's not done via casting, just a call.
 trait From!<T> {
-  // construct a self type from T.
+  // construct a self _type from T.
   fn from(v: T) -> #self;
 }
 
@@ -121,7 +121,7 @@ trait Subscript!<T> {
 
 /*  
   Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
-  often paired with defer blocks, to emulate a nice 'RAII' type behaviour.
+  often paired with defer blocks, to emulate a nice 'RAII' _type behaviour.
 
   recursive is defaulted to true. we set a precedent that this is the expected behaviour when calling destroy in most cases;
   every subobject that needs to be freed, will be.

@@ -55,7 +55,7 @@
 
     (6) while {
       token := lexer.eat();
-      if token.type == TOKEN_EOF then break;
+      if token._type == TOKEN_EOF then break;
 
       // Do something with your token :D
     }
@@ -69,14 +69,14 @@
     import fmt;
     import lexer::*;
 
-    alias None :: Option!<s32>::None;
+    type None :: Option!<s32>::None;
 
     // We don't need to worry about clashes with
     // the builtin token types, because the lexer
     // uses incredibly large u32's to represent those, 
     // with the express intent to avoid said clashes.
 
-    // You may want to alias these types in your own enum,
+    // You may want to type these types in your own enum,
     // as shown below.
     enum u32 {
       Add,
@@ -94,7 +94,7 @@
       Assign,
       Fn,
 
-      // alias the constants of the lexer.
+      // type the constants of the lexer.
       Eof         = lexer::TOKEN_EOF,
       Identifier  = lexer::TOKEN_IDENTIFIER,
       Integer     = lexer::TOKEN_INTEGER,
@@ -165,7 +165,7 @@
 */
 
 import interned::*;
-alias InternedString :: Interned!<String>;
+type InternedString :: Interned!<String>;
 
 import math::{
   clamp,
@@ -272,37 +272,37 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
 struct Token {
   // TODO: put this in an option.
   value:    Option!<InternedString>,
-  type:     u32,
+  _type:     u32,
   location: SourceLocation,
 }
 
 impl Token {
   fn Eof() -> Token {
     #static eof: Token = .{
-      type: TOKEN_EOF,
+      _type: TOKEN_EOF,
     };
     return eof;
   }
 
-  fn is_type(self, type: u32) -> bool {
-    return self.type == type;
+  fn is_type(self, _type: u32) -> bool {
+    return self._type == _type;
   }
 
   fn is_eof(self) -> bool {
-    return self.type == TOKEN_EOF;
+    return self._type == TOKEN_EOF;
   }
 
-  fn new(location: SourceLocation, value: Option!<String>, type: u32) -> Token {
+  fn new(location: SourceLocation, value: Option!<String>, _type: u32) -> Token {
     if value is Option!<String>::Some(string) {
       return .{
         value: Option!<InternedString>::Some(InternedString::new(string)),
-        type: type,
+        _type: _type,
         location: location,
       };
     } else {
       return .{
         value: Option!<InternedString>::None,
-        type: type,
+        _type: _type,
         location: location,
       };
     }
@@ -321,7 +321,7 @@ impl Format for Token {
     } else {
       value = Option!<String>::None;
     }
-    f.writer.appendf("\n  type: %,\n  value: %\n}", (self.type, value), f.options.quoted());
+    f.writer.appendf("\n  _type: %,\n  value: %\n}", (self._type, value), f.options.quoted());
   }
 }
 
@@ -421,7 +421,7 @@ impl Destroy for Lexer {
 
 impl Lexer {
   fn has_work(self) -> bool {
-    return self.lookahead_buffer[0].type != TOKEN_EOF;
+    return self.lookahead_buffer[0]._type != TOKEN_EOF;
   }
 
   fn push_state(*mut self, state: State) {
@@ -435,19 +435,19 @@ impl Lexer {
       } else {
         self.get_token(self.states.back_mut().unwrap());
         token := self.lookahead_buffer.back().unwrap();
-        if token.type == TOKEN_EOF {
+        if token._type == TOKEN_EOF {
           self.states.pop();
         }
       }
     }
   }
 
-  fn expect(*mut self, type: u32) -> Token {
+  fn expect(*mut self, _type: u32) -> Token {
     token := self.eat();
-    if token.type != type {
+    if token._type != _type {
       lex_error(
         format("unexpected token: '%' ...\nexpected '%' instead.",
-          (token.type, type), FormatOptions::default()
+          (token._type, _type), FormatOptions::default()
         ),
         token.location
       );

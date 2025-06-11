@@ -1,5 +1,7 @@
+type c_str :: *const u8;
+
 #ifndef PLATFORM_LINUX {
-  // TODO: just write equal libraries for other systems.
+  // TODO: just write equivalent libraries for other systems.
   #error "dlfcn.ela is only available on linux.";
 }
 
@@ -8,12 +10,11 @@ extern fn dlclose(handle: *const void) -> s32;
 extern fn dlsym(handle: *const void, symbol: c_str) -> *mut void;
 extern fn dlerror() -> c_str;
 
-// Flags for 'dlopen'
-// Of course the later flags are completely arbitrary, so we can't use #flags.
+// "runtime load?" options for 'dlopen'
 enum Rtld {
   Lazy = 0x00001,
   Now = 0x00002,
-  Binding_mask = 0x3,
+  BindingMask = 0x3,
   Noload = 0x00004,
   Deepbind = 0x00008,
   Global = 0x00100,

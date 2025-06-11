@@ -6,26 +6,26 @@ trait Serializable {
 }
 
 fn new_dyn_serializable(value: any) -> dyn Serializable {
-  instance, type := value;
+  instance, _type := value;
 
-  serialize_method := type.methods.find_first_of(
+  serialize_method := _type.methods.find_first_of(
     fn(method: *const Method) -> bool {
       return method.name == "serialize";
     }
   )
 
   if !serialize_method {
-    panic(format("unable to find 'serialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
+    panic(format("unable to find 'serialize' in _type %s\n", (_type.name,), FormatOptions::default()).as_str());
   }
 
-  deserialize_method := type.methods.find_first_of(
+  deserialize_method := _type.methods.find_first_of(
     fn(method: *const Method) -> bool {
       return method.name == "deserialize";
     }
   );
 
   if !deserialize_method {
-    panic(format("unable to find 'deserialize' in type %s\n", (type.name,), FormatOptions::default()).as_str());
+    panic(format("unable to find 'deserialize' in _type %s\n", (_type.name,), FormatOptions::default()).as_str());
   }
 
   mut dynamic: dyn Serializable;
@@ -37,25 +37,25 @@ fn new_dyn_serializable(value: any) -> dyn Serializable {
 
 fn serialize_scalar(object: any) -> JsonResult {
   val := JsonValue::new();
-  if object.type.is_float() {
-    val.type = JsonValueType::Number;
-    if object.type.size == 8 {
+  if object._type.is_float() {
+    val._type = JsonValueType::Number;
+    if object._type.size == 8 {
       val.number = *(object.ptr as *const f64);
     } else {
       val.number = *(object.ptr as *const f32);
     }
     return JsonResult::Ok(val);
-  } else if object.type.is_integral() {
-    val.type = JsonValueType::Number;
-    if object.type.is_signed() {
-      val.number = switch object.type.size {
+  } else if object._type.is_integral() {
+    val._type = JsonValueType::Number;
+    if object._type.is_signed() {
+      val.number = switch object._type.size {
         8 => *(object.ptr as *const s64),
         4 => *(object.ptr as *const s32),
         2 => *(object.ptr as *const s16),
         1 => *(object.ptr as *const s8),
       };
     } else {
-      val.number = switch object.type.size {
+      val.number = switch object._type.size {
         8 => *(object.ptr as *const u64),
         4 => *(object.ptr as *const u32),
         2 => *(object.ptr as *const u16),
@@ -63,20 +63,20 @@ fn serialize_scalar(object: any) -> JsonResult {
       };
     }
     return JsonResult::Ok(val);
-  } else if object.type.is_bool() {
-    val.type = JsonValueType::Boolean;
+  } else if object._type.is_bool() {
+    val._type = JsonValueType::Boolean;
     val.boolean = *(object.ptr as *const bool);
     return JsonResult::Ok(val);
   }
-  return JsonResult::Err(format("Unsupported type :: %", (object.type.name, ), FormatOptions::default()));
+  return JsonResult::Err(format("Unsupported _type :: %", (object._type.name, ), FormatOptions::default()));
 }
 
 fn serialize_struct(object: any) -> JsonResult {
   val := JsonValue::new();
-  val.type = JsonValueType::Object;
+  val._type = JsonValueType::Object;
   val.object = .{};
-  for field in object.type.fields {
-    result := serialize_any(any.{ptr: field.get(object.ptr), type: field.type});
+  for field in object._type.fields {
+    result := serialize_any(any.{ptr: field.get(object.ptr), _type: field._type});
     if result.is_err() {
       return result;
     }
@@ -87,9 +87,9 @@ fn serialize_struct(object: any) -> JsonResult {
 
 fn serialize_array(object: any) -> JsonResult {
   val := JsonValue::new();
-  val.type = JsonValueType::Array;
+  val._type = JsonValueType::Array;
   val.array = .{};
-  for element in object.type.elements(object.ptr as *const u8) {
+  for element in object._type.elements(object.ptr as *const u8) {
     result := serialize_any(element);
     if result.is_err() then return result;
     val.array.push(result.unwrap());
@@ -99,10 +99,10 @@ fn serialize_array(object: any) -> JsonResult {
 
 fn serialize_tuple(object: any) -> JsonResult {
   val := JsonValue::new();
-  val.type = JsonValueType::Object;
+  val._type = JsonValueType::Object;
   val.array = .{};
   mut index := 0;
-  for element in object.type.tuple_elements(object.ptr as *mut u8) {
+  for element in object._type.tuple_elements(object.ptr as *mut u8) {
     result := serialize_any(element);
     if result.is_err() then return result;
     val.object.insert(to_string(index, *FormatOptions::current()), result.unwrap());
@@ -113,40 +113,40 @@ fn serialize_tuple(object: any) -> JsonResult {
 
 fn serialize_any(object: any) -> JsonResult {
 
-  if object.type.implements("Serializable") {
+  if object._type.implements("Serializable") {
     dynamic := new_dyn_serializable(object);
     return dynamic.serialize();
   }
 
-  if object.type.has_no_extension() {
-    if object.type == typeof(str) {
+  if object._type.has_no_extension() {
+    if object._type == typeof(str) {
       val := JsonValue::new();
-      val.type = JsonValueType::String;
+      val._type = JsonValueType::String;
       the_str := *(object.ptr as *const str);
       val.string = String::from(the_str);
       return JsonResult::Ok(val);
-    } else if object.type == typeof(String) {
+    } else if object._type == typeof(String) {
       val := JsonValue::new();
-      val.type = JsonValueType::String;
+      val._type = JsonValueType::String;
       // We clone here to guarantee we don't have to rely on the original object's lifetime.
       val.string = (object.ptr as *const String).clone(); 
       return JsonResult::Ok(val);
-    } if object.type == typeof(*const u8) {
+    } if object._type == typeof(*const u8) {
       val := JsonValue::new();
-      val.type = JsonValueType::String;
+      val._type = JsonValueType::String;
       val.string = String::from_ptr(*(object.ptr as *const *const u8));
       return JsonResult::Ok(val);
-    } else if object.type.is_scalar() {
+    } else if object._type.is_scalar() {
       return serialize_scalar(object);
-    } else if object.type.is_struct() {
+    } else if object._type.is_struct() {
       return serialize_struct(object);
-    } else if object.type.is_tuple() {
+    } else if object._type.is_tuple() {
       return serialize_tuple(object);
     }
-  } else if object.type.is_array() {
+  } else if object._type.is_array() {
     return serialize_array(object);
   }
-  return JsonResult::Err(format("Unsupported type :: '%'", (object.type.name, ), FormatOptions::default()));
+  return JsonResult::Err(format("Unsupported _type :: '%'", (object._type.name, ), FormatOptions::default()));
 }
 
 fn serialize!<T>(mut object: T) -> JsonResult {
@@ -155,7 +155,7 @@ fn serialize!<T>(mut object: T) -> JsonResult {
 
 fn serialize_iterator!<It, V>(obj: It) -> JsonResult where It: Iterator!<V> {
   value : *mut JsonValue = JsonValue::new();
-  value.type = JsonValueType::Array;
+  value._type = JsonValueType::Array;
   for v in obj {
     result := serialize(v);
     if result.is_err() {

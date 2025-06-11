@@ -18,7 +18,7 @@ enum TokenType {
 }
 
 struct Token {
-  type: TokenType,
+  _type: TokenType,
   value: String,
   line: s32,
   column: s32,
@@ -59,10 +59,10 @@ impl JsonLexer {
   }
 
   fn get_token(*mut self) -> Result!<Token, String> {
-    alias Result :: Result!<Token, String>;
+    type Result :: Result!<Token, String>;
     mut token : Token;
 
-    token.type = TokenType::Eof;
+    token._type = TokenType::Eof;
     token.column = self.position - self.line_start;
     token.line = self.cur_line + 1;
 
@@ -110,7 +110,7 @@ impl JsonLexer {
       while c != '\n' && c != '\r' {
         self.position++;
         if self.position >= self.input.length || self.input[self.position] == 0 {
-          token.type = TokenType::Eof;
+          token._type = TokenType::Eof;
           return Result::Ok(token);
         }
         c = self.input[self.position];
@@ -147,37 +147,37 @@ impl JsonLexer {
         token.value.push_front('-');
       }
 
-      token.type = TokenType::Number;
+      token._type = TokenType::Number;
       return Result::Ok(token);
       // operators
     } else if c == ':' {
       token.value = String::from(":");
-      token.type = TokenType::Colon;
+      token._type = TokenType::Colon;
       self.position++;
       return Result::Ok(token);
     } else if c == '{' {
       token.value = String::from("{");
-      token.type = TokenType::LCurly;
+      token._type = TokenType::LCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '}' {
       token.value = String::from("}");
-      token.type = TokenType::RCurly;
+      token._type = TokenType::RCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '[' {
       token.value = String::from("[");
-      token.type = TokenType::LBracket;
+      token._type = TokenType::LBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ']' {
       token.value = String::from("]");
-      token.type = TokenType::RBracket;
+      token._type = TokenType::RBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ',' {
       token.value = String::from(",");
-      token.type = TokenType::Comma;
+      token._type = TokenType::Comma;
       self.position++;
       return Result::Ok(token);
     } else if c == '\"' {
@@ -201,21 +201,21 @@ impl JsonLexer {
         length: len
       };
 
-      token.type = TokenType::String;
+      token._type = TokenType::String;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && std::c::strncmp(self.input.data + self.position, "true"c, 4) == 0 {
       token.value = String::from("true"); 
-      token.type = TokenType::True;
+      token._type = TokenType::True;
       self.position += 4;
       return Result::Ok(token);
     } else if self.position + 5 <= self.input.length && std::c::strncmp(self.input.data + self.position, "false"c, 5) == 0 {
       token.value = String::from("false");
-      token.type = TokenType::False;
+      token._type = TokenType::False;
       self.position += 5;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && std::c::strncmp(self.input.data + self.position, "null"c, 4) == 0 {
       token.value = String::from("null");
-      token.type = TokenType::Null;
+      token._type = TokenType::Null;
       self.position += 4;
       return Result::Ok(token);
     } else {
@@ -266,8 +266,8 @@ impl JsonLexer {
     }
 
     for i in 0..types.length {
-      type := types.data[i];
-      if token.type == type {
+      _type := types.data[i];
+      if token._type == _type {
         return Result!<Token, String>::Ok(token);
       }
     }
@@ -275,7 +275,7 @@ impl JsonLexer {
     error := format("at: \"%:%:%\" :: unexpected token, expected %, got %", (
         self.file, token.line, token.column,
         types,
-        token.type,
+        token._type,
       ),
       *FormatOptions::current(),
     );
@@ -283,9 +283,9 @@ impl JsonLexer {
     return Result!<Token, String>::Err(error);
   }
 
-  fn expect_type(*mut self, type: TokenType) -> Result!<Token, String> {
+  fn expect_type(*mut self, _type: TokenType) -> Result!<Token, String> {
     // TODO: it's much cheaper if we just check this, instead of making list lol.
     // saves a stack alloc and a function call.
-    return self.expect_types(.[type]);
+    return self.expect_types(.[_type]);
   }
 }

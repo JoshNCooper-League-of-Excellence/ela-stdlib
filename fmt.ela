@@ -237,16 +237,16 @@ trait Format {
 }
 
 fn new_dyn_format(value: any) -> dyn Format {
-  instance, type := value;
+  instance, _type := value;
   
-  method := type.methods.find_first_of(
+  method := _type.methods.find_first_of(
     fn(method: *const Method) -> bool {
       return method.name == "format";
     }
   )
 
   if !method {
-    std::c::printf("unable to find 'format' in type %s\n"c, type.name);
+    std::c::printf("unable to find 'format' in _type %s\n"c, _type.name);
     panic("DynFormat failure");
   }
   
@@ -447,7 +447,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       return "false".to_string(allocator);
     }
   } else where T: IsEnum {
-    for field in type.fields {
+    for field in _type.fields {
       if value == field.enum_value {
         return field.name.to_string(allocator);
       }
@@ -460,7 +460,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
     };
     value.format(&mut formatter);
   } else {
-    type := typeof(T);
+    _type := typeof(T);
     mut format : str;
     mut format_buffer: u8[255];
     where T: IsPointer {
@@ -520,7 +520,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
     } else where T: f64 {
       std::c::sprintf(format_buffer, "%%.%dlf"c, options.digits_after_decimal);
     } else {
-      panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", type.name).as_str());
+      panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", _type.name).as_str());
       return .{};
     }
     buffer: u8[1024];
@@ -533,7 +533,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
 }
 
 fn format_struct(value: any, formatter: *mut Formatter) {
-  formatter.writer.append(value.type.name);
+  formatter.writer.append(value._type.name);
   formatter.writer.append(" {");
 
   if formatter.options.indented {
@@ -541,7 +541,7 @@ fn format_struct(value: any, formatter: *mut Formatter) {
   }
 
   mut idx := 0;
-  for field in value.type.fields {
+  for field in value._type.fields {
     if formatter.options.indented {
       formatter.writer.append("  ");
     }
@@ -551,11 +551,11 @@ fn format_struct(value: any, formatter: *mut Formatter) {
     formatter.writer.append(": ");
 
     format_any(any.{
-      type: field.type,
+      _type: field._type,
       ptr: field.get(value.ptr),
     }, formatter);
 
-    if idx != value.type.fields.length - 1 {
+    if idx != value._type.fields.length - 1 {
       formatter.writer.append(",");
     }
 
@@ -574,15 +574,15 @@ fn format_struct(value: any, formatter: *mut Formatter) {
 
 fn format_tuple(value: any, formatter: *mut Formatter) {
   formatter.writer.append("(");
-  for i in 0..value.type.fields.length {
-    field := value.type.fields[i];
+  for i in 0..value._type.fields.length {
+    field := value._type.fields[i];
 
     format_any(any.{
-      type: field.type,
+      _type: field._type,
       ptr: field.get(value.ptr),
     }, formatter);
 
-    if i != value.type.fields.length - 1 {
+    if i != value._type.fields.length - 1 {
       formatter.writer.append(", ");
     }
   }
@@ -590,40 +590,40 @@ fn format_tuple(value: any, formatter: *mut Formatter) {
 }
 
 fn format_any(value: any, formatter: *mut Formatter) {
-  if value.type.implements("Format") {
+  if value._type.implements("Format") {
     dyn_format := new_dyn_format(value);
     dyn_format.format(formatter);
     return;
   }
 
-  if value.type == typeof(String)  {
+  if value._type == typeof(String)  {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
     formatter.writer.append(*(value.ptr as *const String));
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
-  } else if value.type == typeof(str) {
+  } else if value._type == typeof(str) {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
     formatter.writer.append((*(value.ptr as *const str)));
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
-  } else if value.type.is_pointer() {
+  } else if value._type.is_pointer() {
     formatter.writer.append_then_free(to_string(value.ptr, formatter.options));
-  } else if value.type.is_struct() {
+  } else if value._type.is_struct() {
     format_struct(value, formatter);
-  } else if value.type.is_tuple() {
+  } else if value._type.is_tuple() {
     format_tuple(value, formatter);
   } else if value.ptr == null {
     formatter.writer.append("null");
-  } else if value.type == typeof(c_str) {
+  } else if value._type == typeof(c_str) {
     formatter.writer.append(String::from_ptr(value.unwrap!<*const u8>()));
-  } else if value.type.is_enum() {
+  } else if value._type.is_enum() {
     if formatter.options.typename {
-      formatter.writer.append(value.type.name);
+      formatter.writer.append(value._type.name);
       formatter.writer.append("::");
     }
-    for field in value.type.fields {
+    for field in value._type.fields {
       if field.enum_value == value.unwrap!<s32>() {
         formatter.writer.append(field.name);
         return;
@@ -631,7 +631,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
     }
     formatter.writer.append("(invalid enum value)");
   } else {
-    switch value.type {
+    switch value._type {
       typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
       typeof(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>(), formatter.options, get_global_allocator()));       }
       typeof(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>(), formatter.options, get_global_allocator()));       }
@@ -643,7 +643,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
       typeof(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>(), formatter.options, get_global_allocator()));       }
       typeof(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>(), formatter.options, get_global_allocator()));       }
       typeof(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>(), formatter.options, get_global_allocator()));      }
-      else:            { formatter.writer.append("$$(unsupported fmt type)$$");                                 }
+      else:            { formatter.writer.append("$$(unsupported fmt _type)$$");                                 }
     }
   }
 }
@@ -714,7 +714,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
       if (*fmt.data) == '%' && value_index < fields.length {
         field := fields[value_index];
         value :any = .{
-          type: field.type,
+          _type: field._type,
           ptr: field.get(&const tuple),
         };
         format_any(value, &mut formatter);

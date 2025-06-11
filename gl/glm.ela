@@ -10,7 +10,7 @@ import math::*;
 
 union Vec4 {
   values: f32[4],
-  #anon :: struct {
+  struct {
     x: f32,
     y: f32,
     z: f32,
@@ -32,7 +32,7 @@ impl Vec4 {
 
 union Vec3 {
   values: f32[3],
-  #anon :: struct {
+  struct {
     x: f32,
     y: f32,
     z: f32,
@@ -106,7 +106,7 @@ impl Vec3 {
 
 union Vec2 {
   values: f32[2],
-  #anon :: struct {
+  struct {
     x: f32,
     y: f32,
   }
@@ -130,7 +130,7 @@ impl Vec2 {
 
 union Mat4 {
   values: f32[16],
-  #anon :: struct {
+  struct {
     M00: f32,
     M01: f32,
     M02: f32,

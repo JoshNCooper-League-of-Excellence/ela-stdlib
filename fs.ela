@@ -3,7 +3,7 @@ import fmt::*;
 const EOF := -1;
 
 struct _IO_FILE;
-alias FILE :: _IO_FILE;
+type FILE :: _IO_FILE;
 
 struct Time_Spec {
   tv_sec: s64,
@@ -133,7 +133,7 @@ struct File {
 
 impl File {
   fn stat(*mut self) -> Option!<Stat> {
-    alias Option :: Option!<Stat>;
+    type Option :: Option!<Stat>;
     mut stat: Stat;
     if fstat(fileno(self.fd), &mut stat) != 0 {
       return Option::None;
@@ -166,7 +166,7 @@ impl File {
   }
 
   fn read_all!<Path>(filename_path: Path) -> Result!<String, str> where Path: AsByteSlice {
-    alias Result :: Result!<String, str>;
+    type Result :: Result!<String, str>;
     filename := filename_path.as_byte_slice();
     file := fopen(filename.data, "r"c);
 
@@ -185,7 +185,7 @@ impl File {
   }
   
   fn read_bytes!<Path>(path: Path) -> Result!<List!<u8>, str> where Path: AsByteSlice {
-    alias Result :: Result!<List!<u8>, str>;
+    type Result :: Result!<List!<u8>, str>;
     filename := path.as_byte_slice();
     file := fopen(filename.data, "r"c);
     if !file then return Result::Err("Couldnt open file");
@@ -204,7 +204,7 @@ impl File {
   
   fn write_all!<Path, Data>(path: Path, data_slice: Data) -> Option!<str> 
     where Path: AsByteSlice, Data: AsByteSlice {
-    alias Option :: Option!<str>;
+    type Option :: Option!<str>;
 
     filename := path.as_byte_slice();
 
@@ -340,7 +340,7 @@ extern fn chdir(path: *const u8) -> s32;
 extern fn dirname(path: *const u8) -> *mut u8;
 
 /* 
-  The option return type simply says when it .is_none(), it has failed in some capacity.
+  The option return _type simply says when it .is_none(), it has failed in some capacity.
   We don't have a way to interact with perror, so we don't really get much information as to why
   this has failed, just that it did fail.
 */

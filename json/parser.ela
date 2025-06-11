@@ -1,4 +1,4 @@
-alias JsonResult :: Result!<*mut JsonValue, String>;
+type JsonResult :: Result!<*mut JsonValue, String>;
 
 fn parse(lexer: *mut JsonLexer) -> JsonResult {
   mut token_result := lexer.expect_types(.[
@@ -15,24 +15,24 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
     then return token_result.propagate();
 
   value : *mut JsonValue = new(JsonValue.{
-    type: JsonValueType::Invalid,
+    _type: JsonValueType::Invalid,
   });
 
   mut token := token_result.unwrap();
 
-  switch token.type {
+  switch token._type {
     TokenType::LBracket: {
-      value.type = JsonValueType::Array;
+      value._type = JsonValueType::Array;
       value.array = .{};
 
       token = lexer.peek();
 
-      if token.type == TokenType::RBracket {
+      if token._type == TokenType::RBracket {
         lexer.eat();
         return JsonResult::Ok(value);
       }
 
-      while token.type != TokenType::RBracket {
+      while token._type != TokenType::RBracket {
         value_result := parse(lexer);
         if value_result.is_err()
           then return value_result.propagate();
@@ -49,15 +49,15 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
       }
     }
     TokenType::LCurly: {
-      value.type = JsonValueType::Object;
+      value._type = JsonValueType::Object;
       value.object = .{};
 
-      if lexer.peek().type == TokenType::RCurly {
+      if lexer.peek()._type == TokenType::RCurly {
         lexer.eat();
         return JsonResult::Ok(value);
       }
 
-      while token.type != TokenType::RCurly {
+      while token._type != TokenType::RCurly {
         
         token_result = lexer.expect_type(TokenType::String);
         if token_result.is_err() 
@@ -90,20 +90,20 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
     }
   }
   
-  if token.type == TokenType::Number {
-    value.type = JsonValueType::Number;
+  if token._type == TokenType::Number {
+    value._type = JsonValueType::Number;
     value.number = std::c::atof(token.value.data);
-  } else if token.type == TokenType::String {
-    value.type = JsonValueType::String;
+  } else if token._type == TokenType::String {
+    value._type = JsonValueType::String;
     value.string = token.value;
-  } else if token.type == TokenType::True {
-    value.type = JsonValueType::Boolean;
+  } else if token._type == TokenType::True {
+    value._type = JsonValueType::Boolean;
     value.boolean = true;
-  } else if token.type == TokenType::False {
-    value.type = JsonValueType::Boolean;
+  } else if token._type == TokenType::False {
+    value._type = JsonValueType::Boolean;
     value.boolean = false;
-  } else if token.type == TokenType::Null {
-    value.type = JsonValueType::Null;
+  } else if token._type == TokenType::Null {
+    value._type = JsonValueType::Null;
   }
 
   return JsonResult::Ok(value);

@@ -1,4 +1,3 @@
-
 // forward declare panic.
 @[no_return]
 fn panic(msg: str);
@@ -47,12 +46,12 @@ impl!<_Some> Option!<_Some> {
 /* 
   TODO:
   replace these with something like this:
-  * alias!<T> Some!<T> :: Option!<T>;
+  * type!<T> Some!<T> :: Option!<T>;
 */
 
 /* 
   This can be inferred, but 
-  This only works with an expected type, such as an argument, 
+  This only works with an expected _type, such as an argument, 
   typed declaration, etc.
 */
 @[inline]
@@ -61,7 +60,7 @@ fn Some!<T>(t: T) -> Option!<T> {
 }
 
 // This can be inferred, but 
-// This only works with an expected type, such as an argument, 
+// This only works with an expected _type, such as an argument, 
 // typed declaration, etc.
 @[inline]
 fn None!<T>() -> T {
