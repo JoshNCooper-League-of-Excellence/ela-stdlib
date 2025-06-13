@@ -462,7 +462,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
   } else {
     _type := typeof(T);
     mut format : str;
-    mut format_buffer: [255; u8];
+    mut format_buffer: [u8; 255];
     where T: IsPointer {
       format_buffer[0] = '%';
       format_buffer[1] = 'p';
@@ -523,7 +523,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", _type.name).as_str());
       return .{};
     }
-    buffer: [1024; u8];
+    buffer: [u8; 1024];
     length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
     return String.{
       data: allocator.copy(buffer, sizeof(u8), length),

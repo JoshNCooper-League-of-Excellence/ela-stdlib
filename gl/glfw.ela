@@ -51,8 +51,8 @@ struct GLFWimage {
   pixels: *mut u8,
 };
 struct GLFWgamepadstate {
-  buttons: [15; u8],
-  axes: [6; f32],
+  buttons: [u8; 15],
+  axes: [f32; 6],
 };
 struct GLFWallocator {
   allocate: GLFWallocatefun,

@@ -15,7 +15,7 @@ choice SolidShape {
   */
   Triangle {
     // in model space. (preferable -1 to 1)
-    points: [3; Vector2],
+    points: [Vector2; 3],
     // actual size.
     scale: Vector2,
   }
@@ -31,7 +31,7 @@ impl SolidShape {
         DrawRectangleV(position - (scale / 2.0), scale, color);
       }
       SolidShape::Triangle.{points: points, scale: scale}: {
-        mut cpy: [3; Vector2];
+        mut cpy: [Vector2; 3];
         for i in 0..3 {
           // TODO: make sure the half-width scaling is correct here.
           cpy[i] = points[i].scale(scale / 2.0) + position;

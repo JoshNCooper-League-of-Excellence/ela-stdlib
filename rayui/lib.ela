@@ -47,7 +47,7 @@ fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsB
 
 // for drawing a single char. useful for custom text layouts.
 fn draw_character(char: u8, position: Vector2, style: Style) {
-  temp : [2; u8] = .[char, '\0' as u8];
+  temp : [u8; 2] = .[char, '\0' as u8];
   slice := Slice!<u8>.{data: temp, length: 1};
   draw_text!<Slice!<u8>>(slice, position, style);
 }
