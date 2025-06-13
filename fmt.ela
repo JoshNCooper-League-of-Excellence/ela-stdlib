@@ -189,7 +189,7 @@ impl FormatOptions {
   fn default() -> #self => .{
     digits_after_decimal: 2,
     indented: false,
-    quote_strings: true,
+    quote_strings: false,
     typename: true,
   };
 
@@ -622,9 +622,12 @@ fn format_any(value: any, formatter: *mut Formatter) {
     if formatter.options.typename {
       formatter.writer.append(value._type.name);
       formatter.writer.append("::");
-    }
+    } 
+    
+    val := value.unwrap!<s32>();
     for field in value._type.fields {
-      if field.enum_value == value.unwrap!<s32>() {
+      std::printf("field: %s, value: %d\n", field.name, field.enum_value);
+      if field.enum_value == val {
         formatter.writer.append(field.name);
         return;
       }
