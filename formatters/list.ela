@@ -66,10 +66,10 @@ impl!<T> Format for List!<T> {
   }
 }
 
-impl!<T> Format for Slice!<T> {
+impl!<T> Format for [T] {
   fn format(*const self, formatter: *mut Formatter) {
     element_type := typeof(T);
-    formatter.writer.appendf("Slice!<%>", (element_type.name,), formatter.options.unquoted());
+    formatter.writer.appendf("[%]", (element_type.name,), formatter.options.unquoted());
     formatter.writer.append(" [ ");
 
     if formatter.options.indented {

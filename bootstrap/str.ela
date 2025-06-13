@@ -19,7 +19,7 @@ impl Subscript!<u8> for str {
 }
 
 impl str {
-  fn slice(*const self, range: Range) -> Slice!<u8> {
+  fn slice(*const self, range: Range) -> [u8] {
     start, end := (range.begin, range.end);
     length := end - start;
 
@@ -76,7 +76,7 @@ impl Hash for str {
 }
 
 impl AsCharSlice for str {
-  fn as_char_slice(self) -> Slice!<u32> {
+  fn as_char_slice(self) -> [u32] {
     return .{
       data: self.data,
       length: self.length,
@@ -85,7 +85,7 @@ impl AsCharSlice for str {
 }
 
 impl AsByteSlice for str {
-  fn as_byte_slice(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> [u8] {
     return .{
       data: self.data,
       length: self.length

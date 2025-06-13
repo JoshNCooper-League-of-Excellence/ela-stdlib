@@ -230,7 +230,7 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
   clamped_begin = max(0, clamped_begin);
   clamped_end = max(0, clamped_end);
 
-  mut lines : Slice!<String> =
+  mut lines : [String] =
     file_data
       .split('\n')
       .as_slice(clamped_begin..clamped_end);

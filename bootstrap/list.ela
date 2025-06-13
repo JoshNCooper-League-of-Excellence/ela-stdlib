@@ -231,7 +231,7 @@ impl!<T> AsSlice!<T> for List!<T> {
   /* 
     Take a `slice` or a view into the array, without taking any ownership of the memory we are viewing into.
   */
-  fn as_slice(self, range: Range) -> Slice!<T> {
+  fn as_slice(self, range: Range) -> [T] {
     return .{
       data: self.data + range.begin,
       length: range.end - range.begin,

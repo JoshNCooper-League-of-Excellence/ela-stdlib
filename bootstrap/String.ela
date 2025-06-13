@@ -192,10 +192,10 @@ impl StringUtils for String {}
       return result;
     }
 
-    fn split_view!<Substring>(self, delimiter: Substring) -> List!<Slice!<u8>> where Substring: AsByteSlice {
+    fn split_view!<Substring>(self, delimiter: Substring) -> List!<[u8]> where Substring: AsByteSlice {
       slice := delimiter.as_byte_slice();
 
-      mut result: List!<Slice!<u8>>;
+      mut result: List!<[u8]>;
       mut start: s32;
 
       for i in 0..self.length {
@@ -262,7 +262,7 @@ impl String {
     }
   }
 
-  fn slice(self, range: Range) -> Slice!<u8> {
+  fn slice(self, range: Range) -> [u8] {
     return .{
       data: self.data + range.begin,
       length: range.end - range.begin,
@@ -306,7 +306,7 @@ impl Iterable for String {
 }
 
 impl AsCharSlice for String {
-  fn as_char_slice(self) -> Slice!<u32> {
+  fn as_char_slice(self) -> [u32] {
     return .{
       data: self.data,
       length: self.length / 4, 
@@ -316,7 +316,7 @@ impl AsCharSlice for String {
 }
 
 impl AsByteSlice for String {
-  fn as_byte_slice(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> [u8] {
     return .{
       data: self.data,
       length: self.length

@@ -28,7 +28,7 @@ const UTF8_ERROR: u32 = 0xFFFD;
   // returns a tuple representing:
   // .0: a u32 code point,
   // .1: the 'advance' which is the number of bytes this codepoint consumed.
-  fn utf8_to_code_point(sequence: Slice!<u8>) -> (u32, s8) {
+  fn utf8_to_code_point(sequence: [u8]) -> (u32, s8) {
     if sequence.length == 0
       then return (UTF8_ERROR, 1);
 
@@ -796,7 +796,7 @@ fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
     ! this needs to be rewritten for Iterator!<>
   */
   struct UTF8_Iter {
-    slice: Slice!<u8>,
+    slice: [u8],
     position: u32,
     current_char: u32,
   }

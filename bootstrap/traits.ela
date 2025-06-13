@@ -139,13 +139,13 @@ trait Hash {
 }
 
 trait AsSlice!<T> {
-  fn as_slice(self, range: Range) -> Slice!<T>;
+  fn as_slice(self, range: Range) -> [T];
 }
 
 trait AsCharSlice {
-  fn as_char_slice(self) -> Slice!<u32>;
+  fn as_char_slice(self) -> [u32];
 }
 
 trait AsByteSlice {
-  fn as_byte_slice(self) -> Slice!<u8>;
+  fn as_byte_slice(self) -> [u8];
 }

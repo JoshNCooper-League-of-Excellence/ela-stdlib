@@ -56,7 +56,7 @@ impl!<T> Hash for Interned!<T> {
 }
 
 impl!<T> AsByteSlice for Interned!<T> where T: AsByteSlice {
-  fn as_byte_slice(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> [u8] {
     return self.value().as_byte_slice();
   }
 }

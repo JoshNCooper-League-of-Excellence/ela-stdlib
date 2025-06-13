@@ -22,7 +22,7 @@
 #include "list.ela";
 // Iterators and such for InitList!<T>
 #include "init_list.ela";
-// Slice!<T> and SliceMut!<T>, views over memory.
+// [T] and SliceMut!<T>, views over memory.
 #include "slice.ela";
 // utils that both string types use, avoiding some redundancy
 #include "stringutils.ela";
@@ -88,7 +88,7 @@ fn panic(msg: str) {
 }
 
 struct Env {
-  args_slice: Slice!<str>,
+  args_slice: [str],
 };
 impl Env {
   fn current() -> *mut #self {
@@ -101,7 +101,7 @@ impl Env {
     and never need to be deallocated. Nor should they be
     mutated.
   */
-  fn args() -> Slice!<str> {
+  fn args() -> [str] {
     return Env::current().args_slice;
   }
   
@@ -139,7 +139,7 @@ impl Env {
 }
 
 impl AsCharSlice for u32 {
-  fn as_char_slice(self) -> Slice!<u32> {
+  fn as_char_slice(self) -> [u32] {
     #static mut chars : [char; 2] = .[
       '\0', '\0'
     ];
@@ -152,7 +152,7 @@ impl AsCharSlice for u32 {
 }
 
 impl AsByteSlice for u32 {
-  fn as_byte_slice(self) -> Slice!<u8> {
+  fn as_byte_slice(self) -> [u8] {
     #static mut chars : [u8; 2] = .[
       '\0', '\0'
     ];
