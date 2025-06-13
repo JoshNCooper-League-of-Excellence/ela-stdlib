@@ -190,7 +190,7 @@ struct SourceLocation {
 }
 
 impl SourceLocation {
-  #static fn files() -> *mut List!<String> {
+  fn files() -> *mut List!<String> {
     #static mut files: List!<String>;
     return &mut files;
   }
@@ -583,7 +583,7 @@ impl Lexer {
               if (state.pos >= state.input.length || !std::c::isxdigit(state.input[state.pos])) {
                 lex_error("invalid hexadecimal escape sequence", location);
               }
-              buffer: u8[2] = .[
+              buffer: [2; u8] = .[
                 state.input[state.pos],
                 '\0',
               ];
@@ -647,7 +647,7 @@ impl Lexer {
         }
         state.pos++; // move past '
         state.col++;
-        mut buffer: u8[32];
+        mut buffer: [32; u8];
         std::c::snprintf(buffer, 32 * sizeof(u8), "0x%X"c, codepoint);
         self.lookahead_buffer.push(Token::new(location, Some(String::from_ptr(buffer)), TOKEN_CHAR));
         return;

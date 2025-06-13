@@ -47,7 +47,7 @@ fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsB
 
 // for drawing a single char. useful for custom text layouts.
 fn draw_character(char: u8, position: Vector2, style: Style) {
-  temp : u8[2] = .[char, '\0' as u8];
+  temp : [2; u8] = .[char, '\0' as u8];
   slice := Slice!<u8>.{data: temp, length: 1};
   draw_text!<Slice!<u8>>(slice, position, style);
 }
@@ -89,9 +89,9 @@ struct WidgetBase {
   // To read tha "Actual size" read `rectangle`.
   model_rectangle: Rectangle,
 
-  on_pressed:   fn * (*mut WidgetBase, s32) -> bool,
-  on_released:  fn * (*mut WidgetBase, s32) -> bool,
-  on_hovered:   fn * (*mut WidgetBase, Vector2),
+  on_pressed:   fn (*mut WidgetBase, s32) -> bool,
+  on_released:  fn (*mut WidgetBase, s32) -> bool,
+  on_hovered:   fn (*mut WidgetBase, Vector2),
 
   children: List!<*mut WidgetBase>,
 };
@@ -156,7 +156,7 @@ struct Button!<TString = String, UserArg = ()> where TString: AsByteSlice {
 
   // callback argument.
   user_arg:     *mut UserArg,
-  on_clicked:   fn * (*mut UserArg),
+  on_clicked:   fn (*mut UserArg),
 }
 
 struct Slider!<TString = String, T = f32> where TString: AsByteSlice {
@@ -201,7 +201,7 @@ struct DropDown!<TString = String, UserArg = ()> where TString: AsByteSlice {
   // a user arg that's used for the on_selected callback.
   user_arg:               *mut UserArg,
   // called when an option is selected via the dropdown.
-  on_option_selected:     fn * (TString, *mut UserArg) -> void,
+  on_option_selected:     fn (TString, *mut UserArg) -> void,
 }
 
 struct Label!<TString = String> where TString: AsByteSlice {
@@ -785,13 +785,13 @@ struct Window!<Ctx> {
   screen_size: Rectangle,
 
   widgets: List!<dyn Widget>,
-  render_hooks: List!<(RenderHookPriority, fn*(*mut Ctx))>,
-  init_hooks: List!<fn * (*mut void)>,
-  on_resized_callbacks: List!<(*mut void, fn * (*mut void, Rectangle, Rectangle))>,
+  render_hooks: List!<(RenderHookPriority, fn(*mut Ctx))>,
+  init_hooks: List!<fn (*mut void)>,
+  on_resized_callbacks: List!<(*mut void, fn(*mut void, Rectangle, Rectangle))>,
 }
 
 impl!<Ctx> Window!<Ctx> {
-  type RenderHook :: fn * (*mut Ctx);
+  type RenderHook :: fn (*mut Ctx);
 
   fn on_resized(*mut self, new_size: Rectangle) {
     for widget in self.widgets.iter_mut() {

@@ -107,7 +107,6 @@ struct MapIterMut!<Key, Value> {
   pair_index: u64,
 }
 
-
 impl!<Key, Value> Iterator!<(Key, Value)> for MapIter!<Key, Value> {
   fn next(*mut self) -> Option!<(Key, Value)> {
     while self.bucket_index < self.map.buckets.length {
@@ -167,7 +166,6 @@ impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
   } 
 }
 
-
 impl!<Key, Value> Destroy for Map!<Key, Value> {
   fn destroy(*mut self, recursive: bool = true) {
     // where Key: Destroy, 
@@ -211,9 +209,9 @@ impl!<Key, Value> Map!<Key, Value> {
   }
 }
 
-
 // This should be in formatters/map.ela.
 import fmt::*;
+
 impl!<Key, Value> Format for Map!<Key, Value> {
   fn format(*const self, formatter: *mut Formatter) { 
     key_type := typeof(Key);

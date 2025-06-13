@@ -47,11 +47,10 @@ impl!<T> Eq for Interned!<T> {
   }
 }
 
-
 impl!<T> Hash for Interned!<T> {
   fn hash(self) -> u64 {
     // TODO: do we want to just return the pointer as if it were a hash?
-    // or do we want to rehash the value itself.
+    // or do we want to rehash the value itself?
     return self.data.hash();
   }
 }

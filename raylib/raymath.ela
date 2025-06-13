@@ -36,10 +36,10 @@ struct Matrix {
   m15: f32,
 };
 struct float3 {
-  v: f32[3],
+  v: [3; f32],
 };
 struct float16 {
-  v: f32[16],
+  v: [16; f32],
 };
 extern fn acos(__x: f64) -> f64;
 extern fn asin(__x: f64) -> f64;

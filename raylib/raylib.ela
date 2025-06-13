@@ -111,7 +111,7 @@ struct MaterialMap {
 struct Material {
   shader: Shader,
   maps: *const MaterialMap,
-  params: f32[4],
+  params: [4; f32],
 };
 struct Transform {
   translation: Vector3,
@@ -119,7 +119,7 @@ struct Transform {
   scale: Vector3,
 };
 struct BoneInfo {
-  name: u8[32],
+  name: [32; u8],
   parent: s32,
 };
 struct Model {
@@ -138,7 +138,7 @@ struct ModelAnimation {
   frameCount: s32,
   bones: *const BoneInfo,
   framePoses: *const *const Transform,
-  name: u8[32],
+  name: [32; u8],
 };
 struct Ray {
   position: Vector3,
@@ -191,18 +191,18 @@ struct VrDeviceInfo {
   eyeToScreenDistance: f32,
   lensSeparationDistance: f32,
   interpupillaryDistance: f32,
-  lensDistortionValues: f32[4],
-  chromaAbCorrection: f32[4],
+  lensDistortionValues: [4;f32],
+  chromaAbCorrection: [4;f32],
 };
 struct VrStereoConfig {
-  projection: Matrix[2],
-  viewOffset: Matrix[2],
-  leftLensCenter: f32[2],
-  rightLensCenter: f32[2],
-  leftScreenCenter: f32[2],
-  rightScreenCenter: f32[2],
-  scale: f32[2],
-  scaleIn: f32[2],
+  projection: [2; Matrix],
+  viewOffset: [2; Matrix],
+  leftLensCenter: [2; f32],
+  rightLensCenter: [2; f32],
+  leftScreenCenter: [2; f32],
+  rightScreenCenter: [2; f32],
+  scale: [2; f32],
+  scaleIn: [2; f32],
 };
 struct FilePathList {
   capacity: u32,
@@ -212,7 +212,7 @@ struct FilePathList {
 struct AutomationEvent {
   frame: u32,
   _type: u32,
-  params: s32[4],
+  params: [4; s32],
 };
 struct AutomationEventList {
   capacity: u32,
@@ -566,11 +566,11 @@ enum NPatchLayout {
   NPATCH_THREE_PATCH_VERTICAL = 1,
   NPATCH_THREE_PATCH_HORIZONTAL = 2,
 };
-type TraceLogCallback :: fn*(s32, *const u8) -> void;
-type LoadFileDataCallback :: fn*(*const u8, *const s32) -> *const u8;
-type SaveFileDataCallback :: fn*(*const u8, *const void, s32) -> bool;
-type LoadFileTextCallback :: fn*(*const u8) -> *const u8;
-type SaveFileTextCallback :: fn*(*const u8, *const u8) -> bool;
+type TraceLogCallback :: fn(s32, *const u8) -> void;
+type LoadFileDataCallback :: fn(*const u8, *const s32) -> *const u8;
+type SaveFileDataCallback :: fn(*const u8, *const void, s32) -> bool;
+type LoadFileTextCallback :: fn(*const u8) -> *const u8;
+type SaveFileTextCallback :: fn(*const u8, *const u8) -> bool;
 extern fn InitWindow(width: s32, height: s32, title: *const u8) -> void;
 extern fn CloseWindow() -> void;
 extern fn WindowShouldClose() -> bool;
@@ -1087,7 +1087,7 @@ extern fn GetRayCollisionBox(ray: Ray, box: BoundingBox) -> RayCollision;
 extern fn GetRayCollisionMesh(ray: Ray, mesh: Mesh, transform: Matrix) -> RayCollision;
 extern fn GetRayCollisionTriangle(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3) -> RayCollision;
 extern fn GetRayCollisionQuad(ray: Ray, p1: Vector3, p2: Vector3, p3: Vector3, p4: Vector3) -> RayCollision;
-type AudioCallback :: fn*(*const void, u32) -> void;
+type AudioCallback :: fn(*const void, u32) -> void;
 extern fn InitAudioDevice() -> void;
 extern fn CloseAudioDevice() -> void;
 extern fn IsAudioDeviceReady() -> bool;

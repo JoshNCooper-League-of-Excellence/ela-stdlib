@@ -36,7 +36,7 @@ type __off_t :: s64;
 type __off64_t :: s64;
 type __pid_t :: s32;
 struct __fsid_t {
-  __val: s32[2],
+  __val: [2; s32],
 };
 type __clock_t :: s64;
 type __rlim_t :: u64;
@@ -113,7 +113,7 @@ extern fn __uint32_identity(__x: __uint32_t) -> __uint32_t;
 extern fn __uint64_identity(__x: __uint64_t) -> __uint64_t;
 
 struct __sigset_t {
-  __val: u64[16],
+  __val: [16; u64],
 };
 
 type sigset_t :: __sigset_t;
@@ -132,7 +132,7 @@ type suseconds_t :: __suseconds_t;
 type __fd_mask :: s64;
 
 struct fd_set {
-  __fds_bits: __fd_mask[16],
+  __fds_bits: [16; __fd_mask],
 };
 
 type fd_mask :: __fd_mask;
@@ -189,7 +189,7 @@ struct __pthread_rwlock_arch_t {
   __cur_writer: s32,
   __shared: s32,
   __rwelision: s8,
-  __pad1: u8[7],
+  __pad1: [7;u8],
   __pad2: u64,
   __flags: u32,
 };
@@ -197,10 +197,10 @@ struct __pthread_rwlock_arch_t {
 struct __pthread_cond_s {
   __wseq: __atomic_wide_counter,
   __g1_start: __atomic_wide_counter,
-  __g_size: u32[2],
+  __g_size: [2; u32],
   __g1_orig_size: u32,
   __wrefs: u32,
-  __g_signals: u32[2],
+  __g_signals: [2; u32],
   __unused_initialized_1: u32,
   __unused_initialized_2: u32,
 };
@@ -213,54 +213,54 @@ struct __once_flag {
 
 type pthread_t :: u64;
 union pthread_mutexattr_t {
-  __size: u8[4],
+  __size: [4; u8],
   __align: s32,
 };
 
 union pthread_condattr_t {
-  __size: u8[4],
+  __size: [4; u8],
   __align: s32,
 };
 
 type pthread_key_t :: u32;
 type pthread_once_t :: s32;
 union pthread_attr_t {
-  __size: u8[56],
+  __size: [56; u8],
   __align: s64,
 };
 
 union pthread_mutex_t {
   __data: __pthread_mutex_s,
-  __size: u8[40],
+  __size: [40; u8],
   __align: s64,
 };
 
 union pthread_cond_t {
   __data: __pthread_cond_s,
-  __size: u8[48],
+  __size: [48; u8],
   __align: s64,
 };
 
 union pthread_rwlock_t {
   __data: __pthread_rwlock_arch_t,
-  __size: u8[56],
+  __size: [56; u8],
   __align: s64,
 };
 
 union pthread_rwlockattr_t {
-  __size: u8[8],
+  __size: [8; u8],
   __align: s64,
 };
 
 type pthread_spinlock_t :: s32;
 
 union pthread_barrier_t {
-  __size: u8[32],
+  __size: [32; u8],
   __align: s64,
 };
 
 union pthread_barrierattr_t {
-  __size: u8[4],
+  __size: [4; u8],
   __align: s32,
 };
 
@@ -342,12 +342,12 @@ type sa_family_t :: u16;
 
 struct sockaddr {
   sa_family: sa_family_t,
-  sa_data: u8[14],
+  sa_data: [14; u8],
 };
 
 struct sockaddr_storage {
   ss_family: sa_family_t,
-  __ss_padding: u8[118],
+  __ss_padding: [118; u8],
   __ss_align: u64,
 };
 
@@ -398,10 +398,10 @@ extern fn __cmsg_nxthdr(__mhdr: *mut msghdr, __cmsg: *mut cmsghdr) -> *mut cmsgh
 const SCM_RIGHTS := 1;
 
 struct __kernel_fd_set {
-  fds_bits: u64[16],
+  fds_bits: [16; u64],
 };
 
-type __kernel_sighandler_t :: fn*(s32) -> void;
+type __kernel_sighandler_t :: fn(s32) -> void;
 type __kernel_key_t :: s32;
 type __kernel_mqd_t :: s32;
 type __kernel_old_uid_t :: u16;
@@ -424,7 +424,7 @@ type __kernel_ssize_t :: __kernel_long_t;
 type __kernel_ptrdiff_t :: __kernel_long_t;
 
 struct __kernel_fsid_t {
-  val: s32[2],
+  val: [2; s32],
 };
 
 type __kernel_off_t :: __kernel_long_t;
@@ -446,7 +446,7 @@ struct linger {
 
 struct osockaddr {
   sa_family: u16,
-  sa_data: u8[14],
+  sa_data: [14; u8],
 };
 
 enum Shut {
@@ -456,7 +456,7 @@ enum Shut {
 };
 
 extern fn socket(__domain: s32, __type: s32, __protocol: s32) -> s32;
-extern fn socketpair(__domain: s32, __type: s32, __protocol: s32, __fds: s32[2]) -> s32;
+extern fn socketpair(__domain: s32, __type: s32, __protocol: s32, __fds: [2; s32]) -> s32;
 extern fn bind(__fd: s32, __addr: *const sockaddr, __len: socklen_t) -> s32;
 extern fn getsockname(__fd: s32, __addr: *mut sockaddr, __len: *mut socklen_t) -> s32;
 extern fn connect(__fd: s32, __addr: *const sockaddr, __len: socklen_t) -> s32;
@@ -487,7 +487,7 @@ struct in_addr {
 
 struct ip_opts {
   ip_dst: in_addr,
-  ip_opts: u8[40],
+  ip_opts: [40; u8],
 };
 
 struct in_pktinfo {
@@ -568,9 +568,9 @@ enum IpPort {
 };
 
 union __bind_gen__anon_D10 {
-  __u6_addr8: u8[16],
-  __u6_addr16: u16[8],
-  __u6_addr32: u32[4],
+  __u6_addr8: [16; u8],
+  __u6_addr16: [8; u16],
+  __u6_addr32: [4; u32],
 };
 
 struct in6_addr {
@@ -584,7 +584,7 @@ struct sockaddr_in {
   sin_family: sa_family_t,
   sin_port: in_port_t,
   sin_addr: in_addr,
-  sin_zero: u8[8],
+  sin_zero: [8; u8],
 };
 
 struct sockaddr_in6 {
@@ -633,7 +633,7 @@ struct ip_msfilter {
   imsf_interface: in_addr,
   imsf_fmode: u32,
   imsf_numsrc: u32,
-  imsf_slist: in_addr[1],
+  imsf_slist: [1; in_addr],
 };
 
 struct group_filter {
@@ -641,7 +641,7 @@ struct group_filter {
   gf_group: sockaddr_storage,
   gf_fmode: u32,
   gf_numsrc: u32,
-  gf_slist: sockaddr_storage[1],
+  gf_slist: [1; sockaddr_storage],
 };
 
 extern fn ntohl(__netlong: u32) -> u32;
@@ -677,7 +677,7 @@ extern fn read(__fd: s32, __buf: *mut void, __nbytes: u64) -> s64;
 extern fn write(__fd: s32, __buf: *const void, __n: u64) -> s64;
 extern fn pread(__fd: s32, __buf: *mut void, __nbytes: u64, __offset: __off_t) -> s64;
 extern fn pwrite(__fd: s32, __buf: *const void, __n: u64, __offset: __off_t) -> s64;
-extern fn pipe(__pipedes: s32[2]) -> s32;
+extern fn pipe(__pipedes: [2; s32]) -> s32;
 extern fn alarm(__seconds: u32) -> u32;
 extern fn sleep(__seconds: u32) -> u32;
 extern fn ualarm(__value: __useconds_t, __interval: __useconds_t) -> __useconds_t;
@@ -722,7 +722,7 @@ extern fn getuid() -> __uid_t;
 extern fn geteuid() -> __uid_t;
 extern fn getgid() -> __gid_t;
 extern fn getegid() -> __gid_t;
-extern fn getgroups(__size: s32, __list: __gid_t[]) -> s32;
+extern fn getgroups(__size: s32, __list: *__gid_t) -> s32;
 extern fn setuid(__uid: __uid_t) -> s32;
 extern fn setreuid(__ruid: __uid_t, __euid: __uid_t) -> s32;
 extern fn seteuid(__uid: __uid_t) -> s32;

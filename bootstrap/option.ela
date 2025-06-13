@@ -33,7 +33,7 @@ impl!<_Some> Option!<_Some> {
     }
   }
 
-  fn expect(self, func: fn * ()) -> _Some {
+  fn expect(self, func: fn()) -> _Some {
     if self.is_none() {
       func();
       default: _Some;

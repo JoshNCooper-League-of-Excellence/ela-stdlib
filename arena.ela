@@ -40,7 +40,7 @@ impl Arena {
     }
 
     if size > self.size {
-      buffer: u8[1024];
+      buffer: [1024; u8];
       len := std::c::snprintf(
         buffer,
         1024,

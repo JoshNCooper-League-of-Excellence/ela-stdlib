@@ -252,7 +252,7 @@ fn new_dyn_format(value: any) -> dyn Format {
   
   mut dynamic: dyn Format;
   dynamic.instance = instance;
-  dynamic.format =  method.pointer as fn * (*const void, *mut Formatter);
+  dynamic.format =  method.pointer as fn (*const void, *mut Formatter);
   return dynamic;
 }
 
@@ -462,7 +462,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
   } else {
     _type := typeof(T);
     mut format : str;
-    mut format_buffer: u8[255];
+    mut format_buffer: [255; u8];
     where T: IsPointer {
       format_buffer[0] = '%';
       format_buffer[1] = 'p';
@@ -523,7 +523,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", _type.name).as_str());
       return .{};
     }
-    buffer: u8[1024];
+    buffer: [1024; u8];
     length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
     return String.{
       data: allocator.copy(buffer, sizeof(u8), length),

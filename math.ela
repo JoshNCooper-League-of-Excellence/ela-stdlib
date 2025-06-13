@@ -1,27 +1,4 @@
-fn pow!<T>(base: T, exponent: T) -> T {
-  extern fn pow(base: f64, exponent: f64) -> f64;
-  return pow(base as f64, exponent as f64) as f64;
-}
 
-fn sqrt!<T>(f: T) -> T {
-  extern fn sqrt(f: f64) -> f64;
-  return sqrt(f as T) as T;
-}
-
-fn ceil!<T>(f: T) -> T {
-  extern fn ceil(f: f64) -> f64;
-  return ceil(f as T) as T;
-}
-
-fn floor!<T>(f: T) -> T {
-  extern fn floor(f: f64) -> f64;
-  return floor(f as T) as T;
-}
-
-fn exp!<T>(f: T) -> T {
-  extern fn exp(f: f64) -> f64;
-  return exp(f as T) as T;
-}
 
 extern fn rand() -> s32;
 extern fn srand(seed: u32);
@@ -85,4 +62,29 @@ fn clamp!<T>(v: T, min: T, max: T) -> T {
 
 fn lerp!<T>(a: T, b: T, t: T) -> T {
   return (a * (1.0 - t)) + (b * t);
+}
+
+fn pow!<T>(base: T, exponent: T) -> T {
+  extern fn pow(base: f64, exponent: f64) -> f64;
+  return pow(base as f64, exponent as f64) as f64;
+}
+
+fn sqrt!<T>(f: T) -> T {
+  extern fn sqrt(f: f64) -> f64;
+  return sqrt(f as T) as T;
+}
+
+fn ceil!<T>(f: T) -> T {
+  extern fn ceil(f: f64) -> f64;
+  return ceil(f as T) as T;
+}
+
+fn floor!<T>(f: T) -> T {
+  extern fn floor(f: f64) -> f64;
+  return floor(f as T) as T;
+}
+
+fn exp!<T>(f: T) -> T {
+  extern fn exp(f: f64) -> f64;
+  return exp(f as T) as T;
 }

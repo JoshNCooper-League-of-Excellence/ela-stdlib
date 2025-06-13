@@ -188,7 +188,7 @@ impl Window {
     glClear(flags);
   }
 
-  fn set_key_callback(*mut self, callback: fn*(*mut GLFWwindow, s32, s32, s32, s32)) {
+  fn set_key_callback(*mut self, callback: fn(*mut GLFWwindow, s32, s32, s32, s32)) {
     glfwSetKeyCallback(self.handle, callback);
   }
 }

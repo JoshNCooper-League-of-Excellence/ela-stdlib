@@ -240,7 +240,7 @@ impl!<T> AsSlice!<T> for List!<T> {
 }
 
 impl!<T> List!<T> {
-  type OrderingPredicate :: fn*(*const T, *const T) -> bool;
+  type OrderingPredicate :: fn(*T, *T) -> bool;
 
   /*
     Remove an element at a specific index from the list.
@@ -269,7 +269,7 @@ impl!<T> List!<T> {
     return true;
   }
   
-  fn find_first_of(self, finder: fn*(*const T) -> bool) -> *const T {
+  fn find_first_of(self, finder: fn(*T) -> bool) -> *const T {
     for idx in 0..self.length {
       if finder(&const self.data[idx]) {
         return &const self.data[idx];
@@ -319,7 +319,7 @@ impl!<T> List!<T> {
   }
   
   @[inline]
-  fn filter(*const self, filter: fn * (*const T) -> bool) -> #self {
+  fn filter(*const self, filter: fn(*const T) -> bool) -> #self {
     mut list: #self;
     for value in *self {
       if filter(&const value) {
@@ -353,7 +353,7 @@ impl!<T> Enumerable!<T> for List!<T> {
 #ifndef FREESTANDING {
 
   impl!<T> List!<T>  {
-    type OrderingPredicate :: fn*(*const T) -> u32;
+    type OrderingPredicate :: fn(*const T) -> u32;
     /* 
       return a new list with the order specified by the predicate.
     */
@@ -382,7 +382,7 @@ impl!<T> Enumerable!<T> for List!<T> {
       }
     }
 
-    type Comparator :: fn*(T, T) -> bool;
+    type Comparator :: fn(T, T) -> bool;
     /* 
       Check if the list contains an item. This uses the `a == b` operator, so this is only valid
       on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)

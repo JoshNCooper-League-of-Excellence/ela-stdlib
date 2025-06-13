@@ -9,7 +9,7 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return default;
   }
 
-  fn expect(self, handler: fn* (_Err)) -> _Ok {
+  fn expect(self, handler: fn(_Err)) -> _Ok {
     if self is Result!<_Ok, _Err>::Err(err) {
       handler(err);
       panic("unwrapped a 'Err' result.");

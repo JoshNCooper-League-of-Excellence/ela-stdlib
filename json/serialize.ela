@@ -30,8 +30,8 @@ fn new_dyn_serializable(value: any) -> dyn Serializable {
 
   mut dynamic: dyn Serializable;
   dynamic.instance = instance;
-  dynamic.serialize = serialize_method.pointer as fn * (*const void) -> JsonResult;
-  dynamic.deserialize = deserialize_method.pointer as fn *(*mut void, *mut JsonValue) -> Option!<String>;
+  dynamic.serialize = serialize_method.pointer as fn (*const void) -> JsonResult;
+  dynamic.deserialize = deserialize_method.pointer as fn(*mut void, *mut JsonValue) -> Option!<String>;
   return dynamic;
 }
 
