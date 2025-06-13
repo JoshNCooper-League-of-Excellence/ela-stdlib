@@ -55,8 +55,8 @@ impl Destroy for JsonValue {
   }
 }
 
-impl Subscript!<JsonValue> for JsonValue {
-  fn subscript(*const self, index: u64) -> *const JsonValue {
+impl Index!<JsonValue> for JsonValue {
+  fn index(*const self, index: u64) -> *const JsonValue {
     if self._type != JsonValueType::Array
       then return null;
 
@@ -66,7 +66,7 @@ impl Subscript!<JsonValue> for JsonValue {
     return self.array[index];
   }
 
-  fn subscript_mut(*mut self, index: u64) -> *mut JsonValue {
+  fn index_mut(*mut self, index: u64) -> *mut JsonValue {
     if self._type != JsonValueType::Array
       then return null;
     if index < 0 || index >= self.array.length

@@ -13,7 +13,7 @@ impl!<T> Format for InitList!<T> {
 
     for i, val in self.enumerate() {
       value : any = any.{
-        ptr: &mut self.data[i]
+        ptr: &mut self.data![i]
         _type: element_type,
       };
       format_any(value, formatter);
@@ -47,7 +47,7 @@ impl!<T> Format for List!<T> {
 
     for i, val in self.enumerate() {
       value : any = any.{
-        ptr: &mut self.data[i]
+        ptr: &mut self.data![i]
         _type: element_type,
       };
       format_any(value, formatter);
@@ -79,7 +79,7 @@ impl!<T> Format for [T] {
     mut i := 0;
     for val in *self {
       value : any = any.{
-        ptr: &mut self.data[i]
+        ptr: &mut self.data![i]
         _type: element_type,
       };
       format_any(value, formatter);

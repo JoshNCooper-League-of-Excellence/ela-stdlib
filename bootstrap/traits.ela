@@ -114,9 +114,9 @@ trait Ord /* where #self: Eq & PartialOrd!<#self> */ {
   }
 }
 
-trait Subscript!<T> {
-  fn subscript(*const self, index: u64) -> *const T;
-  fn subscript_mut(*mut self, index: u64) -> *mut T;
+trait Index!<T> {
+  fn index(*const self, index: u64) -> *const T;
+  fn index_mut(*mut self, index: u64) -> *mut T;
 }
 
 /*  

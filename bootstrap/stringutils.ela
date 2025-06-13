@@ -14,12 +14,12 @@ trait StringUtils {
 
   fn front(self) -> Option!<u8> {
     if self.length == 0 then return None();
-    return Some(self.data[0]);
+    return Some(self.data![0]);
   }
 
   fn back(self) -> Option!<u8> {
     if self.length == 0 then return None();
-    return Some(self.data[self.length - 1]);
+    return Some(self.data![self.length - 1]);
   }
 
   fn starts_with!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
@@ -27,7 +27,7 @@ trait StringUtils {
     if self.length < length then return false;
 
     for i in 0..length {
-      if self.data[i] != data[i] 
+      if self.data![i] != data![i] 
         then return false;
     }
 
@@ -38,14 +38,14 @@ trait StringUtils {
     data, length := suffix.as_byte_slice();
     if self.length < length then return false;
     for i in 0..length {
-      if self.data[self.length - length + i] != data[i] then return false;
+      if self.data![self.length - length + i] != data![i] then return false;
     }
     return true;
   }
 
   fn is_empty_or_whitespace(self) -> bool {
     for i in 0..self.length {
-      ch := self.data[i];
+      ch := self.data![i];
       if ch != ' ' {
         return false;
       }

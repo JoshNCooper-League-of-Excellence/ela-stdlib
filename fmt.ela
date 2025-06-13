@@ -345,7 +345,7 @@ impl StringBuilder {
       data = allocator.unwrap().allocate(sizeof(u8) * length + 1);
     }
 
-    data[length] = '\0'; // Null-terminate the final str
+    data![length] = '\0'; // Null-terminate the final str
     mut current := self.root;
     mut offset := 0;
     while current {
@@ -373,7 +373,7 @@ impl StringBuilder {
     mut length := slice.length;
 
     // Ignore null-terminator-only strings
-    if length == 1 && slice.data[0] == '\0' then return;
+    if length == 1 && slice.data![0] == '\0' then return;
 
     mut remaining := self.block_size - self.current.length;
 
@@ -415,7 +415,7 @@ impl StringBuilder {
       self.current = self.current.next;
     }
 
-    self.current.data[self.current.length] = ch;
+    self.current.data![self.current.length] = ch;
     self.current.length += 1;
   }
 

@@ -20,12 +20,12 @@
   }
 }
 
-impl!<T> Subscript!<T> for [T] {
-  fn subscript(*const self, idx: u64) -> *const T {
-    return &const self.data[idx];
+impl!<T> Index!<T> for [T] {
+  fn index(*const self, idx: u64) -> *const T {
+    return &const self.data![idx];
   }
-  fn subscript_mut(*mut self, idx: u64) -> *mut T {
-    return &mut self.data[idx];
+  fn index_mut(*mut self, idx: u64) -> *mut T {
+    return &mut self.data![idx];
   }
 }
 

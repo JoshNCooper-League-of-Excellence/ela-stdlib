@@ -39,13 +39,13 @@
         self.capacity *= 2;
         self.pointers = std::c::realloc(self.pointers, sizeof(*const void) * self.capacity);
       }
-      self.pointers[self.length] = ptr;
+      self.pointers![self.length] = ptr;
       self.length += 1;
     }
 
     fn contains_pointer(self, ptr: *mut void) -> bool {
       for i in 0..self.length {
-        if self.pointers[i] == ptr {
+        if self.pointers![i] == ptr {
           return true;
         }
       }
@@ -54,7 +54,7 @@
 
     fn remove_pointer(*mut self, ptr: *const void) {
       for i in 0..self.length {
-        if self.pointers[i] == ptr {
+        if self.pointers![i] == ptr {
           std::c::memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
           self.length -= 1;
           break;
@@ -65,7 +65,7 @@
   impl Allocator for Tracking_Allocator {
     fn destroy(*mut self) {
       while self.length > 0 {
-        std::c::free(self.pointers[self.length - 1]);
+        std::c::free(self.pointers![self.length - 1]);
         self.length -= 1;
       }
       std::c::free(self.pointers);

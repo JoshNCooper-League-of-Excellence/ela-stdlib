@@ -78,7 +78,7 @@ fn panic(msg: str);
         if self.capacity == 0 then self.capacity = 4;
         self.resize(self.capacity * 2);
       }
-      self.data[self.length] = v;
+      self.data![self.length] = v;
       self.length++;
     }
     
@@ -87,7 +87,7 @@ fn panic(msg: str);
     */
     @[inline]
     fn pop(*mut self) -> T {
-      value := self.data[self.length - 1];
+      value := self.data![self.length - 1];
       self.length -= 1;
       return value;
     }
@@ -108,7 +108,7 @@ fn panic(msg: str);
       std::c::memmove(self.data + 1, self.data, sizeof(T) * self.length);
   
       // Insert the new value at the front
-      self.data[0] = v;
+      self.data![0] = v;
       self.length++;
     }
 
@@ -117,7 +117,7 @@ fn panic(msg: str);
     */
     @[inline]
     fn pop_front(*mut self) -> T {
-      value := self.data[0];
+      value := self.data![0];
       std::c::memmove(self.data, self.data + 1, sizeof(T) * (self.length - 1));
       self.length -= 1;
       return value;
@@ -218,12 +218,12 @@ impl!<T> Destroy for List!<T> {
   }
 }
 
-impl!<T> Subscript!<T> for List!<T> {
-  fn subscript(*const self, idx: u64) -> *const T {
-    return &const self.data[idx];
+impl!<T> Index!<T> for List!<T> {
+  fn index(*const self, idx: u64) -> *const T {
+    return &const self.data![idx];
   }
-  fn subscript_mut(*mut self, idx: u64) -> *mut T {
-    return &mut self.data[idx];
+  fn index_mut(*mut self, idx: u64) -> *mut T {
+    return &mut self.data![idx];
   }
 }
 
@@ -254,11 +254,11 @@ impl!<T> List!<T> {
     fn memmove(list: *mut List!<T>, index: u64) {
       if (list.data + index) < (list.data + index + 1) {
         for i in 0..(list.length - index - 1) {
-          list.data[index + i] = list.data[index + i + 1];
+          list.data![index + i] = list.data![index + i + 1];
         }
       } else {
         for i in (list.length - index - 2)..-1 {
-          list.data[index + i] = list.data[index + i + 1];
+          list.data![index + i] = list.data![index + i + 1];
         }
       }
     }
@@ -271,8 +271,8 @@ impl!<T> List!<T> {
   
   fn find_first_of(self, finder: fn(*T) -> bool) -> *const T {
     for idx in 0..self.length {
-      if finder(&const self.data[idx]) {
-        return &const self.data[idx];
+      if finder(&const self.data![idx]) {
+        return &const self.data![idx];
       }
     }
     return null;
@@ -292,28 +292,28 @@ impl!<T> List!<T> {
   @[inline]
   fn back(self) -> Option!<T> {
     if self.length > 0 {
-      return Some(self.data[self.length-1]);
+      return Some(self.data![self.length-1]);
     }
     return None();
   }
   @[inline]
   fn front(self) -> Option!<T> {
     if self.length > 0 {
-      return Some(self.data[0]);
+      return Some(self.data![0]);
     }
     return None();
   }
   @[inline]
   fn back_mut(*mut self) -> Option!<*mut T> {
     if self.length > 0 {
-      return Some(&mut self.data[self.length-1]);
+      return Some(&mut self.data![self.length-1]);
     }
     return None();
   }
   @[inline]
   fn front_mut(*mut self) -> Option!<*mut T> {
     if self.length > 0 {
-      return Some(&mut self.data[0]);
+      return Some(&mut self.data![0]);
     }
     return None();
   }
@@ -371,9 +371,9 @@ impl!<T> Enumerable!<T> for List!<T> {
           b := predicate(&const (*self)[i + 1]);
 
           if b > a {
-            temp := self[i];
-            self[i] = self[i + 1];
-            self[i + 1] = temp;
+            temp := self![i];
+            self![i] = self![i + 1];
+            self![i + 1] = temp;
             swapped = true;
           }
         }
@@ -393,7 +393,7 @@ impl!<T> Enumerable!<T> for List!<T> {
     @[inline]
     fn contains(self, seek: T, comparator: Comparator) -> bool {
       for idx in 0..self.length {
-        if comparator(self.data[idx], seek) {
+        if comparator(self.data![idx], seek) {
           return true;
         }
       }
@@ -407,7 +407,7 @@ impl!<T> Enumerable!<T> for List!<T> {
     @[inline]
     fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
       for idx in 0..self.length {
-        if comparator(self.data[idx], seek) {
+        if comparator(self.data![idx], seek) {
           std::c::memmove(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
           self.length -= 1;
           return true;

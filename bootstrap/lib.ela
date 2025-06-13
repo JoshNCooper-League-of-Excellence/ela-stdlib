@@ -125,9 +125,9 @@ impl Env {
     
 
     for i in 0..argc {
-      data[i] = .{
-        data: argv[i],
-        length: Env::env_strlen(argv[i]),
+      data![i] = .{
+        data: argv![i],
+        length: Env::env_strlen(argv![i]),
       };
     }
 

@@ -242,7 +242,7 @@ impl JsonLexer {
     self.ensure_buffer_is_full();
     token := self.lookahead_buffer[0];
     for i in 0..self.lookahead_buffer.length - 1 {
-      self.lookahead_buffer.data[i] = self.lookahead_buffer.data[i + 1];
+      self.lookahead_buffer.data![i] = self.lookahead_buffer.data![i + 1];
     }
     self.lookahead_buffer.length--;
     return token;
@@ -266,7 +266,7 @@ impl JsonLexer {
     }
 
     for i in 0..types.length {
-      _type := types.data[i];
+      _type := types.data![i];
       if token._type == _type {
         return Result!<Token, String>::Ok(token);
       }
