@@ -334,6 +334,15 @@ impl Vector4 {
 }
 
 impl Rectangle {
+  fn from_vectors(position: Vector2, scale: Vector2) -> #self {
+    return .{
+      x: position.x,
+      y: position.y,
+      width: scale.x,
+      height: scale.y,
+    };
+  }
+
   fn position(self) -> Vector2 {
     return .{
       x: self.x,

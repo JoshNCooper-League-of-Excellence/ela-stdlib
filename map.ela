@@ -60,9 +60,9 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
 
     idx := search_key.hash() % self.buckets.length;
 
-    for pair in self.buckets[idx].iter() {
-      if pair.0 == search_key then
-        return Some(&mut pair.1);
+    for key, &mut value in self.buckets[idx].iter_mut() {
+      if key == search_key then
+        return Some(value);
     }
 
     return None();
