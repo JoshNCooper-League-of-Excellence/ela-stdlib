@@ -1,4 +1,4 @@
-
+#c_flags " -lm "
 
 extern fn rand() -> s32;
 extern fn srand(seed: u32);
