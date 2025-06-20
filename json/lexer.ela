@@ -25,8 +25,8 @@ struct Token {
 }
 
 impl Token {
-  fn Invalid() -> #self {
-    v: #self;
+  fn Invalid() -> Self {
+    v: Self;
     return v;
   }
 }
@@ -45,7 +45,7 @@ struct JsonLexer {
 }
 
 impl JsonLexer {
-  fn create!<TString>(file: TString, input: String) -> #self where TString: AsByteSlice {
+  fn create!<TString>(file: TString, input: String) -> Self where TString: AsByteSlice {
     return .{
       file: String::from(file.as_byte_slice()),
       input: input,

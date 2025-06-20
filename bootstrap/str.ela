@@ -50,17 +50,13 @@ impl Iterable for str {
   }
 }
 
-impl Eq for str {
-  fn eq(self, other: #self) -> bool {
+impl PartialEq!<str> for str {
+  fn eq(self, other: Self) -> bool {
     if self.length != other.length then return false;
     for idx in 0..self.length {
       if self[idx] != other[idx] then return false;
     }
     return true;
-  }
-  
-  fn neq(self, other: #self) -> bool {
-    return !self.eq(other);
   }
 }
 

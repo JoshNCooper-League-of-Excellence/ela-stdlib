@@ -186,43 +186,43 @@ struct FormatOptions {
 }
 
 impl FormatOptions {
-  fn default() -> #self => .{
+  fn default() -> Self => .{
     digits_after_decimal: 2,
     indented: false,
     quote_strings: false,
     typename: true,
   };
 
-  fn current() -> *mut #self {
+  fn current() -> *mut Self {
     #static mut current: FormatOptions;
     return &mut current;
   }
 
-  fn unquoted(self) -> #self {
+  fn unquoted(self) -> Self {
     mut copy := self;
     copy.quote_strings = false;
     return copy;
   }
 
-  fn quoted(self) -> #self {
+  fn quoted(self) -> Self {
     mut copy := self;
     copy.quote_strings = true;
     return copy;
   }
 
-  fn with_number_style(self, style: NumberStyle) -> #self {
+  fn with_number_style(self, style: NumberStyle) -> Self {
     mut copy := self;
     copy.number_style = style;
     return copy;
   }
 
-  fn with_digits_after_decimal(self, n_digits: u8) -> #self {
+  fn with_digits_after_decimal(self, n_digits: u8) -> Self {
     mut copy := self;
     copy.digits_after_decimal = n_digits;
     return copy;
   }
 
-  fn without_typename(self) -> #self {
+  fn without_typename(self) -> Self {
     mut copy := self;
     copy.typename = false;
     return copy;
@@ -265,8 +265,8 @@ struct StringBuilderBlock {
 }
 
 impl StringBuilderBlock {
-  fn new(allocator: dyn Allocator, size: u64) -> *mut #self {
-    mut self : *mut #self =  allocator.allocate(sizeof(StringBuilderBlock));
+  fn new(allocator: dyn Allocator, size: u64) -> *mut Self {
+    mut self : *mut Self =  allocator.allocate(sizeof(StringBuilderBlock));
     self.allocator = allocator;
     self.data = allocator.allocate_array(sizeof(u8), size);
     self.length = 0;

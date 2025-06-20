@@ -82,7 +82,7 @@ struct Writer {
 }
 
 impl Writer {
-  fn new() -> #self {
+  fn new() -> Self {
     options := FormatOptions.{
       indented: true,
       quote_strings: true,

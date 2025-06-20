@@ -16,7 +16,7 @@ import math::*;
 
 
 impl Color {
-  fn scaled_rgb(self, scale: f32) -> #self {
+  fn scaled_rgb(self, scale: f32) -> Self {
     return .{
       r: clamp!<u8>(self.r, 0, 255),
       g: clamp!<u8>(self.g, 0, 255),
@@ -32,7 +32,7 @@ impl Color {
       a: a,
     };
   }
-  fn lerp(a: #self, b: #self, t: f32) -> #self {
+  fn lerp(a: Self, b: Self, t: f32) -> Self {
     return .{
       r: (a.r + (b.r - a.r) * t) as u8,
       g: (a.g + (b.g - a.g) * t) as u8,
@@ -40,7 +40,7 @@ impl Color {
       a: (a.a + (b.a - a.a) * t) as u8,
     };
   }
-  fn new(r: u8, g: u8, b: u8, a: u8) -> #self {
+  fn new(r: u8, g: u8, b: u8, a: u8) -> Self {
     return .{
       r: r,
       g: g,
@@ -53,7 +53,7 @@ impl Color {
 impl Vector2 {
 
   @[inline]
-  fn smooth_step(self, target: #self, mut t: f32) -> #self {
+  fn smooth_step(self, target: Self, mut t: f32) -> Self {
     t = math::clamp(t, 0.0, 1.0);
     t = t * t * (3.0 - 2.0 * t);
     return .{
@@ -63,7 +63,7 @@ impl Vector2 {
   }
 
   @[inline]
-  fn move_towards(self, target: #self, max_distance_delta: f32) -> #self {
+  fn move_towards(self, target: Self, max_distance_delta: f32) -> Self {
     delta := target.sub(self);
     distance := delta.length();
     if distance <= max_distance_delta || distance == 0.0 {
@@ -73,37 +73,37 @@ impl Vector2 {
   }
 
   @[inline]
-  fn zero() -> #self {
+  fn zero() -> Self {
     return .{ x: 0.0, y: 0.0 };
   }
 
   @[inline]
-  fn one() -> #self {
+  fn one() -> Self {
     return .{ x: 1.0, y: 1.0 };
   }
 
   @[inline]
-  fn scalar(value: f32) -> #self {
+  fn scalar(value: f32) -> Self {
     return .{ x: value, y: value };
   }
 
   @[inline]
-  fn add(self, other: #self) -> #self {
+  fn add(self, other: Self) -> Self {
     return .{ x: self.x + other.x, y: self.y + other.y };
   }
 
   @[inline]
-  fn sub(self, other: #self) -> #self {
+  fn sub(self, other: Self) -> Self {
     return .{ x: self.x - other.x, y: self.y - other.y };
   }
 
   @[inline]
-  fn mul(self, scalar: f64) -> #self {
+  fn mul(self, scalar: f64) -> Self {
     return .{ x: self.x * scalar, y: self.y * scalar };
   }
 
   @[inline]
-  fn div(self, scalar: f64) -> #self {
+  fn div(self, scalar: f64) -> Self {
     return .{ x: self.x / scalar, y: self.y / scalar };
   }
 
@@ -118,48 +118,48 @@ impl Vector2 {
   }
 
   @[inline]
-  fn normalize(self) -> #self {
+  fn normalize(self) -> Self {
     len := self.length();
     return .{ x: self.x / len, y: self.y / len };
   }
 
   @[inline]
-  fn dot(self, other: #self) -> f32 {
+  fn dot(self, other: Self) -> f32 {
     return (self.x * other.x) + (self.y * other.y);
   }
 
   @[inline]
-  fn cross(self, other: #self) -> f32 {
+  fn cross(self, other: Self) -> f32 {
     return self.x * other.y - self.y * other.x;
   }
 
   @[inline]
-  fn scale(self, scalar: Vector2) -> #self {
+  fn scale(self, scalar: Vector2) -> Self {
     return .{ x: self.x * scalar.x, y: self.y * scalar.y };
   }
 
   @[inline]
-  fn eq(self, other: #self) -> bool {
+  fn eq(self, other: Self) -> bool {
     return self.x == other.x && self.y == other.y;
   }
 
   @[inline]
-  fn neq(self, other: #self) -> bool {
+  fn neq(self, other: Self) -> bool {
     return !self.eq(other);
   }
 
   @[inline]
-  fn distance(self, other: #self) -> f32 {
+  fn distance(self, other: Self) -> f32 {
     return sqrt((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y)) as f32;
   }
 
   @[inline]
-  fn random(scale: s32) -> #self {
+  fn random(scale: s32) -> Self {
     return .{ x: GetRandomValue(-scale, scale) as f32, y: GetRandomValue(-scale, scale) as f32 };
   }
 
   @[inline]
-  fn clamp(self, min: #self, max: #self) -> #self {
+  fn clamp(self, min: Self, max: Self) -> Self {
     return .{
       x: math::clamp(self.x, min.x, max.x),
       y: math::clamp(self.y, min.y, max.y)
@@ -167,13 +167,13 @@ impl Vector2 {
   }
 
   @[inline]
-  fn reflect(self, normal: #self) -> #self {
+  fn reflect(self, normal: Self) -> Self {
     dot := self.dot(normal);
     return self.sub(normal.mul(2.0 * dot));
   }
 
   @[inline]
-  fn rotate(self, angle: f32) -> #self {
+  fn rotate(self, angle: f32) -> Self {
     cos_theta := cos(angle);
     sin_theta := sin(angle);
     return .{
@@ -193,41 +193,41 @@ impl Vector2 {
   }
 
   @[inline]
-  fn neg(self) -> #self {
+  fn neg(self) -> Self {
     return .{x: -self.x, y: -self.y};
   }
 }
 
 impl Vector3 {
-  fn new(x: f32, y: f32, z: f32) -> #self {
+  fn new(x: f32, y: f32, z: f32) -> Self {
     return .{ x: x, y: y, z: z };
   }
   
-  fn zero() -> #self {
+  fn zero() -> Self {
     return .{ x: 0.0, y: 0.0, z: 0.0 };
   }
 
-  fn one() -> #self {
+  fn one() -> Self {
     return .{ x: 1.0, y: 1.0, z: 1.0 };
   }
 
-  fn scalar(value: f32) -> #self {
+  fn scalar(value: f32) -> Self {
     return .{ x: value, y: value, z: value };
   }
 
-  fn add(self, other: #self) -> #self {
+  fn add(self, other: Self) -> Self {
     return .{ x: self.x + other.x, y: self.y + other.y, z: self.z + other.z };
   }
 
-  fn sub(self, other: #self) -> #self {
+  fn sub(self, other: Self) -> Self {
     return .{ x: self.x - other.x, y: self.y - other.y, z: self.z - other.z };
   }
 
-  fn mul(self, scalar: f32) -> #self {
+  fn mul(self, scalar: f32) -> Self {
     return .{ x: self.x * scalar, y: self.y * scalar, z: self.z * scalar };
   }
 
-  fn div(self, scalar: f32) -> #self {
+  fn div(self, scalar: f32) -> Self {
     return .{ x: self.x / scalar, y: self.y / scalar, z: self.z / scalar };
   }
 
@@ -240,16 +240,16 @@ impl Vector3 {
   }
 
 
-  fn normalize(self) -> #self {
+  fn normalize(self) -> Self {
     len := self.length();
     return .{ x: self.x / len, y: self.y / len, z: self.z / len };
   }
 
-  fn dot(self, other: #self) -> f32 {
+  fn dot(self, other: Self) -> f32 {
     return self.x * other.x + self.y * other.y + self.z * other.z;
   }
 
-  fn cross(self, other: #self) -> #self {
+  fn cross(self, other: Self) -> Self {
     return .{
       x: self.y * other.z - self.z * other.y,
       y: self.z * other.x - self.x * other.z,
@@ -257,49 +257,49 @@ impl Vector3 {
     };
   }
 
-  fn scale(self, scalar: f32) -> #self {
+  fn scale(self, scalar: f32) -> Self {
     return .{ x: self.x * scalar, y: self.y * scalar, z: self.z * scalar };
   }
 
-  fn equals(self, other: #self) -> bool {
+  fn equals(self, other: Self) -> bool {
     return self.x == other.x && self.y == other.y && self.z == other.z;
   }
 
-  fn distance(self, other: #self) -> f32 {
+  fn distance(self, other: Self) -> f32 {
     return sqrt((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y) + (self.z - other.z) * (self.z - other.z)) as f32;
   }
 }
 
 impl Vector4 {
-  fn new(x: f32, y: f32, z: f32, w: f32) -> #self {
+  fn new(x: f32, y: f32, z: f32, w: f32) -> Self {
     return .{ x: x, y: y, z: z, w: w };
   }
 
-  fn zero() -> #self {
+  fn zero() -> Self {
     return .{ x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
   }
 
-  fn one() -> #self {
+  fn one() -> Self {
     return .{ x: 1.0, y: 1.0, z: 1.0, w: 1.0 };
   }
 
-  fn scalar(value: f32) -> #self {
+  fn scalar(value: f32) -> Self {
     return .{ x: value, y: value, z: value, w: value };
   }
 
-  fn add(self, other: #self) -> #self {
+  fn add(self, other: Self) -> Self {
     return .{ x: self.x + other.x, y: self.y + other.y, z: self.z + other.z, w: self.w + other.w };
   }
 
-  fn sub(self, other: #self) -> #self {
+  fn sub(self, other: Self) -> Self {
     return .{ x: self.x - other.x, y: self.y - other.y, z: self.z - other.z, w: self.w - other.w };
   }
 
-  fn mul(self, other: #self) -> #self {
+  fn mul(self, other: Self) -> Self {
     return QuaternionMultiply(self, other);
   }
 
-  fn div(self, scalar: f32) -> #self {
+  fn div(self, scalar: f32) -> Self {
     return .{ x: self.x / scalar, y: self.y / scalar, z: self.z / scalar, w: self.w / scalar };
   }
 
@@ -311,30 +311,30 @@ impl Vector4 {
     return self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w;
   }
 
-  fn normalize(self) -> #self {
+  fn normalize(self) -> Self {
     len := self.length();
     return .{ x: self.x / len, y: self.y / len, z: self.z / len, w: self.w / len };
   }
 
-  fn dot(self, other: #self) -> f32 {
+  fn dot(self, other: Self) -> f32 {
     return self.x * other.x + self.y * other.y + self.z * other.z + self.w * other.w;
   }
 
-  fn scale(self, scalar: f32) -> #self {
+  fn scale(self, scalar: f32) -> Self {
     return .{ x: self.x * scalar, y: self.y * scalar, z: self.z * scalar, w: self.w * scalar };
   }
 
-  fn equals(self, other: #self) -> bool {
+  fn equals(self, other: Self) -> bool {
     return self.x == other.x && self.y == other.y && self.z == other.z && self.w == other.w;
   }
 
-  fn distance(self, other: #self) -> f32 {
+  fn distance(self, other: Self) -> f32 {
     return sqrt((self.x - other.x) * (self.x - other.x) + (self.y - other.y) * (self.y - other.y) + (self.z - other.z) * (self.z - other.z) + (self.w - other.w) * (self.w - other.w)) as f32;
   }
 }
 
 impl Rectangle {
-  fn from_vectors(position: Vector2, scale: Vector2) -> #self {
+  fn from_vectors(position: Vector2, scale: Vector2) -> Self {
     return .{
       x: position.x,
       y: position.y,
@@ -358,7 +358,7 @@ impl Rectangle {
 }
 
 impl Quaternion {
-  fn from_euler(x: f32, y: f32, z: f32) -> #self {
+  fn from_euler(x: f32, y: f32, z: f32) -> Self {
     return QuaternionFromEuler(x, y, z);
   }
 }
@@ -422,7 +422,7 @@ const LIGHTCYAN := Color.{ r: 224 as u8, g: 255 as u8, b: 255 as u8, a: 255 as u
 ];
 
 impl Color {
-  fn random(max: u8) -> #self {
+  fn random(max: u8) -> Self {
     return .{
       r: GetRandomValue(0, max) as u8,
       g: GetRandomValue(0, max) as u8,

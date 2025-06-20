@@ -12,7 +12,7 @@ struct Map!<Key, Value> {
 
 impl!<Key, Value> Map!<Key, Value> where Key: Hash {
   type Pair :: (Key, Value);
-  fn new() -> #self {
+  fn new() -> Self {
     const INITIAL_CAPACITY := 16;
     mut buckets: List!<List!<Pair>>;
     buckets.initialize(INITIAL_CAPACITY);
@@ -157,8 +157,8 @@ impl!<Key, Value> Iterable for Map!<Key, Value> {
 }
 
 impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
-  fn init(init_list: InitList!<(Key, Value)>) -> #self {
-    mut self: #self;
+  fn init(init_list: InitList!<(Key, Value)>) -> Self {
+    mut self: Self;
     for key, value in init_list {
       self.insert(key, value);
     }

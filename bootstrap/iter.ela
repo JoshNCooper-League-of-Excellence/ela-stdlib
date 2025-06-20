@@ -74,7 +74,7 @@ impl!<T> Iterator!<T> {
   // ! This causes infinite recursion, where this should actually be allowed.
   // ! I am not sure if it's even possible without out of order compilation
   // ! but this is too nice of a feature to leave out.
-  // fn enumerate(self) -> Enumerate!<T, #self> {
+  // fn enumerate(self) -> Enumerate!<T, Self> {
   //   return .{ iterator: self, idx: 0 };
   // }
 }

@@ -33,25 +33,25 @@ extern fn fileno(file: *const FILE) -> s32;
 
 /* Idk the validity of these methods, just written by chatgpt */
 impl Stat {
-  fn new!<T>(path: T) -> Option!<#self> where T: AsByteSlice {
+  fn new!<T>(path: T) -> Option!<Self> where T: AsByteSlice {
     file := fopen(path.as_byte_slice().data, "r"c);
 
     if !file {
       fclose(file); // probably not needed?
-      return Option!<#self>::None;
+      return Option!<Self>::None;
     }
 
-    mut stat: #self;
+    mut stat: Self;
     fd := fileno(file);
 
     if fd == -1 {
       fclose(file);
-      return Option!<#self>::None;
+      return Option!<Self>::None;
     }
 
     fstat(fd, &mut stat);
     fclose(file);
-    return Option!<#self>::Some(stat);
+    return Option!<Self>::Some(stat);
   }
 
   fn is_dir(*const self) -> bool {
@@ -141,9 +141,9 @@ impl File {
     return Option::Some(stat);
   }
 
-  fn open!<T>(path: T, flags: FileOpenFlags) -> #self where T: AsByteSlice {
+  fn open!<T>(path: T, flags: FileOpenFlags) -> Self where T: AsByteSlice {
     slice := path.as_byte_slice();
-    self: #self;
+    self: Self;
     self.fd = fopen(slice.data, flags.as_str());
     return self;
   }

@@ -22,7 +22,7 @@ trait Stream!<T> {
   }
 };
 
-trait BufferedStream!<T> where #self: Stream!<T> {
+trait BufferedStream!<T> where Self: Stream!<T> {
   fn flush(*mut self);
 }
 

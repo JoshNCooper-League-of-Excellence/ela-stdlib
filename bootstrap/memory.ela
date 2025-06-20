@@ -21,7 +21,7 @@
     fn destroy(*mut self) {}
   }
   impl Libc_Allocator {
-    fn get() -> #self {
+    fn get() -> Self {
       #static self: Libc_Allocator;
       return self;
     }

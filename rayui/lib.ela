@@ -102,7 +102,7 @@ impl Destroy for WidgetBase {
   }
 }
 
-trait Widget where #self: Destroy {
+trait Widget where Self: Destroy {
   fn get_base(*const self) -> *mut WidgetBase {
     return &mut self.base;
   }
@@ -807,7 +807,7 @@ impl!<Ctx> Window!<Ctx> {
         config_flags: ConfigFlags = 0,
         size: Vector2 = .{x: 800, y: 600},
         target_fps: u8 = 60,
-        background_color: Color = .{ r:0, g:0, b:0, a:255}) -> #self {
+        background_color: Color = .{ r:0, g:0, b:0, a:255}) -> Self {
     SetConfigFlags(config_flags);
     SetTargetFPS(target_fps);
     InitWindow(size.x as s32, size.y as s32, title.data);
@@ -937,7 +937,7 @@ impl!<Ctx> Window!<Ctx> {
     CloseWindow();
   }
 
-  fn add_widget!<T>(*mut self, t: *mut T) -> #self where T: Widget  {
+  fn add_widget!<T>(*mut self, t: *mut T) -> Self where T: Widget  {
     trait_obj := dynof(t, Widget);
     trait_obj.on_window_resized(.{
       x: 0, y: 0,
@@ -948,17 +948,17 @@ impl!<Ctx> Window!<Ctx> {
     return *self;
   }
 
-  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> #self {
+  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> Self {
     self.render_hooks.push((priority, hook));
     return *self;
   }
 
-  fn set_user_context(*mut self, ctx: *mut Ctx) -> #self {
+  fn set_user_context(*mut self, ctx: *mut Ctx) -> Self {
     self.user_context = ctx;
     return *self;
   }
 
-  fn add_on_init_hook(*mut self, hook: RenderHook) -> #self {
+  fn add_on_init_hook(*mut self, hook: RenderHook) -> Self {
     self.init_hooks.push(hook);
     return *self;
   }

@@ -19,8 +19,8 @@ struct Thread {
 }
 
 impl Thread {    
-  fn start(start_function: ThreadFunction, arg: *mut void) -> #self {
-    self: #self;
+  fn start(start_function: ThreadFunction, arg: *mut void) -> Self {
+    self: Self;
     // this memory gets deleted in start_thread();
     parameters := new((start_function, arg));
     pthread_create(&mut self.handle, null, &mut start_thread, parameters);
@@ -54,8 +54,8 @@ struct Mutex {
 }
 
 impl Mutex {
-  fn new() -> #self {
-    self: #self;
+  fn new() -> Self {
+    self: Self;
     pthread_mutex_init(&mut self.handle, null);
     return self;
   }

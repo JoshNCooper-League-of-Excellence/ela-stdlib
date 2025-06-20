@@ -59,7 +59,7 @@ impl Shader {
     glUseProgram(self.handle);
   }
   
-  fn create(vertexSource: String, fragSource: String) -> #self {
+  fn create(vertexSource: String, fragSource: String) -> Self {
     return .{
       handle: Shader::compile_program(vertexSource.data, fragSource.data),
     };
@@ -148,8 +148,8 @@ struct Window {
 }
 
 impl Window {
-  fn create(width: s32, height: s32, title: str) -> #self {
-    mut self: #self;
+  fn create(width: s32, height: s32, title: str) -> Self {
+    mut self: Self;
     
     if !glfwInit() {
       std::printf("Failed to initialize glfw\n");
@@ -206,7 +206,7 @@ struct Camera {
 }
 
 impl Camera {
-  fn new(up: Vec3, fov: f32, aspect: f32, near: f32, far: f32) -> #self {
+  fn new(up: Vec3, fov: f32, aspect: f32, near: f32, far: f32) -> Self {
     return .{
       position: Vec3::zero(),
       target:   Vec3::zero(),

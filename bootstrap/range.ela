@@ -83,11 +83,11 @@ impl!<V> Iterable for RangeBase!<V> {
   }
 }
 
-impl!<V> Eq for RangeBase!<V> {
-  fn eq(self, right: #self) -> bool {
+impl!<V> PartialEq!<RangeBase!<V>> for RangeBase!<V> {
+  fn eq(self, right: Self) -> bool {
     return self.begin == right.begin && self.end == right.end;
   }
-  fn neq(self, right: #self) -> bool {
+  fn neq(self, right: Self) -> bool {
     return self.begin != right.begin || self.end != right.end;
   }
 }

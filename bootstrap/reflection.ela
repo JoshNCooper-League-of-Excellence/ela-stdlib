@@ -145,7 +145,7 @@ impl Type  {
 }
 
 impl any {
-  fn from!<T>(t: *mut T) -> #self {
+  fn from!<T>(t: *mut T) -> Self {
     return .{
       ptr: t,
       _type: typeof(T),

@@ -1,7 +1,7 @@
 
 #ifndef FREESTANDING {
   impl!<T> [T] {
-    fn clone!<Alloc>(self, allocator: *mut Alloc) -> #self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
+    fn clone!<Alloc>(self, allocator: *mut Alloc) -> Self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
       data : *mut T = allocator.allocate_array(sizeof(T), self.length);
       std::c::memcpy(data, self.data, self.length * sizeof(T));
       return .{
@@ -34,7 +34,7 @@ impl!<T> [T] {
     return self.length == 0;
   }
 
-  fn from(data: *const T, len: u32) -> #self => .{
+  fn from(data: *const T, len: u32) -> Self => .{
     data: data,
     length: len,
   }
@@ -77,7 +77,7 @@ impl!<T> Iterable for [T] {
 }
 
 impl AsByteSlice for [u8] {
-  fn as_byte_slice(self) -> #self {
+  fn as_byte_slice(self) -> Self {
     return self;
   }
 }

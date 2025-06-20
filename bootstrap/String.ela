@@ -36,7 +36,7 @@ impl StringUtils for String {}
       return result;
     }
 
-    fn from!<T>(data: T) -> #self
+    fn from!<T>(data: T) -> Self
       where T: AsByteSlice {
       slice := data.as_byte_slice();
 
@@ -52,7 +52,7 @@ impl StringUtils for String {}
       };
     }
 
-    fn from_ptr(data: c_str) -> #self {
+    fn from_ptr(data: c_str) -> Self {
       length := std::c::strlen(data);
       return .{
         allocator: get_global_allocator(),
@@ -219,7 +219,7 @@ impl StringUtils for String {}
   }
 
   impl Clone for String {
-    fn clone(self) -> #self {
+    fn clone(self) -> Self {
       mut allocator := self.allocator;
       if !allocator.has_instance() {
         allocator = get_global_allocator();
@@ -277,16 +277,13 @@ impl String {
   }
 }
 
-impl Eq for String {
-  fn eq(self, other: #self) -> bool {
+impl PartialEq!<String> for String {
+  fn eq(self, other: Self) -> bool {
     if self.length != other.length then return false;
     for idx in 0..self.length {
       if self[idx] != other[idx] then return false;
     }
     return true;
-  }
-  fn neq(self, other: #self) -> bool {
-    return !self.eq(other);
   }
 }
 

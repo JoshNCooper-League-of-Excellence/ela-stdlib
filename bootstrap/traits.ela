@@ -3,47 +3,46 @@
 // Except it's not done via casting, just a call.
 trait From!<T> {
   // construct a self _type from T.
-  fn from(v: T) -> #self;
+  fn from(v: T) -> Self;
 }
 
 // A deep clone, versus assignment always being a shallow clone in Ela. (think C memory semantics)
 trait Clone {
   // get a deep clone of self.
-  fn clone(self) -> #self;
+  fn clone(self) -> Self;
 }
 
 // Construct from an InitList!<V>. This is never done automatically/implicitly, as of now.
 trait Init!<V> {
-  fn init(init: InitList!<V>) -> #self;
+  fn init(init: InitList!<V>) -> Self;
 }
 
 // Binary arithmetic operator overloads.
 trait Arithmetic!<Right> {
-  fn add(self, right: Right) -> #self;       // '+' operator.
-  fn sub(self, right: Right) -> #self;       // '-' operator.
-  fn mul(self, right: Right) -> #self;       // '*' operator.
-  fn div(self, right: Right) -> #self;       // '/' operator.
-  fn modulo(self, right: Right) -> #self;    // '%' operator.
+  fn add(self, right: Right) -> Self;       // '+' operator.
+  fn sub(self, right: Right) -> Self;       // '-' operator.
+  fn mul(self, right: Right) -> Self;       // '*' operator.
+  fn div(self, right: Right) -> Self;       // '/' operator.
+  fn modulo(self, right: Right) -> Self;    // '%' operator.
 }
 
 // Binary bitwise operator overloading.
 trait Bitwise!<Right> {
-  fn shr(self, right: Right) -> #self;   // '>>' operator.
-  fn shl(self, right: Right) -> #self;   // '<<' operator.
-  fn xor(self, right: Right) -> #self;   //  '^' operator.
-  fn or(self, right: Right) -> #self;   //  '|' operator.
-  fn and(self, right: Right) -> #self;   //  '&' operator.
+  fn shr(self, right: Right) -> Self;   // '>>' operator.
+  fn shl(self, right: Right) -> Self;   // '<<' operator.
+  fn xor(self, right: Right) -> Self;   //  '^' operator.
+  fn or(self, right: Right) -> Self;   //  '|' operator.
+  fn and(self, right: Right) -> Self;   //  '&' operator.
 }
 
 trait PartialEq!<Right> {
-  fn eq(self, right: Right) -> bool;
-  fn neq(self, right: Right) -> bool;
+  fn eq(self, right: Self) -> bool;
+  fn neq(self, right: Self) -> bool {
+    return !self.eq(right);
+  }
 }
 
-trait Eq {
-  fn eq(self, right: #self) -> bool;
-  fn neq(self, right: #self) -> bool;
-}
+trait Eq where Self: PartialEq!<Self> {}
 
 enum Ordering {
   Less = -1,
@@ -51,11 +50,11 @@ enum Ordering {
   Greater = 1
 }
 
-trait PartialOrd!<Right> where Right: PartialEq!<#self> {
-  fn partial_cmp(self, right: Right) -> Option!<Ordering>;
+trait PartialOrd!<Right> where Right: PartialEq!<Self> {
+  fn cmp(self, right: Right) -> Option!<Ordering>;
 
   fn lt(self, right: Right) -> bool {
-    ordering_opt := self.partial_cmp(right);
+    ordering_opt := self.cmp(right);
     if ordering_opt is Option!<Ordering>::None {
       return false;
     }
@@ -64,7 +63,7 @@ trait PartialOrd!<Right> where Right: PartialEq!<#self> {
   }
 
   fn gt(self, right: Right) -> bool {
-    ordering_opt := self.partial_cmp(right);
+    ordering_opt := self.cmp(right);
     if ordering_opt is Option!<Ordering>::None {
       return false;
     }
@@ -73,7 +72,7 @@ trait PartialOrd!<Right> where Right: PartialEq!<#self> {
   }
 
   fn lte(self, right: Right) -> bool {
-    ordering_opt := self.partial_cmp(right);
+    ordering_opt := self.cmp(right);
     if ordering_opt is Option!<Ordering>::None {
       return false;
     }
@@ -82,7 +81,7 @@ trait PartialOrd!<Right> where Right: PartialEq!<#self> {
   }
 
   fn gte(self, right: Right) -> bool {
-    ordering_opt := self.partial_cmp(right);
+    ordering_opt := self.cmp(right);
     if ordering_opt is Option!<Ordering>::None {
       return false;
     }
@@ -91,26 +90,22 @@ trait PartialOrd!<Right> where Right: PartialEq!<#self> {
   }
 }
 
-/// ! Fix repro 114, then we can use this trait binding.
-trait Ord /* where #self: Eq & PartialOrd!<#self> */ {
-  fn cmp(self, other: #self) -> Ordering;
-
-  fn max(self, other: #self) -> #self {
+trait Ord where Self: Eq & PartialOrd!<Self> {
+  fn max(self, other: Self) -> Self {
     if self > other {
       return self;
     }
     return other;
   }
-
-  fn min(self, other: #self) -> #self {
+  fn min(self, other: Self) -> Self {
     if self < other {
       return self;
     }
     return other;
   }
 
-  fn clamp(self, min: #self, max: #self) -> #self {
-    return self.max(min, self.min(self, max));
+  fn clamp(self, min: Self, max: Self) -> Self {
+    return self.max(min).min(max);
   }
 }
 
@@ -130,8 +125,12 @@ trait Index!<T> {
   the destroy function will not call destroy on the objects in the list.
 */
 trait Destroy {
+  // TODO: do we wanna remove the recursive thing, 
+  // and have a different destroy type for collections?
+  // it's redundant in like 99% of cases, and the compiler
+  // bypasses mutability checks for any method called 'destroy()'
+  // regardless of the signature or the trait it comes from.
   fn destroy(*mut self, recursive: bool = true);
-  // fn destroy(*mut self);
 }
 
 trait Hash {

@@ -27,7 +27,7 @@ fn panic(msg: str);
     /* 
       Copy out a sub array. use as_slice if you want a borrowed, un-owning view into the array at a specific range.
     */
-    fn subarray(self, range: Range) -> #self {
+    fn subarray(self, range: Range) -> Self {
       len := range.end - range.begin;
       new_data := self.allocator.allocate_array(sizeof(T), len);
       std::c::memcpy(new_data, self.data + range.begin, sizeof(T) * len);
@@ -129,7 +129,7 @@ fn panic(msg: str);
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
     @[inline]
-    fn clone(self) -> #self {
+    fn clone(self) -> Self {
       new_data := self.allocator.allocate_array(sizeof(T), self.capacity);
       std::c::memcpy(new_data, self.data, sizeof(T) * self.length);
       return .{
@@ -151,8 +151,8 @@ fn panic(msg: str);
       When we have optional parameters, this will be much more intuitive.
     */
     @[inline]
-    fn init(init: InitList!<T>) -> #self {
-      mut self: #self;
+    fn init(init: InitList!<T>) -> Self {
+      mut self: Self;
       self.resize(init.length);
       std::c::memcpy(self.data, init.data, sizeof(T) * init.length);
       self.length = init.length;
@@ -319,8 +319,8 @@ impl!<T> List!<T> {
   }
   
   @[inline]
-  fn filter(*const self, filter: fn(*const T) -> bool) -> #self {
-    mut list: #self;
+  fn filter(*const self, filter: fn(*const T) -> bool) -> Self {
+    mut list: Self;
     for value in *self {
       if filter(&const value) {
         where T: Clone {

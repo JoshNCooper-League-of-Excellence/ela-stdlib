@@ -24,7 +24,7 @@ struct Arena {
 }
 
 impl Arena {
-  fn new(size: u64, flags: ArenaFlags) -> #self {
+  fn new(size: u64, flags: ArenaFlags) -> Self {
     return .{
       size: size,
       flags: flags,

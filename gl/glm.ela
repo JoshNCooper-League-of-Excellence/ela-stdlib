@@ -22,10 +22,10 @@ impl Vec4 {
   fn sqr_mag(*mut self) -> f32 {
     return self.x * self.x + self.y * self.y + self.z * self.z + self.w * self.w;
   }
-  fn one() -> #self {
+  fn one() -> Self {
     return .{ x: 1.0, y: 1.0, z: 1.0, w: 1.0 };
   }
-  fn zero() -> #self {
+  fn zero() -> Self {
     return .{ x: 0.0, y: 0.0, z: 0.0, w: 0.0 };
   }
 }
@@ -40,8 +40,8 @@ union Vec3 {
 }
 
 impl Vec3 {
-  fn up() -> #self {
-    #static up: #self = .{
+  fn up() -> Self {
+    #static up: Self = .{
       x: 0, y: 1, z: 0
     };
     return up;
@@ -51,13 +51,13 @@ impl Vec3 {
   fn sqr_mag(*mut self) -> f32 {
     return self.x * self.x + self.y * self.y + self.z * self.z;
   }
-  fn one() -> #self {
+  fn one() -> Self {
     return .{ x: 1.0, y: 1.0, z: 1.0 };
   }
   fn zero() -> Vec3 {
     return .{ x: 0.0, y: 0.0, z: 0.0 };
   }
-  fn normalize(self) -> #self {
+  fn normalize(self) -> Self {
     mag: f32 = sqrt(self.x * self.x + self.y * self.y + self.z * self.z) as f32;
     return .{ x: self.x / mag, y: self.y / mag, z: self.z / mag };
   }
@@ -116,13 +116,13 @@ impl Vec2 {
   fn sqr_mag(*mut self) -> f32 {
     return self.x * self.x + self.y * self.y;
   }
-  fn one() -> #self {
+  fn one() -> Self {
     return .{ x: 1.0, y: 1.0 };
   }
-  fn zero() -> #self {
+  fn zero() -> Self {
     return .{ x: 0.0, y: 0.0 };
   }
-  fn normalize(*mut self) -> #self {
+  fn normalize(*mut self) -> Self {
     mag: f32 = sqrt(self.x * self.x + self.y * self.y) as f32;
     return .{ x: self.x / mag, y: self.y / mag };
   }
@@ -153,7 +153,7 @@ union Mat4 {
 impl Mat4 {
 
 
-  fn zero() -> #self {
+  fn zero() -> Self {
     return .{
       M00: 0.0, M01: 0.0, M02: 0.0, M03: 0.0,
       M10: 0.0, M11: 0.0, M12: 0.0, M13: 0.0,
@@ -162,8 +162,8 @@ impl Mat4 {
     };
   }
 
-  fn scale(*mut self, factor: f32) -> #self {
-    mut matrix: #self;
+  fn scale(*mut self, factor: f32) -> Self {
+    mut matrix: Self;
     matrix.M00 = self.M00 * factor;
     matrix.M01 = self.M01 * factor;
     matrix.M02 = self.M02 * factor;
@@ -183,7 +183,7 @@ impl Mat4 {
     return matrix;
   }
 
-  fn normalize(*mut self) -> #self {
+  fn normalize(*mut self) -> Self {
     mag: f32 = sqrt(self.M00 * self.M00 + self.M01 * self.M01 + self.M02 * self.M02 + self.M03 * self.M03 +
                    self.M10 * self.M10 + self.M11 * self.M11 + self.M12 * self.M12 + self.M13 * self.M13 +
                    self.M20 * self.M20 + self.M21 * self.M21 + self.M22 * self.M22 + self.M23 * self.M23 +
@@ -199,8 +199,8 @@ impl Mat4 {
     return r0 - r1 + r2 - r3;
   }
 
-  fn identity() -> #self {
-    mut matrix: #self;
+  fn identity() -> Self {
+    mut matrix: Self;
     matrix.M00 = 1.0;
     matrix.M01 = 0.0;
     matrix.M02 = 0.0;
@@ -220,12 +220,12 @@ impl Mat4 {
     return matrix;
   }
 
-  fn look_at(eye: Vec3, center: Vec3, up: Vec3) -> #self {
+  fn look_at(eye: Vec3, center: Vec3, up: Vec3) -> Self {
     f: Vec3 = (center - eye).normalize();
     s: Vec3 = f.cross(up).normalize();
     u: Vec3 = s.cross(f);
 
-    mut matrix: #self = Mat4::identity();
+    mut matrix: Self = Mat4::identity();
     matrix.M00 = s.x;
     matrix.M01 = s.y;
     matrix.M02 = s.z;
@@ -242,10 +242,10 @@ impl Mat4 {
     return matrix;
   }
 
-  fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> #self {
+  fn perspective(fov: f32, aspect: f32, near: f32, far: f32) -> Self {
     tan_half_fov: f32 = tan(fov / 2.0) as f32;
 
-    mut matrix: #self = Mat4::zero();
+    mut matrix: Self = Mat4::zero();
     matrix.M00 = 1.0 / (aspect * tan_half_fov);
     matrix.M11 = 1.0 / tan_half_fov;
     matrix.M22 = -(far + near) / (far - near);
@@ -256,8 +256,8 @@ impl Mat4 {
     return matrix;
   }
 
-  fn mul(self, other: #self) -> #self {
-    mut matrix: #self;
+  fn mul(self, other: Self) -> Self {
+    mut matrix: Self;
     matrix.M00 = self.M00 * other.M00 + self.M01 * other.M10 + self.M02 * other.M20 + self.M03 * other.M30;
     matrix.M01 = self.M00 * other.M01 + self.M01 * other.M11 + self.M02 * other.M21 + self.M03 * other.M31;
     matrix.M02 = self.M00 * other.M02 + self.M01 * other.M12 + self.M02 * other.M22 + self.M03 * other.M32;
@@ -280,15 +280,15 @@ impl Mat4 {
     return matrix;
   }
   
-  fn translation(translation: Vec3) -> #self {
-    mut matrix: #self = Mat4::identity();
+  fn translation(translation: Vec3) -> Self {
+    mut matrix: Self = Mat4::identity();
     matrix.M03 = translation.x;
     matrix.M13 = translation.y;
     matrix.M23 = translation.z;
     return matrix;
   }
 
-  fn rotation(rotation: Vec3) -> #self {
+  fn rotation(rotation: Vec3) -> Self {
     cx: f32 = cos(rotation.x) as f32;
     sx: f32 = sin(rotation.x) as f32;
     cy: f32 = cos(rotation.y) as f32;
@@ -296,7 +296,7 @@ impl Mat4 {
     cz: f32 = cos(rotation.z) as f32;
     sz: f32 = sin(rotation.z) as f32;
 
-    mut matrix: #self = Mat4::identity();
+    mut matrix: Self = Mat4::identity();
     matrix.M00 = cy * cz;
     matrix.M01 = -cy * sz;
     matrix.M02 = sy;
@@ -312,8 +312,8 @@ impl Mat4 {
     return matrix;
   }
 
-  fn scalar(scale: Vec3) -> #self {
-    mut matrix: #self = Mat4::identity();
+  fn scalar(scale: Vec3) -> Self {
+    mut matrix: Self = Mat4::identity();
     matrix.M00 = scale.x;
     matrix.M11 = scale.y;
     matrix.M22 = scale.z;

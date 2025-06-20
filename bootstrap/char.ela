@@ -32,11 +32,11 @@ trait CharUtils {
   fn is_graph(self) -> bool {
     return std::c::isgraph(self) != 0;
   }
-  fn to_lower(self) -> #self {
-    return std::c::tolower(self) as #self;
+  fn to_lower(self) -> Self {
+    return std::c::tolower(self) as Self;
   }
-  fn to_upper(self) -> #self {
-    return std::c::toupper(self) as #self;
+  fn to_upper(self) -> Self {
+    return std::c::toupper(self) as Self;
   }
 }
 

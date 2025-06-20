@@ -31,19 +31,16 @@ impl!<T> Interned!<T> {
     }
   }
 
-  fn new(value: T) -> #self {
-    mut self: #self;
+  fn new(value: T) -> Self {
+    mut self: Self;
     self.insert_or_set(value);
     return self;
   }
 }
 
-impl!<T> Eq for Interned!<T> {
-  fn eq(self, other: #self) -> bool {
+impl!<T> PartialEq!<Interned!<T>> for Interned!<T> {
+  fn eq(self, other: Self) -> bool {
     return self.data == other.data;
-  }
-  fn neq(self, other: #self) -> bool {
-    return self.data != other.data;
   }
 }
 

@@ -351,7 +351,7 @@ struct State {
 }
 
 impl State {
-  fn new(path: String, input: String, file_idx: u64) -> #self {
+  fn new(path: String, input: String, file_idx: u64) -> Self {
     return .{
       path: path,
       input: input,
@@ -362,7 +362,7 @@ impl State {
     };
   }
 
-  fn from_file!<Path>(filename: Path) -> #self where Path: AsByteSlice {
+  fn from_file!<Path>(filename: Path) -> Self where Path: AsByteSlice {
       canonical_option := canonical_path(filename);
       if canonical_option.is_none() {
         printlnf("file '%' was unable to be located.", (filename,));
@@ -398,7 +398,7 @@ struct Lexer {
 }
 
 impl Lexer {
-  fn new(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>) -> #self {
+  fn new(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>) -> Self {
     return .{
       operators:  operators.or_else(.{}),
       keywords:   keywords.or_else(.{}),
