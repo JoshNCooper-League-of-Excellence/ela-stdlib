@@ -1,0 +1,28 @@
+
+trait Stream!<T> {
+  fn read(*mut self) -> Option!<T>;
+  fn write(*mut self, value: T);
+  fn clear(*mut self);
+  fn read_many(*mut self, mut length: u32) -> List!<T> {
+    mut list: List!<T>;
+    list.resize(length);
+    while length > 0 {
+      if self.read() is Option!<T>::Some(v) {
+        list.push(v);
+      } else {
+        break;
+      }
+    }
+    return list;
+  }
+  fn write_many(*mut self, values: [T]) {
+    for v in values {
+      self.write(v);
+    }
+  }
+};
+
+trait BufferedStream!<T> where #self: Stream!<T> {
+  fn flush(*mut self);
+}
+

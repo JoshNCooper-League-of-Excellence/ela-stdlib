@@ -349,6 +349,14 @@ impl!<T> Enumerable!<T> for List!<T> {
   }
 }
 
+impl AsByteSlice for List!<u8> {
+  fn as_byte_slice(self) -> [u8] {
+    return [u8].{
+      data: self.data,
+      length: self.length
+    };
+  }
+}
 
 #ifndef FREESTANDING {
 
