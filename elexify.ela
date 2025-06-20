@@ -208,7 +208,7 @@ impl Format for SourceLocation {
   }
 }
 
-fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
+fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
   mut builder: StringBuilder;
   mut formatter: Formatter = .{
     writer: &mut builder,
@@ -233,7 +233,7 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsByteSlice {
   mut lines : [String] =
     file_data
       .split('\n')
-      .as_slice(clamped_begin..clamped_end);
+      .subslice(clamped_begin..clamped_end);
 
   defer {
     builder.destroy();
@@ -362,7 +362,7 @@ impl State {
     };
   }
 
-  fn from_file!<Path>(filename: Path) -> Self where Path: AsByteSlice {
+  fn from_file!<Path>(filename: Path) -> Self where Path: AsSlice!<u8> {
       canonical_option := canonical_path(filename);
       if canonical_option.is_none() {
         printlnf("file '%' was unable to be located.", (filename,));

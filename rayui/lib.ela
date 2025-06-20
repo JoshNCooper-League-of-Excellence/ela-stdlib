@@ -34,10 +34,10 @@ fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, f
   );
 }
 
-fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsByteSlice {
+fn draw_text!<Data>(text: Data, position: Vector2, style: Style) where Data: AsSlice!<u8> {
   DrawTextEx(
     style.font,
-    text.as_byte_slice().data,
+    text.as_slice().data,
     position,
     style.font_size,
     style.font_spacing,
@@ -150,7 +150,7 @@ trait Widget where Self: Destroy {
   }
 }
 
-struct Button!<TString = String, UserArg = ()> where TString: AsByteSlice {
+struct Button!<TString = String, UserArg = ()> where TString: AsSlice!<u8> {
   base:         WidgetBase,
   label:        Option!<TString>,
 
@@ -159,7 +159,7 @@ struct Button!<TString = String, UserArg = ()> where TString: AsByteSlice {
   on_clicked:   fn (*mut UserArg),
 }
 
-struct Slider!<TString = String, T = f32> where TString: AsByteSlice {
+struct Slider!<TString = String, T = f32> where TString: AsSlice!<u8> {
   base:             WidgetBase,
   text:             Option!<TString>,
   format_options:   Option!<FormatOptions>,
@@ -173,7 +173,7 @@ struct Slider!<TString = String, T = f32> where TString: AsByteSlice {
   value:            *mut T,
 }
 
-struct CheckButton!<TString = String> where TString: AsByteSlice {
+struct CheckButton!<TString = String> where TString: AsSlice!<u8> {
   base:         WidgetBase,
   // A possible label.
   text:         Option!<TString>,
@@ -183,7 +183,7 @@ struct CheckButton!<TString = String> where TString: AsByteSlice {
   value:        *mut bool,
 }
 
-struct DropDown!<TString = String, UserArg = ()> where TString: AsByteSlice {
+struct DropDown!<TString = String, UserArg = ()> where TString: AsSlice!<u8> {
   base:                   WidgetBase,
   // optional label to show in the base rect.
   // this is released on destroy() if Some()
@@ -204,7 +204,7 @@ struct DropDown!<TString = String, UserArg = ()> where TString: AsByteSlice {
   on_option_selected:     fn (TString, *mut UserArg) -> void,
 }
 
-struct Label!<TString = String> where TString: AsByteSlice {
+struct Label!<TString = String> where TString: AsSlice!<u8> {
   base: WidgetBase,
   text: TString,
 }
@@ -453,7 +453,7 @@ impl ListBox {
   }
 }
 
-impl!<TString, T> Widget for Slider!<TString, T> where TString: AsByteSlice, T: IsNumeric {
+impl!<TString, T> Widget for Slider!<TString, T> where TString: AsSlice!<u8>, T: IsNumeric {
   fn draw(*mut self) {
     // Draw the slider background
     DrawRectangleRec(
@@ -490,7 +490,7 @@ impl!<TString, T> Widget for Slider!<TString, T> where TString: AsByteSlice, T: 
       the_text := self.text.unwrap();
 
       text_position = .{
-        x: (self.base.rectangle.x - 15 + (self.base.rectangle.width - MeasureText(the_text.as_byte_slice().data, self.base.style.font_size)) / 2),
+        x: (self.base.rectangle.x - 15 + (self.base.rectangle.width - MeasureText(the_text.as_slice().data, self.base.style.font_size)) / 2),
         y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
 
@@ -572,7 +572,7 @@ impl!<TString> Widget for CheckButton!<TString> {
 
     if self.text.is_some() {
       text_position: Vector2 = .{
-        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(self.text.unwrap().as_byte_slice().data, self.base.style.font_size)) / 2),
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(self.text.unwrap().as_slice().data, self.base.style.font_size)) / 2),
         y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
       draw_text(self.text.unwrap(), text_position, self.base.style);
@@ -609,7 +609,7 @@ impl!<TString> Widget for CheckButton!<TString> {
   }
 }
 
-impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: AsByteSlice {
+impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: AsSlice!<u8> {
   fn draw(*mut self) {
     // Draw the DropDown box
     DrawRectangleRec(self.base.rectangle, self.base.style.background);
@@ -618,7 +618,7 @@ impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: As
     if self.selected_index.is_some() && (self.text.is_none() || self.prefer_selected_option) {
       the_text := self.options[self.selected_index.unwrap()];
       text_position: Vector2 = .{
-        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.as_byte_slice().data, self.base.style.font_size)) / 2),
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.as_slice().data, self.base.style.font_size)) / 2),
         y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
       draw_text(
@@ -629,7 +629,7 @@ impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: As
     } else if self.text.is_some() {
       the_text := self.text.unwrap();
       text_position: Vector2 = .{
-        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.as_byte_slice().data, self.base.style.font_size)) / 2),
+        x: (self.base.rectangle.x + (self.base.rectangle.width - MeasureText(the_text.as_slice().data, self.base.style.font_size)) / 2),
         y: (self.base.rectangle.y + (self.base.rectangle.height - self.base.style.font_size) / 2),
       };
       draw_text(
@@ -661,7 +661,7 @@ impl!<TString, UserArg> Widget for DropDown!<TString, UserArg> where TString: As
 
         DrawRectangleRec(option_rect, option_color);
 
-        text := self.options[i].as_byte_slice();
+        text := self.options[i].as_slice();
         text_position: Vector2 = .{
           x: option_rect.x + (option_rect.width - MeasureText(text.data, self.base.style.font_size)) / 2,
           y: option_rect.y + (option_rect.height - self.base.style.font_size) / 2,

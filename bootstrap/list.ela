@@ -1,6 +1,5 @@
 fn panic(msg: str);
 
-
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
     @[inline]
@@ -227,18 +226,6 @@ impl!<T> Index!<T> for List!<T> {
   }
 }
 
-impl!<T> AsSlice!<T> for List!<T> {
-  /* 
-    Take a `slice` or a view into the array, without taking any ownership of the memory we are viewing into.
-  */
-  fn as_slice(self, range: Range) -> [T] {
-    return .{
-      data: self.data + range.begin,
-      length: range.end - range.begin,
-    }
-  }
-}
-
 impl!<T> List!<T> {
   type OrderingPredicate :: fn(*T, *T) -> bool;
 
@@ -280,15 +267,12 @@ impl!<T> List!<T> {
 }
 
 impl!<T> List!<T> {
-
   @[inline]
   fn new(allocator: dyn Allocator) -> List!<T> {
     return .{ 
       allocator: allocator,
     };
   }
-
-
   @[inline]
   fn back(self) -> Option!<T> {
     if self.length > 0 {
@@ -317,7 +301,6 @@ impl!<T> List!<T> {
     }
     return None();
   }
-  
   @[inline]
   fn filter(*const self, filter: fn(*const T) -> bool) -> Self {
     mut list: Self;
@@ -349,9 +332,9 @@ impl!<T> Enumerable!<T> for List!<T> {
   }
 }
 
-impl AsByteSlice for List!<u8> {
-  fn as_byte_slice(self) -> [u8] {
-    return [u8].{
+impl!<T> AsSlice!<T> for List!<T> {
+  fn as_slice(self) -> [T] {
+    return [T].{
       data: self.data,
       length: self.length
     };

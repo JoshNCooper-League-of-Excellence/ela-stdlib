@@ -125,7 +125,7 @@ impl Writer {
   }
 
 
-  fn write!<DataSlice>(*mut self, data: DataSlice) where DataSlice: AsByteSlice {
+  fn write!<DataSlice>(*mut self, data: DataSlice) where DataSlice: AsSlice!<u8> {
     self.builder.append(data);
   }
 

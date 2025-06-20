@@ -45,9 +45,9 @@ struct JsonLexer {
 }
 
 impl JsonLexer {
-  fn create!<TString>(file: TString, input: String) -> Self where TString: AsByteSlice {
+  fn create!<TString>(file: TString, input: String) -> Self where TString: AsSlice!<u8> {
     return .{
-      file: String::from(file.as_byte_slice()),
+      file: String::from(file.as_slice()),
       input: input,
     };
   }

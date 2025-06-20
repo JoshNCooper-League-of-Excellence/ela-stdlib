@@ -22,8 +22,8 @@ trait StringUtils {
     return Some(self.data![self.length - 1]);
   }
 
-  fn starts_with!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsByteSlice {
-    data, length := prefix.as_byte_slice();
+  fn starts_with!<Prefix>(self, prefix: Prefix) -> bool where Prefix: AsSlice!<u8> {
+    data, length := prefix.as_slice();
     if self.length < length then return false;
 
     for i in 0..length {
@@ -34,8 +34,8 @@ trait StringUtils {
     return true;
   }
   
-  fn ends_with!<Suffix>(self, suffix: Suffix) -> bool where Suffix: AsByteSlice {
-    data, length := suffix.as_byte_slice();
+  fn ends_with!<Suffix>(self, suffix: Suffix) -> bool where Suffix: AsSlice!<u8> {
+    data, length := suffix.as_slice();
     if self.length < length then return false;
     for i in 0..length {
       if self.data![self.length - length + i] != data![i] then return false;
@@ -53,9 +53,9 @@ trait StringUtils {
     return true;
   }
 
-  fn contains!<TString>(self, search: TString) -> bool where TString: AsByteSlice {
-    self_data, self_len := self.as_byte_slice();
-    search_data, search_len := search.as_byte_slice();
+  fn contains!<TString>(self, search: TString) -> bool where TString: AsSlice!<u8> {
+    self_data, self_len := self.as_slice();
+    search_data, search_len := search.as_slice();
   
     if search_len == 0 || self_len < search_len {
       return false;

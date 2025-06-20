@@ -138,21 +138,8 @@ impl Env {
   }
 }
 
-impl AsCharSlice for u32 {
-  fn as_char_slice(self) -> [u32] {
-    #static mut chars : [char; 2] = .[
-      '\0', '\0'
-    ];
-    chars[0] = self;
-    return .{
-      data: chars,
-      length: 1,
-    }
-  }
-}
-
-impl AsByteSlice for u32 {
-  fn as_byte_slice(self) -> [u8] {
+impl AsSlice!<u8> for u32 {
+  fn as_slice(self) -> [u8] {
     #static mut chars : [u8; 2] = .[
       '\0', '\0'
     ];

@@ -12,10 +12,10 @@ impl StringUtils for String {}
 
   impl String {
     fn replace!<Old, Replacement>(*mut self, old_arg: Old, replacement_arg: Replacement) -> String
-      where Old: AsByteSlice,
-            Replacement: AsByteSlice {
-      old := old_arg.as_byte_slice();
-      replacement := replacement_arg.as_byte_slice();
+      where Old: AsSlice!<u8>,
+            Replacement: AsSlice!<u8> {
+      old := old_arg.as_slice();
+      replacement := replacement_arg.as_slice();
 
       self.get_allocator_if_needed();
 
@@ -37,8 +37,8 @@ impl StringUtils for String {}
     }
 
     fn from!<T>(data: T) -> Self
-      where T: AsByteSlice {
-      slice := data.as_byte_slice();
+      where T: AsSlice!<u8> {
+      slice := data.as_slice();
 
       if slice.is_empty() {
         return .{};
@@ -62,8 +62,8 @@ impl StringUtils for String {}
       };
     }
 
-    fn append!<T>(*mut self, other: T) where T: AsByteSlice {
-      slice := other.as_byte_slice();
+    fn append!<T>(*mut self, other: T) where T: AsSlice!<u8> {
+      slice := other.as_slice();
       if self.capacity == 0 then self.capacity = 256 / 3;
 
       if self.length + slice.length >= self.capacity 
@@ -76,7 +76,7 @@ impl StringUtils for String {}
       self.data![self.length] = '\0';
     }
 
-    fn append_then_free!<T>(*mut self, mut other: T) where T: AsByteSlice & Destroy {
+    fn append_then_free!<T>(*mut self, mut other: T) where T: AsSlice!<u8> & Destroy {
       self.append(other);
       other.destroy();
     }
@@ -149,8 +149,8 @@ impl StringUtils for String {}
       self.data![self.length] = '\0';
     }
 
-    fn insert_substr!<Substring>(*mut self, index: u64, substr: Substring) where Substring: AsByteSlice {
-      slice := substr.as_byte_slice();
+    fn insert_substr!<Substring>(*mut self, index: u64, substr: Substring) where Substring: AsSlice!<u8> {
+      slice := substr.as_slice();
       if index > self.length then return;
       if self.capacity == 0 then self.capacity = 256 / 3;
       if self.length + slice.length >= self.capacity {
@@ -175,8 +175,8 @@ impl StringUtils for String {}
       };
     }
 
-    fn split!<Substring>(self, delimiter: Substring) -> List!<String> where Substring: AsByteSlice {
-      slice := delimiter.as_byte_slice();
+    fn split!<Substring>(self, delimiter: Substring) -> List!<String> where Substring: AsSlice!<u8> {
+      slice := delimiter.as_slice();
 
       mut result: List!<String>;
       mut start: u64;
@@ -192,8 +192,8 @@ impl StringUtils for String {}
       return result;
     }
 
-    fn split_view!<Substring>(self, delimiter: Substring) -> List!<[u8]> where Substring: AsByteSlice {
-      slice := delimiter.as_byte_slice();
+    fn split_view!<Substring>(self, delimiter: Substring) -> List!<[u8]> where Substring: AsSlice!<u8> {
+      slice := delimiter.as_slice();
 
       mut result: List!<[u8]>;
       mut start: s32;
@@ -302,18 +302,8 @@ impl Iterable for String {
   }
 }
 
-impl AsCharSlice for String {
-  fn as_char_slice(self) -> [u32] {
-    return .{
-      data: self.data,
-      length: self.length / 4, 
-      // we do this because we're reinterpreting a c_str as a u32* which effectively packs it and quarters the "length"
-    }
-  }
-}
-
-impl AsByteSlice for String {
-  fn as_byte_slice(self) -> [u8] {
+impl AsSlice!<u8> for String {
+  fn as_slice(self) -> [u8] {
     return .{
       data: self.data,
       length: self.length

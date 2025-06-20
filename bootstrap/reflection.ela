@@ -36,8 +36,8 @@ impl Field {
 }
 
 impl Type {
-  fn get_field!<Path>(*const self, name: Path) -> *const Field where Path: AsByteSlice {
-    slice := name.as_byte_slice();
+  fn get_field!<Path>(*const self, name: Path) -> *const Field where Path: AsSlice!<u8> {
+    slice := name.as_slice();
     for i in 0..self.fields.length {
       field := &mut self.fields[i];
       string : str = .{data: slice.data, length:  slice.length};
