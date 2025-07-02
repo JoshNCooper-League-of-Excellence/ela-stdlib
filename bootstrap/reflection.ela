@@ -72,7 +72,9 @@ impl Type {
   SIGNED,
   UNSIGNED,
   TRAIT,
+  DYN,
   UNION,
+  FLAGS_ENUM,
 }
 
 impl Type  {
@@ -82,65 +84,54 @@ impl Type  {
   fn is_signed(*const self) -> bool {
     return self.flags & TypeFlags::SIGNED != 0;
   }
-
   fn is_unsigned(*const self) -> bool {
     return self.flags & TypeFlags::UNSIGNED != 0;
   }
-
   fn has_no_extension(*const self) -> bool {
     return self.flags & TypeFlags::POINTER == 0 &&
           self.flags & TypeFlags::ARRAY == 0;
   }
-
   fn is_array(*const self) -> bool {
     return self.flags & TypeFlags::ARRAY != 0;
   }
-
   fn is_scalar(*const self) -> bool {
     return self.has_no_extension() &&
           (self.flags & TypeFlags::INTEGER != 0 ||
             self.flags & TypeFlags::FLOAT != 0   ||
             self.flags & TypeFlags::BOOL != 0);
   }
-
   fn is_struct(*const self) -> bool {
     return self.flags & TypeFlags::STRUCT != 0;
   }
-
   fn is_enum(*const self) -> bool {
     return self.flags & TypeFlags::ENUM != 0;
   }
-
   fn is_integral(*const self) -> bool {
     return self.flags & TypeFlags::INTEGER != 0;
   }
-
   fn is_float(*const self) -> bool {
     return self.flags & TypeFlags::FLOAT != 0;
   }
-
   fn is_bool(*const self) -> bool {
     return self.flags & TypeFlags::BOOL != 0;
   }
-
   fn is_tuple(*const self) -> bool {
     return self.flags & TypeFlags::TUPLE != 0;
   }
-
   fn is_function(*const self) -> bool {
     return self.flags & TypeFlags::FUNCTION != 0;
   }
-
   fn is_pointer(*const self) -> bool {
     return self.flags & TypeFlags::POINTER != 0;
   }
-
   fn is_choice(*const self) -> bool {
     return self.flags & TypeFlags::CHOICE != 0;
   }
-
   fn is_union(*const self) -> bool {
     return self.flags & TypeFlags::UNION != 0;
+  }
+  fn is_flags_enum(*const self) -> bool {
+    return self.flags & TypeFlags::FLAGS_ENUM != 0;
   }
 }
 

@@ -1,0 +1,39 @@
+
+module std {
+  module util {
+    trait Flags {
+      @[inline]
+      fn check(self, value: Self) -> bool {
+        return self & value != 0;
+      }
+      
+      @[inline]
+      fn set(*mut self, value: Self) {
+        (*self) |= value;
+      }
+
+      @[inline]
+      fn unset(*mut self, value: Self) {
+        (*self) &= ~value;
+      }
+
+      @[inline]
+      fn replace(*mut self, old: Self, new: Self) {
+        (*self) &= ~old;
+        (*self) |= new;
+      }
+
+      @[inline]
+      fn without(mut self, old: Self) -> Self {
+        self &= ~old;
+        return self;
+      }
+
+      @[inline]
+      fn with(mut self, new: Self) -> Self {
+        self |= new;
+        return self;
+      }
+    }
+  }
+}

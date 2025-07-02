@@ -1,5 +1,5 @@
-
-
+// flags enum utils. such as Flags trait, a default impl for simple flag manipulation methods.
+#include "flags.ela";
 // all of your basic types.
 #include "typedef.ela"
 // many more basic types, mainly traits.
@@ -36,6 +36,7 @@
 #include "hash.ela";
 // char utils
 #include "char.ela";
+
 
 #ifndef FREESTANDING {
   fn assert(message: str, condition: bool) {
@@ -179,3 +180,6 @@ impl AsSlice!<u8> for u32 {
 }
 
 
+fn default!<T>() -> T {
+  return .{};
+}

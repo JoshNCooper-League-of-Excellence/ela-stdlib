@@ -460,5 +460,29 @@ impl Timer {
   }
 }
 
+module util {
+  fn center_screen() -> Vector2 {
+    return .{
+      x: GetScreenWidth() as f32 / 2.0,
+      y: GetScreenHeight() as f32 / 2.0
+    };
+  }
+  
+  fn screen_rect() -> Rectangle {
+    return Rectangle.{
+      x: 0, y: 0, 
+      width: GetScreenWidth(), 
+      height: GetScreenHeight(),
+    };
+  }
+
+  fn screen_size() -> Vector2 {
+    return .{
+      x: GetScreenWidth(),
+      y: GetScreenHeight(),
+    };
+  }
+}
+
 // Simple shape drawing API using choice types.
 #include "shape.ela"
