@@ -89,30 +89,32 @@ impl Timing {
 }
 
 #test fn __test_timing() {
+  import assertion::*;
+
   // Capture a reference time
   start_time := Timing::get_timespec_since_epoch();
 
   // Test seconds
   seconds := Timing::seconds();
-  assert("seconds failed", seconds >= start_time.tv_sec);
+  assert(seconds >= start_time.tv_sec, "seconds failed");
 
   // Test milliseconds
   milliseconds := Timing::milliseconds();
-  assert("ms failed", milliseconds >= start_time.tv_sec * 1000 + start_time.tv_nsec / 1_000_000);
+  assert(milliseconds >= start_time.tv_sec * 1000 + start_time.tv_nsec / 1_000_000, "ms failed");
 
   // Test microseconds
   microseconds := Timing::microseconds();
-  assert("us failed", microseconds >= start_time.tv_sec * 1_000_000 + start_time.tv_nsec / 1_000);
+  assert(microseconds >= start_time.tv_sec * 1_000_000 + start_time.tv_nsec / 1_000, "us failed");
 
   // Test minutes
   minutes := Timing::minutes();
-  assert("minutes failed", minutes >= start_time.tv_sec / 60);
+  assert(minutes >= start_time.tv_sec / 60, "minutes failed");
 
   // Test hours
   hours := Timing::hours();
-  assert("hours failed", hours >= start_time.tv_sec / 3600);
+  assert(hours >= start_time.tv_sec / 3600, "hours failed");
 
   // Test days
   days := Timing::days();
-  assert("days failed", days >= start_time.tv_sec / 86400);
+  assert(days >= start_time.tv_sec / 86400, "days failed");
 }

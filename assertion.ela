@@ -1,0 +1,22 @@
+import fmt;
+
+fn assert(condition: bool, message: str = "assertion failed") {
+  if !condition {
+    fmt::printlnf("assertion failed: '%'", (message,));
+    std::c::exit(1);
+  }
+}
+
+fn assert_eq!<T>(a: T, b: T, message: str = "assertion failed") {
+  if a != b {
+    fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+    std::c::exit(1);
+  }
+}
+
+fn assert_neq!<T>(a: T, b: T, message: str = "assertion failed") {
+  if a == b {
+    fmt::printlnf("assertion failed: '%', (% != %) evaluated to false", (message, a, b));
+    std::c::exit(1);
+  }
+}
