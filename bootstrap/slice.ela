@@ -60,6 +60,18 @@ impl!<T> [T] {
   }
 }
 
+impl [u8] {
+  fn as_str(self) -> str {
+    return .{
+      length: self.length,
+      data: self.data,
+    };
+  }
+  fn as_c_str(self) -> c_str {
+    return self.data;
+  }
+}
+
 impl!<T> Iterable for [T] {
   fn iter(*const self) -> Iter!<T> {
     return .{

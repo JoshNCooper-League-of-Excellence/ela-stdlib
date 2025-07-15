@@ -8,14 +8,11 @@
 import math::*;
 #c_flags " -lm "
 
-union Vec4 {
-  values: [f32; 4],
-  struct {
-    x: f32,
-    y: f32,
-    z: f32,
-    w: f32,
-  }
+struct Vec4 {
+  x: f32,
+  y: f32,
+  z: f32,
+  w: f32,
 }
 
 impl Vec4 {
@@ -30,13 +27,10 @@ impl Vec4 {
   }
 }
 
-union Vec3 {
-  values: [f32; 3],
-  struct {
-    x: f32,
-    y: f32,
-    z: f32,
-  }  
+struct Vec3 {
+  x: f32,
+  y: f32,
+  z: f32,
 }
 
 impl Vec3 {
@@ -104,12 +98,9 @@ impl Vec3 {
   }
 }
 
-union Vec2 {
-  values: [f32; 2],
-  struct {
-    x: f32,
-    y: f32,
-  }
+struct Vec2 {
+  x: f32,
+  y: f32,
 }
 
 impl Vec2 {
@@ -128,31 +119,26 @@ impl Vec2 {
   }
 }
 
-union Mat4 {
-  values: [f32; 16],
-  struct {
-    M00: f32,
-    M01: f32,
-    M02: f32,
-    M03: f32,
-    M10: f32,
-    M11: f32,
-    M12: f32,
-    M13: f32,
-    M20: f32,
-    M21: f32,
-    M22: f32,
-    M23: f32,
-    M30: f32,
-    M31: f32,
-    M32: f32,
-    M33: f32,
-  },
+struct Mat4 {
+  M00: f32,
+  M01: f32,
+  M02: f32,
+  M03: f32,
+  M10: f32,
+  M11: f32,
+  M12: f32,
+  M13: f32,
+  M20: f32,
+  M21: f32,
+  M22: f32,
+  M23: f32,
+  M30: f32,
+  M31: f32,
+  M32: f32,
+  M33: f32,
 }
 
 impl Mat4 {
-
-
   fn zero() -> Self {
     return .{
       M00: 0.0, M01: 0.0, M02: 0.0, M03: 0.0,

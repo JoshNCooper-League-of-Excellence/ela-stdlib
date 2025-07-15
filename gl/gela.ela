@@ -68,7 +68,7 @@ impl Shader {
   fn set_mat4(*mut self, name: str, v: *const Mat4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniformMatrix4fv(index, 1, false, v.values);
+      glUniformMatrix4fv(index, 1, false, v as *f32);
     } else {
       std::printf("failed to get uniform : %s\n", name.data);
     }
@@ -77,7 +77,7 @@ impl Shader {
   fn set_vec4(*mut self, name: str, v: *const Vec4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniform4fv(index, 1, v.values);
+      glUniform4fv(index, 1, v as *f32);
     } else {
       std::printf("failed to get uniform : %s\n", name.data);
     }
@@ -86,7 +86,7 @@ impl Shader {
   fn set_vec3(*mut self, name: str, v: *const Vec3) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniform3fv(index, 1, v.values);
+      glUniform3fv(index, 1, v as *f32);
     } else {
       std::printf("failed to get uniform : %s\n", name.data);
     }
@@ -95,7 +95,7 @@ impl Shader {
   fn set_vec2(*mut self, name: str, v: *const Vec2) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
-      glUniform2fv(index, 1, v.values);
+      glUniform2fv(index, 1, v as *f32);
     } else {
       std::printf("failed to get uniform : %s\n", name.data);
     }
@@ -111,29 +111,19 @@ impl Shader {
   }
 
   fn set!<T>(*mut self, name: str, v: T) {
-    switch typeof(T) {
-      typeof(f32): {
-        self.set_float(name, *((&const v) as *const f32));
-        return;
-      }
-      typeof(Vec2): {
-        self.set_vec2(name, (&const v) as *const Vec2);
-        return;
-      }
-      typeof(Vec3): {
-        self.set_vec3(name, (&const v) as *const Vec3);
-        return;
-      }
-      typeof(Vec4): {
-        self.set_vec4(name, (&const v) as *const Vec4);
-        return;
-      }
-      typeof(Mat4): {
-        self.set_mat4(name, (&const v) as *const Mat4);
-        return;
-      }
+    where T: f32 {
+      self.set_float(name, *((&const v) as *const f32));
+    } else where T: Vec2 {
+      self.set_vec2(name, (&const v) as *const Vec2);
+    } else where T: Vec3 {
+      self.set_vec3(name, (&const v) as *const Vec3);
+    } else where T: Vec4 {
+      self.set_vec4(name, (&const v) as *const Vec4);
+    } else where T: Mat4 {
+      self.set_mat4(name, (&const v) as *const Mat4);
+    } else {
+      std::printf("incompatible data type passed into Shader.set(name: str, value: T)");
     }
-    std::printf("incompatible _type with 'set' method on shader: only f32, Vec2/3/4, and Mat4 are currently supported\n");
   }
 }
 

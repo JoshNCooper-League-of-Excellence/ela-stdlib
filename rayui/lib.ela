@@ -1,7 +1,6 @@
 import raylib::*;
 import fmt::*;
 
-
 struct Style {
   foreground:           Color = WHITE,
   background:           Color = BLACK,
@@ -18,8 +17,6 @@ struct Style {
   // Layout stuff
   margin:               f32 = 10.0, // only really used for ListBox right now. Should've been added to all elements.
 }
-
-
 
 fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions) where Tuple: IsTuple {
   text := format(fmt, tuple, format_options);
@@ -778,7 +775,6 @@ impl Widget for TextField {
     return null;
   }
 }
-
 
 struct Window!<Ctx> {
   background_color: Color,

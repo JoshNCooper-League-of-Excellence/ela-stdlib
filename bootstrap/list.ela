@@ -205,7 +205,7 @@ impl!<T> Destroy for List!<T> {
     where T: Destroy {
       if recursive {
         for v in *self {
-          v.destroy();
+          v.destroy(recursive);
         }
       }
     }

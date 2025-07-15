@@ -1154,6 +1154,4 @@ extern fn AttachAudioStreamProcessor(stream: AudioStream, processor: AudioCallba
 extern fn DetachAudioStreamProcessor(stream: AudioStream, processor: AudioCallback) -> void;
 extern fn AttachAudioMixedProcessor(processor: AudioCallback) -> void;
 extern fn DetachAudioMixedProcessor(processor: AudioCallback) -> void;
-
-
 extern fn rlSetClipPlanes(near: f64, far: f64);

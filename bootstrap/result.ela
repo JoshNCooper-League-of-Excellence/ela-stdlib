@@ -69,3 +69,18 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return default;
   }
 }
+
+impl!<_Ok, _Err> Destroy for Result!<_Ok, _Err> {
+  fn destroy(*mut self, recursive: bool = false) {
+    where _Ok: Destroy {
+      if self is Result!<_Ok, _Err>::Ok(ok) {
+        ok.destroy(recursive);
+      }
+    }
+    where _Err: Destroy {
+      if self is Result!<_Ok, _Err>::Err(err) {
+        err.destroy(recursive);
+      }
+    }
+  }
+}
