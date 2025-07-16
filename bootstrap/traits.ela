@@ -114,24 +114,6 @@ trait Index!<T> {
   fn index_mut(*mut self, index: u64) -> *mut T;
 }
 
-/*  
-  Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
-  often paired with defer blocks, to emulate a nice 'RAII' _type behaviour.
-
-  recursive is defaulted to true. we set a precedent that this is the expected behaviour when calling destroy in most cases;
-  every subobject that needs to be freed, will be.
-
-  if you pass false, say to a List!<T>, where T implements Destroy,
-  the destroy function will not call destroy on the objects in the list.
-*/
-trait Destroy {
-  // TODO: do we wanna remove the recursive thing, 
-  // and have a different destroy type for collections?
-  // it's redundant in like 99% of cases, and the compiler
-  // bypasses mutability checks for any method called 'destroy()'
-  // regardless of the signature or the trait it comes from.
-  fn destroy(*mut self, recursive: bool = true);
-}
 
 trait Hash {
   fn hash(self) -> u64;

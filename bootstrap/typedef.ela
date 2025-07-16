@@ -5,14 +5,34 @@ type c_str :: *const u8;
 
 struct Type;
 
+/*  
+  Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
+  often paired with defer blocks, to emulate a nice 'RAII' _type behaviour.
+
+  recursive is defaulted to true. we set a precedent that this is the expected behaviour when calling destroy in most cases;
+  every subobject that needs to be freed, will be.
+
+  if you pass false, say to a List!<T>, where T implements Destroy,
+  the destroy function will not call destroy on the objects in the list.
+*/
+trait Destroy {
+  // TODO: do we wanna remove the recursive thing, 
+  // and have a different destroy type for collections?
+  // it's redundant in like 99% of cases, and the compiler
+  // bypasses mutability checks for any method called 'destroy()'
+  // regardless of the signature or the trait it comes from.
+  // it is a little annoying to type recursive: bool = false/true or whatever,
+  // but you _do_ get to choose how your method defaults, which is cool.
+  fn destroy(*mut self, recursive: bool = true);
+}
+
 // this is used by many foundational types so it has to be defined first.
-trait Allocator {
+trait Allocator: Destroy {
   fn allocate(*mut self, size: u64) -> *mut void;
   fn free(*mut self, ptr: *mut void);
   fn allocate_array(*mut self, size: u64, n: u64) -> *mut void;
   fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
-  fn destroy(*mut self);
 }
 
 // This is a string literal _type. "..." will return this _type.

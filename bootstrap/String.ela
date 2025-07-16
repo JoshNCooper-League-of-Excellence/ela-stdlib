@@ -217,30 +217,30 @@ impl StringUtils for String {}
       self.data![self.length] = '\0';
     }
   }
+}
 
-  impl Clone for String {
-    fn clone(self) -> Self {
-      mut allocator := self.allocator;
-      if !allocator.has_instance() {
-        allocator = get_global_allocator();
-      }
-      return .{
-        data: allocator.copy(self.data, sizeof(u8), self.length),
-        length: self.length,
-        capacity: self.capacity,
-        allocator: allocator,
-      };
+impl Clone for String {
+  fn clone(self) -> Self {
+    mut allocator := self.allocator;
+    if !allocator.has_instance() {
+      allocator = get_global_allocator();
     }
+    return .{
+      data: allocator.copy(self.data, sizeof(u8), self.length),
+      length: self.length,
+      capacity: self.capacity,
+      allocator: allocator,
+    };
   }
+}
 
-  impl Destroy for String {
-    fn destroy(*mut self, recursive: bool = true) {
-      self.get_allocator_if_needed();
-      self.allocator.free(self.data);
-      self.data = null;
-      self.capacity = 0;
-      self.length = 0;
-    }
+impl Destroy for String {
+  fn destroy(*mut self, recursive: bool = true) {
+    self.get_allocator_if_needed();
+    self.allocator.free(self.data);
+    self.data = null;
+    self.capacity = 0;
+    self.length = 0;
   }
 }
 

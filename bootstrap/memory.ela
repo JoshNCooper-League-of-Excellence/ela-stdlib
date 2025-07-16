@@ -1,6 +1,9 @@
 #ifndef FREESTANDING {
-  struct Libc_Allocator {}
-  impl Allocator for Libc_Allocator {
+  struct LibcAllocator {}
+  impl Destroy for LibcAllocator {
+    fn destroy(*mut self, recursive: bool = false) {}
+  }
+  impl Allocator for LibcAllocator {
     fn allocate(*mut self, size: u64) -> *mut void {
       return std::c::malloc(size);
     }
@@ -18,21 +21,19 @@
       std::c::memcpy(newptr, ptr, n * element_size);
       return newptr;
     }
-    fn destroy(*mut self) {}
   }
-  impl Libc_Allocator {
+  impl LibcAllocator {
     fn get() -> Self {
-      #static self: Libc_Allocator;
+      #static self: LibcAllocator;
       return self;
     }
   }
-  struct Tracking_Allocator {
+  struct TrackingAllocator {
     pointers: *mut *mut void,
     length: u64,
     capacity: u64,
   }
-  impl Tracking_Allocator {
-
+  impl TrackingAllocator {
     fn push_pointer(*mut self, ptr: *mut void) {
       if self.length + 1 > self.capacity {
         if self.capacity == 0 then self.capacity = 4;
@@ -62,8 +63,8 @@
       }
     }
   }
-  impl Allocator for Tracking_Allocator {
-    fn destroy(*mut self) {
+  impl Destroy for TrackingAllocator {
+    fn destroy(*mut self, recursive: bool = false) {
       while self.length > 0 {
         std::c::free(self.pointers![self.length - 1]);
         self.length -= 1;
@@ -72,7 +73,8 @@
       self.pointers = null;
       self.capacity = 0;
     }
-
+  }
+  impl Allocator for TrackingAllocator {
     fn allocate(*mut self, size: u64) -> *mut void {
       ptr := std::c::malloc(size);
       self.push_pointer(ptr);
@@ -111,9 +113,9 @@
     It relies heavily on pointers/function pointers, which i highly doubt are just thread safe.
 */
 #ifndef FREESTANDING {
-  mut global_libc_allocator: Libc_Allocator;
+  mut global_LibcAllocator: LibcAllocator;
 }
-mut global_dyn_libc_allocator: dyn Allocator;
+mut global_dyn_LibcAllocator: dyn Allocator;
 mut global_allocator: dyn Allocator;
 
 impl dyn Allocator {
@@ -144,11 +146,11 @@ fn set_global_allocator(allocator: dyn Allocator) {
     if !global_allocator.has_instance() {
 
       // we have to setup the dynof here because of static initializer limitations.
-      if !global_dyn_libc_allocator.has_instance() {
-        global_dyn_libc_allocator = dynof(&mut global_libc_allocator, Allocator);
+      if !global_dyn_LibcAllocator.has_instance() {
+        global_dyn_LibcAllocator = dynof(&mut global_LibcAllocator, Allocator);
       }
 
-      global_allocator = global_dyn_libc_allocator;
+      global_allocator = global_dyn_LibcAllocator;
     }
     return global_allocator;
   }

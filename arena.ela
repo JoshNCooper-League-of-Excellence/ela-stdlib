@@ -69,7 +69,17 @@ impl Arena {
     return result;
   }
 }
-
+impl Destroy for Arena {
+  fn destroy(*mut self) {
+    if self.next {
+      self.next.destroy();
+      std::c::free(self.next);
+      self.next = null;
+    }
+    std::c::free(self.memory);
+    self.memory = null;
+  }
+}
 impl Allocator for Arena {
   fn allocate(*mut self, size: u64) -> *mut void {
     return self.alloc(size);
@@ -86,14 +96,5 @@ impl Allocator for Arena {
     std::c::memcpy(new_ptr, ptr, n);
     return new_ptr;
 
-  }
-  fn destroy(*mut self) {
-    if self.next {
-      self.next.destroy();
-      std::c::free(self.next);
-      self.next = null;
-    }
-    std::c::free(self.memory);
-    self.memory = null;
   }
 }
