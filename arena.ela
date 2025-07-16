@@ -70,7 +70,7 @@ impl Arena {
   }
 }
 impl Destroy for Arena {
-  fn destroy(*mut self) {
+  fn destroy(*mut self, recursive: bool = false) {
     if self.next {
       self.next.destroy();
       std::c::free(self.next);
