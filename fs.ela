@@ -37,7 +37,6 @@ impl Stat {
     file := fopen(path.as_slice().data, "r"c);
 
     if !file {
-      fclose(file); // probably not needed?
       return Option!<Self>::None;
     }
 
