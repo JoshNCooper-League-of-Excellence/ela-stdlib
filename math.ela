@@ -66,7 +66,7 @@ fn lerp!<T>(a: T, b: T, t: T) -> T {
 
 fn pow!<T>(base: T, exponent: T) -> T {
   extern fn pow(base: f64, exponent: f64) -> f64;
-  return pow(base as f64, exponent as f64) as f64;
+  return pow(base as f64, exponent as f64) as T;
 }
 
 fn sqrt!<T>(f: T) -> T {

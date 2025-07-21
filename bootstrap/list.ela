@@ -334,7 +334,16 @@ impl!<T> Enumerable!<T> for List!<T> {
 
 impl!<T> AsSlice!<T> for List!<T> {
   fn as_slice(self) -> [T] {
-    return [T].{
+    return .{
+      data: self.data,
+      length: self.length
+    };
+  }
+}
+
+impl!<T> List!<T> {
+  fn as_slice_mut(self) -> mut [T] {
+     return [T].{
       data: self.data,
       length: self.length
     };
@@ -342,7 +351,6 @@ impl!<T> AsSlice!<T> for List!<T> {
 }
 
 #ifndef FREESTANDING {
-
   impl!<T> List!<T>  {
     type OrderingPredicate :: fn(*const T) -> u32;
     /* 
@@ -405,6 +413,42 @@ impl!<T> AsSlice!<T> for List!<T> {
         }
       }
       return false;
+    }
+
+    /*
+      Retain only the elements specified by the predicate function.
+      The predicate should return true to keep the element, false to remove it.
+    */
+    @[inline]
+    fn retain(*mut self, predicate: fn(*const T) -> bool) {
+      mut write_idx := 0;
+      for read_idx in 0..self.length {
+        if predicate(&const self.data![read_idx]) {
+          if write_idx != read_idx {
+            self.data![write_idx] = self.data![read_idx];
+          }
+          write_idx += 1;
+        }
+      }
+      self.length = write_idx;
+    }
+
+    @[inline]
+    fn from_slice(input: [T]) -> Self {
+      mut list: Self;
+      for item in input {
+        list.push(item);
+      }
+      return list;
+    }
+
+    @[inline]
+    fn from_slice_mut(input: mut [T]) -> Self {
+      mut list: Self;
+      for item in input {
+        list.push(item);
+      }
+      return list;
     }
   }
 }

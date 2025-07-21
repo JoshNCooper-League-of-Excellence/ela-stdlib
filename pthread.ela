@@ -8,7 +8,10 @@ type ThreadStartRoutine :: fn(*mut void) -> *mut void;
 extern fn pthread_create(thread: *mut pthread_t, attr: *const pthread_attr_t, start_routine: ThreadStartRoutine, arg: *mut void) -> s32;
 extern fn pthread_join(thread: *mut pthread_t, retval: *const *const void) -> s32;
 
-struct pthread_mutex_t;
+union pthread_mutex_t {
+  __size: [u8; 40],
+  __align: s64,
+}
 
 /* forward */ 
 fn start_thread(arg: *mut void) -> *mut void;
@@ -67,5 +70,11 @@ impl Mutex {
   }
   fn free(*mut self) {
     pthread_mutex_destroy(&mut self.handle);
+  }
+}
+
+impl Destroy for Mutex {
+  fn destroy(*mut self, recursive: bool = false) {
+    self.free();
   }
 }

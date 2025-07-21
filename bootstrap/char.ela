@@ -41,5 +41,4 @@ trait CharUtils {
 }
 
 impl CharUtils for char {}
-
 impl CharUtils for u8 {}

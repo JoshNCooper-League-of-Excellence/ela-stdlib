@@ -80,7 +80,7 @@ impl!<T> Iterable for [T] {
     }
   }
 
-  fn iter_mut(*mut self) -> Iter!<T> {
+  fn iter_mut(*mut self) -> IterMut!<T> {
     return .{
       ptr: self.data as *mut T,
       end: self.data + self.length
@@ -91,5 +91,95 @@ impl!<T> Iterable for [T] {
 impl!<T> AsSlice!<T> for [T] {
   fn as_slice(self) -> Self {
     return self;
+  }
+}
+
+
+
+impl!<T> Index!<T> for mut [T] {
+  fn index(*const self, idx: u64) -> *const T {
+    return &const self.data![idx];
+  }
+  fn index_mut(*mut self, idx: u64) -> *mut T {
+    return &mut self.data![idx];
+  }
+}
+
+impl!<T> mut [T] {
+  fn is_empty(self) -> bool {
+    return self.length == 0;
+  }
+
+  fn from(data: *mut T, len: u32) -> Self => .{
+    data: data,
+    length: len,
+  }
+  
+  // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
+  // data available??
+  fn slice!<Range>(self, mut range: Range) -> [T] where Range: RangeBase!<u8>  |  RangeBase!<u16> |  RangeBase!<u32> | RangeBase!<u64> | RangeBase!<s8>  | RangeBase!<s16> | RangeBase!<s32> |  RangeBase!<s64> {
+    if range.begin < 0 then range.begin = 0;
+
+    if range.end == -1 || range.end > self.length {
+      range.end = self.length;  
+    }
+
+    length := range.end - range.begin;
+    
+    // TODO: support reverse ranges?
+    if length < 0 then return .{};
+
+    return .{
+      data: self.data + range.begin,
+      length: length,
+    }
+  }
+}
+
+impl mut [u8] {
+  fn as_str(self) -> str {
+    return .{
+      length: self.length,
+      data: self.data,
+    };
+  }
+  fn as_c_str(self) -> c_str {
+    return self.data;
+  }
+}
+
+impl!<T> Iterable for mut [T] {
+  fn iter(*const self) -> Iter!<T> {
+    return .{
+      ptr: self.data as *mut T,
+      end: self.data + self.length
+    }
+  }
+
+  fn iter_mut(*mut self) -> IterMut!<T> {
+    return .{
+      ptr: self.data as *mut T,
+      end: self.data + self.length
+    }
+  }
+}
+
+impl !<T> mut [T] {
+  /*
+    Retain only the elements specified by the predicate function.
+    The predicate should return true to keep the element, false to remove it.
+  */
+  @[inline]
+  fn retain(*mut self, predicate: fn(*const T) -> bool) {
+    mut write_idx := 0;
+    for read_idx in 0..self.length {
+      if predicate(&const self.data![read_idx]) {
+        if write_idx != read_idx {
+          self.data![write_idx] = self.data![read_idx];
+        }
+        write_idx += 1;
+      }
+    }
+    self.length = write_idx;
   }
 }
