@@ -1,0 +1,34 @@
+union Vec2 {
+  struct {
+    x: f32, y: f32
+  },
+
+  struct {
+    u: f32,
+    v: f32,
+  },
+
+  struct {
+    left: f32,
+    right: f32,
+  },
+
+  struct {
+    width: f32,
+    height: f32,
+  },
+
+  elements: [f32; 2],
+}
+
+impl Index!<f32> for Vec2 {
+  fn index(*self, index: u64) -> *f32 {
+    return &self.elements[index];
+  }
+  fn index_mut(*mut self, index: u64) -> *mut f32 {
+    return &mut self.elements[index];
+  }
+}
+
+
+struct __m128;

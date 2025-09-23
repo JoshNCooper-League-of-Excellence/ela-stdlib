@@ -1,0 +1,10 @@
+
+// This will only work on POD structs & scalars!
+// there is much undefined behaviour here, anything with pointers
+// will behave very poorly.
+fn as_bytes_le!<T>(v: T) -> List!<u8> {
+  n := sizeof(T);
+  mut out := List!<u8>::with_length(n);
+  std::c::memcpy(&out[0], &v, n);
+  return out;
+}

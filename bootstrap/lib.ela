@@ -37,6 +37,7 @@
 // char utils
 #include "char.ela";
 
+
 type Panic_Handler :: fn(str);
 
 
@@ -153,3 +154,21 @@ impl AsSlice!<u8> for u32 {
 fn default!<T>() -> T {
   return .{};
 }
+
+// COMPILER IMPLEMENTED TRAITS FOR PATTERN MATCHING TYPES
+/* 
+  trait IsFnPtr {}
+  trait IsFn {}
+  trait IsTuple {}
+  trait IsStruct {}
+  trait IsEnum {}
+  trait IsChoice {}
+  trait IsDyn {}
+  trait IsUnion {}
+  trait IsArray {}
+  trait IsPointer {}
+  trait IsMutPointer {}
+  trait IsConstPointer {}
+  trait IsSlice {}
+  trait IsSliceMut {}
+*/

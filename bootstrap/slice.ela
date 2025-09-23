@@ -20,6 +20,23 @@
   }
 }
 
+
+impl!<T> [T] {
+  fn cast!<ToInner>(*self) -> [ToInner] {
+    mut length: s64;
+    if (sizeof(T) < sizeof(ToInner)) {
+      length = self.length / sizeof(ToInner);
+    } else {
+      length = self.length * sizeof(ToInner);
+    }
+
+    return .{
+      data: self.data as *mut ToInner,
+      length: length
+    }
+  }
+}
+
 impl!<T> Index!<T> for [T] {
   fn index(*const self, idx: u64) -> *const T {
     return &const self.data![idx];

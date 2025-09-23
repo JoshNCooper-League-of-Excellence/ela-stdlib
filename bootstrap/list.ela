@@ -67,6 +67,14 @@ fn panic(msg: str);
       std::c::memset(self.data, 0, sizeof(T) * self.capacity);
       self.length = num_to_fill;
     }
+
+
+    @[inline]
+    fn with_length(length: u64) -> Self {
+      mut list: Self;
+      list.initialize(length);
+      return list;
+    }
     
     /* 
       push an element to the array. this will, of course, expand the array if needed.
@@ -79,6 +87,13 @@ fn panic(msg: str);
       }
       self.data![self.length] = v;
       self.length++;
+    }
+
+    @[inline]
+    fn push_range(*mut self, v: Slice!<T>) {
+      for val in v {
+        self.push(val);
+      }
     }
     
     /* 

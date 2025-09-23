@@ -107,7 +107,6 @@
     }
 
 
-    @[inline]
     fn exit(code: s32) {
       return c::exit(code);
     }
