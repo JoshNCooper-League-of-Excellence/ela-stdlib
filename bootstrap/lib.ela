@@ -158,18 +158,51 @@ fn default!<T>() -> T {
 // COMPILER IMPLEMENTED TRAITS FOR PATTERN MATCHING TYPES
 /* 
 
-  trait IsFnPtr {}
-  trait IsFn {}
-  trait IsTuple {}
-  trait IsStruct {}
-  trait IsEnum {}
-  trait IsChoice {}
-  trait IsDyn {}
-  trait IsUnion {}
-  trait IsArray {}
-  trait IsPointer {}
-  trait IsMutPointer {}
-  trait IsConstPointer {}
-  trait IsSlice {}
-  trait IsSliceMut {}
+? Most of these are just type descriptors, and are completely self explanatory by name.
+  * trait IsFnPtr {}
+  * trait IsFn {}
+  * trait IsTuple {}
+  * trait IsStruct {}
+  * trait IsEnum {}
+  * trait IsChoice {}
+  * trait IsDyn {}
+  * trait IsUnion {}
+  * trait IsArray {}
+  * trait IsPointer {}
+  * trait IsMutPointer {}
+  * trait IsConstPointer {}
+  * trait IsSlice {}
+  * trait IsSliceMut {}
+
+
+? These are special traits, that arent as self explanatory.
+  * trait Blittable {}
+
+   - Blittable types are those which contain no pointers or references, or any subtypes that aren't blittable.
+     Meaning they can be memcpy'd into a block of memory with no special handling.
+
+   An example of a blittable type:
+    struct T {
+      x: s32,
+      y: s32,
+      z: s32,
+      f: [f32; 100]             <- Ok.
+      g: AnotherBlittableType   <- Ok.
+    }
+
+    note: 
+      fixed arrays are not considered a pointer since the instantiated struct has to allocate all of the memory required to store it.
+      subtypes don't disqualify the parent as long as the subtype is also blittable.
+
+   An example of a _non_ blittable type:
+    struct T {
+      x: s32,
+      y: *s32,            <- pointer disqualifies
+      list: List!<s32>    <- contains a pointer, disqualified.
+    }
+
+    The most common use cases for checking against Blittable are probably
+     - binary serialization, 
+     - interop into managed environments,
+     - copying buffers of data into a new owned buffer, etc.
 */
