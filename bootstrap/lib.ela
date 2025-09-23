@@ -157,6 +157,7 @@ fn default!<T>() -> T {
 
 // COMPILER IMPLEMENTED TRAITS FOR PATTERN MATCHING TYPES
 /* 
+
   trait IsFnPtr {}
   trait IsFn {}
   trait IsTuple {}
