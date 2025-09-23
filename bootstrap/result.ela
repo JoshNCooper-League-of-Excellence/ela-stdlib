@@ -9,6 +9,15 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return default;
   }
 
+  fn unwrap_err(self) -> _Err {
+    if self is Result!<_Ok, _Err>::Err(err) {
+      return err;
+    }
+    panic("called 'unwrap_err' on an Ok result");
+    default: _Err;
+    return default;
+  }
+
   fn expect(self, handler: fn(_Err)) -> _Ok {
     if self is Result!<_Ok, _Err>::Err(err) {
       handler(err);

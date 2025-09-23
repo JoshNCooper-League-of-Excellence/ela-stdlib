@@ -165,6 +165,20 @@ struct ElementIter {
   element_type: *const Type,
 }
 
+impl ElementIter {
+  
+  // TODO: let's make this a default method for any iterator.
+  fn count(*self) -> u64 {
+    mut p := self.ptr;
+    mut ct: u64 = 0;
+    while (*p) {
+      p = p + self.element_type.size;
+      ct++;
+    }
+    return ct;
+  }
+}
+
 impl Iterator!<any> for ElementIter {
   // Advances the iterator to the next element in the collection.
   fn next(*mut self) -> Option!<any> {
