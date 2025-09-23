@@ -28,23 +28,6 @@ impl!<V> Iter!<V> {
     }
     return None();
   }
-
-  // advances the iterator by param(count) elements and returns
-  // a slice into that memory, only if the iterator has at least param(count) iterations or elements left.
-  fn take(*mut self, count: s64) -> Option!<[V]> {
-    if self.ptr + count > self.end {
-      return None();
-    }
-    
-    slice: [V] = .{
-      data: self.ptr,
-      length: count
-    };
-
-    self.ptr += count;
-
-    return Some(slice);
-  }
 }
 
 /* 
@@ -136,5 +119,24 @@ impl!<V, I> Iterator!<(u64, V)> for Enumerate!<V, I> {
     } else {
       return Option!<(u64, V)>::None;
     }
+  }
+}
+
+impl!<V> Iter!<V> {
+   // advances the iterator by param(count) elements and returns
+  // a slice into that memory, only if the iterator has at least param(count) iterations or elements left.
+  fn take(*mut self, count: s64) -> Option!<[V]> {
+    if self.ptr + count > self.end {
+      return None();
+    }
+    
+    slice: [V] = .{
+      data: self.ptr,
+      length: count
+    };
+
+    self.ptr += count;
+
+    return Some(slice);
   }
 }
