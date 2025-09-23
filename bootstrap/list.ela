@@ -2,6 +2,17 @@ fn panic(msg: str);
 
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
+
+    @[inline]
+    fn new(allocator: dyn Allocator) -> Self {
+      return .{
+        data: null,
+        length: 0,
+        capacity: 24,
+        allocator: allocator,
+      }
+    }
+
     @[inline]
     fn get_allocator_if_needed(*mut self) {
       if !self.allocator.has_instance() 

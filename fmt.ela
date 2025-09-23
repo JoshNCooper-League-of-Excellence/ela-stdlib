@@ -659,6 +659,17 @@ fn format_any(value: any, formatter: *mut Formatter) {
       }
     }
     formatter.writer.append("(invalid enum value)");
+  } else if value._type.is_array() {
+    formatter.writer.append("[");
+    mut first := true;
+    for element in value._type.elements(value.ptr) {
+      if !first {
+        formatter.writer.append(", ");
+      }
+      format_any(element, formatter);
+      first = false;
+    }
+    formatter.writer.append("]");
   } else {
     switch value._type {
       typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }

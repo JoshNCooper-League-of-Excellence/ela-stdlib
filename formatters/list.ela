@@ -1,33 +1,35 @@
-
 impl!<T> Format for InitList!<T> {
   fn format(*const self, formatter: *mut Formatter) {
     element_type := typeof(T);
     if formatter.options.typename {
       formatter.writer.appendf("InitList!<%>", (element_type.name,), formatter.options.unquoted());
     }
-    formatter.writer.append("[ ");
-
+    formatter.writer.append("[");
     if formatter.options.indented {
       formatter.writer.append("\n  ");
     }
 
+    mut first := true;
     for i, val in self.enumerate() {
       value : any = any.{
-        ptr: &mut self.data![i]
+        ptr: &mut self.data![i],
         _type: element_type,
       };
-      format_any(value, formatter);
-      if formatter.options.indented && i != self.length - 1 {
-        formatter.writer.append(",\n  ");
-      } else if i != self.length - 1 {
-        formatter.writer.append(", ");
+      if !first {
+        if formatter.options.indented {
+          formatter.writer.append(",\n  ");
+        } else {
+          formatter.writer.append(", ");
+        }
       }
+      format_any(value, formatter);
+      first = false;
     }
 
     if formatter.options.indented {
       formatter.writer.append("\n]");
     } else {
-      formatter.writer.append(" ]");
+      formatter.writer.append("]");
     }
   }
 }
@@ -39,29 +41,32 @@ impl!<T> Format for List!<T> {
     if formatter.options.typename {
       formatter.writer.appendf("List!<%>", (element_type.name,), formatter.options.unquoted());
     }
-    formatter.writer.append("[ ");
-
+    formatter.writer.append("[");
     if formatter.options.indented {
       formatter.writer.append("\n  ");
     }
 
+    mut first := true;
     for i, val in self.enumerate() {
       value : any = any.{
-        ptr: &mut self.data![i]
+        ptr: &mut self.data![i],
         _type: element_type,
       };
-      format_any(value, formatter);
-      if formatter.options.indented && i != self.length - 1 {
-        formatter.writer.append(",\n  ");
-      } else if i != self.length - 1 {
-        formatter.writer.append(", ");
+      if !first {
+        if formatter.options.indented {
+          formatter.writer.append(",\n  ");
+        } else {
+          formatter.writer.append(", ");
+        }
       }
+      format_any(value, formatter);
+      first = false;
     }
 
     if formatter.options.indented {
       formatter.writer.append("\n]");
     } else {
-      formatter.writer.append(" ]");
+      formatter.writer.append("]");
     }
   }
 }
@@ -70,31 +75,34 @@ impl!<T> Format for [T] {
   fn format(*const self, formatter: *mut Formatter) {
     element_type := typeof(T);
     formatter.writer.appendf("[%]", (element_type.name,), formatter.options.unquoted());
-    formatter.writer.append(" [ ");
-
+    formatter.writer.append(" [");
     if formatter.options.indented {
       formatter.writer.append("\n  ");
     }
 
+    mut first := true;
     mut i := 0;
     for val in *self {
       value : any = any.{
-        ptr: &mut self.data![i]
+        ptr: &mut self.data![i],
         _type: element_type,
       };
-      format_any(value, formatter);
-      if formatter.options.indented && i != self.length - 1 {
-        formatter.writer.append(",\n  ");
-      } else if i != self.length - 1 {
-        formatter.writer.append(", ");
+      if !first {
+        if formatter.options.indented {
+          formatter.writer.append(",\n  ");
+        } else {
+          formatter.writer.append(", ");
+        }
       }
+      format_any(value, formatter);
+      first = false;
       i++;
     }
 
     if formatter.options.indented {
       formatter.writer.append("\n]");
     } else {
-      formatter.writer.append("] ");
+      formatter.writer.append("]");
     }
   }
 }

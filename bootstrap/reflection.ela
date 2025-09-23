@@ -33,6 +33,13 @@ impl Field {
   fn get!<T>(*const self, source: *const T) -> *mut u8 {
     return source as *mut u8 + self.offset;
   }
+
+  fn as_any(*const self, source: *const u8) -> any {
+    return any.{
+      ptr: self.get!<u8>(source),
+      _type: self._type
+    };
+  }
 }
 
 impl Type {
@@ -166,7 +173,7 @@ struct ElementIter {
 }
 
 impl ElementIter {
-  
+
   // TODO: let's make this a default method for any iterator.
   fn count(*self) -> u64 {
     mut p := self.ptr;

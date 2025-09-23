@@ -23,3 +23,13 @@ impl!<_Ok, _Err> Format for Result!<_Ok, _Err> {
     }
   }
 }
+
+
+impl Format for any {
+  fn format(*const self, formatter: *mut Formatter) {
+    if formatter.options.typename {
+      formatter.writer.append("any ");
+    }
+    formatter.writer.appendf("{ type: %, ptr: % }", (self._type.name, self.ptr), formatter.options);
+  }
+}

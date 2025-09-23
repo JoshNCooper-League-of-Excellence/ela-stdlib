@@ -28,12 +28,21 @@
       return self;
     }
   }
+
   struct TrackingAllocator {
     pointers: *mut *mut void,
     length: u64,
     capacity: u64,
   }
+
   impl TrackingAllocator {
+
+    fn try_report_leaks(*self) {
+      for i in 0..self.length {
+        std::c::printf("[TrackingAllocator]: leak at index(%d), pointer(%p)"c, i, self.pointers![i]);
+      }
+    }
+
     fn push_pointer(*mut self, ptr: *mut void) {
       if self.length + 1 > self.capacity {
         if self.capacity == 0 then self.capacity = 4;
