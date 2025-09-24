@@ -1,8 +1,15 @@
 
-trait Stream!<T> {
-  fn read(*mut self) -> Option!<T>;
+trait Writer!<T> {
   fn write(*mut self, value: T);
-  fn clear(*mut self);
+  fn write_many(*mut self, values: [T]) {
+    for v in values {
+      self.write(v);
+    }
+  }
+}
+
+trait Reader!<T> {
+  fn read(*mut self) -> Option!<T>;
   fn read_many(*mut self, mut length: u32) -> List!<T> {
     mut list: List!<T>;
     list.resize(length);
@@ -15,14 +22,10 @@ trait Stream!<T> {
     }
     return list;
   }
-  fn write_many(*mut self, values: [T]) {
-    for v in values {
-      self.write(v);
-    }
-  }
-};
-
-trait BufferedStream!<T> where Self: Stream!<T> {
-  fn flush(*mut self);
 }
 
+trait Buffered!<T> where Self: Writer!<T> | Reader!<T> {
+  fn flush(*mut self);
+  fn flush_to!<TWriter>(*mut self, other: TWriter) where TWriter: Writer!<T>;
+  fn clear(*mut self);
+}

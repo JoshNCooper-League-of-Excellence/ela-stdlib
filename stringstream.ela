@@ -1,0 +1,160 @@
+
+
+struct Block {
+  data: *mut u8,
+  length: u64,
+  next: *mut Block,
+  block_size: u64,
+  allocator: dyn Allocator,
+}
+
+impl Block {
+  fn new(allocator: dyn Allocator, size: u64) -> *mut Self {
+    mut self : *mut Self =  allocator.allocate(sizeof(Block));
+    self.allocator = allocator;
+    self.data = allocator.allocate_array(sizeof(u8), size);
+    self.length = 0;
+    self.next = null;
+    self.block_size = size;
+    return self;
+  }
+}
+
+impl Destroy for Block {
+  fn destroy(*mut self, recursive: bool = true) {
+    if self.data then self.allocator.free(self.data);
+    if self.next {
+      self.next.destroy();
+      self.allocator.free(self.next);
+    }
+  }
+}
+
+struct StringStream {
+  root:       *mut Block,
+  current:    *mut Block,
+  allocator:  dyn Allocator = get_global_allocator(),
+  block_size: u64 = 8192,
+}
+
+impl Destroy for StringStream {
+  fn destroy(*mut self, recursive: bool = true) {
+    if self.root {
+      self.root.destroy();
+      self.allocator.free(self.root);
+    } 
+  }
+}
+
+impl StringStream {
+  // just here for 'clarity' xd
+  @[inline]
+  fn clear(*mut self) {
+    self.destroy();
+  }
+
+  @[inline]
+  fn length(*mut self) -> u64 {
+    if !self.root 
+      then return 0;
+    mut current := self.root;
+    mut len: u64;
+    while current {
+      len += current.length;
+      current = current.next;
+    }
+    return len;
+  }
+
+  @[inline]
+  fn get_string(*mut self, allocator: Option!<dyn Allocator> = None()) -> String {
+    length := self.length();
+    mut data: *mut u8;
+
+    if allocator is Option!<dyn Allocator>::None {
+      data = self.allocator.allocate(sizeof(u8) * length + 1);
+    } else {
+      data = allocator.unwrap().allocate(sizeof(u8) * length + 1);
+    }
+
+    data![length] = '\0'; // Null-terminate the final str
+    mut current := self.root;
+    mut offset := 0;
+    while current {
+      std::c::memcpy(data + offset, current.data, current.length);
+      offset += current.length;
+      current = current.next;
+    }
+    return .{
+      data: data,
+      length: length,
+    };
+  }
+
+  fn append!<T>(*mut self, value: T) where T: AsSlice!<u8> {
+    slice := value.as_slice();
+
+    if slice.length <= 0 then return;
+
+    if !self.root {
+      self.root = Block::new(self.allocator, self.block_size);
+      self.current = self.root;
+    }
+
+    mut slice_index := 0;
+    mut length := slice.length;
+
+    // Ignore null-terminator-only strings
+    if length == 1 && slice.data![0] == '\0' then return;
+
+    mut remaining := self.block_size - self.current.length;
+
+    while length > 0 {
+      if remaining == 0 {
+        self.current.next = Block::new(self.allocator, self.block_size);
+        self.current = self.current.next;
+        remaining = self.block_size;
+      }
+
+      mut to_copy := math::min(length, remaining);
+
+      std::c::memcpy(self.current.data + self.current.length, slice.data + slice_index, to_copy);
+      self.current.length += to_copy;
+
+      slice_index += to_copy;
+      length -= to_copy;
+      remaining -= to_copy;
+    }
+  }
+
+  // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
+  // this is helpful for doing a builder.append_then_free(some_allocating_function() (like fmt::format()));
+  // so you don't leak.
+  fn append_then_free!<T>(*mut self, mut value: T) where T: Destroy {
+    self.append(value);
+    value.destroy();
+  }
+
+  @[inline]
+  fn append_byte(*mut self, ch: u8) {
+    if !self.root {
+      self.root = Block::new(self.allocator, self.block_size);
+      self.current = self.root;
+    }
+
+    if self.current.length == self.block_size {
+      self.current.next = Block::new(self.allocator, self.block_size);
+      self.current = self.current.next;
+    }
+
+    self.current.data![self.current.length] = ch;
+    self.current.length += 1;
+  }
+
+}
+
+impl stream::Writer!<u8> for StringStream {
+  fn write(*mut self, value: u8) {
+    self.append_byte(value);
+  }
+}
