@@ -2,9 +2,19 @@
 // This will only work on POD structs & scalars!
 // there is much undefined behaviour here, anything with pointers
 // will behave very poorly.
-fn as_bytes_le!<T>(v: T) -> List!<u8> {
+fn as_bytes_le!<T>(v: T, allocator: dyn Allocator) -> List!<u8> {
   n := sizeof(T);
-  mut out := List!<u8>::with_length(n);
+  mut out := List!<u8>::with_length(n, allocator);
   std::c::memcpy(&out[0], &v, n);
   return out;
+}
+
+// returns None if too few bytes were present to create this type.
+fn from_bytes_le!<T>(bytes: [u8]) -> Option!<T> {
+  if (bytes.length < sizeof(T)) {
+    return None();
+  }
+  mut v: T;
+  memcpy(&mut v, bytes.data, sizeof(T));
+  return Some(v);
 }

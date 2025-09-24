@@ -72,9 +72,9 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
   // I don't know good names for these, so obviously suggestions are welcome
   fn coerce!<NewOkT>(self) -> NewOkT {
     if self is Result!<_Ok, _Err>::Err(err) {
-      return NewErrorT::Ok(err);
+      return NewOkT::Ok(err);
     }
-    default: NewErrorT;
+    default: NewOkT;
     return default;
   }
 }

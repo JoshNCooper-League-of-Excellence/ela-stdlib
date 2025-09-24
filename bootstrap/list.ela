@@ -81,8 +81,8 @@ fn panic(msg: str);
 
 
     @[inline]
-    fn with_length(length: u64) -> Self {
-      mut list: Self;
+    fn with_length(length: u64, allocator: dyn Allocator) -> Self {
+      mut list := List!<T>::new(allocator);
       list.initialize(length);
       return list;
     }

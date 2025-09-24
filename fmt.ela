@@ -818,7 +818,6 @@ fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   }
 }
 
-
 fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s\n"c, formatted.data);
