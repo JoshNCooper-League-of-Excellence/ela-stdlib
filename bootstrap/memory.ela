@@ -170,3 +170,14 @@ fn set_global_allocator(allocator: dyn Allocator) {
     return global_allocator;
   }
 }
+
+
+struct DefaultContext {
+  allocator: dyn Allocator,
+}
+
+impl Context for DefaultContext {
+  fn get_allocator(*self) -> dyn Allocator {
+    return get_global_allocator();
+  }
+}

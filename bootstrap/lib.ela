@@ -92,7 +92,7 @@ impl Env {
     #ifndef FREESTANDING {
       mut data : *mut str = std::c::malloc(argc * sizeof(str));
     } else {
-      #static mut data : str[48]; // This is just a hack. idk what a reasonable value to put here is.
+      #static mut data : [str; 48]; // This is just a hack. idk what a reasonable value to put here is.
     }
     
 

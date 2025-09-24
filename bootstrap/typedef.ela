@@ -35,10 +35,8 @@ trait Allocator: Destroy {
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
 }
 
-module compiler {
-  trait Context {
-    fn get_allocator(*self) -> dyn Allocator;
-  }
+trait Context {
+  fn get_allocator(*self) -> dyn Allocator;
 }
 
 // This is a string literal _type. "..." will return this _type.
