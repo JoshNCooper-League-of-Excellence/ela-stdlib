@@ -10,12 +10,16 @@ trait Writer!<T> {
 
 trait Reader!<T> {
   fn read(*mut self) -> Option!<T>;
-  fn read_many(*mut self, mut length: u32) -> List!<T> {
+
+  // Attempt to read 'length' bytes, until the end of the stream.
+  // hence 'try' because there's no guarantee that return(list.length) == param(length)
+  fn try_read_many(*mut self, mut length: u32) -> List!<T> {
     mut list: List!<T>;
     list.resize(length);
     while length > 0 {
       if self.read() is Option!<T>::Some(v) {
         list.push(v);
+        length -= 1;
       } else {
         break;
       }
@@ -24,8 +28,7 @@ trait Reader!<T> {
   }
 }
 
-trait Buffered!<T> where Self: Writer!<T> | Reader!<T> {
+trait Buffered!<T> {
   fn flush(*mut self);
-  fn flush_to!<TWriter>(*mut self, other: TWriter) where TWriter: Writer!<T>;
   fn clear(*mut self);
 }

@@ -147,6 +147,20 @@ impl File {
     return self;
   }
 
+  fn write_raw(*mut self, data: *u8, length: u64) -> u64 {
+    return fwrite(data, sizeof(u8), length, self.fd);
+  }
+
+  fn write!<Data>(*mut self, data: Data) -> u64 where Data: AsSlice!<u8> {
+    slice := data.as_slice();
+    return fwrite(slice.data, sizeof(u8), slice.length, self.fd);
+  }
+
+  fn read(*mut self, buffer: *mut u8, size: u64) -> u64 {
+    return fread(buffer, sizeof(u8), size, self.fd);
+  }
+
+
   fn flush(*mut self) {
     fflush(self.fd);
   }
@@ -326,8 +340,7 @@ impl Destroy for Directory {
   ! We should make a solid decision if we want the free functions like the ones below
   ! to be within a struct as associated functions, or if we want to keep them free functions
   ! floating in our module. I think I prefer the latter, but it's easy to change for now.
-*/
-/* 
+
   ! I just copied this from my system, we need a better way to get this.
   ! should use pathconf.
 */

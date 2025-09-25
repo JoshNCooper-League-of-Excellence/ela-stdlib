@@ -1,3 +1,8 @@
+import stringstream::{
+  StringStream,
+};
+import math;
+
 const UTF8_ERROR: u32 = 0xFFFD;
 
 #region UTF8 {
@@ -235,8 +240,11 @@ impl FormatOptions {
   }
 }
 
-struct StringBuilder;
-struct Formatter;
+struct Formatter {
+  writer: *mut StringStream,
+  indentation: u32,
+  options: FormatOptions,
+}
 
 trait Format {
   fn format(*const self, formatter: *mut Formatter);
@@ -262,169 +270,11 @@ fn new_dyn_format(value: any) -> dyn Format {
   return dynamic;
 }
 
-struct StringBuilderBlock {
-  data: *mut u8,
-  length: u64,
-  next: *mut StringBuilderBlock,
-  block_size: u64,
-  allocator: dyn Allocator,
-}
-
-impl StringBuilderBlock {
-  fn new(allocator: dyn Allocator, size: u64) -> *mut Self {
-    mut self : *mut Self =  allocator.allocate(sizeof(StringBuilderBlock));
-    self.allocator = allocator;
-    self.data = allocator.allocate_array(sizeof(u8), size);
-    self.length = 0;
-    self.next = null;
-    self.block_size = size;
-    return self;
-  }
-}
-
-impl Destroy for StringBuilderBlock {
-  fn destroy(*mut self, recursive: bool = true) {
-    if self.data then self.allocator.free(self.data);
-    if self.next {
-      self.next.destroy();
-      self.allocator.free(self.next);
-    }
-  }
-}
-
-struct StringBuilder {
-  root:       *mut StringBuilderBlock,
-  current:    *mut StringBuilderBlock,
-  allocator:  dyn Allocator = get_global_allocator(),
-  block_size: u64 = 8192,
-}
-
-impl Destroy for StringBuilder {
-  fn destroy(*mut self, recursive: bool = true) {
-    if self.root {
-      self.root.destroy();
-      self.allocator.free(self.root);
-    } 
-  }
-}
-
-struct Formatter {
-  writer: *mut StringBuilder,
-  indentation: u32,
-  options: FormatOptions,
-}
-
-fn to_string!<T>(value: T) -> String;
+fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
 fn format_any(list: any, formatter: *mut Formatter);
-fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions) -> String where Tuple: IsTuple;
+fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
 
-import math;
-
-impl StringBuilder {
-  // just here for 'clarity' xd
-  @[inline]
-  fn clear(*mut self) {
-    self.destroy();
-  }
-
-  @[inline]
-  fn length(*mut self) -> u64 {
-    if !self.root 
-      then return 0;
-    mut current := self.root;
-    mut len: u64;
-    while current {
-      len += current.length;
-      current = current.next;
-    }
-    return len;
-  }
-
-  @[inline]
-  fn get_string(*mut self, allocator: Option!<dyn Allocator> = None()) -> String {
-    length := self.length();
-    mut data: *mut u8;
-
-    if allocator is Option!<dyn Allocator>::None {
-      data = self.allocator.allocate(sizeof(u8) * length + 1);
-    } else {
-      data = allocator.unwrap().allocate(sizeof(u8) * length + 1);
-    }
-
-    data![length] = '\0'; // Null-terminate the final str
-    mut current := self.root;
-    mut offset := 0;
-    while current {
-      std::c::memcpy(data + offset, current.data, current.length);
-      offset += current.length;
-      current = current.next;
-    }
-    return .{
-      data: data,
-      length: length,
-    };
-  }
-
-  fn append!<T>(*mut self, value: T) where T: AsSlice!<u8> {
-    slice := value.as_slice();
-
-    if slice.length <= 0 then return;
-
-    if !self.root {
-      self.root = StringBuilderBlock::new(self.allocator, self.block_size);
-      self.current = self.root;
-    }
-
-    mut slice_index := 0;
-    mut length := slice.length;
-
-    // Ignore null-terminator-only strings
-    if length == 1 && slice.data![0] == '\0' then return;
-
-    mut remaining := self.block_size - self.current.length;
-
-    while length > 0 {
-      if remaining == 0 {
-        self.current.next = StringBuilderBlock::new(self.allocator, self.block_size);
-        self.current = self.current.next;
-        remaining = self.block_size;
-      }
-
-      mut to_copy := math::min(length, remaining);
-
-      std::c::memcpy(self.current.data + self.current.length, slice.data + slice_index, to_copy);
-      self.current.length += to_copy;
-
-      slice_index += to_copy;
-      length -= to_copy;
-      remaining -= to_copy;
-    }
-  }
-
-  // this is just a way to pass an allocated rvalue, and not have to store it in a variable to free after this call.
-  // this is helpful for doing a builder.append_then_free(some_allocating_function());
-  // so you don't leak.
-  fn append_then_free!<T>(*mut self, mut value: T) where T: Destroy {
-    self.append(value);
-    value.destroy();
-  }
-
-  @[inline]
-  fn append_byte(*mut self, ch: u8) {
-    if !self.root {
-      self.root = StringBuilderBlock::new(self.allocator, self.block_size);
-      self.current = self.root;
-    }
-
-    if self.current.length == self.block_size {
-      self.current.next = StringBuilderBlock::new(self.allocator, self.block_size);
-      self.current = self.current.next;
-    }
-
-    self.current.data![self.current.length] = ch;
-    self.current.length += 1;
-  }
-
+impl StringStream {
   fn appendf!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {
     mut formatted := format(fmt, values, options);
     self.append(formatted);
@@ -459,10 +309,10 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       }
     }
   } else where T: Format {
-    mut builder: StringBuilder;
+    mut sstream: StringStream;
     mut formatter := Formatter.{
       options: *FormatOptions::current(),
-      writer: &mut builder, 
+      writer: &mut sstream, 
     };
     value.format(&mut formatter);
   } else {
@@ -688,24 +538,25 @@ fn format_any(value: any, formatter: *mut Formatter) {
   }
 }
 
-fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple | Format {
+// TODO: this is unintuitive and strange. what if you wanted to emplace a \ and then a %. just not possible.
+// I think %% worked better, but whatever. we'll find a better solution; 
+// maybe just using {}, and {{ }} for escaped (the obvious modern solution)
+const FORMAT_ESCAPED_PERCENT_STRING := "\\%";
+
+fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current(), allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple | Format {
   if fmt.length == 0 then
     return .{};
 
-  mut builder: StringBuilder = .{
+  using mut sstream: StringStream = .{
     allocator: allocator,
     block_size: 8192
   };
 
   mut formatter: Formatter = .{
     indentation: 0,
-    writer: &mut builder,
+    writer: &mut sstream,
     options: options,
   };
-
-  defer {
-    formatter.writer.destroy();
-  }
 
   where tuple: Format {
     mut value_written := false;
@@ -730,8 +581,6 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
       fmt.data++;
     }
   } else {
-
-
     value_index := 0;
 
     fields := typeof(Tuple).fields;
@@ -769,27 +618,24 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions, allocator: dyn
   return formatter.writer.get_string(Some(allocator));
 }
 
-/* 
-  Quick format. avoid passing settings.
-*/
+// Totally obsolete. just use format. it has defaults. 
 fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
   return format(fmt, tuple, *FormatOptions::current(), get_global_allocator());
 }
 
 fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
-    mut builder: StringBuilder;
+    using mut sstream: StringStream;
+
     mut formatter: Formatter = .{
-      writer: &mut builder,
+      writer: &mut sstream,
       options: options,
     };
+
     message.format(&mut formatter);
-    formatted := builder.get_string();
-    defer {
-      formatted.destroy();
-      builder.destroy();
-    }
+    using formatted := sstream.get_string();
     std::c::printf("%s"c, formatted.data);
+    
   } else {
     mut formatted := format("%", (message,), options);
     std::c::printf("%s"c, formatted.data);
@@ -799,16 +645,16 @@ fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
 
 fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
-    mut builder: StringBuilder;
+    mut sstream: StringStream;
     mut formatter: Formatter = .{
-      writer: &mut builder,
+      writer: &mut sstream,
       options: options,
     };
     message.format(&mut formatter);
-    formatted := builder.get_string();
+    formatted := sstream.get_string();
     defer {
       formatted.destroy();
-      builder.destroy();
+      sstream.destroy();
     }
     std::c::printf("%s\n"c, formatted.data);
   } else {

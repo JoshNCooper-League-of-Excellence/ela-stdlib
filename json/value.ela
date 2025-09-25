@@ -1,6 +1,6 @@
 import fmt::{
   FormatOptions,
-  StringBuilder,
+  StringStream,
   Format,
 };
 
@@ -76,7 +76,7 @@ impl Index!<JsonValue> for JsonValue {
 }
 
 struct Writer {
-  builder: StringBuilder,
+  builder: StringStream,
   options: FormatOptions,
   indentation: (u16 /* depth */, u8 /* width in spaces */),
 }

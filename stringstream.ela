@@ -1,4 +1,4 @@
-
+import stream;
 
 struct Block {
   data: *mut u8,

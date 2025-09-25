@@ -209,7 +209,7 @@ impl Format for SourceLocation {
 }
 
 fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
-  mut builder: StringBuilder;
+  mut builder: StringStream;
   mut formatter: Formatter = .{
     writer: &mut builder,
   };
@@ -327,7 +327,7 @@ impl Format for Token {
 
 impl Token {
   fn to_string(self) -> String {
-    mut builder: StringBuilder;
+    mut builder: StringStream;
     mut formatter: Formatter = .{
       writer: &mut builder,
       options: FormatOptions::default()
@@ -466,7 +466,7 @@ impl Lexer {
   }
 
   fn get_token(*mut self, state: *mut State) {
-    mut token_builder: StringBuilder;
+    mut token_builder: StringStream;
     defer token_builder.destroy();
 
     while state.pos < state.input.length {

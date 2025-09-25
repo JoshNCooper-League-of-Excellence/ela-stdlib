@@ -37,9 +37,7 @@
 // char utils
 #include "char.ela";
 
-
 type Panic_Handler :: fn(str);
-
 
 #ifndef FREESTANDING {
   mut panic_handler: Panic_Handler = fn(msg: str) {
@@ -62,6 +60,7 @@ fn panic(msg: str) {
 struct Env {
   args_slice: [str],
 };
+
 impl Env {
   fn current() -> *mut Self {
     #static mut self: Self;
