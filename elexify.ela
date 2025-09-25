@@ -175,6 +175,7 @@ import math::{
 import map::*;
 import fmt::*;
 import fs::*;
+import stringstream::*;
 
 const TOKEN_EOF        : u32 = -1;
 const TOKEN_IDENTIFIER : u32 = -2;
