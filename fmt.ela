@@ -271,8 +271,8 @@ fn new_dyn_format(value: any) -> dyn Format {
   return dynamic;
 }
 
-fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
 fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
+fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
 fn format_any(list: any, formatter: *mut Formatter);
 
 impl StringStream {
