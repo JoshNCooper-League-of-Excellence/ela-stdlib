@@ -1,4 +1,3 @@
-import fmt;
 import fs;
 import stream;
 
@@ -49,13 +48,13 @@ impl stream::Writer!<u8> for StreamWriter {
   }
 }
 
+
 impl Destroy for StreamWriter {
   fn destroy(*mut self, recursive: bool = false) {
     self.flush();
     self.file.destroy(recursive);
   }
 }
-
 
 struct StreamReader {
   file: fs::File,
@@ -126,56 +125,14 @@ impl Destroy for StreamReader {
   }
 }
 
+import fmt::{
+  FormatOptions,
+  format,
+};
 
-fn print!<T>(message: T, options: fmt::FormatOptions = *FormatOptions::current()) {
-  where T: fmt::Format {
-    using mut sstream: StringStream;
-
-    mut formatter: fmt::Formatter = .{
-      writer: &mut sstream,
-      options: options,
-    };
-
-    message.format(&mut formatter);
-    using formatted := sstream.get_string();
-    std::c::printf("%s"c, formatted.data);
-    
-  } else {
-    mut formatted := format("%", (message,), options);
-    std::c::printf("%s"c, formatted.data);
-    formatted.destroy();
+impl StreamWriter {
+  fn writef!<TupleT>(*mut self, fmt: str, tuple: TupleT, options: fmt::FormatOptions, allocator: dyn Allocator) {
+    using formatted_string := fmt::format(fmt, tuple, options, allocator);
+    self.write_many(formatted_string.as_slice());
   }
-}
-
-fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
-  where T: Format {
-    mut sstream: StringStream;
-    mut formatter: Formatter = .{
-      writer: &mut sstream,
-      options: options,
-    };
-    message.format(&mut formatter);
-    formatted := sstream.get_string();
-    defer {
-      formatted.destroy();
-      sstream.destroy();
-    }
-    std::c::printf("%s\n"c, formatted.data);
-  } else {
-    mut formatted := format("%", (message,), options);
-    std::c::printf("%s\n"c, formatted.data);
-    formatted.destroy();
-  }
-}
-
-fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
-  mut formatted := format(fmt, tuple, options);
-  std::c::printf("%s\n"c, formatted.data);
-  formatted.destroy();
-}
-
-fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
-  mut formatted := format(fmt, tuple, options);
-  std::c::printf("%s"c, formatted.data);
-  formatted.destroy();
 }

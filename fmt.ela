@@ -1,6 +1,7 @@
 import stringstream::{
   StringStream,
 };
+
 import math;
 
 const UTF8_ERROR: u32 = 0xFFFD;
@@ -270,9 +271,9 @@ fn new_dyn_format(value: any) -> dyn Format {
   return dynamic;
 }
 
+fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
 fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
 fn format_any(list: any, formatter: *mut Formatter);
-fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
 
 impl StringStream {
   fn appendf!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {
@@ -635,7 +636,7 @@ fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
     message.format(&mut formatter);
     using formatted := sstream.get_string();
     std::c::printf("%s"c, formatted.data);
-    
+
   } else {
     mut formatted := format("%", (message,), options);
     std::c::printf("%s"c, formatted.data);
