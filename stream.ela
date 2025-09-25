@@ -1,3 +1,10 @@
+// forward declare format symbols.
+// #global just exports this module to the global module/namespace.
+#global module fmt {
+  struct FormatOptions;
+  fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
+  fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;  
+};
 
 trait Writer!<T> {
   fn write(*mut self, value: T);
@@ -5,6 +12,15 @@ trait Writer!<T> {
     for v in values {
       self.write(v);
     }
+  }
+  // ! I have no idea how this is even getting FormatOptions and format!<T>, but it seems to work?
+  // ! There are a ton of namespacing and module bugs.
+
+  // ! Right now, whatever is importin gthis and calling it must define fmt and import these symbols.
+  // ! it doesn't error until called without those symbols, which is even weirder.
+  fn writef!<TupleT>(*mut self, fmt: str, tuple: TupleT, options: FormatOptions, allocator: dyn Allocator) {
+    using formatted_string := format(fmt, tuple, options, allocator);
+    self.write_many(formatted_string.as_slice());
   }
 }
 

@@ -1,4 +1,5 @@
 import fs;
+import fmt;
 import stream;
 
 const FILE_STREAM_BUFFER_LENGTH: u16 = 1024;
@@ -122,17 +123,5 @@ impl Destroy for StreamReader {
     return StreamWriter::from(fs::File.{
       fd: stdout
     });
-  }
-}
-
-import fmt::{
-  FormatOptions,
-  format,
-};
-
-impl StreamWriter {
-  fn writef!<TupleT>(*mut self, fmt: str, tuple: TupleT, options: fmt::FormatOptions, allocator: dyn Allocator) {
-    using formatted_string := fmt::format(fmt, tuple, options, allocator);
-    self.write_many(formatted_string.as_slice());
   }
 }
