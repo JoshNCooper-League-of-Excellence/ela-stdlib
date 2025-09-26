@@ -122,36 +122,19 @@ impl AsSlice!<u8> for u32 {
   }
 }
 
-#ifndef FREESTANDING {
-  /* 
-    a way to allocate while also providing an initialize value.
-    useful for doing things like 
-
-    v: Vec3* = new(.{
-      x: 0.0,
-      y: 250.0,
-      z: 3000.0
-    });
-
-    instead of 
-
-    v: Vec3* = malloc(sizeof(Vec3));
-    *v = .{
-      x: 0.0,
-      y: 250.0,
-      z: 3000.0
-    };
-  */
-  fn new!<T>(initial_value: T) -> *mut T {
-    ptr: *mut T = get_global_allocator().allocate(sizeof(T));
-    *ptr = initial_value;
-    return ptr;
-  }
+fn new!<T>(initial_value: T) -> *mut T {
+  ptr: *mut T = get_global_allocator().allocate(sizeof(T));
+  *ptr = initial_value;
+  return ptr;
 }
 
-
 fn default!<T>() -> T {
-  return .{};
+  where T: IsPointer {
+    return null;
+  } else {
+    _value: T;
+    return _value;
+  }
 }
 
 // COMPILER IMPLEMENTED TRAITS FOR PATTERN MATCHING TYPES

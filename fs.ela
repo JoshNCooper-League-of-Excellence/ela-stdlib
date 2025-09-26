@@ -1,5 +1,3 @@
-// import fmt::*;
-
 const EOF := -1;
 
 struct _IO_FILE;
