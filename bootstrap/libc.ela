@@ -112,99 +112,96 @@
     }
 
     @[inline]
-    fn printf(format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vprintf(format.data, list);
-      va_end(list);
-      return result;
-    }
-
-    @[inline]
-    fn fprintf(stream: *mut c::FILE, format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vfprintf(stream, format.data, list);
-      va_end(list);
-      return result;
-    }
-
-    @[inline]
-    fn dprintf(fd: s32, format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vdprintf(fd, format.data, list);
-      va_end(list);
-      return result;
-    }
-
-    @[inline]
-    fn sprintf(buffer: *mut u8, format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vsprintf(buffer, format.data, list);
-      va_end(list);
-      return result;
-    }
-
-    @[inline]
-    fn asprintf(format: str, allocator: dyn Allocator, ...) -> String {
-      list: va_list;
-      va_start(list);
-
-      // clone it since we make 2 calls.
-      list_copy: va_list;
-      va_copy(list_copy, list);
-
-      defer {
-        va_end(list);
-        va_end(list_copy);
+    fn printf!<T>(format: str, arg: T) -> s32 {
+      where T: IsTuple {
+        return c::printf(format.data, ...arg);
+      } else {
+        return c::printf(format.data, arg);
       }
+    }
+    
+    @[inline]
+    fn fprintf!<T>(stream: *mut c::FILE, format: str, arg: T) -> s32 {
+      where T: IsTuple {
+        return c::fprintf(stream, format.data, ...arg);
+      } else {
+        return c::fprintf(stream, format.data, arg);
+      }
+    }
 
-      length := c::vsnprintf(null, 0, format.data, list);
+    @[inline]
+    fn dprintf!<T>(fd: s32, format: str, arg: T) -> s32 {
+      where T: IsTuple {
+        return c::dprintf(fd, format.data, ...arg);
+      } else {
+        return c::dprintf(fd, format.data, arg);
+      }
+    }
+
+    @[inline]
+    fn sprintf!<T>(buffer: *mut u8, format: str, arg: T) -> s32 {
+      where T: IsTuple {
+        return c::sprintf(buffer, format.data, ...arg);
+      } else {
+        return c::sprintf(buffer, format.data, arg);
+      }
+    }
+
+    @[inline]
+    fn asprintf!<T>(format: str, allocator: dyn Allocator, arg: T) -> String {
+      where T: IsTuple {
+        length := c::snprintf(null, 0, format.data, ...arg);
+      } else {
+        length := c::snprintf(null, 0, format.data, arg);
+      }
       if length < 0 {
         return .{};
       }
 
       buffer: *mut u8 = allocator.allocate((length + 1) * sizeof(u8));
+      
       if buffer == null {
         return .{};
       }
 
-      c::vsnprintf(buffer, length + 1, format.data, list_copy);
+      where T: IsTuple {
+        c::snprintf(buffer, length + 1, format.data, arg);
+      } else {
+        c::snprintf(buffer, length + 1, format.data, ...arg);
+      }
 
       return String.{
         data: buffer,
-        length: length
+        length: length,
         allocator: allocator,
       };
     }
 
     @[inline]
-    fn scanf(format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vscanf(format.data, list);
-      va_end(list);
-      return result;
+    fn scanf!<T>(format: str, arg: T) -> s32 {
+      where T: IsTuple {
+      c::scanf(format.data, arg);
+      } else {
+      return c::scanf(format.data, ...arg);
+      }
     }
 
     @[inline]
-    fn fscanf(stream: *mut c::FILE, format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vfscanf(stream, format.data, list);
-      va_end(list);
-      return result;
+    fn fscanf!<T>(stream: *mut c::FILE, format: str, arg: T) -> s32 {
+      where T: IsTuple {
+      c::fscanf(stream, format.data, arg);
+      } else {
+      return c::fscanf(stream, format.data, ...arg);
+      }
     }
 
     @[inline]
-    fn sscanf(buffer: str, format: str, ...) -> s32 {
-      list: va_list;
-      va_start(list);
-      result := c::vsscanf(buffer.data, format.data, list);
-      va_end(list);
-      return result;
+    fn sscanf!<T>(buffer: str, format: str, arg: T) -> s32 {
+      where T: IsTuple {
+      c::sscanf(buffer.data, format.data, arg);
+      } else {
+      return c::sscanf(buffer.data, format.data, ...arg);
+      }
     }
   }
 }

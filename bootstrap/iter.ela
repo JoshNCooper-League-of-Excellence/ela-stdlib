@@ -24,9 +24,9 @@ struct Iter!<V> {
 impl!<V> Iter!<V> {
   fn peek(*const self) -> Option!<V> {
     if self.ptr != self.end {
-      return Some(*self.ptr);
+      return Option!<V>::Some(*self.ptr);
     }
-    return None();
+    return Option!<V>::None;
   }
 }
 
@@ -127,7 +127,7 @@ impl!<V> Iter!<V> {
   // a slice into that memory, only if the iterator has at least param(count) iterations or elements left.
   fn take(*mut self, count: s64) -> Option!<[V]> {
     if self.ptr + count > self.end {
-      return None();
+      return Option!<[V]>::None;
     }
     
     slice: [V] = .{
@@ -137,6 +137,6 @@ impl!<V> Iter!<V> {
 
     self.ptr += count;
 
-    return Some(slice);
+    return Option!<[V]>::Some(slice);
   }
 }
