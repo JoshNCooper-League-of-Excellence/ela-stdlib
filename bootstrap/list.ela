@@ -316,9 +316,9 @@ impl!<T> List!<T> {
   @[inline]
   fn back_mut(*mut self) -> Option!<*mut T> {
     if self.length > 0 {
-      return Some(&mut self.data![self.length-1]);
+      return Option!<*mut T>::Some(&mut self.data![self.length-1]);
     }
-    return None();
+    return Option!<*mut T>::None;
   }
   @[inline]
   fn front_mut(*mut self) -> Option!<*mut T> {
@@ -389,6 +389,7 @@ impl!<T> List!<T> {
 
       mut swapped: bool;
       mut n := self.length;
+
       while {
         mut swapped := false;
         for i in 0..(n - 1) {
@@ -402,7 +403,9 @@ impl!<T> List!<T> {
             swapped = true;
           }
         }
-        if !swapped then break;
+        if !swapped {
+          break;
+        } 
         --n;
       }
     }
@@ -412,7 +415,7 @@ impl!<T> List!<T> {
       Check if the list contains an item. This uses the `a == b` operator, so this is only valid
       on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
 
-      Right now we don't have a good way to check if a _type is a pointer with an trait and a where constraint, 
+      Right now we don't have a good way to check if a _type is a pointer with an trait and a where constraint,
       so we can't really put a _type constraint on this function yet. in the future!
     */
     @[inline]

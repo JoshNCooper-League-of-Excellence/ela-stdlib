@@ -1,0 +1,23 @@
+type Panic_Handler :: fn(str, *mut void);
+
+mut panic_user_arg: *mut void;
+
+#ifndef FREESTANDING {
+  mut panic_handler: Panic_Handler = fn(msg: str, arg_ignored: *mut void) {
+    std::c::printf("panic(): %s\n"c, msg.data);
+    std::c::exit(1);
+  };
+} else {
+  mut panic_handler: Panic_Handler = null;
+}
+
+fn set_panic_handler(handler: Panic_Handler) -> Panic_Handler {
+  old := panic_handler;
+  panic_handler = handler;
+  return old;
+}
+
+@[no_return]
+fn panic(msg: str) {
+  panic_handler(msg, panic_user_arg);
+}

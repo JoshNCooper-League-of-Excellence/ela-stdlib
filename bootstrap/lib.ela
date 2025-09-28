@@ -36,25 +36,12 @@
 #include "hash.ela";
 // char utils
 #include "char.ela";
+// panic stuff
+#include "panic.ela";
 
-type Panic_Handler :: fn(str);
-
-#ifndef FREESTANDING {
-  mut panic_handler: Panic_Handler = fn(msg: str) {
-    std::c::printf("panic(): %s\n"c, msg.data);
-    std::c::exit(1);
-  };
-} else {
-  mut panic_handler: Panic_Handler;
-}
-
-fn set_panic_handler(handler: Panic_Handler) {
-  panic_handler = handler;
-}
-
-@[no_return]
-fn panic(msg: str) {
-  panic_handler(msg);
+// default testing apparatus.
+#ifdef TESTING {  
+  import testing;
 }
 
 struct Env {

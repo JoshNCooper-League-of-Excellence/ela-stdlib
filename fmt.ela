@@ -407,10 +407,7 @@ fn format_struct(value: any, formatter: *mut Formatter) {
     formatter.writer.append(field.name);
     formatter.writer.append(": ");
 
-    format_any(any.{
-      _type: field._type,
-      ptr: field.get(value.ptr),
-    }, formatter);
+    format_any(field.as_any(value.ptr), formatter);
 
     if idx != value._type.fields.length - 1 {
       formatter.writer.append(",");
