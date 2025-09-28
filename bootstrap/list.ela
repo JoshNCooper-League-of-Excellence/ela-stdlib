@@ -294,12 +294,6 @@ impl!<T> List!<T> {
 
 impl!<T> List!<T> {
   @[inline]
-  fn new(allocator: dyn Allocator) -> List!<T> {
-    return .{ 
-      allocator: allocator,
-    };
-  }
-  @[inline]
   fn back(self) -> Option!<T> {
     if self.length > 0 {
       return Some(self.data![self.length-1]);
