@@ -5,7 +5,7 @@ import assertion::*;
 
 #test fn test_serialize_scalars() {
   assert_eq(
-    serialize(0.0).unwrap().number, 
+    *serialize(0.0).unwrap().as_number().unwrap(), 
     0.0 as f64, 
     "serialize(0) != 0.000"
   );

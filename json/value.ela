@@ -249,36 +249,36 @@ impl JsonValue {
     return false;
   }
 
-  fn as_number(*mut self) -> Option!<f64> {
-    if self is JsonValue::Number(num) {
+  fn as_number(*mut self) -> Option!<*mut f64> {
+    if self is JsonValue::Number(&mut num) {
       return Some(num);
     }
     return None();
   }
 
-  fn as_string(*mut self) -> Option!<String> {
-    if self is JsonValue::String(s) {
+  fn as_string(*mut self) -> Option!<*mut String> {
+    if self is JsonValue::String(&mut s) {
       return Some(s);
     }
     return None();
   }
 
-  fn as_object(*mut self) -> Option!<Map!<String, *mut JsonValue>> {
-    if self is JsonValue::Object(obj) {
+  fn as_object(*mut self) -> Option!<*mut Map!<String, *mut JsonValue>> {
+    if self is JsonValue::Object(&mut obj) {
       return Some(obj);
     }
     return None();
   }
 
-  fn as_array(*mut self) -> Option!<List!<*mut JsonValue>> {
-    if self is JsonValue::Array(arr) {
+  fn as_array(*mut self) -> Option!<*mut List!<*mut JsonValue>> {
+    if self is JsonValue::Array(&mut arr) {
       return Some(arr);
     }
     return None();
   }
 
-  fn as_boolean(*mut self) -> Option!<bool> {
-    if self is JsonValue::Bool(b) {
+  fn as_boolean(*mut self) -> Option!<*mut bool> {
+    if self is JsonValue::Bool(&mut b) {
       return Some(b);
     }
     return None();

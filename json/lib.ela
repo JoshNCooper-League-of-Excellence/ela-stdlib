@@ -6,14 +6,13 @@
 
 impl Serializable for String {
   fn serialize(*const self) -> JsonResult {
-    mut jstring := JsonValue::new();
-    jstring._type = JsonValueType::String;
-    jstring.string = self.clone();
-    return JsonResult::Ok(jstring);
+    return JsonResult::Ok(new(JsonValue::String(self.clone())));
   }
 
   fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
-    *self = object.string.clone();
+    if self is JsonValue::String(v) {
+      return Some(v);
+    }
     return None();
   }
 }
@@ -24,15 +23,15 @@ impl!<T> Serializable for List!<T> {
   }
 
   fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
-    if object._type != JsonValueType::Array then return Some(String::from("invalid json _type, expected array."));
-    self.initialize(object.array.length);
-    for i in 0..object.array.length {
-      err := deserialize(object.array[i], &mut (*self)[i]);
+    array := object.as_array().unwrap();
+    self.initialize(array.length);
+    for i in 0..array.length {
+      err := deserialize((*array)[i], &mut (*self)[i]);
       if err.is_some() {
         return err;
       }
     }
-    return .{};
+    return None();
   }
 }
 

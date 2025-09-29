@@ -137,15 +137,14 @@ fn serialize!<T>(mut object: T) -> JsonResult {
 }
 
 fn serialize_iterator!<It, V>(obj: It) -> JsonResult where It: Iterator!<V> {
-  value : *mut JsonValue = JsonValue::new();
-  value._type = JsonValue::Array;
+  mut array: List!<*mut JsonValue>;
   for v in obj {
     result := serialize(v);
     if result.is_err() {
       return result.propagate();
     }
-    value.array.push(result.unwrap());
+    array.push(result.unwrap());
   }
-  return JsonResult::Ok(value);
+  return JsonResult::Ok(new(JsonValue::Array(array)));
 }
 

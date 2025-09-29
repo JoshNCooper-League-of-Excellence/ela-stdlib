@@ -1,7 +1,7 @@
 fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String>;
 
 fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
-  for key, value in value.object {
+  for key, value in *value.as_object().unwrap() {
     struct_field := object._type.get_field(key);
 
     if !struct_field {
@@ -15,13 +15,18 @@ fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
 
     result := deserialize_any(value, any_value);
 
-    if result.is_some() => result;
+    if result.is_some() {
+      return result; // TODO stop using option as an error type its confusing
+    } 
   }
   return None();
 }
 
 fn deserialize_scalar(value: *mut JsonValue, object: any) -> Option!<String> {
-  if (!object._type.has_no_extension()) => Some(String::from("Unable to deserialize into pointer _type with 'deserialize_scalar'"));
+  if (!object._type.has_no_extension()) { 
+    return Some(String::from("Unable to deserialize into pointer type with 'deserialize_scalar'"));
+  }
+
   if object._type.is_bool() {
     *(object.ptr as *mut bool) = value.as_boolean().unwrap();
   } else if (object._type.is_float()) {
@@ -85,8 +90,8 @@ fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String> {
     return None();
   } else if object._type == typeof(str) {
     mut string := value.as_string().unwrap();
-    string = string.clone();
-    *(object.ptr as *mut str) = string.as_str();
+    cloned := string.clone();
+    *(object.ptr as *mut str) = cloned.as_str();
     return None();
   }
   return deserialize_scalar(value, object);
