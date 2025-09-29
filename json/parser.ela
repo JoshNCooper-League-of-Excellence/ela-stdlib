@@ -14,7 +14,7 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
   if token_result.is_err()
     then return token_result.propagate();
 
-  value := new(JsonValue::Null);
+  value := new(JsonValue::Null());
 
   mut token := token_result.unwrap();
 

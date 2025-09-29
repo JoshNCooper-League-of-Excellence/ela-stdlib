@@ -36,7 +36,7 @@ fn new_dyn_serializable(value: any) -> dyn Serializable {
 }
 
 fn serialize_scalar(object: any) -> JsonResult {
-  mut val := new(JsonValue::Null)
+  mut val: *mut JsonValue = new(JsonValue::Null())
   if object._type.is_float() {
     if object._type.size == 8 {
       *val = JsonValue::Number(*(object.ptr as *const f64));

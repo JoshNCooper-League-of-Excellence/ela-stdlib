@@ -10,8 +10,8 @@ impl Serializable for String {
   }
 
   fn deserialize(*mut self, object: *mut JsonValue) -> Option!<String> {
-    if self is JsonValue::String(v) {
-      return Some(v);
+    if object is JsonValue::String(v) {
+      *self = v;
     }
     return None();
   }
