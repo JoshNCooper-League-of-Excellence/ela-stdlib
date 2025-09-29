@@ -142,14 +142,14 @@ impl Window {
     mut self: Self;
     
     if !glfwInit() {
-      std::printf("Failed to initialize glfw\n");
+      std::puts("Failed to initialize glfw\n");
       return self;
     }
     
     self.handle = glfwCreateWindow(width, height, title.data, null, null);
     
     if self.handle == null {
-      std::printf("Failed to create window\n");
+      std::puts("Failed to create window\n");
       glfwTerminate();
       return self;
     }
@@ -157,7 +157,7 @@ impl Window {
     glfwMakeContextCurrent(self.handle);
     
     if glewInit() != 0 {
-      std::printf("Failed to initialize glew\n");
+      std::puts("Failed to initialize glew\n");
       glfwTerminate();
       return self;
     }

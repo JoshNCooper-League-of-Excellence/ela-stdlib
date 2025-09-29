@@ -119,6 +119,12 @@
         return c::printf(format.data, arg);
       }
     }
+
+    @[inline]
+    fn puts!<MsgT>(message: MsgT) where MsgT: AsSlice!<u8> {
+      ptr, _ := message.as_slice();
+      std::c::puts(message);
+    }
     
     @[inline]
     fn fprintf!<T>(stream: *mut c::FILE, format: str, arg: T) -> s32 {

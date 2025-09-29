@@ -2,7 +2,6 @@ fn panic(msg: str);
 
 #ifndef FREESTANDING {
   impl!<T> List!<T> {
-
     @[inline]
     fn new(allocator: dyn Allocator) -> Self {
       return .{
