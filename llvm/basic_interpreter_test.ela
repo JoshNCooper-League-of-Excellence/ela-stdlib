@@ -1,5 +1,5 @@
 import fmt::*;
-import llvm::*;
+import lib::*;
 
 fn main() {
   context: LLVMContextRef = LLVMContextCreate();

@@ -35,5 +35,4 @@ enum LLVMCodeModel {
 
 #include "llvm.ela";
 
-
 fn LLVMInitializeBasicToolkit() {}
