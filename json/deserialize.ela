@@ -28,7 +28,7 @@ fn deserialize_scalar(value: *mut JsonValue, object: any) -> Option!<String> {
   }
 
   if object._type.is_bool() {
-    *(object.ptr as *mut bool) = value.as_boolean().unwrap();
+    *(object.ptr as *mut bool) = value.as_bool().unwrap();
   } else if (object._type.is_float()) {
     if (object._type.size == 8) {
       *(object.ptr as *mut f64) = value.as_number().unwrap();

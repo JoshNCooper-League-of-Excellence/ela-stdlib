@@ -277,7 +277,7 @@ impl JsonValue {
     return None();
   }
 
-  fn as_boolean(*mut self) -> Option!<*mut bool> {
+  fn as_bool(*mut self) -> Option!<*mut bool> {
     if self is JsonValue::Bool(&mut b) {
       return Some(b);
     }

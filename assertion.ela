@@ -7,6 +7,20 @@ fn assert(condition: bool, message: str = "assertion failed") {
   }
 }
 
+fn assert_eq_f32(a: f32, b: f32, message: str = "assertion failed") {
+  if (a - b) > f32::epsilon() {
+    fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+    std::c::exit(1);
+  }
+}
+
+fn assert_eq_f64(a: f64, b: f64, message: str = "assertion failed") {
+  if (a - b) > f64::epsilon() {
+    fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+    std::c::exit(1);
+  }
+}
+
 fn assert_eq!<T>(a: T, b: T, message: str = "assertion failed") {
   if a != b {
     fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
