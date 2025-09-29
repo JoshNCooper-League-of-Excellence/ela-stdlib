@@ -303,6 +303,17 @@ impl String {
       length: range.end - range.begin,
     }
   }
+
+  fn eq_str(self, s: str) -> bool {
+    return self.as_str() == s;
+  }
+}
+
+// This has to be here because it depends on a function above
+impl str {
+  fn eq_string(self, s: String) -> bool {
+    return self == s.as_str();
+  }
 }
 
 impl PartialEq!<String> for String {

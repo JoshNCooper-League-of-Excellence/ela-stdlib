@@ -1,6 +1,12 @@
 import fmt::*;
 import json::*;
 
-fn main() {
+import assertion::*;
 
+#test fn test_serialize_scalars() {
+  assert_eq(
+    serialize(0.0).unwrap().number, 
+    0.0 as f64, 
+    "serialize(0) != 0.000"
+  );
 }

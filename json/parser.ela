@@ -14,17 +14,13 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
   if token_result.is_err()
     then return token_result.propagate();
 
-  value : *mut JsonValue = new(JsonValue.{
-    _type: JsonValueType::Invalid,
-  });
+  value := new(JsonValue::Null);
 
   mut token := token_result.unwrap();
 
   switch token._type {
     TokenType::LBracket: {
-      value._type = JsonValueType::Array;
-      value.array = .{};
-
+      *value = JsonValue::Array(.{});
       token = lexer.peek();
 
       if token._type == TokenType::RBracket {
@@ -34,23 +30,27 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
 
       while token._type != TokenType::RBracket {
         value_result := parse(lexer);
-        if value_result.is_err()
-          then return value_result.propagate();
 
-        value.array.push(value_result.unwrap());
+        if value_result.is_err() {
+          return value_result.propagate();
+        }
+
+        value.as_array().unwrap().push(value_result.unwrap());
 
         token_result = lexer.expect_types(.[
           TokenType::RBracket, 
           TokenType::Comma
         ]);
-        if token_result.is_err()
-          then return token_result.propagate();
+
+        if token_result.is_err() {
+          return token_result.propagate();
+        }
+
         token = token_result.unwrap();
       }
     }
     TokenType::LCurly: {
-      value._type = JsonValueType::Object;
-      value.object = .{};
+      *value = JsonValue::Object(.{});
 
       if lexer.peek()._type == TokenType::RCurly {
         lexer.eat();
@@ -58,32 +58,37 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
       }
 
       while token._type != TokenType::RCurly {
-        
         token_result = lexer.expect_type(TokenType::String);
-        if token_result.is_err() 
-          then return token_result.propagate();
+
+        if token_result.is_err()  {
+          return token_result.propagate();
+        }
         
         key_token := token_result.unwrap();
-
         token_result = lexer.expect_type(TokenType::Colon);
-        if token_result.is_err() 
-          then return token_result.propagate();
+
+        if token_result.is_err() {
+          return token_result.propagate();
+        }
 
         value_result := parse(lexer);
-        if value_result.is_err() 
-          then return value_result.propagate();
+
+        if value_result.is_err() {
+          return value_result.propagate();
+        }
         
         val := value_result.unwrap();
 
-        value.object.insert(key_token.value, val);
+        value.as_object().unwrap().insert(key_token.value, val);
 
         token_result = lexer.expect_types(.[
           TokenType::RCurly, 
           TokenType::Comma
         ]);
 
-        if token_result.is_err() 
-          then return token_result.propagate();
+        if token_result.is_err() {
+          return token_result.propagate();
+        }
 
         token = token_result.unwrap();
       }
@@ -91,19 +96,13 @@ fn parse(lexer: *mut JsonLexer) -> JsonResult {
   }
   
   if token._type == TokenType::Number {
-    value._type = JsonValueType::Number;
-    value.number = std::c::atof(token.value.data);
+    *value = JsonValue::Number(std::c::atof(token.value.data));
   } else if token._type == TokenType::String {
-    value._type = JsonValueType::String;
-    value.string = token.value;
+    *value = JsonValue::String(token.value);
   } else if token._type == TokenType::True {
-    value._type = JsonValueType::Boolean;
-    value.boolean = true;
+    *value = JsonValue::Bool(true);
   } else if token._type == TokenType::False {
-    value._type = JsonValueType::Boolean;
-    value.boolean = false;
-  } else if token._type == TokenType::Null {
-    value._type = JsonValueType::Null;
+    *value = JsonValue::Bool(false);
   }
 
   return JsonResult::Ok(value);
@@ -113,7 +112,7 @@ fn parse_file(file: str) -> JsonResult {
   result := File::read_all(file);
 
   if result is Result!<String, String>::Err(err) {
-    return JsonResult::Err(err));
+    return JsonResult::Err(err);
   }
 
   mut lexer := JsonLexer::create(file, result.unwrap());
