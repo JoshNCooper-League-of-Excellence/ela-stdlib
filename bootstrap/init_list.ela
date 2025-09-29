@@ -30,3 +30,12 @@ impl!<T> Enumerable!<T> for InitList!<T> {
     };
   }
 }
+
+impl!<T> AsSlice!<T> for InitList!<T> {
+  fn as_slice(self) -> [T] {
+    return .{
+      data: self.data,
+      length: self.length,
+    }
+  }
+}

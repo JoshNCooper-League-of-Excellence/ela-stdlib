@@ -107,6 +107,16 @@ impl Env {
     }
   }
   
+
+  fn args_string() -> String {
+    slice := Env::current().args_slice;
+    mut out: String;
+    for string in slice {
+      out.append(string);
+    }
+    return out;
+  }
+
 }
 
 impl AsSlice!<u8> for u32 {

@@ -177,13 +177,28 @@ impl StringUtils for String {}
 
     fn split!<SeperatorT>(self, seperator: SeperatorT) -> List!<String> {
       mut out: List!<String>;
-      views := self.split_view(seperator);
+      using views := self.split_view(seperator);
       for v in views {
         out.push(String::from(v));
       }
       return out;
     }
 
+    fn join!<SepT>(strings: [String], separator: SepT) -> String 
+      where SepT: AsSlice!<u8> 
+    {
+      sep := separator.as_slice();
+      mut result: String;
+      for i in 0..strings.length {
+        result.append(strings[i]);
+        if i + 1 < strings.length {
+          result.append(sep);
+        }
+      }
+      return result;
+    }
+
+    // Split view is kind of a misnomer, we still allocate in this function.
     fn split_view!<SeperatorT>(self, seperator: SeperatorT) -> List!<[u8]> {
       mut result: List!<[u8]>;
       mut start: s32 = 0;

@@ -17,6 +17,21 @@ impl str {
       length: length as u64
     };
   }
+
+
+  fn join!<SepT>(strings: [str], separator: SepT) -> String 
+    where SepT: AsSlice!<u8> 
+  {
+    sep := separator.as_slice();
+    mut result: String;
+    for i in 0..strings.length {
+      result.append(strings[i]);
+      if i + 1 < strings.length {
+        result.append(sep);
+      }
+    }
+    return result;
+  }
 }
 
 impl Index!<u8> for str {
