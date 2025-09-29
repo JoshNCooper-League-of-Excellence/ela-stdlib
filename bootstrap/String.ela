@@ -175,38 +175,51 @@ impl StringUtils for String {}
       };
     }
 
-    fn split!<Substring>(self, delimiter: Substring) -> List!<String> where Substring: AsSlice!<u8> {
-      slice := delimiter.as_slice();
-
-      mut result: List!<String>;
-      mut start: u64;
-
-      for i in (0..self.length).iter_mut() {
-        if *i + slice.length <= self.length && std::c::memcmp(self.data + *i, slice.data, slice.length) == 0 {
-          result.push(self.substr(start, *i - start));
-          start = *i + slice.length;
-          *i += slice.length - 1;
-        }
+    fn split!<SeperatorT>(self, seperator: SeperatorT) -> List!<String> {
+      mut out: List!<String>;
+      views := self.split_view(seperator);
+      for v in views {
+        out.push(String::from(v));
       }
-      result.push(self.substr(start, self.length - start));
-      return result;
+      return out;
     }
 
-    fn split_view!<Substring>(self, delimiter: Substring) -> List!<[u8]> where Substring: AsSlice!<u8> {
-      slice := delimiter.as_slice();
-
+    fn split_view!<SeperatorT>(self, seperator: SeperatorT) -> List!<[u8]> {
       mut result: List!<[u8]>;
-      mut start: s32;
+      mut start: s32 = 0;
+      mut i: s32 = 0;
 
-      for i in 0..self.length {
-        if i + slice.length <= self.length && std::c::memcmp(self.data + i, slice.data, slice.length) == 0 {
-          result.push(self.slice(start..i - start));
-          start = i + slice.length;
-          i += slice.length - 1;
+      mut sep: [u8];
+
+      where SeperatorT: AsSlice!<u8> {
+        sep = seperator.as_slice();
+      } else where SeperatorT: u8 | u32 {
+        mut one: [u8; 1];
+        one[0] = seperator as u8;
+        sep = .{ data: one.data, length: 1 };
+      }
+
+      if sep.length == 0 {
+        result.push(self.slice(0..(self.length as s32)));
+        return result;
+      }
+
+      while i < (self.length as s32) {
+        if i + (sep.length as s32) <= (self.length as s32) &&
+           std::c::memcmp(self.data + i, sep.data, sep.length as s32) == 0 {
+          // push range begin..end (end is i)
+          result.push(self.slice(start..i));
+          start = i + (sep.length as s32);
+          i = start;
+        } else {
+          i += 1;
         }
       }
 
-      result.push(self.slice(start..self.length - start));
+      if start <= (self.length as s32) {
+        result.push(self.slice(start..(self.length as s32)));
+      }
+
       return result;
     }
 
