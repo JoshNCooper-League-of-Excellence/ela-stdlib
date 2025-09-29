@@ -230,13 +230,14 @@ impl File {
     return len as u32;
   }
 
-  fn read_all!<Path>(filename_path: Path) -> Result!<String, str> where Path: AsSlice!<u8> {
-    type Result :: Result!<String, str>;
+  fn read_all!<Path>(filename_path: Path) -> Result!<String, String> where Path: AsSlice!<u8> {
+    type Result :: Result!<String, String>;
     filename := filename_path.as_slice();
     file := fopen(filename.data, "r"c);
 
-    if !file then 
-      return Result::Err("Couldnt open file");
+    if !file then {
+      return Result::Err(fmt::format("Couldnt open file %", (filename_path,)));
+    }
 
     mut string: String;
     string.resize(1024);
@@ -419,7 +420,7 @@ impl Directory {
           if entry.as_str() == "." || entry.as_str() == ".." {
             continue;
           }
-          mut entry_path := String::from(slice);
+          using mut entry_path := String::from(slice);
           entry_path.push('/');
           entry_path.append(entry);
           Directory::delete(entry_path, true, force);
@@ -522,6 +523,50 @@ impl Directory {
     }
 
     return mkdir(slice.data, DEFAULT_MODE) == 0;
+  }
+
+  // TODO: fix the recursive generic bug, if you use TSource and TDest here, it explodes.
+  fn copy(source: String, dest: String) -> bool {
+    src_slice := source.as_slice();
+    dst_slice := dest.as_slice();
+
+    src_dir_opt := Directory::open(src_slice);
+    if src_dir_opt.is_none() {
+      return false;
+    }
+    src_dir := src_dir_opt.unwrap();
+
+    if !Directory::create(dst_slice, true) {
+      return false;
+    }
+
+    for entry in src_dir.entries {
+      if entry.as_str() == "." || entry.as_str() == ".." {
+        continue;
+      }
+
+      using mut src_entry_path := String::from(src_slice);
+      src_entry_path.push('/');
+      src_entry_path.append(entry);
+
+      using mut dst_entry_path := String::from(dst_slice);
+      dst_entry_path.push('/');
+      dst_entry_path.append(entry);
+
+      stat_opt := Stat::new(src_entry_path);
+      if stat_opt.is_none() {
+        continue;
+      }
+      stat := stat_opt.unwrap();
+
+      if stat.is_dir() {
+        Directory::copy(src_entry_path, dst_entry_path);
+      } else {
+        File::copy(src_entry_path, dst_entry_path);
+      }
+    }
+
+    return true;
   }
 }
 
