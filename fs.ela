@@ -131,6 +131,14 @@ struct File {
 }
 
 impl File {
+  fn delete!<PathT>(path: PathT) -> bool where PathT: AsSlice!<u8> {
+    extern fn remove(path: *const u8) -> s32;
+    slice := path.as_slice();
+    if slice.length == 0 {
+      return false;
+    }
+    return remove(slice.data) == 0;
+  }
 
   fn copy!<SourcePathT, DestPathT>(source: SourcePathT, dest: DestPathT) -> Result!<Infallible, String>
     where SourcePathT: AsSlice!<u8>, DestPathT: AsSlice!<u8> {
@@ -332,15 +340,15 @@ extern fn dirname(path: *const u8) -> *mut u8;
   We don't have a way to interact with perror, so we don't really get much information as to why
   this has failed, just that it did fail.
 */
-fn change_directory!<Path>(path: Path) -> Option!<()> where Path: AsSlice!<u8> {
+fn change_directory!<Path>(path: Path) -> bool where Path: AsSlice!<u8> {
   slice := path.as_slice();
   if slice.length == 0 {
-    return None();
+    return false;
   }
   if chdir(slice.data) != 0 {
-    return None();
+    return false;
   }
-  return Some(());
+  return true;
 }
 
 fn parent_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8> {
@@ -379,6 +387,51 @@ struct Directory {
 }
 
 impl Directory {
+  fn delete!<PathT>(path: PathT, recursive: bool = false, force: bool = false) -> bool where PathT: AsSlice!<u8> {
+    slice := path.as_slice();
+    if slice.length == 0 {
+      return false;
+    }
+
+    stat_opt := Stat::new(slice);
+    if stat_opt.is_none() {
+      return false;
+    }
+    stat := stat_opt.unwrap();
+
+    if stat.is_file() || stat.is_symlink() {
+      extern fn remove(path: *const u8) -> s32;
+      if force {
+        extern fn chmod(path: *const u8, mode: u32) -> s32;
+        chmod(slice.data, 511);
+      }
+      return remove(slice.data) == 0;
+    }
+
+    if stat.is_dir() {
+      if recursive {
+        dir_opt := Directory::open(slice);
+        if dir_opt.is_none() {
+          return false;
+        }
+        dir := dir_opt.unwrap();
+        for entry in dir.entries {
+          if entry.as_str() == "." || entry.as_str() == ".." {
+            continue;
+          }
+          mut entry_path := String::from(slice);
+          entry_path.push('/');
+          entry_path.append(entry);
+          Directory::delete(entry_path, true, force);
+        }
+      }
+      extern fn rmdir(path: *const u8) -> s32;
+      return rmdir(slice.data) == 0;
+    }
+
+    return false;
+  }
+
   fn current() -> String {
     buffer: [u8; 256];
     getcwd(buffer, 256);
