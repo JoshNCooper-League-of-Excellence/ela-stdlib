@@ -36,76 +36,70 @@ fn new_dyn_serializable(value: any) -> dyn Serializable {
 }
 
 fn serialize_scalar(object: any) -> JsonResult {
-  val := JsonValue::new();
+  mut val := new(JsonValue::Null)
   if object._type.is_float() {
-    val._type = JsonValueType::Number;
     if object._type.size == 8 {
-      val.number = *(object.ptr as *const f64);
+      *val = JsonValue::Number(*(object.ptr as *const f64));
     } else {
-      val.number = *(object.ptr as *const f32);
+      *val = JsonValue::Number(*(object.ptr as *const f32));
     }
     return JsonResult::Ok(val);
   } else if object._type.is_integral() {
-    val._type = JsonValueType::Number;
+    *val = JsonValue::Number(0);
     if object._type.is_signed() {
-      val.number = switch object._type.size {
-        8 => *(object.ptr as *const s64),
-        4 => *(object.ptr as *const s32),
-        2 => *(object.ptr as *const s16),
-        1 => *(object.ptr as *const s8),
-      };
+      *val = JsonValue::Number(switch object._type.size {
+        8 => *(object.ptr as *s64),
+        4 => *(object.ptr as *s32),
+        2 => *(object.ptr as *s16),
+        1 => *(object.ptr as *s8),
+      });
     } else {
-      val.number = switch object._type.size {
-        8 => *(object.ptr as *const u64),
-        4 => *(object.ptr as *const u32),
-        2 => *(object.ptr as *const u16),
-        1 => *(object.ptr as *const u8),
-      };
+      *val = JsonValue::Number(switch object._type.size {
+        8 => *(object.ptr as *u64),
+        4 => *(object.ptr as *u32),
+        2 => *(object.ptr as *u16),
+        1 => *(object.ptr as *u8),
+      });
     }
     return JsonResult::Ok(val);
   } else if object._type.is_bool() {
-    val._type = JsonValueType::Boolean;
-    val.boolean = *(object.ptr as *const bool);
+    *val = JsonValue::Bool(*(object.ptr as *bool));
     return JsonResult::Ok(val);
   }
   return JsonResult::Err(format("Unsupported _type :: %", (object._type.name, ), FormatOptions::default()));
 }
 
 fn serialize_struct(object: any) -> JsonResult {
-  val := JsonValue::new();
-  val._type = JsonValueType::Object;
-  val.object = .{};
+  mut val := new(JsonValue::Object(.{}));
   for field in object._type.fields {
     result := serialize_any(any.{ptr: field.get(object.ptr), _type: field._type});
     if result.is_err() {
       return result;
     }
-    val.object.insert(String::from(field.name), result.unwrap());
+    val.as_object().unwrap().insert(String::from(field.name), result.unwrap());
   }
   return JsonResult::Ok(val);
 }
 
 fn serialize_array(object: any) -> JsonResult {
-  val := JsonValue::new();
-  val._type = JsonValueType::Array;
-  val.array = .{};
+  mut val := new(JsonValue::Array(.{}));
   for element in object._type.elements(object.ptr as *const u8) {
     result := serialize_any(element);
     if result.is_err() then return result;
-    val.array.push(result.unwrap());
+    val.as_array().unwrap().push(result.unwrap());
   }
   return JsonResult::Ok(val);
 }
 
 fn serialize_tuple(object: any) -> JsonResult {
-  val := JsonValue::new();
-  val._type = JsonValueType::Object;
-  val.array = .{};
+  mut val := new(JsonValue::Object(.{}));
   mut index := 0;
   for element in object._type.tuple_elements(object.ptr as *mut u8) {
     result := serialize_any(element);
-    if result.is_err() then return result;
-    val.object.insert(to_string(index, *FormatOptions::current()), result.unwrap());
+    if result.is_err() {
+      return result;
+    }
+    val.as_object().unwrap().insert(to_string(index, *FormatOptions::current()), result.unwrap());
     index += 1;
   }
   return JsonResult::Ok(val);
@@ -120,22 +114,11 @@ fn serialize_any(object: any) -> JsonResult {
 
   if object._type.has_no_extension() {
     if object._type == typeof(str) {
-      val := JsonValue::new();
-      val._type = JsonValueType::String;
-      the_str := *(object.ptr as *const str);
-      val.string = String::from(the_str);
-      return JsonResult::Ok(val);
+      return JsonResult::Ok(new(JsonValue::String(String::from(*(object.ptr as *const str)))));
     } else if object._type == typeof(String) {
-      val := JsonValue::new();
-      val._type = JsonValueType::String;
-      // We clone here to guarantee we don't have to rely on the original object's lifetime.
-      val.string = (object.ptr as *const String).clone(); 
-      return JsonResult::Ok(val);
-    } if object._type == typeof(*const u8) {
-      val := JsonValue::new();
-      val._type = JsonValueType::String;
-      val.string = String::from_ptr(*(object.ptr as *const *const u8));
-      return JsonResult::Ok(val);
+      return JsonResult::Ok(new(JsonValue::String((object.ptr as *const String).clone())));
+    } else if object._type == typeof(*const u8) {
+      return JsonResult::Ok(new(JsonValue::String(String::from_ptr(*(object.ptr as *const *const u8)))));
     } else if object._type.is_scalar() {
       return serialize_scalar(object);
     } else if object._type.is_struct() {
@@ -155,7 +138,7 @@ fn serialize!<T>(mut object: T) -> JsonResult {
 
 fn serialize_iterator!<It, V>(obj: It) -> JsonResult where It: Iterator!<V> {
   value : *mut JsonValue = JsonValue::new();
-  value._type = JsonValueType::Array;
+  value._type = JsonValue::Array;
   for v in obj {
     result := serialize(v);
     if result.is_err() {
