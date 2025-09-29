@@ -7,7 +7,7 @@ fn panic(msg: str);
       return .{
         data: null,
         length: 0,
-        capacity: 24,
+        capacity: 0,
         allocator: allocator,
       }
     }

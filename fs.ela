@@ -131,6 +131,46 @@ struct File {
 }
 
 impl File {
+
+  fn copy!<SourcePathT, DestPathT>(source: SourcePathT, dest: DestPathT) -> Result!<Infallible, String>
+    where SourcePathT: AsSlice!<u8>, DestPathT: AsSlice!<u8> {
+    type Result :: Result!<Infallible, String>;
+    src := source.as_slice();
+    dst := dest.as_slice();
+
+    in_file := fopen(src.data, "r"c);
+    if !in_file {
+      return Result::Err(String::from("Unable to open source file"));
+    }
+
+    out_file := fopen(dst.data, "w"c);
+    if !out_file {
+      fclose(in_file);
+      return Result::Err(String::from("Unable to open destination file"));
+    }
+
+    mut buf: [u8; 8192];
+
+    while {
+      read := fread(buf, sizeof(u8), 8192, in_file);
+      if read == 0 {
+        break;
+      }
+      written := fwrite(buf, sizeof(u8), read, out_file);
+      if written != read {
+        fclose(in_file);
+        fclose(out_file);
+        return Result::Err(String::from("Failed to write all bytes to destination"));
+      }
+    }
+
+    fflush(out_file);
+    fclose(in_file);
+    fclose(out_file);
+
+    return Result::Ok(Infallible.{});
+  }
+
   fn stat(*mut self) -> Option!<Stat> {
     type Option :: Option!<Stat>;
     mut stat: Stat;

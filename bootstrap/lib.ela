@@ -48,6 +48,8 @@ struct Env {
   args_slice: [str],
 };
 
+extern fn getenv(buf: c_str) -> c_str;
+
 impl Env {
   fn current() -> *mut Self {
     #static mut self: Self;
@@ -61,6 +63,14 @@ impl Env {
   */
   fn args() -> [str] {
     return Env::current().args_slice;
+  }
+
+  fn args_without_program_name() -> [str] {
+    slice := Env::current().args_slice;
+    if slice.length == 0 {
+      return .{};
+    }
+    return slice.slice(1..slice.length);
   }
   
   fn env_strlen(s: *const u8) -> u32 {
@@ -96,7 +106,6 @@ impl Env {
   }
 
   fn home_dir() -> String {
-    extern fn getenv(buf: c_str) -> c_str;
     mut var: c_str;
     if (var = getenv("XDG_CONFIG_HOME"c)) {
       return String::from_ptr(var);
@@ -106,7 +115,6 @@ impl Env {
       panic("Unable to get HOME or XDG_CONFIG_HOME env vars, it's likely your platform isn't supported");
     }
   }
-  
 
   fn args_string() -> String {
     slice := Env::current().args_slice;
@@ -116,7 +124,6 @@ impl Env {
     }
     return out;
   }
-
 }
 
 impl AsSlice!<u8> for u32 {
