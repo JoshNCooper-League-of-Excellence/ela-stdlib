@@ -1,0 +1,1064 @@
+/* 
+  This is only ever included by `sqlite3/lib.ela`, so it has no imports.
+*/
+@[inline]
+fn close(param0: *mut sqlite3) -> s32 {
+  return sqlite3_close_v2(param0);
+}
+
+choice Value {
+  Null,
+  Integer(s64),
+  Float(f64),
+  Text(String),
+  Blob(List!<u8>)
+}
+
+impl Destroy for Value {
+  fn destroy(*mut self, recursive: bool = false) {
+    switch is *self {
+      Value::Text(string): {
+        string.destroy();
+      }
+      Value::Blob(list): {
+        list.destroy();
+      }
+    }
+  }
+}
+
+import fmt;
+
+impl fmt::Format for Value {
+  fn format(*self, formatter: *mut fmt::Formatter) {
+    switch is *self {
+      Value::Null: {
+        formatter.writer.append("Value::Null");
+      }
+      Value::Integer(v): {
+        formatter.writer.appendf("Value::Integer(%)", (v,), fmt::FormatOptions::default());
+      }
+      Value::Float(v): {
+        formatter.writer.appendf("Value::Float(%)", (v,), fmt::FormatOptions::default());
+      }
+      Value::Text(v): {
+        formatter.writer.appendf("Value::Text(\"%\")", (v,), fmt::FormatOptions::default());
+      }
+      Value::Blob(data): {
+        formatter.writer.appendf("Value::Blob(%, %)", (data.data, data.length), fmt::FormatOptions::default());
+      }
+    }
+  }
+}
+
+struct Column { name: String, value: Value };
+
+impl Destroy for Column {
+  fn destroy(*mut self, recursive: bool = false) {
+    self.name.destroy(recursive);
+    self.value.destroy(recursive);
+  }
+}
+
+@[inline]
+fn exec!<TString, UserArg>(db: *mut sqlite3, sql: TString, callback: fn(*mut UserArg, List!<Column>) -> s32 = null, user_arg: *mut UserArg = null) -> Result!<Infallible, String> where TString: AsSlice!<u8>{
+  fn transitive_callback(user_arg: *mut void, n_col: s32, col_vals: *mut *mut u8, col_names: *mut *mut u8) -> s32 {
+    type Callback :: fn(*mut UserArg, List!<Column>) -> s32;
+    callback, arg := *(user_arg as *(Callback, *mut UserArg));
+
+    if !callback {
+      return 0;
+    }
+
+    using mut columns: List!<Column> {
+      for i in 0..n_col {
+        name_ptr := col_names![i];
+        col_ptr := col_vals![i];
+        columns.push(.{
+          name: String::from_ptr(name_ptr),
+          value: Value::Text(String::from_ptr(col_ptr))
+        });
+      }
+      return callback(arg, columns);
+    }
+  }
+  
+  errmsg: *mut u8;
+  if sqlite3_exec(db, sql.data, &mut transitive_callback, &mut (callback, user_arg), &mut errmsg) != 0 {
+    return Result!<Infallible, String>::Err(String::from_ptr(errmsg as c_str));
+  }
+  return Result!<Infallible, String>::Ok();
+}
+
+@[inline]
+fn prepare!<TString>(db: *mut sqlite3, sql: TString) -> Result!<*mut sqlite3_stmt, *u8> where TString: AsSlice!<u8> {
+  slice := sql.as_slice()
+  mut stmt: *mut sqlite3_stmt;
+  if sqlite3_prepare(db, slice.as_c_str(), -1, &mut stmt, null) != 0 {
+    return Result!<*mut sqlite3_stmt, *u8>::Err(sqlite3_errmsg(db));
+  } else {
+    return Result!<*mut sqlite3_stmt, *u8>::Ok(stmt);
+  }
+}
+
+impl sqlite3_stmt {
+  fn step(*mut self) -> s32 {
+    return sqlite3_step(self);
+  }
+  // The Strings in Value::Text(..) 
+  // and the Lists in Value::Blob(..)
+  // are _NOT_ freed by us!
+  // Calling `columns.destroy(true)` / `column.destroy(true)` _WILL_ free them though.
+  // Always destroy the columns list too, it is transferred ownership when it is passed to the lambda.
+  fn query!<UserArg>(*mut self, callback: fn(*mut UserArg, List!<Column>) -> s32 = null, user_arg: *mut UserArg) {
+    column_count := sqlite3_column_count(self);
+    while self.step() == sqlite3::Status::Row {
+      mut columns: List!<Column>;
+      for i in 0..column_count {
+        column_name := sqlite3_column_name(self, i);
+        column_type := sqlite3_column_type(self, i);
+        value := switch column_type {
+          ValueType::Integer => Value::Integer(sqlite3_column_int64(self, i));
+          ValueType::Float   => Value::Float(sqlite3_column_double(self, i));
+          ValueType::Text    => Value::Text(String::from_ptr(sqlite3_column_text(self, i)));
+          ValueType::Blob    => Value::Blob(.{
+            data: sqlite3_column_blob(self, i) as *mut u8,
+            length: sqlite3_column_bytes(self, i),
+          });
+          else           => Value::Null;
+        };
+        columns.push(.{
+          name: String::from_ptr(column_name),
+          value: value
+        });
+      }
+      if callback != null {
+        if callback(user_arg, columns) != 0 {
+          break;
+        }
+      }
+    }
+  }
+  fn collect(*mut self) -> List!<List!<Column>> {
+    column_count := sqlite3_column_count(self);
+    mut results: List!<List!<Column>>;
+    while self.step() == sqlite3::Status::Row {
+      mut columns: List!<Column>;
+      for i in 0..column_count {
+        column_name := sqlite3_column_name(self, i);
+        column_type := sqlite3_column_type(self, i);
+        value := switch column_type {
+          ValueType::Integer => Value::Integer(sqlite3_column_int64(self, i));
+          ValueType::Float   => Value::Float(sqlite3_column_double(self, i));
+          ValueType::Text    => Value::Text(String::from_ptr(sqlite3_column_text(self, i)));
+          ValueType::Blob    => Value::Blob(.{ 
+            data: sqlite3_column_blob(self, i) as *mut u8, 
+            length: sqlite3_column_bytes(self, i)
+          });
+          else               => Value::Null;
+        };
+        columns.push(.{
+          name: String::from_ptr(column_name),
+          value: value
+        });
+      }
+      results.push(columns);
+    }
+    return results;
+  }
+  fn finalize(*mut self) {
+    sqlite3_finalize(self);
+  }
+  // TODO: fix the binding problems, dont handle enough types, and 
+  // we don't pass the right destructor functions for any of these.
+  fn bind!<T>(*mut self, index: u32, t: T) -> Result!<(), *u8> {
+    where T: IsInteger {
+      where T: s32 {
+        if bind_int(self, index as s32, t as s32) == 0 {
+          return Result!<(), *u8>::Ok(());
+        }
+      } else {
+        if bind_int64(self, index as s32, t as s64) == 0 {
+          return Result!<(), *u8>::Ok(());
+        }
+      }
+    } else where T: IsFloat {
+      if bind_double(self, index as s32, t as f64) == 0 {
+        return Result!<(), *u8>::Ok(());
+      }
+    } else where T: AsSlice!<u8> {
+      slice := t.as_slice();
+      if bind_text(self, index as s32, slice.as_c_str(), slice.length as s32, sqlite3::STATIC) == 0 {
+        return Result!<(), *u8>::Ok(());
+      }
+    } else where T: (*u8, s32) {
+      ptr, len := t;
+      if bind_blob(self, index as s32, ptr as *void, len, null) == 0 {
+        return Result!<(), *u8>::Ok(());
+      }
+    } else where T: *void {
+      if bind_null(self, index as s32) == 0 {
+        return Result!<(), *u8>::Ok(());
+      }
+    } else {
+      return Result!<(), *u8>::Err("Unsupported type for bind" as *u8);
+    }
+    db := sqlite3::db_handle(self);
+    return Result!<(), *u8>::Err(sqlite3::errmsg(db));
+  }
+
+  fn execute(*mut self) -> s32 {
+    mut status := self.step();
+    while status == sqlite3::Status::Row {
+      status = self.step();
+    }
+    return status;
+  }
+}
+
+impl Destroy for sqlite3_stmt {
+  fn destroy(*mut self, recursive: bool = false) {
+    self.finalize();
+  }
+}
+
+@[inline]
+fn extended_result_codes(param0: *mut sqlite3, onoff: s32) -> s32 {
+  return sqlite3_extended_result_codes(param0, onoff);
+}
+@[inline]
+fn last_insert_rowid(param0: *mut sqlite3) -> s64 {
+  return sqlite3_last_insert_rowid(param0);
+}
+@[inline]
+fn set_last_insert_rowid(param0: *mut sqlite3, param1: s64) -> void {
+  sqlite3_set_last_insert_rowid(param0, param1);
+}
+@[inline]
+fn changes(param0: *mut sqlite3) -> s32 {
+  return sqlite3_changes(param0);
+}
+@[inline]
+fn changes64(param0: *mut sqlite3) -> s64 {
+  return sqlite3_changes64(param0);
+}
+@[inline]
+fn total_changes(param0: *mut sqlite3) -> s32 {
+  return sqlite3_total_changes(param0);
+}
+@[inline]
+fn total_changes64(param0: *mut sqlite3) -> s64 {
+  return sqlite3_total_changes64(param0);
+}
+@[inline]
+fn interrupt(param0: *mut sqlite3) -> void {
+  sqlite3_interrupt(param0);
+}
+@[inline]
+fn is_interrupted(param0: *mut sqlite3) -> s32 {
+  return sqlite3_is_interrupted(param0);
+}
+@[inline]
+fn complete(sql: c_str) -> s32 {
+  return sqlite3_complete(sql);
+}
+@[inline]
+fn complete16(sql: *void) -> s32 {
+  return sqlite3_complete16(sql);
+}
+@[inline]
+fn busy_handler(param0: *mut sqlite3, param1: fn(*mut void, s32) -> s32, param2: *mut void) -> s32 {
+  return sqlite3_busy_handler(param0, param1, param2);
+}
+@[inline]
+fn busy_timeout(param0: *mut sqlite3, ms: s32) -> s32 {
+  return sqlite3_busy_timeout(param0, ms);
+}
+@[inline]
+fn get_table(db: *mut sqlite3, zSql: c_str, pazResult: *mut *mut *mut u8, pnRow: *mut s32, pnColumn: *mut s32, pzErrmsg: *mut *mut u8) -> s32 {
+  return sqlite3_get_table(db, zSql, pazResult, pnRow, pnColumn, pzErrmsg);
+}
+@[inline]
+fn free_table(result: *mut *mut u8) -> void {
+  sqlite3_free_table(result);
+}
+
+@[inline]
+fn set_authorizer(param0: *mut sqlite3, xAuth: fn(*mut void, s32, c_str, c_str, c_str, c_str) -> s32, pUserData: *mut void) -> s32 {
+  return sqlite3_set_authorizer(param0, xAuth, pUserData);
+}
+
+@[inline]
+fn profile(param0: *mut sqlite3, xProfile: fn(*mut void, c_str, u64) -> void, param2: *mut void) -> *mut void {
+  return sqlite3_profile(param0, xProfile, param2);
+}
+
+@[inline]
+fn trace(param0: *mut sqlite3, uMask: u32, xCallback: fn(u32, *mut void, *mut void, *mut void) -> s32, pCtx: *mut void) -> s32 {
+  return sqlite3_trace_v2(param0, uMask, xCallback, pCtx);
+}
+@[inline]
+fn progress_handler(param0: *mut sqlite3, param1: s32, param2: fn(*mut void) -> s32, param3: *mut void) -> void {
+  sqlite3_progress_handler(param0, param1, param2, param3);
+}
+@[inline]
+fn open(filename: c_str, ppDb: *mut *mut sqlite3, flags: s32, zVfs: c_str) -> s32 {
+  return sqlite3_open_v2(filename, ppDb, flags, zVfs);
+}
+@[inline]
+fn open16(filename: *void, ppDb: *mut *mut sqlite3) -> s32 {
+  return sqlite3_open16(filename, ppDb);
+}
+@[inline]
+fn uri_parameter(z: c_str, zParam: c_str) -> c_str {
+  return sqlite3_uri_parameter(z, zParam);
+}
+@[inline]
+fn uri_boolean(z: c_str, zParam: c_str, bDefault: s32) -> s32 {
+  return sqlite3_uri_boolean(z, zParam, bDefault);
+}
+@[inline]
+fn uri_int64(param0: c_str, param1: c_str, param2: s64) -> s64 {
+  return sqlite3_uri_int64(param0, param1, param2);
+}
+@[inline]
+fn uri_key(z: c_str, N: s32) -> c_str {
+  return sqlite3_uri_key(z, N);
+}
+@[inline]
+fn filename_database(param0: c_str) -> c_str {
+  return c_str_database(param0);
+}
+@[inline]
+fn filename_journal(param0: c_str) -> c_str {
+  return c_str_journal(param0);
+}
+@[inline]
+fn filename_wal(param0: c_str) -> c_str {
+  return c_str_wal(param0);
+}
+@[inline]
+fn database_file_object(param0: c_str) -> *mut sqlite3_file {
+  return sqlite3_database_file_object(param0);
+}
+@[inline]
+fn create_filename(zDatabase: c_str, zJournal: c_str, zWal: c_str, nParam: s32, azParam: *mut c_str) -> c_str {
+  return sqlite3_create_filename(zDatabase, zJournal, zWal, nParam, azParam);
+}
+@[inline]
+fn free_filename(param0: c_str) -> void {
+  sqlite3_free_filename(param0);
+}
+@[inline]
+fn errcode(db: *mut sqlite3) -> s32 {
+  return sqlite3_errcode(db);
+}
+@[inline]
+fn extended_errcode(db: *mut sqlite3) -> s32 {
+  return sqlite3_extended_errcode(db);
+}
+@[inline]
+fn errmsg(param0: *mut sqlite3) -> c_str {
+  return sqlite3_errmsg(param0);
+}
+@[inline]
+fn errmsg16(param0: *mut sqlite3) -> *void {
+  return sqlite3_errmsg16(param0);
+}
+@[inline]
+fn errstr(param0: s32) -> c_str {
+  return sqlite3_errstr(param0);
+}
+@[inline]
+fn error_offset(db: *mut sqlite3) -> s32 {
+  return sqlite3_error_offset(db);
+}
+@[inline]
+fn limit(param0: *mut sqlite3, id: s32, newVal: s32) -> s32 {
+  return sqlite3_limit(param0, id, newVal);
+}
+
+@[inline]
+fn prepare_v3(db: *mut sqlite3, zSql: c_str, nByte: s32, prepFlags: u32, ppStmt: *mut *mut sqlite3_stmt, pzTail: *mut c_str) -> s32 {
+  return sqlite3_prepare_v3(db, zSql, nByte, prepFlags, ppStmt, pzTail);
+}
+@[inline]
+fn prepare16(db: *mut sqlite3, zSql: *void, nByte: s32, ppStmt: *mut *mut sqlite3_stmt, pzTail: *mut *void) -> s32 {
+  return sqlite3_prepare16_v2(db, zSql, nByte, ppStmt, pzTail);
+}
+@[inline]
+fn prepare16_v3(db: *mut sqlite3, zSql: *void, nByte: s32, prepFlags: u32, ppStmt: *mut *mut sqlite3_stmt, pzTail: *mut *void) -> s32 {
+  return sqlite3_prepare16_v3(db, zSql, nByte, prepFlags, ppStmt, pzTail);
+}
+@[inline]
+fn sql(pStmt: *mut sqlite3_stmt) -> c_str {
+  return sqlite3_sql(pStmt);
+}
+@[inline]
+fn expanded_sql(pStmt: *mut sqlite3_stmt) -> *mut u8 {
+  return sqlite3_expanded_sql(pStmt);
+}
+@[inline]
+fn stmt_readonly(pStmt: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_stmt_readonly(pStmt);
+}
+@[inline]
+fn stmt_isexplain(pStmt: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_stmt_isexplain(pStmt);
+}
+@[inline]
+fn stmt_explain(pStmt: *mut sqlite3_stmt, eMode: s32) -> s32 {
+  return sqlite3_stmt_explain(pStmt, eMode);
+}
+@[inline]
+fn stmt_busy(param0: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_stmt_busy(param0);
+}
+@[inline]
+fn bind_blob(param0: *mut sqlite3_stmt, param1: s32, param2: *void, n: s32, param4: fn(*mut void) -> void) -> s32 {
+  return sqlite3_bind_blob(param0, param1, param2, n, param4);
+}
+@[inline]
+fn bind_blob64(param0: *mut sqlite3_stmt, param1: s32, param2: *void, param3: u64, param4: fn(*mut void) -> void) -> s32 {
+  return sqlite3_bind_blob64(param0, param1, param2, param3, param4);
+}
+@[inline]
+fn bind_double(param0: *mut sqlite3_stmt, param1: s32, param2: f64) -> s32 {
+  return sqlite3_bind_double(param0, param1, param2);
+}
+@[inline]
+fn bind_int(param0: *mut sqlite3_stmt, param1: s32, param2: s32) -> s32 {
+  return sqlite3_bind_int(param0, param1, param2);
+}
+@[inline]
+fn bind_int64(param0: *mut sqlite3_stmt, param1: s32, param2: s64) -> s32 {
+  return sqlite3_bind_int64(param0, param1, param2);
+}
+@[inline]
+fn bind_null(param0: *mut sqlite3_stmt, param1: s32) -> s32 {
+  return sqlite3_bind_null(param0, param1);
+}
+@[inline]
+fn bind_text(param0: *mut sqlite3_stmt, param1: s32, param2: c_str, param3: s32, param4: u64) -> s32 {
+  return sqlite3_bind_text(param0, param1, param2, param3, param4);
+}
+@[inline]
+fn bind_text16(param0: *mut sqlite3_stmt, param1: s32, param2: *void, param3: s32, param4: fn(*mut void) -> void) -> s32 {
+  return sqlite3_bind_text16(param0, param1, param2, param3, param4);
+}
+@[inline]
+fn bind_text64(param0: *mut sqlite3_stmt, param1: s32, param2: c_str, param3: u64, param4: fn(*mut void) -> void, encoding: u8) -> s32 {
+  return sqlite3_bind_text64(param0, param1, param2, param3, param4, encoding);
+}
+@[inline]
+fn bind_value(param0: *mut sqlite3_stmt, param1: s32, param2: *sqlite3_value) -> s32 {
+  return sqlite3_bind_value(param0, param1, param2);
+}
+@[inline]
+fn bind_pointer(param0: *mut sqlite3_stmt, param1: s32, param2: *mut void, param3: c_str, param4: fn(*mut void) -> void) -> s32 {
+  return sqlite3_bind_pointer(param0, param1, param2, param3, param4);
+}
+@[inline]
+fn bind_zeroblob(param0: *mut sqlite3_stmt, param1: s32, n: s32) -> s32 {
+  return sqlite3_bind_zeroblob(param0, param1, n);
+}
+@[inline]
+fn bind_zeroblob64(param0: *mut sqlite3_stmt, param1: s32, param2: u64) -> s32 {
+  return sqlite3_bind_zeroblob64(param0, param1, param2);
+}
+@[inline]
+fn bind_parameter_count(param0: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_bind_parameter_count(param0);
+}
+@[inline]
+fn bind_parameter_name(param0: *mut sqlite3_stmt, param1: s32) -> c_str {
+  return sqlite3_bind_parameter_name(param0, param1);
+}
+@[inline]
+fn bind_parameter_index(param0: *mut sqlite3_stmt, zName: c_str) -> s32 {
+  return sqlite3_bind_parameter_index(param0, zName);
+}
+@[inline]
+fn clear_bindings(param0: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_clear_bindings(param0);
+}
+@[inline]
+fn column_count(pStmt: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_column_count(pStmt);
+}
+@[inline]
+fn column_name(param0: *mut sqlite3_stmt, N: s32) -> c_str {
+  return sqlite3_column_name(param0, N);
+}
+@[inline]
+fn column_name16(param0: *mut sqlite3_stmt, N: s32) -> *void {
+  return sqlite3_column_name16(param0, N);
+}
+@[inline]
+fn column_database_name(param0: *mut sqlite3_stmt, param1: s32) -> c_str {
+  return sqlite3_column_database_name(param0, param1);
+}
+@[inline]
+fn column_database_name16(param0: *mut sqlite3_stmt, param1: s32) -> *void {
+  return sqlite3_column_database_name16(param0, param1);
+}
+@[inline]
+fn column_table_name(param0: *mut sqlite3_stmt, param1: s32) -> c_str {
+  return sqlite3_column_table_name(param0, param1);
+}
+@[inline]
+fn column_table_name16(param0: *mut sqlite3_stmt, param1: s32) -> *void {
+  return sqlite3_column_table_name16(param0, param1);
+}
+@[inline]
+fn column_origin_name(param0: *mut sqlite3_stmt, param1: s32) -> c_str {
+  return sqlite3_column_origin_name(param0, param1);
+}
+@[inline]
+fn column_origin_name16(param0: *mut sqlite3_stmt, param1: s32) -> *void {
+  return sqlite3_column_origin_name16(param0, param1);
+}
+@[inline]
+fn column_decltype(param0: *mut sqlite3_stmt, param1: s32) -> c_str {
+  return sqlite3_column_decltype(param0, param1);
+}
+@[inline]
+fn column_decltype16(param0: *mut sqlite3_stmt, param1: s32) -> *void {
+  return sqlite3_column_decltype16(param0, param1);
+}
+
+@[inline]
+fn data_count(pStmt: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_data_count(pStmt);
+}
+@[inline]
+fn column_blob(param0: *mut sqlite3_stmt, iCol: s32) -> *void {
+  return sqlite3_column_blob(param0, iCol);
+}
+@[inline]
+fn column_double(param0: *mut sqlite3_stmt, iCol: s32) -> f64 {
+  return sqlite3_column_double(param0, iCol);
+}
+@[inline]
+fn column_int(param0: *mut sqlite3_stmt, iCol: s32) -> s32 {
+  return sqlite3_column_int(param0, iCol);
+}
+@[inline]
+fn column_int64(param0: *mut sqlite3_stmt, iCol: s32) -> s64 {
+  return sqlite3_column_int64(param0, iCol);
+}
+@[inline]
+fn column_text(param0: *mut sqlite3_stmt, iCol: s32) -> c_str {
+  return sqlite3_column_text(param0, iCol);
+}
+@[inline]
+fn column_text16(param0: *mut sqlite3_stmt, iCol: s32) -> *void {
+  return sqlite3_column_text16(param0, iCol);
+}
+@[inline]
+fn column_value(param0: *mut sqlite3_stmt, iCol: s32) -> *mut sqlite3_value {
+  return sqlite3_column_value(param0, iCol);
+}
+@[inline]
+fn column_bytes(param0: *mut sqlite3_stmt, iCol: s32) -> s32 {
+  return sqlite3_column_bytes(param0, iCol);
+}
+@[inline]
+fn column_bytes16(param0: *mut sqlite3_stmt, iCol: s32) -> s32 {
+  return sqlite3_column_bytes16(param0, iCol);
+}
+@[inline]
+fn column_type(param0: *mut sqlite3_stmt, iCol: s32) -> s32 {
+  return sqlite3_column_type(param0, iCol);
+}
+@[inline]
+fn finalize(pStmt: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_finalize(pStmt);
+}
+@[inline]
+fn reset(pStmt: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_reset(pStmt);
+}
+@[inline]
+fn create_function16(db: *mut sqlite3, zFunctionName: *void, nArg: s32, eTextRep: s32, pApp: *mut void, xFunc: fn(*mut sqlite3_context, s32, *mut *mut sqlite3_value) -> void, xStep: fn(*mut sqlite3_context, s32, *mut *mut sqlite3_value) -> void, xFinal: fn(*mut sqlite3_context) -> void) -> s32 {
+  return sqlite3_create_function16(db, zFunctionName, nArg, eTextRep, pApp, xFunc, xStep, xFinal);
+}
+@[inline]
+fn create_function(db: *mut sqlite3, zFunctionName: c_str, nArg: s32, eTextRep: s32, pApp: *mut void, xFunc: fn(*mut sqlite3_context, s32, *mut *mut sqlite3_value) -> void, xStep: fn(*mut sqlite3_context, s32, *mut *mut sqlite3_value) -> void, xFinal: fn(*mut sqlite3_context) -> void, xDestroy: fn(*mut void) -> void) -> s32 {
+  return sqlite3_create_function_v2(db, zFunctionName, nArg, eTextRep, pApp, xFunc, xStep, xFinal, xDestroy);
+}
+@[inline]
+fn create_window_function(db: *mut sqlite3, zFunctionName: c_str, nArg: s32, eTextRep: s32, pApp: *mut void, xStep: fn(*mut sqlite3_context, s32, *mut *mut sqlite3_value) -> void, xFinal: fn(*mut sqlite3_context) -> void, xValue: fn(*mut sqlite3_context) -> void, xInverse: fn(*mut sqlite3_context, s32, *mut *mut sqlite3_value) -> void, xDestroy: fn(*mut void) -> void) -> s32 {
+  return sqlite3_create_window_function(db, zFunctionName, nArg, eTextRep, pApp, xStep, xFinal, xValue, xInverse, xDestroy);
+}
+@[inline]
+fn aggregate_count(param0: *mut sqlite3_context) -> s32 {
+  return sqlite3_aggregate_count(param0);
+}
+@[inline]
+fn expired(param0: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_expired(param0);
+}
+@[inline]
+fn transfer_bindings(param0: *mut sqlite3_stmt, param1: *mut sqlite3_stmt) -> s32 {
+  return sqlite3_transfer_bindings(param0, param1);
+}
+@[inline]
+fn value_blob(param0: *mut sqlite3_value) -> *void {
+  return sqlite3_value_blob(param0);
+}
+@[inline]
+fn value_double(param0: *mut sqlite3_value) -> f64 {
+  return sqlite3_value_double(param0);
+}
+@[inline]
+fn value_int(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_int(param0);
+}
+@[inline]
+fn value_int64(param0: *mut sqlite3_value) -> s64 {
+  return sqlite3_value_int64(param0);
+}
+@[inline]
+fn value_pointer(param0: *mut sqlite3_value, param1: c_str) -> *mut void {
+  return sqlite3_value_pointer(param0, param1);
+}
+@[inline]
+fn value_text(param0: *mut sqlite3_value) -> c_str {
+  return sqlite3_value_text(param0);
+}
+@[inline]
+fn value_text16(param0: *mut sqlite3_value) -> *void {
+  return sqlite3_value_text16(param0);
+}
+@[inline]
+fn value_text16le(param0: *mut sqlite3_value) -> *void {
+  return sqlite3_value_text16le(param0);
+}
+@[inline]
+fn value_text16be(param0: *mut sqlite3_value) -> *void {
+  return sqlite3_value_text16be(param0);
+}
+@[inline]
+fn value_bytes(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_bytes(param0);
+}
+@[inline]
+fn value_bytes16(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_bytes16(param0);
+}
+@[inline]
+fn value_type(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_type(param0);
+}
+@[inline]
+fn value_numeric_type(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_numeric_type(param0);
+}
+@[inline]
+fn value_nochange(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_nochange(param0);
+}
+@[inline]
+fn value_frombind(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_frombind(param0);
+}
+@[inline]
+fn value_encoding(param0: *mut sqlite3_value) -> s32 {
+  return sqlite3_value_encoding(param0);
+}
+@[inline]
+fn value_subtype(param0: *mut sqlite3_value) -> u32 {
+  return sqlite3_value_subtype(param0);
+}
+@[inline]
+fn value_dup(param0: *sqlite3_value) -> *mut sqlite3_value {
+  return sqlite3_value_dup(param0);
+}
+@[inline]
+fn value_free(param0: *mut sqlite3_value) -> void {
+  sqlite3_value_free(param0);
+}
+@[inline]
+fn aggregate_context(param0: *mut sqlite3_context, nBytes: s32) -> *mut void {
+  return sqlite3_aggregate_context(param0, nBytes);
+}
+@[inline]
+fn user_data(param0: *mut sqlite3_context) -> *mut void {
+  return sqlite3_user_data(param0);
+}
+@[inline]
+fn context_db_handle(param0: *mut sqlite3_context) -> *mut sqlite3 {
+  return sqlite3_context_db_handle(param0);
+}
+@[inline]
+fn get_auxdata(param0: *mut sqlite3_context, N: s32) -> *mut void {
+  return sqlite3_get_auxdata(param0, N);
+}
+@[inline]
+fn set_auxdata(param0: *mut sqlite3_context, N: s32, param2: *mut void, param3: fn(*mut void) -> void) -> void {
+  sqlite3_set_auxdata(param0, N, param2, param3);
+}
+@[inline]
+fn get_clientdata(param0: *mut sqlite3, param1: c_str) -> *mut void {
+  return sqlite3_get_clientdata(param0, param1);
+}
+@[inline]
+fn set_clientdata(param0: *mut sqlite3, param1: c_str, param2: *mut void, param3: fn(*mut void) -> void) -> s32 {
+  return sqlite3_set_clientdata(param0, param1, param2, param3);
+}
+@[inline]
+fn result_blob(param0: *mut sqlite3_context, param1: *void, param2: s32, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_blob(param0, param1, param2, param3);
+}
+@[inline]
+fn result_blob64(param0: *mut sqlite3_context, param1: *void, param2: u64, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_blob64(param0, param1, param2, param3);
+}
+@[inline]
+fn result_double(param0: *mut sqlite3_context, param1: f64) -> void {
+  sqlite3_result_double(param0, param1);
+}
+@[inline]
+fn result_error(param0: *mut sqlite3_context, param1: c_str, param2: s32) -> void {
+  sqlite3_result_error(param0, param1, param2);
+}
+@[inline]
+fn result_error16(param0: *mut sqlite3_context, param1: *void, param2: s32) -> void {
+  sqlite3_result_error16(param0, param1, param2);
+}
+@[inline]
+fn result_error_toobig(param0: *mut sqlite3_context) -> void {
+  sqlite3_result_error_toobig(param0);
+}
+@[inline]
+fn result_error_nomem(param0: *mut sqlite3_context) -> void {
+  sqlite3_result_error_nomem(param0);
+}
+@[inline]
+fn result_error_code(param0: *mut sqlite3_context, param1: s32) -> void {
+  sqlite3_result_error_code(param0, param1);
+}
+@[inline]
+fn result_int(param0: *mut sqlite3_context, param1: s32) -> void {
+  sqlite3_result_int(param0, param1);
+}
+@[inline]
+fn result_int64(param0: *mut sqlite3_context, param1: s64) -> void {
+  sqlite3_result_int64(param0, param1);
+}
+@[inline]
+fn result_null(param0: *mut sqlite3_context) -> void {
+  sqlite3_result_null(param0);
+}
+@[inline]
+fn result_text(param0: *mut sqlite3_context, param1: c_str, param2: s32, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_text(param0, param1, param2, param3);
+}
+@[inline]
+fn result_text64(param0: *mut sqlite3_context, param1: c_str, param2: u64, param3: fn(*mut void) -> void, encoding: u8) -> void {
+  sqlite3_result_text64(param0, param1, param2, param3, encoding);
+}
+@[inline]
+fn result_text16(param0: *mut sqlite3_context, param1: *void, param2: s32, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_text16(param0, param1, param2, param3);
+}
+@[inline]
+fn result_text16le(param0: *mut sqlite3_context, param1: *void, param2: s32, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_text16le(param0, param1, param2, param3);
+}
+@[inline]
+fn result_text16be(param0: *mut sqlite3_context, param1: *void, param2: s32, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_text16be(param0, param1, param2, param3);
+}
+@[inline]
+fn result_value(param0: *mut sqlite3_context, param1: *mut sqlite3_value) -> void {
+  sqlite3_result_value(param0, param1);
+}
+@[inline]
+fn result_pointer(param0: *mut sqlite3_context, param1: *mut void, param2: c_str, param3: fn(*mut void) -> void) -> void {
+  sqlite3_result_pointer(param0, param1, param2, param3);
+}
+@[inline]
+fn result_zeroblob(param0: *mut sqlite3_context, n: s32) -> void {
+  sqlite3_result_zeroblob(param0, n);
+}
+@[inline]
+fn result_zeroblob64(param0: *mut sqlite3_context, n: u64) -> s32 {
+  return sqlite3_result_zeroblob64(param0, n);
+}
+@[inline]
+fn result_subtype(param0: *mut sqlite3_context, param1: u32) -> void {
+  sqlite3_result_subtype(param0, param1);
+}
+
+@[inline]
+fn create_collation(param0: *mut sqlite3, zName: c_str, eTextRep: s32, pArg: *mut void, xCompare: fn(*mut void, s32, *void, s32, *void) -> s32, xDestroy: fn(*mut void) -> void) -> s32 {
+  return sqlite3_create_collation_v2(param0, zName, eTextRep, pArg, xCompare, xDestroy);
+}
+@[inline]
+fn create_collation16(param0: *mut sqlite3, zName: *void, eTextRep: s32, pArg: *mut void, xCompare: fn(*mut void, s32, *void, s32, *void) -> s32) -> s32 {
+  return sqlite3_create_collation16(param0, zName, eTextRep, pArg, xCompare);
+}
+@[inline]
+fn collation_needed(param0: *mut sqlite3, param1: *mut void, param2: fn(*mut void, *mut sqlite3, s32, c_str) -> void) -> s32 {
+  return sqlite3_collation_needed(param0, param1, param2);
+}
+@[inline]
+fn collation_needed16(param0: *mut sqlite3, param1: *mut void, param2: fn(*mut void, *mut sqlite3, s32, *void) -> void) -> s32 {
+  return sqlite3_collation_needed16(param0, param1, param2);
+}
+@[inline]
+fn sleep(param0: s32) -> s32 {
+  return sqlite3_sleep(param0);
+}
+@[inline]
+fn get_autocommit(param0: *mut sqlite3) -> s32 {
+  return sqlite3_get_autocommit(param0);
+}
+@[inline]
+fn db_handle(param0: *mut sqlite3_stmt) -> *mut sqlite3 {
+  return sqlite3_db_handle(param0);
+}
+@[inline]
+fn db_name(db: *mut sqlite3, N: s32) -> c_str {
+  return sqlite3_db_name(db, N);
+}
+@[inline]
+fn db_filename(db: *mut sqlite3, zDbName: c_str) -> c_str {
+  return sqlite3_db_filename(db, zDbName);
+}
+@[inline]
+fn db_readonly(db: *mut sqlite3, zDbName: c_str) -> s32 {
+  return sqlite3_db_readonly(db, zDbName);
+}
+@[inline]
+fn txn_state(param0: *mut sqlite3, zSchema: c_str) -> s32 {
+  return sqlite3_txn_state(param0, zSchema);
+}
+@[inline]
+fn next_stmt(pDb: *mut sqlite3, pStmt: *mut sqlite3_stmt) -> *mut sqlite3_stmt {
+  return sqlite3_next_stmt(pDb, pStmt);
+}
+@[inline]
+fn commit_hook(param0: *mut sqlite3, param1: fn(*mut void) -> s32, param2: *mut void) -> *mut void {
+  return sqlite3_commit_hook(param0, param1, param2);
+}
+@[inline]
+fn rollback_hook(param0: *mut sqlite3, param1: fn(*mut void) -> void, param2: *mut void) -> *mut void {
+  return sqlite3_rollback_hook(param0, param1, param2);
+}
+@[inline]
+fn update_hook(param0: *mut sqlite3, param1: fn(*mut void, s32, c_str, c_str, s64) -> void, param2: *mut void) -> *mut void {
+  return sqlite3_update_hook(param0, param1, param2);
+}
+@[inline]
+fn table_column_metadata(db: *mut sqlite3, zDbName: c_str, zTableName: c_str, zColumnName: c_str, pzDataType: *mut c_str, pzCollSeq: *mut c_str, pNotNull: *mut s32, pPrimaryKey: *mut s32, pAutoinc: *mut s32) -> s32 {
+  return sqlite3_table_column_metadata(db, zDbName, zTableName, zColumnName, pzDataType, pzCollSeq, pNotNull, pPrimaryKey, pAutoinc);
+}
+@[inline]
+fn load_extension(db: *mut sqlite3, zFile: c_str, zProc: c_str, pzErrMsg: *mut *mut u8) -> s32 {
+  return sqlite3_load_extension(db, zFile, zProc, pzErrMsg);
+}
+@[inline]
+fn enable_load_extension(db: *mut sqlite3, onoff: s32) -> s32 {
+  return sqlite3_enable_load_extension(db, onoff);
+}
+@[inline]
+fn auto_extension(xEntryPoint: fn() -> void) -> s32 {
+  return sqlite3_auto_extension(xEntryPoint);
+}
+@[inline]
+fn cancel_auto_extension(xEntryPoint: fn() -> void) -> s32 {
+  return sqlite3_cancel_auto_extension(xEntryPoint);
+}
+@[inline]
+fn reset_auto_extension() -> void {
+  sqlite3_reset_auto_extension();
+}
+
+@[inline]
+fn create_module(db: *mut sqlite3, zName: c_str, p: *sqlite3_module, pClientData: *mut void, xDestroy: fn(*mut void) -> void) -> s32 {
+  return sqlite3_create_module_v2(db, zName, p, pClientData, xDestroy);
+}
+@[inline]
+fn drop_modules(db: *mut sqlite3, azKeep: *mut c_str) -> s32 {
+  return sqlite3_drop_modules(db, azKeep);
+}
+@[inline]
+fn declare_vtab(param0: *mut sqlite3, zSQL: c_str) -> s32 {
+  return sqlite3_declare_vtab(param0, zSQL);
+}
+@[inline]
+fn overload_function(param0: *mut sqlite3, zFuncName: c_str, nArg: s32) -> s32 {
+  return sqlite3_overload_function(param0, zFuncName, nArg);
+}
+@[inline]
+fn blob_open(param0: *mut sqlite3, zDb: c_str, zTable: c_str, zColumn: c_str, iRow: s64, flags: s32, ppBlob: *mut *mut sqlite3_blob) -> s32 {
+  return sqlite3_blob_open(param0, zDb, zTable, zColumn, iRow, flags, ppBlob);
+}
+@[inline]
+fn blob_reopen(param0: *mut sqlite3_blob, param1: s64) -> s32 {
+  return sqlite3_blob_reopen(param0, param1);
+}
+@[inline]
+fn blob_close(param0: *mut sqlite3_blob) -> s32 {
+  return sqlite3_blob_close(param0);
+}
+@[inline]
+fn blob_bytes(param0: *mut sqlite3_blob) -> s32 {
+  return sqlite3_blob_bytes(param0);
+}
+@[inline]
+fn blob_read(param0: *mut sqlite3_blob, Z: *mut void, N: s32, iOffset: s32) -> s32 {
+  return sqlite3_blob_read(param0, Z, N, iOffset);
+}
+@[inline]
+fn blob_write(param0: *mut sqlite3_blob, z: *void, n: s32, iOffset: s32) -> s32 {
+  return sqlite3_blob_write(param0, z, n, iOffset);
+}
+@[inline]
+fn keyword_count() -> s32 {
+  return sqlite3_keyword_count();
+}
+@[inline]
+fn keyword_name(param0: s32, param1: *mut c_str, param2: *mut s32) -> s32 {
+  return sqlite3_keyword_name(param0, param1, param2);
+}
+@[inline]
+fn keyword_check(param0: c_str, param1: s32) -> s32 {
+  return sqlite3_keyword_check(param0, param1);
+}
+@[inline]
+fn str_new(param0: *mut sqlite3) -> *mut sqlite3_str {
+  return sqlite3_str_new(param0);
+}
+@[inline]
+fn str_finish(param0: *mut sqlite3_str) -> *mut u8 {
+  return sqlite3_str_finish(param0);
+}
+@[inline]
+fn str_appendf(param0: *mut sqlite3_str, zFormat: c_str) -> void {
+  sqlite3_str_appendf(param0, zFormat);
+}
+@[inline]
+fn str_vappendf(param0: *mut sqlite3_str, zFormat: c_str, param2: va_list) -> void {
+  sqlite3_str_vappendf(param0, zFormat, param2);
+}
+@[inline]
+fn str_append(param0: *mut sqlite3_str, zIn: c_str, N: s32) -> void {
+  sqlite3_str_append(param0, zIn, N);
+}
+@[inline]
+fn str_appendall(param0: *mut sqlite3_str, zIn: c_str) -> void {
+  sqlite3_str_appendall(param0, zIn);
+}
+@[inline]
+fn str_appendchar(param0: *mut sqlite3_str, N: s32, C: u8) -> void {
+  sqlite3_str_appendchar(param0, N, C);
+}
+@[inline]
+fn str_reset(param0: *mut sqlite3_str) -> void {
+  sqlite3_str_reset(param0);
+}
+@[inline]
+fn str_errcode(param0: *mut sqlite3_str) -> s32 {
+  return sqlite3_str_errcode(param0);
+}
+@[inline]
+fn str_length(param0: *mut sqlite3_str) -> s32 {
+  return sqlite3_str_length(param0);
+}
+@[inline]
+fn str_value(param0: *mut sqlite3_str) -> *mut u8 {
+  return sqlite3_str_value(param0);
+}
+@[inline]
+fn backup_init(pDest: *mut sqlite3, zDestName: c_str, pSource: *mut sqlite3, zSourceName: c_str) -> *mut sqlite3_backup {
+  return sqlite3_backup_init(pDest, zDestName, pSource, zSourceName);
+}
+@[inline]
+fn backup_step(p: *mut sqlite3_backup, nPage: s32) -> s32 {
+  return sqlite3_backup_step(p, nPage);
+}
+@[inline]
+fn backup_finish(p: *mut sqlite3_backup) -> s32 {
+  return sqlite3_backup_finish(p);
+}
+@[inline]
+fn backup_remaining(p: *mut sqlite3_backup) -> s32 {
+  return sqlite3_backup_remaining(p);
+}
+@[inline]
+fn backup_pagecount(p: *mut sqlite3_backup) -> s32 {
+  return sqlite3_backup_pagecount(p);
+}
+
+@[inline]
+fn strglob(zGlob: c_str, zStr: c_str) -> s32 {
+  return sqlite3_strglob(zGlob, zStr);
+}
+@[inline]
+fn strlike(zGlob: c_str, zStr: c_str, cEsc: u32) -> s32 {
+  return sqlite3_strlike(zGlob, zStr, cEsc);
+}
+@[inline]
+fn wal_hook(param0: *mut sqlite3, param1: fn(*mut void, *mut sqlite3, c_str, s32) -> s32, param2: *mut void) -> *mut void {
+  return sqlite3_wal_hook(param0, param1, param2);
+}
+@[inline]
+fn wal_autocheckpoint(db: *mut sqlite3, N: s32) -> s32 {
+  return sqlite3_wal_autocheckpoint(db, N);
+}
+@[inline]
+fn wal_checkpoint(db: *mut sqlite3, zDb: c_str, eMode: s32, pnLog: *mut s32, pnCkpt: *mut s32) -> s32 {
+  return sqlite3_wal_checkpoint_v2(db, zDb, eMode, pnLog, pnCkpt);
+}
+@[inline]
+fn vtab_config(param0: *mut sqlite3, op: s32) -> s32 {
+  return sqlite3_vtab_config(param0, op);
+}
+@[inline]
+fn vtab_on_conflict(param0: *mut sqlite3) -> s32 {
+  return sqlite3_vtab_on_conflict(param0);
+}
+@[inline]
+fn vtab_nochange(param0: *mut sqlite3_context) -> s32 {
+  return sqlite3_vtab_nochange(param0);
+}
+@[inline]
+fn vtab_collation(param0: *mut sqlite3_index_info, param1: s32) -> c_str {
+  return sqlite3_vtab_collation(param0, param1);
+}
+@[inline]
+fn vtab_distinct(param0: *mut sqlite3_index_info) -> s32 {
+  return sqlite3_vtab_distinct(param0);
+}
+@[inline]
+fn vtab_in(param0: *mut sqlite3_index_info, iCons: s32, bHandle: s32) -> s32 {
+  return sqlite3_vtab_in(param0, iCons, bHandle);
+}
+@[inline]
+fn vtab_in_first(pVal: *mut sqlite3_value, ppOut: *mut *mut sqlite3_value) -> s32 {
+  return sqlite3_vtab_in_first(pVal, ppOut);
+}
+@[inline]
+fn vtab_in_next(pVal: *mut sqlite3_value, ppOut: *mut *mut sqlite3_value) -> s32 {
+  return sqlite3_vtab_in_next(pVal, ppOut);
+}
+@[inline]
+fn vtab_rhs_value(param0: *mut sqlite3_index_info, param1: s32, ppVal: *mut *mut sqlite3_value) -> s32 {
+  return sqlite3_vtab_rhs_value(param0, param1, ppVal);
+}
+@[inline]
+fn stmt_scanstatus(pStmt: *mut sqlite3_stmt, idx: s32, iScanStatusOp: s32, flags: s32, pOut: *mut void) -> s32 {
+  return sqlite3_stmt_scanstatus_v2(pStmt, idx, iScanStatusOp, flags, pOut);
+}
+@[inline]
+fn stmt_scanstatus_reset(param0: *mut sqlite3_stmt) -> void {
+  sqlite3_stmt_scanstatus_reset(param0);
+}
+@[inline]
+fn db_cacheflush(param0: *mut sqlite3) -> s32 {
+  return sqlite3_db_cacheflush(param0);
+}

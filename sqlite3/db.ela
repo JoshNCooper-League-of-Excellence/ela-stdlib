@@ -1,0 +1,43 @@
+/*
+  This is only ever included by `sqlite3/lib.ela`, so it has no imports.
+*/
+import fmt;
+
+struct Db {
+  handle: *mut sqlite3::sqlite3,
+};
+
+impl Db {
+  fn open!<TString>(path: TString, flags: s32 = OpenFlag::ReadWrite | OpenFlag::Create, vfs: *u8 = null) -> Result!<Self, String> where TString: AsSlice!<u8> {
+    slice := path.as_slice();
+    mut db: Self;
+    if sqlite3::open(slice.as_c_str(), &mut db.handle, flags, vfs) != 0 {
+      return Result!<Self, String>::Err(fmt::format("%", (str::from_ptr(sqlite3_errmsg(db.handle)),)));
+    }
+    return Result!<Self, String>::Ok(db);
+  }
+  fn open_in_memory(flags: s32 = OpenFlag::ReadWrite | OpenFlag::Create, vfs: *u8 = null) -> Result!<Self, str> {
+    mut db: Self;
+    if sqlite3::open(":memory:"c, &mut db.handle, flags, vfs) != 0 {
+      return Result!<Self, str>::Err("unable to open in-memory database");
+    }
+    return Result!<Self, str>::Ok(db);
+  }
+}
+
+impl Destroy for Db {
+  fn destroy(*mut self, recursive: bool = false) {
+    sqlite3::close(self.handle);
+  }
+}
+
+impl Db {
+  @[inline]
+  fn exec!<TString, UserArg>(*mut self,
+    sql: TString,
+    callback: fn(*mut UserArg, List!<Column>) -> s32 = null,
+    user_arg: *mut UserArg = null
+  ) -> Result!<Infallible, String> where TString: AsSlice!<u8>{
+    return sqlite3::exec!<TString, UserArg>(self.handle, sql, callback, user_arg);
+  }
+}

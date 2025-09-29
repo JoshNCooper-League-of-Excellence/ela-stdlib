@@ -1,0 +1,146 @@
+enum OpenFlag {
+  ReadOnly = 0x00000001,
+  ReadWrite = 0x00000002,
+  Create = 0x00000004,
+  DeleteOnClose = 0x00000008,
+  Exclusive = 0x00000010,
+  AutoProxy = 0x00000020,
+  Uri = 0x00000040,
+  Memory = 0x00000080,
+  MainDb = 0x00000100,
+  TempDb = 0x00000200,
+  TransientDb = 0x00000400,
+  MainJournal = 0x00000800,
+  TempJournal = 0x00001000,
+  SubJournal = 0x00002000,
+  SuperJournal = 0x00004000,
+  NoMutex = 0x00008000,
+  FullMutex = 0x00010000,
+  SharedCache = 0x00020000,
+  PrivateCache = 0x00040000,
+  Wal = 0x00080000,
+  NoFollow = 0x01000000
+}
+
+enum Status {
+  Ok = 0,
+  Error = 1,
+  Internal = 2,
+  Perm = 3,
+  Abort = 4,
+  Busy = 5,
+  Locked = 6,
+  NoMem = 7,
+  ReadOnly = 8,
+  Interrupt = 9,
+  IoErr = 10,
+  Corrupt = 11,
+  NotFound = 12,
+  Full = 13,
+  CantOpen = 14,
+  Protocol = 15,
+  Empty = 16,
+  Schema = 17,
+  TooBig = 18,
+  Constraint = 19,
+  Mismatch = 20,
+  Misuse = 21,
+  NoLfs = 22,
+  Auth = 23,
+  Format = 24,
+  Range = 25,
+  NotADb = 26,
+  Notice = 27,
+  Warning = 28,
+  Row = 100,
+  Done = 101
+}
+
+enum IoErr {
+  Read = (10 | (1 << 8)),
+  ShortRead = (10 | (2 << 8)),
+  Write = (10 | (3 << 8)),
+  Fsync = (10 | (4 << 8)),
+  DirFsync = (10 | (5 << 8)),
+  Truncate = (10 | (6 << 8)),
+  Fstat = (10 | (7 << 8)),
+  Unlock = (10 | (8 << 8)),
+  Rdlock = (10 | (9 << 8)),
+  Delete = (10 | (10 << 8)),
+  Blocked = (10 | (11 << 8)),
+  NoMem = (10 | (12 << 8)),
+  Access = (10 | (13 << 8)),
+  CheckReservedLock = (10 | (14 << 8)),
+  Lock = (10 | (15 << 8)),
+  Close = (10 | (16 << 8)),
+  DirClose = (10 | (17 << 8)),
+  ShmOpen = (10 | (18 << 8)),
+  ShmSize = (10 | (19 << 8)),
+  ShmLock = (10 | (20 << 8)),
+  ShmMap = (10 | (21 << 8)),
+  Seek = (10 | (22 << 8)),
+  DeleteNoEnt = (10 | (23 << 8)),
+  Mmap = (10 | (24 << 8)),
+  GetTempPath = (10 | (25 << 8)),
+  ConvPath = (10 | (26 << 8)),
+  VNode = (10 | (27 << 8)),
+  Auth = (10 | (28 << 8)),
+  BeginAtomic = (10 | (29 << 8)),
+  CommitAtomic = (10 | (30 << 8)),
+  RollbackAtomic = (10 | (31 << 8)),
+  Data = (10 | (32 << 8)),
+  CorruptFs = (10 | (33 << 8))
+}
+
+enum BusyStatus {
+  Recovery = (5 | (1 << 8)),
+  Snapshot = (5 | (2 << 8)),
+  Timeout = (5 | (3 << 8))
+}
+
+enum LockedStatus {
+  SharedCache = (6 | (1 << 8))
+}
+
+enum CantOpenStatus {
+  NoTempDir = (14 | (1 << 8)),
+  IsDir = (14 | (2 << 8)),
+  FullPath = (14 | (3 << 8)),
+  ConvPath = (14 | (4 << 8)),
+  DirtyWal = (14 | (5 << 8)),
+  Symlink = (14 | (6 << 8))
+}
+
+enum ConstraintStatus {
+  Check = (19 | (1 << 8)),
+  CommitHook = (19 | (2 << 8)),
+  ForeignKey = (19 | (3 << 8)),
+  Function = (19 | (4 << 8)),
+  NotNull = (19 | (5 << 8)),
+  PrimaryKey = (19 | (6 << 8)),
+  Trigger = (19 | (7 << 8)),
+  Unique = (19 | (8 << 8)),
+  Vtab = (19 | (9 << 8)),
+  RowId = (19 | (10 << 8))
+}
+
+enum NoticeStatus {
+  RecoverWal = (27 | (1 << 8)),
+  RecoverRollback = (27 | (2 << 8))
+}
+
+enum WarningStatus {
+  AutoIndex = (28 | (1 << 8))
+}
+
+enum ValueType {
+  Integer = 1,
+  Float = 2,
+  Text = 3,
+  Blob = 4,
+  Null = 5
+}
+
+#include "sqlite3.ela";
+#include "wrappers.ela";
+#include "db.ela";

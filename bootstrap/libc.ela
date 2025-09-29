@@ -43,6 +43,7 @@
         fn sscanf(buffer: *const u8, format: *const u8, ...) -> s32;
         fn vsscanf(buffer: *const u8, format: *const u8, args: va_list) -> s32;
 
+        
         fn exit(code: s32);
 
         fn getchar() -> s32;
@@ -106,7 +107,7 @@
       return c::realloc(ptr, n * sizeof(T));
     }
 
-
+    @[no_return]
     fn exit(code: s32) {
       return c::exit(code);
     }

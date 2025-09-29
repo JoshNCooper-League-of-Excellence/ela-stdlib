@@ -100,6 +100,8 @@ extern fn fgetc(file: *mut FILE) -> s8;
 extern fn putc(ch: u8, file: *mut FILE) -> void;
 extern fn fprintf(stream: *mut FILE, format: c_str, ...) -> s32;
 extern fn fflush(f: *const FILE);
+extern fn mkdir(path: *const u8, mode: u32) -> s32;
+
 
 // TODO: add a way to do Binary stuff.
 #flags enum FileOpenFlags {
@@ -136,6 +138,10 @@ impl File {
       return Option::None;
     }
     return Option::Some(stat);
+  }
+
+  fn exists!<PathT>(path: PathT) -> bool where PathT: AsSlice!<u8> {
+    return Stat::new(path).is_some();
   }
 
   fn open!<T>(path: T, flags: FileOpenFlags) -> Self where T: AsSlice!<u8> {
@@ -253,8 +259,67 @@ impl Destroy for File {
   }
 }
 
+
+/* 
+  ! We should make a solid decision if we want the free functions like the ones below
+  ! to be within a struct as associated functions, or if we want to keep them free functions
+  ! floating in our module. I think I prefer the latter, but it's easy to change for now.
+
+  ! I just copied this from my system, we need a better way to get this.
+  ! should use pathconf.
+*/
+const PATH_MAX := 4096;
+
+extern fn realpath(path: *const u8, result: *mut u8) -> *const u8;
+
+fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8> {
+  slice := path.as_slice();
+  if slice.length == 0 {
+    return None();
+  }
+  mut resolved_path: [u8; PATH_MAX];
+  if !realpath(slice.data, resolved_path) {
+    return None();
+  }
+  return Some(String::from_ptr(resolved_path));
+}
+
+extern fn chdir(path: *const u8) -> s32;
+extern fn dirname(path: *const u8) -> *mut u8;
+
+/* 
+  The option return _type simply says when it .is_none(), it has failed in some capacity.
+  We don't have a way to interact with perror, so we don't really get much information as to why
+  this has failed, just that it did fail.
+*/
+fn change_directory!<Path>(path: Path) -> Option!<()> where Path: AsSlice!<u8> {
+  slice := path.as_slice();
+  if slice.length == 0 {
+    return None();
+  }
+  if chdir(slice.data) != 0 {
+    return None();
+  }
+  return Some(());
+}
+
+fn parent_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8> {
+  slice := path.as_slice();
+  if slice.length == 0 {
+    return None();
+  }
+  mut data := std::c::strdup(slice.data);
+  defer std::c::free(data);
+  name := dirname(data);
+  if !name {
+    return None();
+  }
+  return Some(String::from_ptr(name));
+}
+
 struct DIR;
 extern fn getcwd(buf: c_str, size: u64) -> c_str;
+
 
 struct dirent {
   d_ino: u64,
@@ -325,6 +390,46 @@ impl Directory {
     }
     return files;
   }
+
+  fn create!<PathT>(path: PathT, create_parent_dirs: bool = false) -> bool where PathT: AsSlice!<u8> {
+    mut dir_path := path.as_slice();
+
+    if dir_path.length == 0 {
+      return false;
+    }
+
+    const DEFAULT_MODE := 493;
+
+    slice := dir_path.as_slice();
+
+    if !create_parent_dirs {
+      return mkdir(slice.data, DEFAULT_MODE) == 0;
+    }
+
+    if slice.length as u64 >= PATH_MAX as u64 {
+      return false;
+    }
+
+    mut buf: [u8; PATH_MAX];
+    mut i: u64 = 0;
+
+    while i < slice.length {
+      if slice[i] == '/' && i != 0 {
+        mut j: u64 = 0;
+        while j < i {
+          buf[j] = slice[j];
+          j += 1;
+        }
+        buf[i] = 0; 
+        // >
+        // attempt to create prefix (ignore errors, e.g. already exists)
+        mkdir(buf, DEFAULT_MODE);
+      }
+      i += 1;
+    }
+
+    return mkdir(slice.data, DEFAULT_MODE) == 0;
+  }
 }
 
 impl Destroy for Directory {
@@ -332,61 +437,4 @@ impl Destroy for Directory {
     self.path.destroy();
     self.entries.destroy();
   }
-}
-
-/* 
-  ! We should make a solid decision if we want the free functions like the ones below
-  ! to be within a struct as associated functions, or if we want to keep them free functions
-  ! floating in our module. I think I prefer the latter, but it's easy to change for now.
-
-  ! I just copied this from my system, we need a better way to get this.
-  ! should use pathconf.
-*/
-const PATH_MAX := 4096;
-
-extern fn realpath(path: *const u8, result: *mut u8) -> *const u8;
-
-fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8> {
-  slice := path.as_slice();
-  if slice.length == 0 {
-    return None();
-  }
-  mut resolved_path: [u8; PATH_MAX];
-  if !realpath(slice.data, resolved_path) {
-    return None();
-  }
-  return Some(String::from_ptr(resolved_path));
-}
-
-extern fn chdir(path: *const u8) -> s32;
-extern fn dirname(path: *const u8) -> *mut u8;
-
-/* 
-  The option return _type simply says when it .is_none(), it has failed in some capacity.
-  We don't have a way to interact with perror, so we don't really get much information as to why
-  this has failed, just that it did fail.
-*/
-fn change_directory!<Path>(path: Path) -> Option!<()> where Path: AsSlice!<u8> {
-  slice := path.as_slice();
-  if slice.length == 0 {
-    return None();
-  }
-  if chdir(slice.data) != 0 {
-    return None();
-  }
-  return Some(());
-}
-
-fn parent_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8> {
-  slice := path.as_slice();
-  if slice.length == 0 {
-    return None();
-  }
-  mut data := std::c::strdup(slice.data);
-  defer std::c::free(data);
-  name := dirname(data);
-  if !name {
-    return None();
-  }
-  return Some(String::from_ptr(name));
 }

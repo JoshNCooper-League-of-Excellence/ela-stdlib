@@ -7,6 +7,16 @@ impl str {
       length: self.length,
     };
   }
+
+  fn from_ptr(ptr: *u8, mut length: s32 = -1) -> Self {
+    if length < 0 {
+      length = std::c::strlen(ptr);
+    }
+    return .{
+      data: ptr,
+      length: length as u64
+    };
+  }
 }
 
 impl Index!<u8> for str {

@@ -94,6 +94,19 @@ impl Env {
       length: argc,
     };
   }
+
+  fn home_dir() -> String {
+    extern fn getenv(buf: c_str) -> c_str;
+    mut var: c_str;
+    if (var = getenv("XDG_CONFIG_HOME"c)) {
+      return String::from_ptr(var);
+    } else if (var = getenv("HOME"c)) {
+      return String::from_ptr(var);
+    } else {
+      panic("Unable to get HOME or XDG_CONFIG_HOME env vars, it's likely your platform isn't supported");
+    }
+  }
+  
 }
 
 impl AsSlice!<u8> for u32 {

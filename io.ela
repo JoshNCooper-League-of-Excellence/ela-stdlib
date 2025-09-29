@@ -102,6 +102,56 @@ impl stream::Reader!<u8> for StreamReader {
   }
 }
 
+struct PollFD { fd: s32, events: s16, revents: s16 };
+extern fn poll(fds: *mut PollFD, nfds: u64, timeout: s32) -> s32;
+extern fn fileno(file: *mut fs::FILE) -> s32;
+const POLLIN: s16 = 0x001;
+
+impl StreamReader {
+  fn read_non_blocking(*mut self) -> Option!<u8> {
+    fd := fileno(self.file.fd);
+    mut p: PollFD = .{ fd: fd, events: POLLIN, revents: 0 };
+    if poll(&mut p, 1, 0) <= 0 {
+      //>
+      // no data available right now
+      return None(); 
+    }
+
+    // existing buffer refill logic (will now not block because poll said its ready)
+    if self.buffer_index >= self.buffer.length {
+      self.buffer.clear();
+      mut buffer: [u8; 1024];
+      bytes_read := self.file.read(buffer, self.buffer_capacity);
+      if bytes_read == 0 {
+        return None();
+      }
+      self.buffer.push_range([u8].{ data: buffer, length: bytes_read });
+      self.buffer_index = 0;
+    }
+
+    byte := self.buffer[self.buffer_index];
+    self.buffer_index += 1;
+    return Some(byte);
+  }
+
+  fn read_line(*mut self) -> String {
+    mut complete: bool;
+    mut buffer: String;
+    while {
+      if self.read() is Option!<u8>::Some(ch) {
+        if ch == '\n' {
+          break;
+        }
+        buffer.push(ch);
+      } else {
+        break;
+      }
+    }
+    return buffer;
+  }
+}
+
+
 impl Destroy for StreamReader {
   fn destroy(*mut self, recursive: bool = false) {
     self.file.destroy(recursive);
