@@ -177,8 +177,8 @@ impl JsonValue {
       JsonValue::Number(num): {
         writer.writef("%", (num,));
       }
-      JsonValue::String(str): {
-        writer.writef("%", (str,));
+      JsonValue::String(s): {
+        writer.writef("%", (s,));
       }
       JsonValue::Bool(b): {
         value : str = if b { return "true"; } else { return "false"; };

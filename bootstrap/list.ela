@@ -292,6 +292,16 @@ impl!<T> List!<T> {
 }
 
 impl!<T> List!<T> {
+
+  fn any(self, closure: *void, comparator: fn(T, *void) -> bool) -> bool {
+    for v in self {
+      if comparator(v, closure) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @[inline]
   fn back(self) -> Option!<T> {
     if self.length > 0 {

@@ -72,6 +72,7 @@
       }
     }
   }
+
   impl Destroy for TrackingAllocator {
     fn destroy(*mut self, recursive: bool = false) {
       while self.length > 0 {
@@ -83,6 +84,7 @@
       self.capacity = 0;
     }
   }
+
   impl Allocator for TrackingAllocator {
     fn allocate(*mut self, size: u64) -> *mut void {
       ptr := std::c::malloc(size);
@@ -114,6 +116,10 @@
       return new_ptr;
     }
   }
+
+  fn temp_allocator() -> TrackingAllocator {
+    return .{};
+  }
 }
 
 /* 
@@ -131,8 +137,10 @@ impl dyn Allocator {
   fn has_instance(self) -> bool => self.instance != null;
 }
 
-fn set_global_allocator(allocator: dyn Allocator) {
+fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
+  old := global_allocator;
   global_allocator = allocator;
+  return old
 }
 
 #ifndef FREESTANDING {
