@@ -198,17 +198,6 @@ impl!<Key, Value> Destroy for Map!<Key, Value> {
   }
 }
 
-impl!<Key, Value> Map!<Key, Value> {
-  fn length(self) -> u64 {
-    // TODO: make this cheaper.
-    mut length := 0;
-    for k,v in self {
-      length++;
-    }
-    return length;
-  }
-}
-
 // This should be in formatters/map.ela.
 import fmt::*;
 
