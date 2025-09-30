@@ -2,9 +2,9 @@ import raylib::*;
 import fmt::*;
 
 struct Style {
-  foreground:           Color = WHITE,
-  background:           Color = BLACK,
-  highlighted:          Color = ORANGE,
+  foreground:           Color = raylib::WHITE,
+  background:           Color = raylib::BLACK,
+  highlighted:          Color = raylib::ORANGE,
 
   line_thickness:       f32 = 2,
 
@@ -695,7 +695,7 @@ impl Widget for TextField {
     fn enter_edit_mode(this: *mut TextField) {
       this.in_edit_mode = true;
       mut copy := this.base.style;
-      copy.font_color_override = Some(WHITE);
+      copy.font_color_override = Some(raylib::WHITE);
       copy.background = YELLOW.with_alpha(25);
       copy.highlighted = CLEAR;
       this.style_override = Some(copy);

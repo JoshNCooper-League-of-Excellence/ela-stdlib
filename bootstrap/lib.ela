@@ -155,8 +155,7 @@ fn default!<T>() -> T {
 }
 
 // COMPILER IMPLEMENTED TRAITS FOR PATTERN MATCHING TYPES
-/* 
-
+/*
 ? Most of these are just type descriptors, and are completely self explanatory by name.
   * trait IsFnPtr {}
   * trait IsFn {}

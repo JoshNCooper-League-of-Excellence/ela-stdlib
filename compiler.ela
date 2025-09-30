@@ -21,18 +21,19 @@ enum OptimizationLevel {
 }
 
 struct Compiler {
-  output:               Output,
-  output_path:          str,
-  load_library_path:    str = "/usr/local/lib/ela",
-  optimization:         OptimizationLevel,
+  output:               Output              = Output::Executable,
+  output_path:          str                 = "./main",
+  load_library_path:    str                 = "/usr/local/lib/ela",
 
-  debug:                bool = true,
-  use_stdlib:           bool = true,
+  optimization:         OptimizationLevel   = OptimizationLevel::None,
 
-  testing:              bool = false,
-  freestanding:         bool = false,
+  debug:                bool                = true,
+  use_stdlib:           bool                = true,
 
-  linker_flags:         List!<str> = List!<str>::init(.[" -lc -lm "]),
+  testing:              bool                = false,
+  freestanding:         bool                = false,
+
+  linker_flags:         List!<str>          = List!<str>::init(.["-lc", "-lm"]),
 }
 
 impl Compiler {

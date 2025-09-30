@@ -121,11 +121,15 @@
       }
     }
 
-    @[inline]
-    fn puts!<MsgT>(message: MsgT) where MsgT: AsSlice!<u8> {
-      ptr, _ := message.as_slice();
-      std::c::puts(message);
+    fn puts!<MsgT>(msg: MsgT) {
+      where MsgT: AsSlice!<u8> {
+        slice := msg.as_slice();
+        std::c::puts(slice.data);
+      } else where MsgT: *u8 | *mut u8 {
+        std::c::puts(msg);
+      }
     }
+   
     
     @[inline]
     fn fprintf!<T>(stream: *mut c::FILE, format: str, arg: T) -> s32 {
