@@ -200,7 +200,7 @@ impl Iterator!<any> for ElementIter {
 
 impl Type {
   fn elements(self, ptr: *const u8) -> ElementIter {
-    if self.name.starts_with("List!<") {
+    if self.name.starts_with("List") {
       length_field := self.fields.find_first_of (
         fn (field: *const Field) -> bool {
           return field.name.eq("length");
@@ -217,6 +217,11 @@ impl Type {
       data   := *(data_field.get(ptr) as *const *const u8);
 
       element_type := self.generic_args[0];
+
+      if element_type == null {
+        panic("Cannot obtain element iterator -- 'element_type' aka self.generic_args[0] was null. This is a compiler bug");
+      }
+
       end := data + length * element_type.size;
       return .{ptr: data as *mut u8, end: end, element_type: element_type};
     }

@@ -80,7 +80,7 @@ fn exec!<TString, UserArg>(db: *mut sqlite3, sql: TString, callback: fn(*mut Use
         });
       }
       return callback(arg, columns);
-    }
+    };
   }
   
   errmsg: *mut u8;
