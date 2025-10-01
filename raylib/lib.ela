@@ -491,22 +491,42 @@ fn run_demo_program() {
   InitWindow(800, 600, "Hello, Raylib!"c);
   SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE);
 
+  // Position variables for movement
+  mut pos_x: f32 = GetScreenWidth() as f32 / 2.0;
+  mut pos_y: f32 = GetScreenHeight() as f32 / 2.0;
+  move_speed: f32 = 200.0; // pixels per second
+
   while !WindowShouldClose() {
+    dt := GetFrameTime();
+
+    if IsKeyDown(KeyboardKey::KEY_W) {
+      pos_y -= move_speed * dt;
+    }
+    if IsKeyDown(KeyboardKey::KEY_S) {
+      pos_y += move_speed * dt;
+    }
+    if IsKeyDown(KeyboardKey::KEY_A) {
+      pos_x -= move_speed * dt;
+    }
+    if IsKeyDown(KeyboardKey::KEY_D) {
+      pos_x += move_speed * dt;
+    }
+
     BeginDrawing();
     ClearBackground(WHITE);
 
-    // Draw 'label' rect.
-    rect_x := (GetScreenWidth() / 2) - 150;
-    rect_y := (GetScreenHeight() / 2) - 150;
-    DrawRectangle(rect_x, rect_y, 300, 300, BLACK);
+    rect_size: s32 = 100;
+    rect_x := pos_x as s32 - (rect_size / 2);
+    rect_y := pos_y as s32 - (rect_size / 2);
+    DrawRectangle(rect_x, rect_y, rect_size, rect_size, BLACK);
 
-    // Draw text.
     text := "Hello, Raylib!"c; // the little 'c' denotes a c string, *const u8
-    text_x := (GetScreenWidth() / 2) - (MeasureText(text, 24) / 2);
-    text_y := GetScreenHeight() / 2;
+    text_size: s32 = 16;
+    text_x := pos_x as s32 - (MeasureText(text, text_size) / 2);
+    text_y := pos_y as s32 - (text_size / 2);
 
     DrawFPS(0, 0);
-    DrawText(text, text_x, text_y, 24, WHITE);
+    DrawText(text, text_x, text_y, text_size, WHITE);
 
     EndDrawing();
   }
