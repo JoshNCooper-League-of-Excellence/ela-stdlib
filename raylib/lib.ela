@@ -430,7 +430,6 @@ impl Color {
       a: 255 as u8,
     };
   }
-
 }
 
 // ? A simple timer that can be used in update loops to get a tick every N seconds.
@@ -484,52 +483,51 @@ module util {
   }
 }
 
-
 fn run_demo_program() {
-  // Silence the raylib console output
-  SetTraceLogLevel(TraceLogLevel::LOG_NONE);
-  InitWindow(800, 600, "Hello, Raylib!"c);
-  SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE);
+    SetTraceLogLevel(TraceLogLevel::LOG_NONE);
+    InitWindow(800, 600, "Hello, Raylib!"c);
+    SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE);
 
-  // Position variables for movement
-  mut pos_x: f32 = GetScreenWidth() as f32 / 2.0;
-  mut pos_y: f32 = GetScreenHeight() as f32 / 2.0;
-  move_speed: f32 = 200.0; // pixels per second
+    mut pos_x: f32 = GetScreenWidth() as f32 / 2.0;
+    mut pos_y: f32 = GetScreenHeight() as f32 / 2.0;
+    move_speed: f32 = 200.0; // pixels per second
 
-  while !WindowShouldClose() {
-    dt := GetFrameTime();
+    while !WindowShouldClose() {
+      dt := GetFrameTime();
 
-    if IsKeyDown(KeyboardKey::KEY_W) {
-      pos_y -= move_speed * dt;
+      if IsKeyDown(KeyboardKey::KEY_W) {
+        pos_y -= move_speed * dt;
+      }
+      if IsKeyDown(KeyboardKey::KEY_S) {
+        pos_y += move_speed * dt;
+      }
+      if IsKeyDown(KeyboardKey::KEY_A) {
+        pos_x -= move_speed * dt;
+      }
+      if IsKeyDown(KeyboardKey::KEY_D) {
+        pos_x += move_speed * dt;
+      }
+
+      std::c::printf("pos_x=%.1f, pos_y=%.1f\n"c, pos_x, pos_y);
+
+      BeginDrawing();
+      ClearBackground(WHITE);
+
+      rect_size: s32 = 100;
+      rect_x := pos_x as s32 - (rect_size / 2);
+      rect_y := pos_y as s32 - (rect_size / 2);
+      DrawRectangle(rect_x, rect_y, rect_size, rect_size, BLACK);
+
+      text := "Hello, Raylib!"c; // the little 'c' denotes a c string, *const u8
+      text_size: s32 = 16;
+      text_x := pos_x as s32 - (MeasureText(text, text_size) / 2);
+      text_y := pos_y as s32 - (text_size / 2);
+
+      DrawFPS(0, 0);
+      DrawText(text, text_x, text_y, text_size, WHITE);
+
+      EndDrawing();
     }
-    if IsKeyDown(KeyboardKey::KEY_S) {
-      pos_y += move_speed * dt;
-    }
-    if IsKeyDown(KeyboardKey::KEY_A) {
-      pos_x -= move_speed * dt;
-    }
-    if IsKeyDown(KeyboardKey::KEY_D) {
-      pos_x += move_speed * dt;
-    }
-
-    BeginDrawing();
-    ClearBackground(WHITE);
-
-    rect_size: s32 = 100;
-    rect_x := pos_x as s32 - (rect_size / 2);
-    rect_y := pos_y as s32 - (rect_size / 2);
-    DrawRectangle(rect_x, rect_y, rect_size, rect_size, BLACK);
-
-    text := "Hello, Raylib!"c; // the little 'c' denotes a c string, *const u8
-    text_size: s32 = 16;
-    text_x := pos_x as s32 - (MeasureText(text, text_size) / 2);
-    text_y := pos_y as s32 - (text_size / 2);
-
-    DrawFPS(0, 0);
-    DrawText(text, text_x, text_y, text_size, WHITE);
-
-    EndDrawing();
-  }
 }
 
 

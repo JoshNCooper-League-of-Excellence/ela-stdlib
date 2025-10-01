@@ -4,7 +4,9 @@
 
 import fmt::{
   FormatOptions,
-  StringStream,
+  stringstream::{
+    StringStream,
+  },
   Format,
   Formatter,
 };

@@ -31,15 +31,15 @@ struct RangeIterMut!<V> where V: Eq| IsNumeric | IsPointer {
 
 impl!<V> Iterator!<V> for RangeIter!<V>  {
   fn next(*mut self) -> Option!<V> {
-    if self.idx == self.end
-      then return Option!<V>::None;
+    if self.idx >= self.end {
+      return Option!<V>::None;
+    }
 
     value := Option!<V>::Some(self.idx);
-
     if self.begin > self.end {
-      self.idx--;
+      self.idx -= 1;
     } else {
-      self.idx++;
+      self.idx += 1;
     }
 
     return value;
