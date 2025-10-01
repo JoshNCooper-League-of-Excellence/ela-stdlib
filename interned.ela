@@ -60,7 +60,7 @@ impl!<T> AsSlice!<u8> for Interned!<T> where T: AsSlice!<u8> {
 
 import fmt::{
   Format,
-  StringStream,
+  stringstream::StringStream,
   FormatOptions
 };
 

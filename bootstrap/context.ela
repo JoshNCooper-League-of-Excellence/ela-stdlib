@@ -1,6 +1,3 @@
 
 
-trait Context {
-  fn allocator(*self) -> dyn Allocator;
-  fn logger(*self) -> void; // TODO
-}
+

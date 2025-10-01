@@ -18,8 +18,8 @@ trait Writer!<T> {
 
   // ! Right now, whatever is importin gthis and calling it must define fmt and import these symbols.
   // ! it doesn't error until called without those symbols, which is even weirder.
-  fn writef!<TupleT>(*mut self, fmt: str, tuple: TupleT, options: FormatOptions, allocator: dyn Allocator) {
-    using formatted_string := format(fmt, tuple, options, allocator);
+  fn writef!<TupleT>(*mut self, fmt_string: str, tuple: TupleT, options: fmt::FormatOptions, allocator: dyn Allocator) {
+    using formatted_string := fmt::format(fmt_string, tuple, options, allocator);
     self.write_many(formatted_string.as_slice());
   }
 }

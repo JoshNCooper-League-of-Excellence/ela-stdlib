@@ -1,6 +1,7 @@
 import fs;
 import fmt;
 import stream;
+import stringstream;
 
 const FILE_STREAM_BUFFER_LENGTH: u16 = 1024;
 
@@ -41,14 +42,17 @@ impl stream::Buffered!<u8> for StreamWriter {
 
 impl stream::Writer!<u8> for StreamWriter {
   fn write(*mut self, byte: u8) {
-    if self.position >= FILE_STREAM_BUFFER_LENGTH || (self.line_buffered && byte == '\n') {
+    if self.position >= FILE_STREAM_BUFFER_LENGTH {
       self.flush();
     }
     self.buffer[self.position] = byte;
     self.position += 1;
+
+    if self.line_buffered && byte == '\n' {
+      self.flush();
+    }
   }
 }
-
 
 impl Destroy for StreamWriter {
   fn destroy(*mut self, recursive: bool = false) {
@@ -151,7 +155,6 @@ impl StreamReader {
   }
 }
 
-
 impl Destroy for StreamReader {
   fn destroy(*mut self, recursive: bool = false) {
     self.file.destroy(recursive);
@@ -174,4 +177,79 @@ impl Destroy for StreamReader {
       fd: stdout
     });
   }
+} else {
+  fn get_stdin() -> StreamReader {
+    return .{};
+  };
+  fn get_stdout() -> StreamReader {
+    return .{};
+  };
+}
+
+@[inline]
+fn print!<T>(value: T, mut writer: StreamWriter = get_stdout(), options: fmt::FormatOptions = fmt::FormatOptions::default()) {
+  where T: *u8 {
+    length := strlen(value);
+    for i in 0..length {
+      writer.write(value![i]);
+    }
+  } else where T: String | str {
+    writer.write_many(value.as_slice());
+  } else where T: IsTuple {
+    using mut formatted := format("%", value, options);
+    writer.write_many(formatted.as_slice());
+  } else where T: fmt::Format {
+    using mut sstream: stringstream::StringStream;
+    mut formatter: fmt::Formatter = .{
+      writer: &mut sstream,
+      options: options,
+    };
+    value.format(&mut formatter);
+    using formatted := sstream.get_string();
+    writer.write_many(formatted.as_slice());
+  } else {
+    using mut formatted := fmt::format("%", (value,), options);
+    writer.write_many(formatted.as_slice());
+  }
+}
+
+@[inline]
+fn println!<T>(value: T, mut writer: StreamWriter = get_stdout(), options: fmt::FormatOptions = fmt::FormatOptions::default()) {
+  where T: *u8 {
+    length := strlen(value);
+    for i in 0..length {
+      writer.write(value![i]);
+    }
+  } else where T: String | str {
+    writer.write_many(value.as_slice());
+  } else where T: IsTuple {
+    using mut formatted := format("%", value, options);
+    writer.write_many(formatted.as_slice());
+  } else where T: fmt::Format {
+    using mut sstream: stringstream::StringStream;
+    mut formatter: fmt::Formatter = .{
+      writer: &mut sstream,
+      options: options,
+    };
+    value.format(&mut formatter);
+    using formatted := sstream.get_string();
+    writer.write_many(formatted.as_slice());
+  } else {
+    using mut formatted := fmt::format("%", (value,), options);
+    writer.write_many(formatted.as_slice());
+  }
+  writer.write('\n');
+}
+
+@[inline]
+fn printf!<FmtT, T>(fmt: FmtT, args: T) where FmtT: AsSlice!<u8> {
+  using formatted := fmt::format(fmt, args, options);
+  writer.write_many(formatted.as_slice());
+}
+
+@[inline]
+fn printlnf!<FmtT, T>(fmt: FmtT, args: T) where FmtT: AsSlice!<u8> {
+  using formatted := fmt::format(fmt, args, options);
+  writer.write_many(formatted.as_slice());
+  writer.write('\n');
 }

@@ -484,5 +484,34 @@ module util {
   }
 }
 
+
+fn run_demo_program() {
+  // Silence the raylib console output
+  SetTraceLogLevel(TraceLogLevel::LOG_NONE);
+  InitWindow(800, 600, "Hello, Raylib!"c);
+  SetConfigFlags(ConfigFlags::FLAG_WINDOW_RESIZABLE);
+
+  while !WindowShouldClose() {
+    BeginDrawing();
+    ClearBackground(WHITE);
+
+    // Draw 'label' rect.
+    rect_x := (GetScreenWidth() / 2) - 150;
+    rect_y := (GetScreenHeight() / 2) - 150;
+    DrawRectangle(rect_x, rect_y, 300, 300, BLACK);
+
+    // Draw text.
+    text := "Hello, Raylib!"c; // the little 'c' denotes a c string, *const u8
+    text_x := (GetScreenWidth() / 2) - (MeasureText(text, 24) / 2);
+    text_y := GetScreenHeight() / 2;
+
+    DrawFPS(0, 0);
+    DrawText(text, text_x, text_y, 24, WHITE);
+
+    EndDrawing();
+  }
+}
+
+
 // Simple shape drawing API using choice types.
 #include "shape.ela"

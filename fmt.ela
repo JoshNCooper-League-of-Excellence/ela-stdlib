@@ -245,6 +245,7 @@ struct Formatter {
   writer: *mut StringStream,
   indentation: u32,
   options: FormatOptions,
+  allocator: dyn Allocator,
 }
 
 trait Format {
@@ -623,16 +624,13 @@ fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
 fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
     using mut sstream: StringStream;
-
     mut formatter: Formatter = .{
       writer: &mut sstream,
       options: options,
     };
-
     message.format(&mut formatter);
     using formatted := sstream.get_string();
     std::c::printf("%s"c, formatted.data);
-
   } else {
     mut formatted := format("%", (message,), options);
     std::c::printf("%s"c, formatted.data);
