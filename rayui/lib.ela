@@ -18,11 +18,12 @@ struct Style {
   margin:               f32 = 10.0, // only really used for ListBox right now. Should've been added to all elements.
 }
 
+fn measure_text!<TString>(text: TString, style: Style) -> f32 where TString: AsSlice!<u8> {
+  return MeasureText(text.as_slice().data, style.font_size);
+}
+
 fn draw_textf!<Tuple>(fmt: str, tuple: Tuple, position: Vector2, style: Style, format_options: FormatOptions) where Tuple: IsTuple {
-  text := format(fmt, tuple, format_options);
-  defer {
-    text.destroy();
-  }
+  using text := format(fmt, tuple, format_options);
   DrawTextEx(
     style.font,
     text.data,
@@ -210,13 +211,44 @@ struct Label!<TString = String> where TString: AsSlice!<u8> {
 
 impl!<TString> Destroy for Label!<TString> {
   fn destroy(*mut self, recursive: bool = true) {
-     where self.text.unwrap(): Destroy {
-      if self.text is Option!<TString>::Some(&mut v) {
-        v.destroy();
-      }
+     where self.text: Destroy {
+      self.text.destroy();
     }
     self.base.destroy();
 
+  }
+}
+
+impl!<TString> Widget for Label!<TString> where TString: AsSlice!<u8> {
+  fn draw(*mut self) {
+    text_width: f32 = MeasureText(self.text.as_slice().data, self.base.style.font_size);
+    text_height: f32 = self.base.style.font_size;
+
+    mut position: Vector2 = .{
+      x: self.base.rectangle.x,
+      y: self.base.rectangle.y
+    };
+
+    mut size: Vector2 = .{
+      x: self.base.rectangle.width,
+      y: self.base.rectangle.height
+    };
+
+    if text_width > self.base.rectangle.width {
+      size.x = text_width;
+      position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
+    }
+
+    text_position: Vector2 = .{
+      x: position.x + (size.x - text_width) / 2,
+      y: position.y + (size.y - text_height) / 2,
+    };
+
+    draw_text(self.text, text_position, self.base.style);
+  }
+
+  fn get_children(*const self) -> *mut List!<dyn Widget> {
+    return null;
   }
 }
 
@@ -935,7 +967,7 @@ impl!<Ctx> Window!<Ctx> {
     CloseWindow();
   }
 
-  fn add_widget!<T>(*mut self, t: *mut T) -> Self where T: Widget  {
+  fn add_widget!<T>(*mut self, t: *mut T) -> *mut Self where T: Widget  {
     trait_obj := dynof(t, Widget);
     trait_obj.on_window_resized(.{
       x: 0, y: 0,
@@ -943,21 +975,21 @@ impl!<Ctx> Window!<Ctx> {
       height: GetScreenHeight(),
     });
     self.widgets.push(trait_obj);
-    return *self;
+    return self;
   }
 
-  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> Self {
+  fn add_render_hook(*mut self, hook: RenderHook, priority: RenderHookPriority = RenderHookPriority::PreWidgetRender) -> *mut Self {
     self.render_hooks.push((priority, hook));
-    return *self;
+    return self;
   }
 
-  fn set_user_context(*mut self, ctx: *mut Ctx) -> Self {
+  fn set_user_context(*mut self, ctx: *mut Ctx) -> *mut Self {
     self.user_context = ctx;
-    return *self;
+    return self;
   }
 
-  fn add_on_init_hook(*mut self, hook: RenderHook) -> Self {
+  fn add_on_init_hook(*mut self, hook: RenderHook) -> *mut Self {
     self.init_hooks.push(hook);
-    return *self;
+    return self;
   }
 }

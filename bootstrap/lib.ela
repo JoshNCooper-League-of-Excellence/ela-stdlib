@@ -31,7 +31,7 @@
 // String, heap allocated string.
 #include "String.ela";
 // generic utilities for reflection
-#include "reflection.ela";
+#include "refl.ela";
 // basic hashing functions implemented for numerical and string types.
 #include "hash.ela";
 // char utils

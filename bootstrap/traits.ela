@@ -36,8 +36,8 @@ trait Bitwise!<Right> {
 }
 
 trait PartialEq!<Right> {
-  fn eq(self, right: Self) -> bool;
-  fn neq(self, right: Self) -> bool {
+  fn eq(self, right: Right) -> bool;
+  fn neq(self, right: Right) -> bool {
     return !self.eq(right);
   }
 }
@@ -111,7 +111,9 @@ trait Ord where Self: Eq & PartialOrd!<Self> {
 
 trait Index!<T> {
   fn index(*const self, index: u64) -> *const T;
-  fn index_mut(*mut self, index: u64) -> *mut T;
+  fn index_mut(*mut self, index: u64) -> *mut T {
+    return self.index(index) as *mut T;
+  }
 }
 
 

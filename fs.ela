@@ -1,5 +1,8 @@
 const EOF := -1;
 
+import fmt;
+
+
 struct _IO_FILE;
 type FILE :: _IO_FILE;
 

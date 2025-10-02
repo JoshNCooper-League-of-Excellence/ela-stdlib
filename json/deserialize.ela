@@ -1,7 +1,8 @@
 fn deserialize_any(value: *mut JsonValue, object: any) -> Option!<String>;
 
 fn deserialize_struct(value: *mut JsonValue, object: any) -> Option!<String> {
-  for key, value in *value.as_object().unwrap() {
+  obj := value.as_object().unwrap();
+  for key, value in *obj {
     struct_field := object._type.get_field(key);
 
     if !struct_field {
@@ -31,39 +32,40 @@ fn deserialize_scalar(value: *mut JsonValue, object: any) -> Option!<String> {
     *(object.ptr as *mut bool) = value.as_bool().unwrap();
   } else if (object._type.is_float()) {
     if (object._type.size == 8) {
-      *(object.ptr as *mut f64) = value.as_number().unwrap();
+      *(object.ptr as *mut f64) = *(value.as_number().unwrap() as *f64);
     } else {
-      *(object.ptr as *mut f32) = value.as_number().unwrap() as f32;
+      *(object.ptr as *mut f32) = *(value.as_number().unwrap() as *f64);
     }
   } else if (object._type.is_integral()) {
     is_signed := object._type.is_signed();
     switch object._type.size {
         8: {
           if is_signed {
-            *(object.ptr as *mut s64) = value.as_number().unwrap();
+            *(object.ptr as *mut s64) = *(value.as_number().unwrap() as *s64);
           } else {
-            *(object.ptr as *mut u64) = value.as_number().unwrap() as u64;
+            *(object.ptr as *mut u64) = *(value.as_number().unwrap() as *u64);
           }
         }
         4: {
           if is_signed {
-            *(object.ptr as *mut s32) = value.as_number().unwrap() as s32;
+            *(object.ptr as *mut s32) = *(value.as_number().unwrap() as *s32);
           } else {
-            *(object.ptr as *mut u32) = value.as_number().unwrap() as u32;
+
+            *(object.ptr as *mut u32) = *(value.as_number().unwrap() as *u32);
           }
         }
         2: {
           if is_signed {
-            *(object.ptr as *mut s16) = value.as_number().unwrap() as s16;
+            *(object.ptr as *mut s16) = *(value.as_number().unwrap() as *s16);
           } else {
-            *(object.ptr as *mut u16) = value.as_number().unwrap() as u16;
+            *(object.ptr as *mut u16) = *(value.as_number().unwrap() as *u16);
           }
         }
         1: {
           if is_signed {
-            *(object.ptr as *mut s8) = value.as_number().unwrap() as s8;
+            *(object.ptr as *mut s8) = *(value.as_number().unwrap() as *s8);
           } else {
-            *(object.ptr as *mut u8) = value.as_number().unwrap() as u8;
+            *(object.ptr as *mut u8) = *(value.as_number().unwrap() as *u8);
           }
         }
     }

@@ -2035,8 +2035,3 @@ extern fn LLVMPassBuilderOptionsSetCallGraphProfile(Options: LLVMPassBuilderOpti
 extern fn LLVMPassBuilderOptionsSetMergeFunctions(Options: LLVMPassBuilderOptionsRef, MergeFunctions: bool) -> void;
 extern fn LLVMPassBuilderOptionsSetInlinerThreshold(Options: LLVMPassBuilderOptionsRef, Threshold: s32) -> void;
 extern fn LLVMDisposePassBuilderOptions(Options: LLVMPassBuilderOptionsRef) -> void;
-
-
-fn main() {
-
-}

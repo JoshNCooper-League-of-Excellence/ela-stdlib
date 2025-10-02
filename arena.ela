@@ -65,10 +65,11 @@ impl Arena {
     }
 
     result := self.memory + aligned_ptr;
-    self.ptr += aligned_ptr + size;
+    self.ptr = aligned_ptr + size;
     return result;
   }
 }
+
 impl Destroy for Arena {
   fn destroy(*mut self, recursive: bool = false) {
     if self.next {
@@ -80,6 +81,7 @@ impl Destroy for Arena {
     self.memory = null;
   }
 }
+
 impl Allocator for Arena {
   fn allocate(*mut self, size: u64) -> *mut void {
     return self.alloc(size);
@@ -96,5 +98,44 @@ impl Allocator for Arena {
     std::c::memcpy(new_ptr, ptr, n);
     return new_ptr;
 
+  }
+}
+
+impl Arena {
+  fn emplace!<T>(*mut self, v: T = default!<T>()) -> *mut T {
+    ptr : *mut T = self.allocate(sizeof(T));
+    *ptr = v;
+    return ptr;
+  }
+
+  fn index!<T>(*const self, index: u64) -> *mut T {
+    offset := index * sizeof(T);
+    mut arena := self;
+    mut current_offset := offset;
+
+    while current_offset >= arena.size {
+      if !arena.next {
+        return null;
+      }
+      current_offset -= arena.size;
+      arena = arena.next;
+    }
+
+    return (arena.memory + current_offset) as *mut T;
+  }
+
+  fn index_of!<T>(*const self, p: *T) -> Option!<u64> {
+    mut arena := self;
+    mut offset: u64 = 0;
+    while arena {
+      start := arena.memory as *u8;
+      end := start + arena.size;
+      if (p as *u8) >= start && (p as *u8) < end {
+        return Option!<u64>::Some(offset + ((p as *u8) - start) / sizeof(T));
+      }
+      offset += arena.size / sizeof(T);
+      arena = arena.next;
+    }
+    return Option!<u64>::None;
   }
 }
