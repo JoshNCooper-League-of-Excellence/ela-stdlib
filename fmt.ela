@@ -457,19 +457,32 @@ fn format_tuple(value: any, formatter: *mut Formatter) {
   formatter.writer.append(")");
 }
 
-// fn format_choice(value: any, formatter: *mut Formatter) {
-//   formatter.writer.append(value._type.name);
-//   formatter.writer.append("::");
-//   ty := value._type;
-//   discriminant := value.ptr; // The discriminant is always the first member.
+fn format_choice(value: any, formatter: *mut Formatter) {
+  ty := value._type;
+   // The discriminant is always the first member.
+  discriminant: *u32 = value.ptr;
 
-//   mut found_field: Field;
-//   for field in ty.fields {
-//     if field.discriminant == discriminant {
-//       found_field = field;
-//     }
-//   }
-// }
+  if formatter.options.typename {
+    formatter.writer.append(ty.name);
+    formatter.writer.append("::");
+  }
+
+  for field in ty.fields {
+    if field.discriminant == *discriminant {
+      formatter.writer.append(field.name);
+      format_any(any.{
+        _type: field._type,
+        // offset of discriminant is where the union starts
+        // ! this just seems wrong because we have no idea if the payload
+        // ! causes this to be padded, i am not sure if this is good.
+        ptr: value.ptr + sizeof(u32) 
+      }, formatter);
+      return;
+    }
+  }
+
+  formatter.writer.append("(Uninitialized)");
+}
 
 fn format_any(value: any, formatter: *mut Formatter) {
   if value._type.implements("Format") {
@@ -546,6 +559,8 @@ fn format_any(value: any, formatter: *mut Formatter) {
       first = false;
     }
     formatter.writer.append("]");
+  } else if value._type.is_choice() {
+    format_choice(value, formatter);
   } else {
     switch value._type {
       typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
