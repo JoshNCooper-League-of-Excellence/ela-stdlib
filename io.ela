@@ -242,14 +242,20 @@ fn println!<T>(value: T, mut writer: StreamWriter = get_stdout(), options: fmt::
 }
 
 @[inline]
-fn printf!<FmtT, T>(fmt: FmtT, args: T) where FmtT: AsSlice!<u8> {
-  using formatted := fmt::format(fmt, args, options);
+fn printf!<FmtT, T>(f: FmtT, args: T, options: fmt::FormatOptions = fmt::FormatOptions::default(), mut writer: StreamWriter = get_stdout()) where FmtT: AsSlice!<u8> {
+  using formatted := fmt::format(f, args, options);
   writer.write_many(formatted.as_slice());
 }
 
 @[inline]
-fn printlnf!<FmtT, T>(fmt: FmtT, args: T) where FmtT: AsSlice!<u8> {
-  using formatted := fmt::format(fmt, args, options);
+fn printlnf!<FmtT, T>(f: FmtT, args: T, options: fmt::FormatOptions = fmt::FormatOptions::default(), mut writer: StreamWriter = get_stdout()) where FmtT: AsSlice!<u8> {
+  using formatted := fmt::format(f, args, options);
   writer.write_many(formatted.as_slice());
   writer.write('\n');
+}
+
+@[no_return]
+fn panicf!<StringT, ArgsT>(msg: StringT, args: ArgsT, options: fmt::FormatOptions = fmt::FormatOptions::default()) where StringT: AsSlice!<u8>  {
+  using formatted := fmt::format(str::view_from(msg.as_slice()), args, options);
+  panic(formatted.as_str());
 }

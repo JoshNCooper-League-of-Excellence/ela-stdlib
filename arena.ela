@@ -47,7 +47,7 @@ impl Arena {
         "attempted to allocate %d bytes in an arena where each chunk is maximum %d bytes. this would lead to splits in the data."c,
         size, self.size
       );
-      panic(.{ data: buffer, length: len });
+      panic(str.{ data: buffer, length: len });
     }
 
     mut aligned_ptr := self.ptr;

@@ -18,6 +18,14 @@ impl str {
     };
   }
 
+  fn view_from!<StringT>(v: StringT) -> Self where StringT: AsSlice!<u8> {
+    slice := v.as_slice();
+    return .{
+      data: slice.data,
+      length: slice.length
+    }
+  }
+
 
   fn join!<SepT>(strings: [str], separator: SepT) -> String 
     where SepT: AsSlice!<u8> 

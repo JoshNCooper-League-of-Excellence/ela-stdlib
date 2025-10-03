@@ -203,14 +203,9 @@ impl SourceLocation {
   }
 }
 
-impl Format for SourceLocation {
-  fn format(*const self, f: *mut fmt::Formatter) {
-    f.writer.append_then_free(self.to_string());
-  }
-}
+fn location_to_source_view!<T>(msg: T, location: SourceLocation) -> String where T: AsSlice!<u8> {
+  using mut builder: StringStream;
 
-fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
-  mut builder: StringStream;
   mut formatter: Formatter = .{
     writer: &mut builder,
   };
@@ -223,6 +218,7 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
 
   filename := (*SourceLocation::files())[location.file];
   mut file_data := File::read_all(filename).unwrap();
+  defer file_data.destroy();
 
   line := location.line as s32;
   mut clamped_begin := clamp(line - 3, line - 3, line) as s32;
@@ -237,8 +233,6 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
       .subslice(clamped_begin..clamped_end);
 
   defer {
-    builder.destroy();
-    file_data.destroy();
     for line in lines {
       line.destroy();
     }
@@ -264,8 +258,23 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
     }
   }
 
-  mut string := builder.get_string();
-  defer builder.destroy();
+  return builder.get_string();
+}
+
+impl SourceLocation {
+  fn to_error_string!<StringT>(self, msg: StringT) -> String where StringT: AsSlice!<u8> {
+    return location_to_source_view(msg, self);
+  }
+}
+
+impl Format for SourceLocation {
+  fn format(*const self, f: *mut fmt::Formatter) {
+    f.writer.append_then_free(self.to_string());
+  }
+}
+
+fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
+  mut string := location_to_source_view(msg, location);
   defer string.destroy();
   panic(string.as_str());
 }
@@ -370,7 +379,9 @@ impl State {
       }
       canonical := canonical_option.unwrap();
       parent := parent_path(canonical).unwrap();
-      change_directory(parent).unwrap();
+      if !change_directory(parent) {
+        
+      }
       input := File::read_all(canonical).unwrap();
 
       mut found := false;
