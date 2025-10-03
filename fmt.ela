@@ -250,7 +250,7 @@ struct Formatter {
 
 fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
 fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
-fn format_any(list: any, formatter: *mut Formatter);
+fn format_any(v: any, formatter: *mut Formatter);
 
 trait Format {
   fn format(*const self, formatter: *mut Formatter);
@@ -456,6 +456,20 @@ fn format_tuple(value: any, formatter: *mut Formatter) {
   }
   formatter.writer.append(")");
 }
+
+// fn format_choice(value: any, formatter: *mut Formatter) {
+//   formatter.writer.append(value._type.name);
+//   formatter.writer.append("::");
+//   ty := value._type;
+//   discriminant := value.ptr; // The discriminant is always the first member.
+
+//   mut found_field: Field;
+//   for field in ty.fields {
+//     if field.discriminant == discriminant {
+//       found_field = field;
+//     }
+//   }
+// }
 
 fn format_any(value: any, formatter: *mut Formatter) {
   if value._type.implements("Format") {
