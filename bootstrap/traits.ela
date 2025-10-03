@@ -9,7 +9,7 @@ trait From!<T> {
 // A deep clone, versus assignment always being a shallow clone in Ela. (think C memory semantics)
 trait Clone {
   // get a deep clone of self.
-  fn clone(self) -> Self;
+  fn clone(self, allocator: dyn Allocator) -> Self;
 }
 
 // Construct from an InitList!<V>. This is never done automatically/implicitly, as of now.

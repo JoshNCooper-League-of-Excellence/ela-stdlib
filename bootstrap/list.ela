@@ -154,8 +154,8 @@ fn panic(msg: str);
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
     @[inline]
-    fn clone(self) -> Self {
-      new_data := self.allocator.allocate_array(sizeof(T), self.capacity);
+    fn clone(self, allocator: dyn Allocator) -> Self {
+      new_data := allocator.allocate_array(sizeof(T), self.capacity);
       std::c::memcpy(new_data, self.data, sizeof(T) * self.length);
       return .{
         data: new_data,
@@ -334,10 +334,11 @@ impl!<T> List!<T> {
   @[inline]
   fn filter(*const self, filter: fn(*const T) -> bool) -> Self {
     mut list: Self;
+    list.get_allocator_if_needed();
     for value in *self {
       if filter(&const value) {
         where T: Clone {
-          list.push(value.clone());
+          list.push(value.clone(list.allocator));
         } else {
           list.push(value);
         }

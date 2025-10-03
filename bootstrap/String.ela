@@ -36,7 +36,7 @@ impl StringUtils for String {}
       return result;
     }
 
-    fn from!<T>(data: T) -> Self
+    fn from!<T>(data: T, allocator: dyn Allocator = get_global_allocator()) -> Self
       where T: AsSlice!<u8> {
       slice := data.as_slice();
 
@@ -45,18 +45,18 @@ impl StringUtils for String {}
       }
       
       return .{
-        allocator: get_global_allocator(),
-        data: get_global_allocator().copy(slice.data, sizeof(u8), slice.length),
+        allocator: allocator,
+        data: allocator.strcpy(slice.data, slice.length),
         capacity: slice.length,
         length: slice.length,
       };
     }
 
-    fn from_ptr(data: c_str) -> Self {
+    fn from_ptr(data: c_str, allocator: dyn Allocator = get_global_allocator()) -> Self {
       length := std::c::strlen(data);
       return .{
-        allocator: get_global_allocator(),
-        data: get_global_allocator().strcpy(data, length),
+        allocator: allocator,
+        data: allocator.strcpy(data, length),
         capacity: length,
         length: length,
       };
@@ -169,7 +169,7 @@ impl StringUtils for String {}
         then length = self.length - start;
 
       return .{
-        data: self.allocator.copy(self.data + start, sizeof(u8), length),
+        data: self.allocator.strcpy(self.data + start, length),
         capacity: length,
         length: length,
       };
@@ -248,13 +248,9 @@ impl StringUtils for String {}
 }
 
 impl Clone for String {
-  fn clone(self) -> Self {
-    mut allocator := self.allocator;
-    if !allocator.has_instance() {
-      allocator = get_global_allocator();
-    }
+  fn clone(self, allocator: dyn Allocator = get_global_allocator()) -> Self {
     return .{
-      data: allocator.copy(self.data, sizeof(u8), self.length),
+      data: allocator.strcpy(self.data, self.length),
       length: self.length,
       capacity: self.capacity,
       allocator: allocator,

@@ -463,9 +463,10 @@ impl Lexer {
         self.lookahead_buffer.push(Token::Eof());
       } else {
         self.get_token(self.states.back_mut().unwrap());
-        token := self.lookahead_buffer.back().unwrap();
-        if token.kind == TOKEN_EOF {
-          self.states.pop();
+        // We dont manage states here, the parser needs to be able to detect when it's swapped
+        if self.peek().kind == TOKEN_EOF {
+          // dont fill the buffer with EOF, just one.
+          break;
         }
       }
     }
