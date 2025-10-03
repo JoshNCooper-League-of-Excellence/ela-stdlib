@@ -394,10 +394,10 @@ impl State {
         io::panicf("[elexify]: unable to change directory to parent of canonicalized path: parent=%, canonical_path=%", (parent, canonical));
       }
 
-      input: String = if File::read_all(filename) is Result!<String, String>::Ok(v) {
+      input: String = if File::read_all(canonical) is Result!<String, String>::Ok(v) {
         return v;
       } else {
-        io::panicf("[elexify]: unable to read file from canonicalized path %", (canonical,));
+        fmt::printlnf("[elexify]: unable to read file from (relative path): %, (canonicalized): %, (parent dir): %", (filename, canonical, parent));
         return .{};
       }
 
@@ -787,7 +787,7 @@ impl Lexer {
           current_match.push(state.input[state.pos]);
           option := self.operators.get(current_match.as_str());
 
-          if (option.is_some()) {
+          if (option is Option!<u32>::Some) {
             longest_match = current_match;
           } else if !longest_match.is_empty() {
             self.lookahead_buffer.push(Token::new(location, None(), self.operators.get(longest_match.as_str()).unwrap()));
