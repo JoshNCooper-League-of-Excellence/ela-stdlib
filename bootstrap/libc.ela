@@ -59,6 +59,13 @@
         fn strcat(dest: *const u8, src: *const u8) -> *mut u8;
         fn strncat(dest: *const u8, src: *const u8, n: u64) -> *mut u8;
 
+        fn strcpy(dest: *mut u8, src: *const u8) -> *mut u8;
+        fn strncpy(dest: *mut u8, src: *const u8, n: u64) -> *mut u8;
+        fn strcmpi(str1: *const u8, str2: *const u8) -> s32;
+        fn strcasecmp(str1: *const u8, str2: *const u8) -> s32;
+        fn strlcpy(dest: *mut u8, src: *const u8, size: u64) -> u64;
+        fn strlcat(dest: *mut u8, src: *const u8, size: u64) -> u64;
+
         fn atoi(v: *const u8) -> s32;
         fn atof(v: *const u8) -> f64;
 

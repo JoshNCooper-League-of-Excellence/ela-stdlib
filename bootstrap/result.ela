@@ -1,11 +1,22 @@
 
+trait ResultFormat {
+  fn print_err(self);
+}
+
+
 impl!<_Ok, _Err> Result!<_Ok, _Err> {
   fn unwrap(self) -> _Ok {
     if self is Result!<_Ok, _Err>::Ok(ok) {
       return ok;
     }
+
+    where Self: ResultFormat {
+      self.print_err();
+    }
+
     panic("called 'unwrap' on an Err result");
     default: _Ok;
+    
     return default;
   }
 

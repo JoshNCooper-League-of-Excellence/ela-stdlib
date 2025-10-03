@@ -329,11 +329,15 @@ fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8>
   if slice.length == 0 {
     return None();
   }
-  mut resolved_path: [u8; PATH_MAX];
-  if !realpath(slice.data, resolved_path) {
+
+  using nt := slice.null_terminated(get_global_allocator());
+
+  mut canonical: [u8; PATH_MAX];
+  if !realpath(nt.data, canonical) {
     return None();
   }
-  return Some(String::from_ptr(resolved_path));
+  result := String::from_ptr(canonical);
+  return Some(result);
 }
 
 extern fn chdir(path: *const u8) -> s32;
@@ -356,17 +360,18 @@ fn change_directory!<Path>(path: Path) -> bool where Path: AsSlice!<u8> {
 }
 
 fn parent_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8> {
-  slice := path.as_slice();
-  if slice.length == 0 {
-    return None();
+  s := path.as_slice();
+  if s.length == 0 { return None(); }
+  mut i := s.length;
+  while i > 0 {
+    i -= 1;
+    if s.data![i] == '/' {
+      if i == 0 { return Some(String::from("/")); }
+      out: [u8] = [u8].{ data: s.data, length: i };
+      return Some(String::from(out));
+    }
   }
-  mut data := std::c::strdup(slice.data);
-  defer std::c::free(data);
-  name := dirname(data);
-  if !name {
-    return None();
-  }
-  return Some(String::from_ptr(name));
+  return None();
 }
 
 struct DIR;

@@ -6,8 +6,7 @@
 #include "traits.ela";
 // Option!<T>
 #include "option.ela";
-// Result!<Ok, Err>
-#include "result.ela";
+
 // Iterator<T> and Iterable<T>
 #include "iter.ela";
 // impls for numeric types, mostly marker traits.
@@ -38,6 +37,8 @@
 #include "char.ela";
 // panic stuff
 #include "panic.ela";
+// Result!<Ok, Err>
+#include "result.ela";
 
 // default testing apparatus.
 #ifdef TESTING {  

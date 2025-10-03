@@ -259,3 +259,10 @@ fn panicf!<StringT, ArgsT>(msg: StringT, args: ArgsT, options: fmt::FormatOption
   using formatted := fmt::format(str::view_from(msg.as_slice()), args, options);
   panic(formatted.as_str());
 }
+
+impl!<_Ok, _Err> ResultFormat for Result!<_Ok, _Err> {
+  fn print_err(self) {
+    err := self.unwrap_err();    
+    panicf("unwrapped an 'Err' result: %", (err,));
+  }
+}

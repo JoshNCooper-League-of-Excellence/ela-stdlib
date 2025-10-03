@@ -56,7 +56,7 @@ impl StringUtils for String {}
       length := std::c::strlen(data);
       return .{
         allocator: get_global_allocator(),
-        data: get_global_allocator().copy(data, sizeof(u8), length),
+        data: get_global_allocator().strcpy(data, length),
         capacity: length,
         length: length,
       };

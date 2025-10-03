@@ -73,3 +73,13 @@ impl!<T> Format for Interned!<T> {
     }
   }
 }
+
+
+impl Interned!<String> {
+  fn get_string(self) -> String {
+    return *self.data;
+  }
+  fn get_str(self) -> str {
+    return self.data.as_str();
+  }
+}

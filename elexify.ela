@@ -55,7 +55,7 @@
 
     (6) while {
       token := lexer.eat();
-      if token._type == TOKEN_EOF then break;
+      if token.kind == TOKEN_EOF then break;
 
       // Do something with your token :D
     }
@@ -184,6 +184,9 @@ const TOKEN_FLOAT      : u32 = -4;
 const TOKEN_STRING     : u32 = -5;
 const TOKEN_CHAR       : u32 = -6;
 
+import io;
+
+
 struct SourceLocation {
   line: u64,
   column: u64,
@@ -282,37 +285,37 @@ fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
 struct Token {
   // TODO: put this in an option.
   value:    Option!<InternedString>,
-  _type:     u32,
+  kind:     u32,
   location: SourceLocation,
 }
 
 impl Token {
   fn Eof() -> Token {
     #static eof: Token = .{
-      _type: TOKEN_EOF,
+      kind: TOKEN_EOF,
     };
     return eof;
   }
 
-  fn is_type(self, _type: u32) -> bool {
-    return self._type == _type;
+  fn iskind(self, kind: u32) -> bool {
+    return self.kind == kind;
   }
 
   fn is_eof(self) -> bool {
-    return self._type == TOKEN_EOF;
+    return self.kind == TOKEN_EOF;
   }
 
-  fn new(location: SourceLocation, value: Option!<String>, _type: u32) -> Token {
+  fn new(location: SourceLocation, value: Option!<String>, kind: u32) -> Token {
     if value is Option!<String>::Some(string) {
       return .{
         value: Option!<InternedString>::Some(InternedString::new(string)),
-        _type: _type,
+        kind: kind,
         location: location,
       };
     } else {
       return .{
         value: Option!<InternedString>::None,
-        _type: _type,
+        kind: kind,
         location: location,
       };
     }
@@ -331,7 +334,7 @@ impl Format for Token {
     } else {
       value = Option!<String>::None;
     }
-    f.writer.appendf("\n  _type: %,\n  value: %\n}", (self._type, value), f.options.quoted());
+    f.writer.appendf("\n  kind: %,\n  value: %\n}", (self.kind, value), f.options.quoted());
   }
 }
 
@@ -373,16 +376,30 @@ impl State {
   }
 
   fn from_file!<Path>(filename: Path) -> Self where Path: AsSlice!<u8> {
-      canonical_option := canonical_path(filename);
-      if canonical_option.is_none() {
-        printlnf("file '%' was unable to be located.", (filename,));
+      canonical: String = if canonical_path(filename) is Option!<String>::Some(v) {
+        return v;
+      } else {
+        io::panicf("[elexify]: file '%' was unable to be canonicalized.", (filename,));
+        return .{};
       }
-      canonical := canonical_option.unwrap();
-      parent := parent_path(canonical).unwrap();
+      
+      parent: String = if parent_path(canonical) is Option!<String>::Some(v) {
+        return v;
+      } else {
+        io::panicf("[elexify]: unable to get the parent directory of canonicalized path: canonical_path=%", (canonical,));
+        return .{};
+      }
+
       if !change_directory(parent) {
-        
+        io::panicf("[elexify]: unable to change directory to parent of canonicalized path: parent=%, canonical_path=%", (parent, canonical));
       }
-      input := File::read_all(canonical).unwrap();
+
+      input: String = if File::read_all(filename) is Result!<String, String>::Ok(v) {
+        return v;
+      } else {
+        io::panicf("[elexify]: unable to read file from canonicalized path %", (canonical,));
+        return .{};
+      }
 
       mut found := false;
       mut file_idx := 0;
@@ -433,7 +450,7 @@ impl Destroy for Lexer {
 
 impl Lexer {
   fn has_work(self) -> bool {
-    return self.lookahead_buffer[0]._type != TOKEN_EOF;
+    return self.lookahead_buffer[0].kind != TOKEN_EOF;
   }
 
   fn push_state(*mut self, state: State) {
@@ -447,19 +464,19 @@ impl Lexer {
       } else {
         self.get_token(self.states.back_mut().unwrap());
         token := self.lookahead_buffer.back().unwrap();
-        if token._type == TOKEN_EOF {
+        if token.kind == TOKEN_EOF {
           self.states.pop();
         }
       }
     }
   }
 
-  fn expect(*mut self, _type: u32) -> Token {
+  fn expect(*mut self, kind: u32) -> Token {
     token := self.eat();
-    if token._type != _type {
+    if token.kind != kind {
       lex_error(
         format("unexpected token: '%' ...\nexpected '%' instead.",
-          (token._type, _type), FormatOptions::default()
+          (token.kind, kind), FormatOptions::default()
         ),
         token.location
       );

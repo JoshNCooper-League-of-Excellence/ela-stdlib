@@ -248,8 +248,24 @@ struct Formatter {
   allocator: dyn Allocator,
 }
 
+fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
+fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
+fn format_any(list: any, formatter: *mut Formatter);
+
 trait Format {
   fn format(*const self, formatter: *mut Formatter);
+  fn println(*self) {
+    using mut writer: StringStream;
+    mut formatter: Formatter = .{
+      writer: &mut writer,
+      indentation: 0,
+      options: FormatOptions::default(),
+      allocator: get_global_allocator(),
+    };
+    self.format(&mut formatter);
+    using string := formatter.writer.get_string();
+    std::c::printf("%s\n"c, string.data);
+  }
 }
 
 fn new_dyn_format(value: any) -> dyn Format {
@@ -272,9 +288,6 @@ fn new_dyn_format(value: any) -> dyn Format {
   return dynamic;
 }
 
-fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = get_global_allocator()) -> String;
-fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;
-fn format_any(list: any, formatter: *mut Formatter);
 
 impl StringStream {
   fn appendf!<Tuple>(*mut self, fmt: str, values: Tuple, options: FormatOptions) where Tuple: IsTuple {

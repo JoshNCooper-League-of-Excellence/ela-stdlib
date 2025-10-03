@@ -33,6 +33,12 @@ trait Allocator: Destroy {
   fn allocate_array(*mut self, size: u64, n: u64) -> *mut void;
   fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
+
+  fn strcpy(*mut self, ptr: *const u8, n: u64) -> *mut u8  {
+    buf: *mut u8 = self.copy(ptr, sizeof(u8), n+1);
+    buf![n] = '\0';
+    return buf;
+  }
 }
 
 trait Context {

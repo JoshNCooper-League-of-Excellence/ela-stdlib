@@ -87,6 +87,18 @@ impl [u8] {
   fn as_c_str(self) -> c_str {
     return self.data;
   }
+
+  // if passing this pointer to C api's, you may need to use this.
+  // it does allocate, therefore it returns a string. just use .data, and a using statement
+  fn null_terminated(self, allocator: dyn Allocator) -> String {
+    buf: *mut u8 = allocator.allocate(sizeof(u8) * self.length + 1);
+    std::c::strncpy(buf, self.data, self.length + 1);
+    return .{
+      data: buf,
+      length: self.length,
+      capacity: self.length
+    };
+  }
 }
 
 impl!<T> Iterable for [T] {
