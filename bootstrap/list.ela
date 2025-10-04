@@ -154,7 +154,7 @@ fn panic(msg: str);
       clone the entire array, duplicating all of the memory and copying all of the data into the new array.
     */
     @[inline]
-    fn clone(self, allocator: dyn Allocator) -> Self {
+    fn clone(self, allocator: dyn Allocator = get_global_allocator()) -> Self {
       new_data := allocator.allocate_array(sizeof(T), self.capacity);
       std::c::memcpy(new_data, self.data, sizeof(T) * self.length);
       return .{
