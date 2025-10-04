@@ -20,7 +20,6 @@
   }
 }
 
-
 impl!<T> [T] {
   fn cast!<ToInner>(*self) -> [ToInner] {
     mut length: s64;

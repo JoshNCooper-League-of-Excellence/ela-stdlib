@@ -187,26 +187,26 @@ const TOKEN_CHAR       : u32 = -6;
 import io;
 
 
-struct SourceLocation {
-  line: u64,
-  column: u64,
-  file: u64,
+struct Span {
+  line: s64,
+  column: s64,
+  file: s64,
 }
 
-impl SourceLocation {
+impl Span {
   fn files() -> *mut List!<String> {
     #static mut files: List!<String>;
     return &mut files;
   }
 
   fn to_string(self) -> String {
-    files := SourceLocation::files();
+    files := Span::files();
     filename := (*files)[self.file];
     return format("%:%:%", (filename, self.line, self.column), FormatOptions::default());
   }
 }
 
-fn location_to_source_view!<T>(msg: T, location: SourceLocation) -> String where T: AsSlice!<u8> {
+fn location_to_source_view!<T>(msg: T, span: Span) -> String where T: AsSlice!<u8> {
   using mut builder: StringStream;
 
   mut formatter: Formatter = .{
@@ -214,16 +214,16 @@ fn location_to_source_view!<T>(msg: T, location: SourceLocation) -> String where
   };
 
   builder.append("\n\033[1;31mat:\n\t\033[1;34m");
-  location.format(&mut formatter);
+  span.format(&mut formatter);
   builder.append("\033[0m\n");
   builder.appendf("\033[1;3;31merror: %", (msg,), FormatOptions::default());
   builder.append("\033[0m\n");
 
-  filename := (*SourceLocation::files())[location.file];
+  filename := (*Span::files())[span.file];
   mut file_data := File::read_all(filename).unwrap();
   defer file_data.destroy();
 
-  line := location.line as s32;
+  line := span.line as s32;
   mut clamped_begin := clamp(line - 3, line - 3, line) as s32;
   mut clamped_end := clamp(line + 3, line, line + 3) as s32;
 
@@ -251,7 +251,7 @@ fn location_to_source_view!<T>(msg: T, location: SourceLocation) -> String where
     builder.appendf("%\n", (line,), FormatOptions::default());
 
     if i == 2 {
-      for i in 1..location.column-1 {
+      for i in 1..span.column-1 {
         builder.append(" ");
       }
       for i in 0..3 {
@@ -264,20 +264,20 @@ fn location_to_source_view!<T>(msg: T, location: SourceLocation) -> String where
   return builder.get_string();
 }
 
-impl SourceLocation {
+impl Span {
   fn to_error_string!<StringT>(self, msg: StringT) -> String where StringT: AsSlice!<u8> {
     return location_to_source_view(msg, self);
   }
 }
 
-impl Format for SourceLocation {
+impl Format for Span {
   fn format(*const self, f: *mut fmt::Formatter) {
     f.writer.append_then_free(self.to_string());
   }
 }
 
-fn lex_error!<T>(msg: T, location: SourceLocation) where T: AsSlice!<u8> {
-  mut string := location_to_source_view(msg, location);
+fn lex_error!<T>(msg: T, span: Span) where T: AsSlice!<u8> {
+  mut string := location_to_source_view(msg, span);
   defer string.destroy();
   panic(string.as_str());
 }
@@ -286,7 +286,7 @@ struct Token {
   // TODO: put this in an option.
   value:    Option!<InternedString>,
   kind:     u32,
-  location: SourceLocation,
+  span:     Span,
 }
 
 impl Token {
@@ -305,18 +305,18 @@ impl Token {
     return self.kind == TOKEN_EOF;
   }
 
-  fn new(location: SourceLocation, value: Option!<String>, kind: u32) -> Token {
+  fn new(span: Span, value: Option!<String>, kind: u32) -> Token {
     if value is Option!<String>::Some(string) {
       return .{
         value: Option!<InternedString>::Some(InternedString::new(string)),
         kind: kind,
-        location: location,
+        span: span,
       };
     } else {
       return .{
         value: Option!<InternedString>::None,
         kind: kind,
-        location: location,
+        span: span,
       };
     }
 
@@ -325,8 +325,8 @@ impl Token {
 
 impl Format for Token {
   fn format(*const self, f: *mut fmt::Formatter) {
-    f.writer.append("Token {\n  location: ");
-    f.writer.append_then_free(self.location.to_string());
+    f.writer.append("Token {\n  span: ");
+    f.writer.append_then_free(self.span.to_string());
 
     mut value: Option!<String>;
     if self.value is Option!<InternedString>::Some(string) {
@@ -357,14 +357,14 @@ impl Token {
 struct State {
   input: String,
   path: String,
-  pos: u64,
-  col: u64,
-  line: u64,
-  file_idx: u64,
+  pos: s64,
+  col: s64,
+  line: s64,
+  file_idx: s64,
 }
 
 impl State {
-  fn new(path: String, input: String, file_idx: u64) -> Self {
+  fn new(path: String, input: String, file_idx: s64) -> Self {
     return .{
       path: path,
       input: input,
@@ -403,7 +403,7 @@ impl State {
 
       mut found := false;
       mut file_idx := 0;
-      for file in *SourceLocation::files() {
+      for file in *Span::files() {
         if file == canonical {
           found = true;
           break;
@@ -411,7 +411,7 @@ impl State {
         file_idx++;
       }
       if (!found) {
-        SourceLocation::files().push(canonical);
+        Span::files().push(canonical);
       }
       return State::new(canonical, input, file_idx);
     }
@@ -479,7 +479,7 @@ impl Lexer {
         format("unexpected token: '%' ...\nexpected '%' instead.",
           (token.kind, kind), FormatOptions::default()
         ),
-        token.location
+        token.span
       );
     }
     return token;
@@ -556,7 +556,7 @@ impl Lexer {
       }
 
       /* token-yielding symbols below. */
-      mut location : SourceLocation = .{
+      mut span : Span = .{
         line: state.line,
         column: state.col,
         file: state.file_idx
@@ -611,7 +611,7 @@ impl Lexer {
             codepoint = 0;
             for i in 0..num_digits {
               if (state.pos >= state.input.length || !std::c::isxdigit(state.input[state.pos])) {
-                lex_error("invalid hexadecimal escape sequence", location);
+                lex_error("invalid hexadecimal escape sequence", span);
               }
               buffer: [u8; 2] = .[
                 state.input[state.pos],
@@ -640,7 +640,7 @@ impl Lexer {
               ++i;
             }
           } else {
-            lex_error(format("invalid escape sequence %", (c,), FormatOptions::default()), location);
+            lex_error(format("invalid escape sequence %", (c,), FormatOptions::default()), span);
           }
         } else if (c & 0x80) == 0 {
           codepoint = c;
@@ -658,12 +658,12 @@ impl Lexer {
             num_bytes = 4;
           }
           else {
-            lex_error("invalid utf8 char", location);
+            lex_error("invalid utf8 char", span);
           }
 
           for i in 0..num_bytes {
             if (state.pos >= state.input.length || (i > 0 && (state.input[state.pos] & 0xC0) != 0x80)) {
-              lex_error("invalid UTF-8 continuation byte", location);
+              lex_error("invalid UTF-8 continuation byte", span);
             }
             codepoint = (codepoint << 6) | (state.input[state.pos] & 0x3F);
             state.pos++;
@@ -673,13 +673,13 @@ impl Lexer {
 
         c = state.input[state.pos];
         if (c != '\'') {
-          lex_error(format("invalid char literal: too many characters %", (codepoint,), FormatOptions::default()), location);
+          lex_error(format("invalid char literal: too many characters %", (codepoint,), FormatOptions::default()), span);
         }
         state.pos++; // move past '
         state.col++;
         mut buffer: [u8; 32];
         std::c::snprintf(buffer, 32 * sizeof(u8), "0x%X"c, codepoint);
-        self.lookahead_buffer.push(Token::new(location, Some(String::from_ptr(buffer)), TOKEN_CHAR));
+        self.lookahead_buffer.push(Token::new(span, Some(String::from_ptr(buffer)), TOKEN_CHAR));
         return;
       }
 
@@ -693,7 +693,7 @@ impl Lexer {
           if (c == '\"') {
             break;
           } if (c == '\n') {
-            lex_error("You can't directly embed a '\\n' in string by just letting it span multiple lines", location);
+            lex_error("You can't directly embed a '\\n' in string by just letting it span multiple lines", span);
           } else if (c == '\\') {
             if (state.pos + 1 < state.input.length) {
               token_builder.append_byte(c);
@@ -703,7 +703,7 @@ impl Lexer {
               state.pos++;
               state.col++;
             } else {
-              lex_error("incomplete escape sequence at end of input", location);
+              lex_error("incomplete escape sequence at end of input", span);
             }
           } else {
             token_builder.append_byte(c);
@@ -717,7 +717,7 @@ impl Lexer {
         }
         state.pos++;
         state.col++;
-        self.lookahead_buffer.push(Token::new(location, Some(token_builder.get_string()), TOKEN_STRING));
+        self.lookahead_buffer.push(Token::new(span, Some(token_builder.get_string()), TOKEN_STRING));
         return;
       }
 
@@ -760,7 +760,7 @@ impl Lexer {
         mut value := token_builder.get_string();
         
         if self.keywords.contains(value.as_str()) {
-          self.lookahead_buffer.push(Token::new(location, None(), self.keywords.get(value.as_str()).unwrap()));
+          self.lookahead_buffer.push(Token::new(span, None(), self.keywords.get(value.as_str()).unwrap()));
           value.destroy();
           return;
         } else if self.reserved.contains(value.as_str(), fn (a: str, b: str) -> bool {
@@ -773,7 +773,7 @@ impl Lexer {
           value.destroy();
           value = new_value;
         }
-        self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_IDENTIFIER));
+        self.lookahead_buffer.push(Token::new(span, Some(value), TOKEN_IDENTIFIER));
         return;
       }
 
@@ -791,7 +791,7 @@ impl Lexer {
           if (option is Option!<u32>::Some) {
             longest_match = current_match;
           } else if !longest_match.is_empty() {
-            self.lookahead_buffer.push(Token::new(location, None(), self.operators.get(longest_match.as_str()).unwrap()));
+            self.lookahead_buffer.push(Token::new(span, None(), self.operators.get(longest_match.as_str()).unwrap()));
             return;
           }
 
@@ -801,10 +801,10 @@ impl Lexer {
         }
 
         if !longest_match.is_empty() {
-          self.lookahead_buffer.push(Token::new(location, None(), self.operators.get(longest_match.as_str()).unwrap()));
+          self.lookahead_buffer.push(Token::new(span, None(), self.operators.get(longest_match.as_str()).unwrap()));
           return;
         } else {
-          lex_error(format("unable to lex operator :: \'%\'", (current_match,), FormatOptions::default()), location);
+          lex_error(format("unable to lex operator :: \'%\'", (current_match,), FormatOptions::default()), span);
         }
       }
 
@@ -838,7 +838,7 @@ impl Lexer {
 
           if (c == '.') {
             if (is_float) {
-              lex_error("got too many '.' periods in a float literal.", location);
+              lex_error("got too many '.' periods in a float literal.", span);
             }
             is_float = true;
           }
@@ -858,15 +858,15 @@ impl Lexer {
         if (is_hex) {
           mut hex := String::from("0x");
           hex.append_then_free(value);
-          self.lookahead_buffer.push(Token::new(location, Some(hex), TOKEN_INTEGER));
+          self.lookahead_buffer.push(Token::new(span, Some(hex), TOKEN_INTEGER));
         } else if (is_bin) {
           mut bin := String::from("0b");
           bin.append_then_free(value);
-          self.lookahead_buffer.push(Token::new(location, Some(bin), TOKEN_INTEGER));
+          self.lookahead_buffer.push(Token::new(span, Some(bin), TOKEN_INTEGER));
         } else if (!is_float) {
-          self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_INTEGER));
+          self.lookahead_buffer.push(Token::new(span, Some(value), TOKEN_INTEGER));
         } else {
-          self.lookahead_buffer.push(Token::new(location, Some(value), TOKEN_FLOAT));
+          self.lookahead_buffer.push(Token::new(span, Some(value), TOKEN_FLOAT));
         }
         return;
       }

@@ -216,14 +216,14 @@ fn print!<T>(value: T, mut writer: StreamWriter = get_stdout(), options: fmt::Fo
 @[inline]
 fn println!<T>(value: T, mut writer: StreamWriter = get_stdout(), options: fmt::FormatOptions = fmt::FormatOptions::default()) {
   where T: *u8 {
-    length := strlen(value);
+    length := std::c::strlen(value);
     for i in 0..length {
       writer.write(value![i]);
     }
   } else where T: String | str {
     writer.write_many(value.as_slice());
   } else where T: IsTuple {
-    using mut formatted := format("%", value, options);
+    using mut formatted := fmt::format("%", value, options);
     writer.write_many(formatted.as_slice());
   } else where T: fmt::Format {
     using mut sstream: stringstream::StringStream;
@@ -242,7 +242,7 @@ fn println!<T>(value: T, mut writer: StreamWriter = get_stdout(), options: fmt::
 }
 
 @[inline]
-fn printf!<FmtT, T>(f: FmtT, args: T, options: fmt::FormatOptions = fmt::FormatOptions::default(), mut writer: StreamWriter = get_stdout()) where FmtT: AsSlice!<u8> {
+fn printf!<FmtT, T>(f: FmtT, args: T, options: fmt::FormatOptions = fmt::FormatOptions::default(), mut writer: StreamWriter = get_stdout()) where FmtT: AsSlice!<u8>, T: fmt::Format | IsTuple {
   using formatted := fmt::format(f, args, options);
   writer.write_many(formatted.as_slice());
 }
@@ -253,6 +253,15 @@ fn printlnf!<FmtT, T>(f: FmtT, args: T, options: fmt::FormatOptions = fmt::Forma
   writer.write_many(formatted.as_slice());
   writer.write('\n');
 }
+
+// Your format string needs to have two '%'s, one for the pointer's value, one for the index.
+fn ptr_println!<FmtT, Pointee>(f: FmtT, pointee: *Pointee, length: u64, options: fmt::FormatOptions = fmt::FormatOptions::default(), mut writer: StreamWriter = get_stdout()) where FmtT: AsSlice!<u8> {
+  for i in 0..length {
+    writer.writef(f, (i, pointee![i]), options, get_global_allocator());
+    writer.write('\n');
+  }
+}
+
 
 @[no_return]
 fn panicf!<StringT, ArgsT>(msg: StringT, args: ArgsT, options: fmt::FormatOptions = fmt::FormatOptions::default()) where StringT: AsSlice!<u8>  {

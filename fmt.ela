@@ -391,7 +391,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
     } else where T: f64 {
       std::c::sprintf(format_buffer, "%%.%dlf"c, options.digits_after_decimal);
     } else {
-      panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", _type.name).as_str());
+      panic(std::asprintf("Type %s failed in 'to_string(T, F, A)'!\n", (_type.name,)).as_str());
       return .{};
     }
     buffer: [u8; 1024];
