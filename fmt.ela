@@ -343,47 +343,53 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       format_buffer[1] = 'c';
       format_buffer[2] = '\0';
     } else where T: IsInteger {
-      where T: s16 {
+      where T: s8 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%d"c, 3); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#04x"c, 6); }
+        }
+      } else where T: s16 {
+        switch options.number_style {
+          NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%d"c, 3); }
+          NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#06x"c, 6); }
         }
       } else where T: s32 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%d"c, 3); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#08x"c, 6); }
         }
       } else where T: s64 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%ld"c, 4); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#016lx"c, 8); }
         }
       } else where T: u8 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%u"c, 3); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#04x"c, 6); }
         }
       } else where T: u16 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%u"c, 3); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#06x"c, 6); }
         }
       } else where T: u32 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%u"c, 3); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#08x"c, 6); }
         }
       } else where T: u64 {
         switch options.number_style {
           NumberStyle::Decimal:      { std::c::memcpy(format_buffer, "%lu"c, 4); }
           NumberStyle::Binary:       { std::c::memcpy(format_buffer, "0b%b"c, 5); }
-          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#0dX"c, 5); }
+          NumberStyle::Hexadecimal:  { std::c::memcpy(format_buffer, "%#016lx"c, 8); }
         }
       }
     } else where T: f32 {

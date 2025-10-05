@@ -64,7 +64,7 @@ trait StringUtils {
     for i in 0..(self_len - search_len + 1) {
       mut found := true;
       for j in 0..search_len {
-        if self_data[i + j] != search_data[j] {
+        if self_data![i + j] != search_data![j] {
           found = false;
           break;
         }

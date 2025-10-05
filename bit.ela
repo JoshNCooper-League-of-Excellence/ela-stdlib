@@ -15,6 +15,6 @@ fn from_bytes_le!<T>(bytes: [u8]) -> Option!<T> {
     return None();
   }
   mut v: T;
-  memcpy(&mut v, bytes.data, sizeof(T));
+  std::c::memcpy(&mut v, bytes.data, sizeof(T));
   return Some(v);
 }

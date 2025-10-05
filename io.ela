@@ -139,7 +139,6 @@ impl StreamReader {
   }
 
   fn read_line(*mut self) -> String {
-    mut complete: bool;
     mut buffer: String;
     while {
       if self.read() is Option!<u8>::Some(ch) {

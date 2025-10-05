@@ -6,7 +6,206 @@
   module std {
     module c {
       struct FILE;
+      struct DIR;
+
+      struct DirEntry {
+        d_ino: u64,
+        d_off: u64,
+        d_reclen: u16,
+        d_type: u8,
+        d_name: [u8; 256],
+      }
+
+      const EOF := -1;
+
+      struct Time_Spec {
+        tv_sec: s64,
+        tv_nsec: s64,
+      };
+
+      struct Stat {
+        st_dev: u64,
+        st_ino: u64,
+        st_nlink: u64,
+        st_mode: u32,
+        st_uid: u32,
+        st_gid: u32,
+        __pad0: s32,
+        st_rdev: u64,
+        st_size: u64,
+        st_blksize: s64,
+        st_blocks: s64,
+        st_atim: Time_Spec,
+        st_mtim: Time_Spec,
+        st_ctim: Time_Spec,
+        __glibc_reserved: [s64; 3],
+      };
+
+      impl Stat {
+        fn new!<T>(path: T) -> Option!<Self> where T: AsSlice!<u8> {
+          file := fopen(path.as_slice().data, "r"c);
+
+          if !file {
+            return Option!<Self>::None;
+          }
+
+          mut stat: Self;
+          fd := fileno(file);
+
+          if fd == -1 {
+            fclose(file);
+            return Option!<Self>::None;
+          }
+
+          fstat(fd, &mut stat);
+          fclose(file);
+          return Option!<Self>::Some(stat);
+        }
+
+        fn is_dir(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0x4000;
+        }
+        
+        fn is_file(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0x8000;
+        }
+        
+        fn is_symlink(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0xA000;
+        }
+        
+        fn is_block_device(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0x6000;
+        }
+        
+        fn is_char_device(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0x2000;
+        }
+        
+        fn is_fifo(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0x1000;
+        }
+        
+        fn is_socket(*const self) -> bool {
+            return (self.st_mode & 0xF000) == 0xC000;
+        }
+      }
+
+      #flags enum FileOpenFlags {
+        Read,
+        Write,
+      }
+
+      impl FileOpenFlags {
+        // Used to convert our flag enum to a str for fopen/fclose etc.
+        // this does not ever need to be freed.
+        fn as_str(self) -> c_str {
+          if self == FileOpenFlags::Read {
+            return "r"c;
+          } else if self == FileOpenFlags::Write {
+            return "w"c;
+          } else if self == FileOpenFlags::Read | FileOpenFlags::Write {
+            return "rw"c;
+          } else {
+            panic("unexpected file flags passed to a file api function");
+            return null;
+          }
+        }
+      }
+
+      enum SeekPosition {
+        Set	= 0,
+        Begin = 0,
+        Current	= 1,
+        End	= 2,
+        // We include the GNU extensions by default, but there's no guarantee that your system supports these.
+        // We are kind of a linux only language (as of now), so it's probably there. check your C docs.
+        Data	= 3,
+        Hole	= 4,
+      };
+
+      const PATH_MAX := 4096;
+      const SEEK_END: s32 = SeekPosition::End;
+      const SEEK_BEGIN: s32 = SeekPosition::Begin;
+      const SEEK_CUR: s32 = SeekPosition::Current;
+      const SEEK_SET: s32 = SeekPosition::Set;
+      const SEEK_DATA: s32 = SeekPosition::Data;
+      const SEEK_HOLE: s32 = SeekPosition::Hole;
+
       extern {
+        fn getcwd(buf: c_str, size: u64) -> c_str;
+        fn opendir(name: *const u8) -> *mut DIR;
+        fn readdir(dir: *mut DIR) -> *const DirEntry;
+        fn closedir(dir: *const void) -> s32;
+        fn chdir(path: *const u8) -> s32;
+        fn dirname(path: *const u8) -> *mut u8;
+        fn realpath(path: *const u8, result: *mut u8) -> *const u8;
+        fn fstat(fd: s32, stat: *mut Stat) -> s32;
+        fn fileno(file: *const FILE) -> s32;
+        fn fread(ptr: *mut void, size: u64, count: u64, stream: *mut FILE) -> u64;
+        fn fwrite(ptr: *const void, size: u64, count: u64, stream: *mut FILE) -> u64;
+        fn fseek(stream: *mut FILE, offset: s64, origin: s32) -> s32;
+        fn ftell(stream: *const FILE) -> s64;
+        fn rewind(stream: *mut FILE) -> void;
+        fn fopen(fname: *const u8, flags: *const u8) -> *mut FILE;
+        fn fclose(file: *mut FILE) -> void;
+        fn fgetc(file: *mut FILE) -> s8;
+        fn putc(ch: u8, file: *mut FILE) -> void;
+        fn fflush(f: *const FILE);
+
+        fn mkdir(path: *const u8, mode: u32) -> s32;
+        fn rmdir(path: *const u8) -> s32;
+        fn remove(path: *const u8) -> s32;
+
+        fn realpath(path: *const u8, result: *mut u8) -> *const u8;
+        fn chdir(path: *const u8) -> s32;
+        fn dirname(path: *const u8) -> *mut u8;
+        fn getcwd(buf: *mut u8, size: u64) -> *mut u8;
+
+        fn opendir(name: *const u8) -> *mut DIR;
+        fn readdir(dir: *mut DIR) -> *const DirEntry;
+        fn closedir(dir: *const void) -> s32;
+        fn lseek(fd: s32, offset: s64, whence: s32) -> s64;
+        fn unlink(path: *const u8) -> s32;
+        fn rename(oldpath: *const u8, newpath: *const u8) -> s32;
+        fn chmod(path: *const u8, mode: u32) -> s32;
+        fn chown(path: *const u8, owner: u32, group: u32) -> s32;
+        fn access(path: *const u8, mode: s32) -> s32;
+        fn utime(path: *const u8, times: *const void) -> s32;
+        fn truncate(path: *const u8, length: s64) -> s32;
+        fn ftruncate(fd: s32, length: s64) -> s32;
+
+        fn open(path: *const u8, flags: s32, mode: u32) -> s32;
+        fn close(fd: s32) -> s32;
+        fn read(fd: s32, buf: *mut void, count: u64) -> s64;
+        fn write(fd: s32, buf: *const void, count: u64) -> s64;
+        fn fsync(fd: s32) -> s32;
+        fn fdatasync(fd: s32) -> s32;
+        fn dup(fd: s32) -> s32;
+        fn dup2(oldfd: s32, newfd: s32) -> s32;
+        fn pipe(fds: *mut s32) -> s32;
+        fn fileno(stream: *mut FILE) -> s32;
+        fn fflush(stream: *mut FILE) -> s32;
+        fn fclose(stream: *mut FILE) -> s32;
+        fn fopen(path: *const u8, mode: *const u8) -> *mut FILE;
+        fn fread(ptr: *mut void, size: u64, nmemb: u64, stream: *mut FILE) -> u64;
+        fn fwrite(ptr: *const void, size: u64, nmemb: u64, stream: *mut FILE) -> u64;
+        fn fseek(stream: *mut FILE, offset: s64, whence: s32) -> s32;
+        fn ftell(stream: *mut FILE) -> s64;
+        fn rewind(stream: *mut FILE);
+        fn feof(stream: *mut FILE) -> s32;
+        fn ferror(stream: *mut FILE) -> s32;
+        fn clearerr(stream: *mut FILE);
+        fn setvbuf(stream: *mut FILE, buf: *mut u8, mode: s32, size: u64) -> s32;
+        fn setbuf(stream: *mut FILE, buf: *mut u8);
+        fn perror(s: *const u8);
+        fn puts(s: *const u8) -> s32;
+        fn fputs(s: *const u8, stream: *mut FILE) -> s32;
+        fn fgets(s: *mut u8, size: s32, stream: *mut FILE) -> *mut u8;
+        fn getc(stream: *mut FILE) -> s32;
+        fn putc(c: s32, stream: *mut FILE) -> s32;
+        fn ungetc(c: s32, stream: *mut FILE) -> s32;
+        
         fn system(cmd: *const u8) -> s32;
 
         fn free(ptr: *const void) -> void;
