@@ -5,6 +5,7 @@ import std::c::*;
 
 struct File {
   fd: *mut FILE,
+  mode: FileOpenFlags,
 }
 
 impl File {
@@ -73,11 +74,17 @@ impl File {
     return self.fd;
   }
 
-  fn open!<T>(path: T, flags: FileOpenFlags) -> Self where T: AsSlice!<u8> {
+  fn open!<T>(path: T, flags: FileOpenFlags) -> Option!<Self> where T: AsSlice!<u8> {
     slice := path.as_slice();
     mut self: Self;
     self.fd = fopen(slice.data, flags.as_str());
-    return self;
+    self.mode = flags;
+
+    if self.fd {
+      return Some(self);
+    }
+    
+    return None();
   }
 
   fn write_raw(*mut self, data: *u8, length: u64) -> u64 {
@@ -121,7 +128,12 @@ impl File {
   }
 
   fn close(*const self) -> void {
-    fflush(self.fd);
+    if !self.is_valid() {
+      return;
+    }
+    if self.mode == FileOpenFlags::Write {
+      fflush(self.fd);
+    }
     fclose(self.fd);
   }
 

@@ -1,0 +1,97 @@
+import fs;
+import fmt;
+import io;
+import bit;
+
+import std::c::{
+  ProcId,
+  IoVec,
+  process_vm_readv,
+  lseek,
+  sscanf,
+  exit,
+  SeekPosition,
+};
+
+// Find the best candidate to be the readable memory page in /proc/<PID>/maps
+// returns Some(base_offset)
+// and None() nothing found
+fn find_module_memory_base(pid: u32, module_substr: String) -> Option!<u64> {
+  using path := fmt::format("/proc/%/maps", (pid,));
+  
+  file := fs::File::open(path, fs::FileOpenFlags::Read).expect(fn () {
+    panic("unable to open proc/<PID>/maps");
+  });
+
+  using mut reader := io::StreamReader::from(file, 1);
+
+  while {
+    using line := reader.read_line();
+    if line.is_empty() {
+      break;
+    }
+
+    inode: u64;
+
+    mut start: u64;
+    mut end: u64;
+    mut offset: u64;
+
+    mut perms_buf: [u8; 8];
+    mut dev_buf: [u8; 16];
+    mut pathname_buf: [u8; 256];
+    n := std::c::sscanf(line.data, "%lx-%lx %7s %lx %15s %lu %255[^\n]"c, &start, &end, perms_buf, &offset, dev_buf, &inode, pathname_buf);
+
+    using perms :=  String::from_ptr(perms_buf);
+    using dev := String::from_ptr(dev_buf);
+    using pathname := String::from_ptr(pathname_buf);
+
+    if n < 6 {
+      continue;
+    }
+
+    if pathname.is_empty() {
+      continue;
+    }
+
+    if !perms.contains("x") {
+      continue;
+    }
+
+    if offset != 0 {
+      continue;
+    }
+
+    if pathname.contains(module_substr) {
+      return Some(start);
+    }
+  }
+
+  return None();
+}
+
+// The buffer must be pre-allocated to handle as much as we're reading, which == len.
+// the return type will be Ok(n_bytes_read) or Err(error)
+fn read_remote_memory(pid: ProcId, addr: u64, buf: *mut u8, len: u64) -> Result!<s64, str> {
+  mut local: [IoVec; 1] = .[.{ data: buf, length: len }];
+  mut remote: [IoVec; 1] = .[.{data: addr as *u8, length: len }];
+
+  n: s64 = process_vm_readv(pid, local, 1, remote, 1, 0);
+
+  if (n >= 0) {
+    return Result!<s64, str>::Ok(n);
+  }
+
+  // Fallback to reading from /proc/<PID>/mem if process_vm_readv fails
+  using mempath := fmt::format("/proc/%/mem", (pid,));
+  using mut file := fs::File::open(mempath, fs::FileOpenFlags::Read).expect(fn() {
+    panic("failed to open processes' memory file");
+  });
+
+  if lseek(file.fd, addr, SeekPosition::Set) == -1 {
+    return Result!<s64, str>::Err("unable to seek to the address specified");
+  }
+
+  bytes_read := file.read(buf, len);
+  return Result!<s64, str>::Ok(bytes_read as s64);
+}

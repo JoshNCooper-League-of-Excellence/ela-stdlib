@@ -132,7 +132,12 @@
       const SEEK_DATA: s32 = SeekPosition::Data;
       const SEEK_HOLE: s32 = SeekPosition::Hole;
 
+      type ProcId :: s32;
+      // iovec is identical to our Slice type, so we can just use that. makes it easier to use in language, and works just fine with interop.
+      type IoVec :: [u8]; 
+
       extern {
+        fn process_vm_readv (pid: ProcId, lvec: *IoVec, l_iovec_ct: u64, rvec: *IoVec, r_iovec_ct: u64, flags: u64) -> s64;
         fn getcwd(buf: c_str, size: u64) -> c_str;
         fn opendir(name: *const u8) -> *mut DIR;
         fn readdir(dir: *mut DIR) -> *const DirEntry;

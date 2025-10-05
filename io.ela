@@ -15,7 +15,7 @@ struct StreamWriter {
 impl StreamWriter {
   fn new!<PathT>(path: PathT, open_flags: fs::FileOpenFlags) -> Self where PathT: AsSlice!<u8> {
     return .{
-      file: fs::File::open(path, open_flags),
+      file: fs::File::open(path, open_flags).expect(fn() { panic("unable to open file for StreamWriter"); } ),
     };
   }
 
@@ -76,7 +76,7 @@ impl StreamReader {
   }
 
   fn new!<PathT>(path: PathT, open_flags: fs::FileOpenFlags, capacity: u64) -> Self where PathT: AsSlice!<u8> {
-    file := fs::File::open(path, open_flags);
+    file := fs::File::open(path, open_flags).expect(fn () { panic("Unable to open file for StreamReader "); });
     return StreamReader::from(file, capacity);
   }
 }
