@@ -92,7 +92,7 @@ impl stream::Reader!<u8> for StreamReader {
         return None();
       }
 
-      self.buffer.push_range([u8].{
+      self.buffer.push_range(.{
         data: buffer,
         length: bytes_read
       });
