@@ -136,152 +136,89 @@
       // iovec is identical to our Slice type, so we can just use that. makes it easier to use in language, and works just fine with interop.
       type IoVec :: [u8]; 
 
+      enum PtraceRequest {
+        Traceme        = 0,
+        PeekText       = 1,
+        PeekData       = 2,
+        PeekUser       = 3,
+        PokeText       = 4,
+        PokeData       = 5,
+        PokeUser       = 6,
+        Cont           = 7,
+        Kill           = 8,
+        SingleStep     = 9,
+        GetRegs        = 12,
+        SetRegs        = 13,
+        GetFpRegs      = 14,
+        SetFpRegs      = 15,
+        Attach         = 16,
+        Detach         = 17,
+        GetFpxRegs     = 18,
+        SetFpxRegs     = 19,
+        Syscall        = 24,
+        SetOptions     = 0x4200,
+        GetEventMsg    = 0x4201,
+        GetSigInfo     = 0x4202,
+        SetSigInfo     = 0x4203,
+      }
+
+      // Process and System Functions
       extern {
+        fn ptrace(request: s32, pid: s32, addr: *mut void, data: *mut void) -> s64;
+        fn waitpid(pid: s32, status: *mut s32, options: s32) -> s32;
+        fn wait(status: *mut s32) -> s32;
+        fn kill(pid: s32, sig: s32) -> s32;
+        fn getpid() -> s32;
+        fn getppid() -> s32;
+        fn fork() -> s32;
+        fn execve(path: *const u8, argv: *const *const u8, envp: *const *const u8) -> s32;
+        fn execvp(file: *const u8, argv: *const *const u8) -> s32;
+        fn execv(path: *const u8, argv: *const *const u8) -> s32;
+        fn execle(path: *const u8, argv: *const *const u8, ...) -> s32;
+        fn execl(path: *const u8, ...) -> s32;
+        fn execlp(file: *const u8, ...) -> s32;
+
+        fn process_vm_writev(pid: ProcId, local: *IoVec, local_count: s64, remote: *IoVec, remote_count: s64, flags: s64) -> s64;
         fn process_vm_readv (pid: ProcId, lvec: *IoVec, l_iovec_ct: u64, rvec: *IoVec, r_iovec_ct: u64, flags: u64) -> s64;
-        fn getcwd(buf: c_str, size: u64) -> c_str;
-        fn opendir(name: *const u8) -> *mut DIR;
-        fn readdir(dir: *mut DIR) -> *const DirEntry;
-        fn closedir(dir: *const void) -> s32;
-        fn chdir(path: *const u8) -> s32;
-        fn dirname(path: *const u8) -> *mut u8;
-        fn realpath(path: *const u8, result: *mut u8) -> *const u8;
-        fn fstat(fd: s32, stat: *mut Stat) -> s32;
-        fn fileno(file: *const FILE) -> s32;
-        fn fread(ptr: *mut void, size: u64, count: u64, stream: *mut FILE) -> u64;
-        fn fwrite(ptr: *const void, size: u64, count: u64, stream: *mut FILE) -> u64;
-        fn fseek(stream: *mut FILE, offset: s64, origin: s32) -> s32;
-        fn ftell(stream: *const FILE) -> s64;
-        fn rewind(stream: *mut FILE) -> void;
-        fn fopen(fname: *const u8, flags: *const u8) -> *mut FILE;
-        fn fclose(file: *mut FILE) -> void;
-        fn fgetc(file: *mut FILE) -> s8;
-        fn putc(ch: u8, file: *mut FILE) -> void;
-        fn fflush(f: *const FILE);
-
-        fn mkdir(path: *const u8, mode: u32) -> s32;
-        fn rmdir(path: *const u8) -> s32;
-        fn remove(path: *const u8) -> s32;
-
-        fn realpath(path: *const u8, result: *mut u8) -> *const u8;
-        fn chdir(path: *const u8) -> s32;
-        fn dirname(path: *const u8) -> *mut u8;
-        fn getcwd(buf: *mut u8, size: u64) -> *mut u8;
-
-        fn opendir(name: *const u8) -> *mut DIR;
-        fn readdir(dir: *mut DIR) -> *const DirEntry;
-        fn closedir(dir: *const void) -> s32;
-        fn lseek(fd: s32, offset: s64, whence: s32) -> s64;
-        fn unlink(path: *const u8) -> s32;
-        fn rename(oldpath: *const u8, newpath: *const u8) -> s32;
-        fn chmod(path: *const u8, mode: u32) -> s32;
-        fn chown(path: *const u8, owner: u32, group: u32) -> s32;
-        fn access(path: *const u8, mode: s32) -> s32;
-        fn utime(path: *const u8, times: *const void) -> s32;
-        fn truncate(path: *const u8, length: s64) -> s32;
-        fn ftruncate(fd: s32, length: s64) -> s32;
-
-        fn open(path: *const u8, flags: s32, mode: u32) -> s32;
-        fn close(fd: s32) -> s32;
-        fn read(fd: s32, buf: *mut void, count: u64) -> s64;
-        fn write(fd: s32, buf: *const void, count: u64) -> s64;
-        fn fsync(fd: s32) -> s32;
-        fn fdatasync(fd: s32) -> s32;
-        fn dup(fd: s32) -> s32;
-        fn dup2(oldfd: s32, newfd: s32) -> s32;
-        fn pipe(fds: *mut s32) -> s32;
-        fn fileno(stream: *mut FILE) -> s32;
-        fn fflush(stream: *mut FILE) -> s32;
-        fn fclose(stream: *mut FILE) -> s32;
-        fn fopen(path: *const u8, mode: *const u8) -> *mut FILE;
-        fn fread(ptr: *mut void, size: u64, nmemb: u64, stream: *mut FILE) -> u64;
-        fn fwrite(ptr: *const void, size: u64, nmemb: u64, stream: *mut FILE) -> u64;
-        fn fseek(stream: *mut FILE, offset: s64, whence: s32) -> s32;
-        fn ftell(stream: *mut FILE) -> s64;
-        fn rewind(stream: *mut FILE);
-        fn feof(stream: *mut FILE) -> s32;
-        fn ferror(stream: *mut FILE) -> s32;
-        fn clearerr(stream: *mut FILE);
-        fn setvbuf(stream: *mut FILE, buf: *mut u8, mode: s32, size: u64) -> s32;
-        fn setbuf(stream: *mut FILE, buf: *mut u8);
-        fn perror(s: *const u8);
-        fn puts(s: *const u8) -> s32;
-        fn fputs(s: *const u8, stream: *mut FILE) -> s32;
-        fn fgets(s: *mut u8, size: s32, stream: *mut FILE) -> *mut u8;
-        fn getc(stream: *mut FILE) -> s32;
-        fn putc(c: s32, stream: *mut FILE) -> s32;
-        fn ungetc(c: s32, stream: *mut FILE) -> s32;
-        
         fn system(cmd: *const u8) -> s32;
+        fn exit(code: s32);
+        fn sleep(seconds: u32);
+        fn usleep(c: u32);
+      }
 
+      // Memory Management
+      extern {
         fn free(ptr: *const void) -> void;
         fn malloc(nbytes: u64) -> *mut void;
         fn calloc(num: u64, size: u64) -> *mut void;
         fn realloc(ptr: *const void, size: u64) -> *mut void;
+        fn memmove(dest: *const void, src: *const void, nbytes: s64) -> s32;
+        fn memcpy(dest: *const void, src: *const void, n: u64) -> *mut void;
+        fn memset(dest: *const void, c: s32, n: u64) -> *mut void;
+        fn memcmp(ptr1: *const void, ptr2: *const void, n: u64) -> s32;
+      }
 
-        // printf family
-        fn printf(format: *const u8, ...) -> s32;
-        fn vprintf(format: *const u8, args: va_list) -> s32;
-
-        fn fprintf(stream: *mut FILE, format: *const u8, ...) -> s32;
-        fn vfprintf(stream: *mut FILE, format: *const u8, args: va_list) -> s32;
-
-        fn dprintf(fd: s32, format: *const u8, ...) -> s32;
-        fn vdprintf(fd: s32, format: *const u8, args: va_list) -> s32;
-
-        fn sprintf(buffer: *mut u8, format: *const u8, ...) -> s32;
-        fn vsprintf(buffer: *mut u8, format: *const u8, args: va_list) -> s32;
-
-        fn snprintf(buffer: *mut u8, buffer_size: u64, format: *const u8, ...) -> s32;
-        fn vsnprintf(buffer: *mut u8, buffer_size: u64, format: *const u8, args: va_list) -> s32;
-
-        fn asprintf(ptr: *mut *mut u8, format: *const u8, ...) -> s32;
-        fn vasprintf(ptr: *mut *mut u8, format: *const u8, args: va_list) -> s32;
-
-        // scanf family
-        fn scanf(format: *const u8, ...) -> s32;
-        fn vscanf(format: *const u8, args: va_list) -> s32;
-
-        fn fscanf(stream: *mut FILE, format: *const u8, ...) -> s32;
-        fn vfscanf(stream: *mut FILE, format: *const u8, args: va_list) -> s32;
-
-        fn sscanf(buffer: *const u8, format: *const u8, ...) -> s32;
-        fn vsscanf(buffer: *const u8, format: *const u8, args: va_list) -> s32;
-
-        
-        fn exit(code: s32);
-
-        fn getchar() -> s32;
-
-        fn sleep(seconds: u32);
-        fn usleep(c: u32);
-
+      // String Functions
+      extern {
         fn strdup(s: *const u8) -> *mut u8;
         fn strndup(s: *const u8, n: u64) -> *mut u8;
         fn strerror(errnum: s32) -> *mut u8;
-
         fn strtok(s: *const u8, delim: *const u8) -> *mut u8;
         fn strcat(dest: *const u8, src: *const u8) -> *mut u8;
         fn strncat(dest: *const u8, src: *const u8, n: u64) -> *mut u8;
-
         fn strcpy(dest: *mut u8, src: *const u8) -> *mut u8;
         fn strncpy(dest: *mut u8, src: *const u8, n: u64) -> *mut u8;
         fn strcmpi(str1: *const u8, str2: *const u8) -> s32;
         fn strcasecmp(str1: *const u8, str2: *const u8) -> s32;
         fn strlcpy(dest: *mut u8, src: *const u8, size: u64) -> u64;
         fn strlcat(dest: *mut u8, src: *const u8, size: u64) -> u64;
-
-        fn atoi(v: *const u8) -> s32;
-        fn atof(v: *const u8) -> f64;
-
-        fn memmove(dest: *const void, src: *const void, nbytes: s64) -> s32;
-        fn memcpy(dest: *const void, src: *const void, n: u64) -> *mut void;
-        fn memset(dest: *const void, c: s32, n: u64) -> *mut void;
-        fn memcmp(ptr1: *const void, ptr2: *const void, n: u64) -> s32;
-
         fn strncmp(s: *const u8, str2: *const u8, len: s32) -> s32;
         fn strcmp(str1: *const u8, str2: *const u8) -> s32;
         fn strlen(string: *const u8) -> u32;
+      }
 
+      // Character Functions
+      extern {
         fn isalnum(c: s32) -> s32;
         fn isalpha(c: s32) -> s32;
         fn isspace(c: s32) -> s32;
@@ -295,6 +232,152 @@
         fn isgraph(c: s32) -> s32;
         fn tolower(c: s32) -> s32;
         fn toupper(c: s32) -> s32;
+      }
+
+      // Conversion Functions
+      extern {
+        fn atoi(v: *const u8) -> s32;
+        fn atof(v: *const u8) -> f64;
+      }
+
+      // Low-level File I/O (POSIX)
+      extern {
+        fn open(path: *const u8, flags: s32, mode: u32) -> s32;
+        fn close(fd: s32) -> s32;
+        fn read(fd: s32, buf: *mut void, count: u64) -> s64;
+        fn write(fd: s32, buf: *const void, count: u64) -> s64;
+        fn lseek(fd: s32, offset: s64, whence: s32) -> s64;
+        fn fsync(fd: s32) -> s32;
+        fn fdatasync(fd: s32) -> s32;
+        fn dup(fd: s32) -> s32;
+        fn dup2(oldfd: s32, newfd: s32) -> s32;
+        fn pipe(fds: *mut s32) -> s32;
+        fn fstat(fd: s32, stat: *mut Stat) -> s32;
+      }
+
+      // High-level File I/O (stdio)
+      extern {
+        fn fopen(fname: *const u8, flags: *const u8) -> *mut FILE;
+        fn fclose(file: *mut FILE) -> void;
+        fn fread(ptr: *mut void, size: u64, count: u64, stream: *mut FILE) -> u64;
+        fn fwrite(ptr: *const void, size: u64, count: u64, stream: *mut FILE) -> u64;
+        fn fseek(stream: *mut FILE, offset: s64, origin: s32) -> s32;
+        fn ftell(stream: *const FILE) -> s64;
+        fn rewind(stream: *mut FILE) -> void;
+        fn fgetc(file: *mut FILE) -> s8;
+        fn fflush(f: *const FILE);
+        fn fileno(file: *const FILE) -> s32;
+        fn feof(stream: *mut FILE) -> s32;
+        fn ferror(stream: *mut FILE) -> s32;
+        fn clearerr(stream: *mut FILE);
+        fn setvbuf(stream: *mut FILE, buf: *mut u8, mode: s32, size: u64) -> s32;
+        fn setbuf(stream: *mut FILE, buf: *mut u8);
+        fn fgets(s: *mut u8, size: s32, stream: *mut FILE) -> *mut u8;
+        fn fputs(s: *const u8, stream: *mut FILE) -> s32;
+        fn getc(stream: *mut FILE) -> s32;
+        fn putc(c: s32, stream: *mut FILE) -> s32;
+        fn ungetc(c: s32, stream: *mut FILE) -> s32;
+        fn getchar() -> s32;
+        fn puts(s: *const u8) -> s32;
+        fn perror(s: *const u8);
+      }
+
+      // Formatted I/O - printf family
+      extern {
+        fn printf(format: *const u8, ...) -> s32;
+        fn vprintf(format: *const u8, args: va_list) -> s32;
+        fn fprintf(stream: *mut FILE, format: *const u8, ...) -> s32;
+        fn vfprintf(stream: *mut FILE, format: *const u8, args: va_list) -> s32;
+        fn dprintf(fd: s32, format: *const u8, ...) -> s32;
+        fn vdprintf(fd: s32, format: *const u8, args: va_list) -> s32;
+        fn sprintf(buffer: *mut u8, format: *const u8, ...) -> s32;
+        fn vsprintf(buffer: *mut u8, format: *const u8, args: va_list) -> s32;
+        fn snprintf(buffer: *mut u8, buffer_size: u64, format: *const u8, ...) -> s32;
+        fn vsnprintf(buffer: *mut u8, buffer_size: u64, format: *const u8, args: va_list) -> s32;
+        fn asprintf(ptr: *mut *mut u8, format: *const u8, ...) -> s32;
+        fn vasprintf(ptr: *mut *mut u8, format: *const u8, args: va_list) -> s32;
+      }
+
+      // Formatted I/O - scanf family
+      extern {
+        fn scanf(format: *const u8, ...) -> s32;
+        fn vscanf(format: *const u8, args: va_list) -> s32;
+        fn fscanf(stream: *mut FILE, format: *const u8, ...) -> s32;
+        fn vfscanf(stream: *mut FILE, format: *const u8, args: va_list) -> s32;
+        fn sscanf(buffer: *const u8, format: *const u8, ...) -> s32;
+        fn vsscanf(buffer: *const u8, format: *const u8, args: va_list) -> s32;
+      }
+
+      // Directory Operations
+      extern {
+        fn opendir(name: *const u8) -> *mut DIR;
+        fn readdir(dir: *mut DIR) -> *const DirEntry;
+        fn closedir(dir: *const void) -> s32;
+        fn getcwd(buf: c_str, size: u64) -> c_str;
+        fn chdir(path: *const u8) -> s32;
+        fn dirname(path: *const u8) -> *mut u8;
+        fn realpath(path: *const u8, result: *mut u8) -> *const u8;
+      }
+
+      // File System Operations
+      extern {
+        fn mkdir(path: *const u8, mode: u32) -> s32;
+        fn rmdir(path: *const u8) -> s32;
+        fn remove(path: *const u8) -> s32;
+        fn unlink(path: *const u8) -> s32;
+        fn rename(oldpath: *const u8, newpath: *const u8) -> s32;
+        fn chmod(path: *const u8, mode: u32) -> s32;
+        fn chown(path: *const u8, owner: u32, group: u32) -> s32;
+        fn access(path: *const u8, mode: s32) -> s32;
+        fn utime(path: *const u8, times: *const void) -> s32;
+        fn truncate(path: *const u8, length: s64) -> s32;
+        fn ftruncate(fd: s32, length: s64) -> s32;
+      }
+
+
+      // Using fmt::format or io::println to print this will give you the enum name, which is more useful.
+      // io::try_print_errno_if_bad(); will print it, if it's in an error state (non-zero)
+      enum Errno {
+        EPERM_OperationNotPermitted        = 1,   // EPERM: Operation not permitted
+        ENOENT_NoSuchFileOrDirectory       = 2,   // ENOENT: No such file or directory
+        ESRCH_NoSuchProcess                = 3,   // ESRCH: No such process
+        EINTR_InterruptedSystemCall        = 4,   // EINTR: Interrupted system call
+        EIO_IOError                        = 5,   // EIO: I/O error
+        ENXIO_NoSuchDeviceOrAddress        = 6,   // ENXIO: No such device or address
+        E2BIG_ArgumentListTooLong          = 7,   // E2BIG: Argument list too long
+        ENOEXEC_ExecFormatError            = 8,   // ENOEXEC: Exec format error
+        EBADF_BadFileDescriptor            = 9,   // EBADF: Bad file number
+        ECHILD_NoChildProcesses            = 10,  // ECHILD: No child processes
+        EAGAIN_TryAgain                    = 11,  // EAGAIN: Try again
+        ENOMEM_OutOfMemory                 = 12,  // ENOMEM: Out of memory
+        EACCES_PermissionDenied            = 13,  // EACCES: Permission denied
+        EFAULT_BadAddress                  = 14,  // EFAULT: Bad address
+        ENOTBLK_BlockDeviceRequired        = 15,  // ENOTBLK: Block device required
+        EBUSY_DeviceOrResourceBusy         = 16,  // EBUSY: Device or resource busy
+        EEXIST_FileExists                  = 17,  // EEXIST: File exists
+        EXDEV_CrossDeviceLink              = 18,  // EXDEV: Cross-device link
+        ENODEV_NoSuchDevice                = 19,  // ENODEV: No such device
+        ENOTDIR_NotADirectory              = 20,  // ENOTDIR: Not a directory
+        EISDIR_IsADirectory                = 21,  // EISDIR: Is a directory
+        EINVAL_InvalidArgument             = 22,  // EINVAL: Invalid argument
+        ENFILE_FileTableOverflow           = 23,  // ENFILE: File table overflow
+        EMFILE_TooManyOpenFiles            = 24,  // EMFILE: Too many open files
+        ENOTTY_NotATypewriter              = 25,  // ENOTTY: Not a typewriter
+        ETXTBSY_TextFileBusy               = 26,  // ETXTBSY: Text file busy
+        EFBIG_FileTooLarge                 = 27,  // EFBIG: File too large
+        ENOSPC_NoSpaceLeftOnDevice         = 28,  // ENOSPC: No space left on device
+        ESPIPE_IllegalSeek                 = 29,  // ESPIPE: Illegal seek
+        EROFS_ReadOnlyFileSystem           = 30,  // EROFS: Read-only file system
+        EMLINK_TooManyLinks                = 31,  // EMLINK: Too many links
+        EPIPE_BrokenPipe                   = 32,  // EPIPE: Broken pipe
+        EDOM_MathArgumentOutOfDomain       = 33,  // EDOM: Math argument out of domain of func
+        ERANGE_MathResultNotRepresentable  = 34,  // ERANGE: Math result not representable
+      }
+
+      extern fn __errno_location() -> *s32;
+      
+      fn errno() -> Errno {
+        return *__errno_location();
       }
     }
 

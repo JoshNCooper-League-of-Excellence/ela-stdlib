@@ -274,3 +274,11 @@ impl!<_Ok, _Err> ResultFormat for Result!<_Ok, _Err> {
     panicf("unwrapped an 'Err' result: %", (err,));
   }
 }
+
+
+fn try_print_errno_if_bad() {
+  errno := std::c::errno();
+  if errno != 0 {
+    printlnf("errno: %, aka %", (errno as std::c::Errno, errno as u32));
+  }
+}

@@ -11,11 +11,32 @@ import std::c::{
   sscanf,
   exit,
   SeekPosition,
+  process_vm_writev,
+  ptrace,
+  waitpid,
+  PtraceRequest
 };
 
-// Find the best candidate to be the readable memory page in /proc/<PID>/maps
-// returns Some(base_offset)
-// and None() nothing found
+/*  
+Find the best candidate to be the readable memory page in /proc/<PID>/maps
+ This function searches through the memory mappings of a process to find the base address
+ of a specific module (shared library or executable).
+
+ Parameters:
+   pid: The process ID of the target process whose memory maps to search
+   module_substr: A substring to match against the pathname in /proc/<PID>/maps
+                  (e.g., "libc", "libssl", or the full path to a specific library)
+
+ Returns:
+   Some(base_offset): The base memory address where the module is loaded
+   None(): No matching module found, or no executable mappings found
+
+ Notes:
+   - Only considers executable memory regions (with 'x' permission)
+   - Only considers mappings with offset 0 (the actual base, not segments)
+   - Skips anonymous mappings (those without a pathname) 
+
+*/
 fn find_module_memory_base(pid: u32, module_substr: String) -> Option!<u64> {
   using path := fmt::format("/proc/%/maps", (pid,));
   
@@ -42,9 +63,13 @@ fn find_module_memory_base(pid: u32, module_substr: String) -> Option!<u64> {
     mut pathname_buf: [u8; 256];
     n := std::c::sscanf(line.data, "%lx-%lx %7s %lx %15s %lu %255[^\n]"c, &start, &end, perms_buf, &offset, dev_buf, &inode, pathname_buf);
 
+    // io::printlnf("find_module_memory_base: sscanf parsed % on line: %", (n, line));
+
+
     using perms :=  String::from_ptr(perms_buf);
     using dev := String::from_ptr(dev_buf);
     using pathname := String::from_ptr(pathname_buf);
+    io::printlnf("start: %, end: %, perms: %, offset: %, dev: %, inode: %, pathname: %", (start, end, perms, offset, dev, inode, pathname));
 
     if n < 6 {
       continue;
@@ -59,7 +84,7 @@ fn find_module_memory_base(pid: u32, module_substr: String) -> Option!<u64> {
     }
 
     if offset != 0 {
-      continue;
+      return Some(start);
     }
 
     if pathname.contains(module_substr) {
@@ -70,28 +95,123 @@ fn find_module_memory_base(pid: u32, module_substr: String) -> Option!<u64> {
   return None();
 }
 
-// The buffer must be pre-allocated to handle as much as we're reading, which == len.
-// the return type will be Ok(n_bytes_read) or Err(error)
-fn read_remote_memory(pid: ProcId, addr: u64, buf: *mut u8, len: u64) -> Result!<s64, str> {
+/*  
+ Reads memory from a remote process at the specified address.
+ Uses process_vm_readv for efficient cross-process memory access, with fallback
+ to /proc/<PID>/mem if the syscall fails (e.g., due to permissions or kernel support).
+
+ Parameters:
+   pid: The process ID of the target process to read from
+   addr: The virtual memory address in the target process to start reading from
+   buf: Pre-allocated buffer to store the read data (must be at least 'len' bytes)
+   len: The number of bytes to read from the remote process
+
+ Returns:
+   Ok(n_bytes_read): Success, with the actual number of bytes read
+   Err(error): Failure, with an error message describing what went wrong
+
+ Notes:
+   - The buffer must be pre-allocated to handle the requested length
+   - May read fewer bytes than requested if hitting memory boundaries
+   - Requires appropriate permissions (usually CAP_SYS_PTRACE or same user) 
+*/
+fn read_remote_memory(pid: ProcId, addr: u64, buf: *mut u8, len: u64) -> Result!<s64, String> {
   mut local: [IoVec; 1] = .[.{ data: buf, length: len }];
   mut remote: [IoVec; 1] = .[.{data: addr as *u8, length: len }];
-
   n: s64 = process_vm_readv(pid, local, 1, remote, 1, 0);
+  
+  if (n >= 0) {
+    return Result!<s64, String>::Ok(n);
+  }
+
+  using mempath := fmt::format("/proc/%/mem", (pid,));
+
+  // Try to open /proc/<pid>/mem; if that fails, try ptrace attach -> open -> detach.
+  mut file_result := fs::File::open(mempath, fs::FileOpenFlags::Read);
+  mut attached := false;
+
+  if (file_result.is_none()) {
+    attach_ret := ptrace(PtraceRequest::Attach, pid, null, null);
+    if (attach_ret == -1) {
+      return Result!<s64, String>::Err(fmt::format("failed to open % and ptrace attach failed", (mempath,)));
+    }
+
+    mut status := 0;
+    wp := waitpid(pid as s32, &mut status, 0);
+    if (wp == -1) {
+      ptrace(PtraceRequest::Detach, pid, null, null);
+      return Result!<s64, String>::Err(String::from("waitpid failed after ptrace attach"));
+    }
+
+    attached = true;
+    file_result = fs::File::open(mempath, fs::FileOpenFlags::Read);
+
+    if (file_result.is_none()) {
+      ptrace(PtraceRequest::Detach, pid, null, null);
+      return Result!<s64, String>::Err(fmt::format("failed to open % even after ptrace attach", (mempath,)));
+    }
+  }
+
+  using mut file := file_result.unwrap();
+
+  if lseek(file.fd, addr, SeekPosition::Set) == -1 {
+    if (attached) {
+      ptrace(PtraceRequest::Detach, pid, null, null);
+    }
+    return Result!<s64, String>::Err(String::from("unable to seek to the address specified"));
+  }
+
+  bytes_read := file.read(buf, len);
+
+  if (attached) {
+    ptrace(PtraceRequest::Detach, pid, null, null);
+  }
+
+  return Result!<s64, String>::Ok(bytes_read as s64);
+}
+
+/*  
+ Writes data to a remote process memory at the specified address.
+ Uses process_vm_writev for efficient cross-process memory access, with fallback
+ to /proc/<PID>/mem if the syscall fails (e.g., due to permissions or kernel support).
+
+ Parameters:
+   pid: The process ID of the target process to write to
+   addr: The virtual memory address in the target process to start writing to
+   buf: Pointer to the data buffer containing bytes to write to the remote process
+   len: The number of bytes to write from the buffer to the remote process
+
+ Returns:
+   Ok(n_bytes_written): Success, with the actual number of bytes written
+   Err(error): Failure, with an error message describing what went wrong
+
+ Notes:
+   - The target memory region must be writable in the remote process
+   - May write fewer bytes than requested if hitting memory boundaries
+   - Requires appropriate permissions (usually CAP_SYS_PTRACE or same user)
+   - Can potentially crash the target process if writing to critical memory 
+*/
+fn write_remote_memory(pid: ProcId, addr: u64, buf: *const u8, len: u64) -> Result!<s64, str> {
+  mut local: [IoVec; 1] = .[.{ data: buf as *mut u8, length: len }];
+  mut remote: [IoVec; 1] = .[.{ data: addr as *mut u8, length: len }];
+
+  n: s64 = process_vm_writev(pid, local, 1, remote, 1, 0);
 
   if (n >= 0) {
     return Result!<s64, str>::Ok(n);
   }
 
-  // Fallback to reading from /proc/<PID>/mem if process_vm_readv fails
+  // Fallback to writing to /proc/<PID>/mem if process_vm_writev fails
   using mempath := fmt::format("/proc/%/mem", (pid,));
-  using mut file := fs::File::open(mempath, fs::FileOpenFlags::Read).expect(fn() {
-    panic("failed to open processes' memory file");
+
+  using mut file := fs::File::open(mempath, fs::FileOpenFlags::Write).expect(fn() {
+    panic("failed to open processes' memory file for writing");
   });
 
   if lseek(file.fd, addr, SeekPosition::Set) == -1 {
     return Result!<s64, str>::Err("unable to seek to the address specified");
   }
 
-  bytes_read := file.read(buf, len);
-  return Result!<s64, str>::Ok(bytes_read as s64);
+  bytes_written := file.write([u8]::from(buf, len as u32));
+  return Result!<s64, str>::Ok(bytes_written as s64);
 }
