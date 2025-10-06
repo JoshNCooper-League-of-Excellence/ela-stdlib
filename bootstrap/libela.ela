@@ -1,0 +1,131 @@
+/*
+
+  A bunch of functions that are normally provided by libc, but we will provide our own copies
+  so that we don't have to depend on libc just to get basic operations on memory and strings.
+
+  This helps us be completely 'freestanding' compatible without compromising on providing useful types:
+
+  List!<T>, String, str, etc, can all work freestanding, so as long as this library provides basic operations 
+  and an allocator is provided, which is a type erased interface that can be used regardless of build type.
+
+  Right now, there isn't a way to disable this library, unless you compile with 'nostdlib', which has huge implications.
+  'for' loops wont work due to a lack of iterators, 'str' and 'String' and Slice!<T>/SliceMut!<T> types wont be available,
+  literally nothing. (this will change in the future.)
+
+*/
+
+module memory {
+  @[inline] // an alternative to libc's memcpy
+  fn copy!<T>(dest: *mut u8, src: *u8, len: T) where T: IsInteger {
+    for i in 0..len {
+      dest![i] = src![i];
+    }
+  }
+  @[inline] // an alternative to libc's memset
+  fn set!<T>(dest: *mut u8, value: u8, len: T) where T: IsInteger {
+    for i in 0..len {
+      dest![i] = value;
+    }
+  }
+  @[inline] // an alternative to libc's memmove
+  fn move!<T>(dest: *mut u8, src: *u8, len: T) where T: IsInteger {
+    if dest == src || len == 0 {
+      return;
+    }
+    if dest < src || dest >= src + len * sizeof(u8) {
+      // No overlap or safe to copy forwards
+      for i in 0..len {
+        dest![i] = src![i];
+      }
+    } else {
+      // Overlap, copy backwards
+      mut i: T = len;
+      while i > 0 {
+        i -= 1;
+        dest![i] = src![i];
+      }
+    }
+  }
+  
+  #test fn test_copy() {
+    mut src: [u8; 5] = .[1, 2, 3, 4, 5];
+    mut dest: [u8; 5] = .[0, 0, 0, 0, 0];
+    copy(dest, src, 5);
+    for i in 0..5 {
+      if dest[i] != src[i] {
+        panic("dest![i] != src![i] in test_copy");
+      }
+    }
+  }
+
+  #test fn test_set() {
+    mut arr: [u8; 4] = .[0, 0, 0, 0];
+    set(arr, 7, 4);
+    for i in 0..4 {
+      if arr[i] != 7 {
+        panic("arr[i] != 7 in test_set");
+      }
+    }
+  }
+
+  #test fn test_move_no_overlap() {
+    mut src: [u8; 3] = .[9, 8, 7];
+    mut dest: [u8; 3] = .[0, 0, 0];
+    move(dest, src, 3);
+    for i in 0..3 {
+      if dest[i] != src[i] {
+        panic("dest[i] != src[i] in test_move_no_overlap");
+      }
+    }
+  }
+
+  #test fn test_move_overlap() {
+    mut arr: [u8; 6] = .[1, 2, 3, 4, 5, 6];
+    move(&mut arr[2], arr, 4);
+    if arr[2] != 1 { panic("arr[2] != 1 in test_move_overlap"); }
+    if arr[3] != 2 { panic("arr[3] != 2 in test_move_overlap"); }
+    if arr[4] != 3 { panic("arr[4] != 3 in test_move_overlap"); }
+    if arr[5] != 4 { panic("arr[5] != 4 in test_move_overlap"); }
+  }
+}
+
+module string {
+  @[inline] // an alternative to libc's strlen
+  fn length(mut s: *u8) -> u32 {
+    mut len: u32;
+    while (*s) {
+      len += 1;
+      s += sizeof(u8);
+    }
+    return len;
+  }
+
+  @[inline] // an alternative to libc's strcpy
+  fn copy!<T>(dest: *mut u8, src: *u8, len: T) where T: IsInteger {
+    memory::copy(dest, src, len);
+    dest![len] = '\0';
+  }
+
+  #test fn test_length() {
+    arr: [u8; 6] = .['h', 'e', 'l', 'l', 'o', '\0'];
+    len := length(arr);
+    if len != 5 {
+      panic("len != 5 in test_length");
+    }
+  }
+
+  #test fn test_copy() {
+    src: [u8; 6] = .['w', 'o', 'r', 'l', 'd', '\0'];
+    mut dest: [u8; 7] = .[0, 0, 0, 0, 0, 0, 0];
+    copy(dest, src, 5);
+    for i in 0..5 {
+      if dest[i] != src[i] {
+        panic("dest[i] != src[i] in test_string_copy");
+      }
+    }
+    if dest[5] != '\0' {
+      panic("dest[5] != '\\0' in test_string_copy");
+    }
+  }
+}
+

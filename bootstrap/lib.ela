@@ -6,15 +6,25 @@
 #include "traits.ela";
 // Option!<T>
 #include "option.ela";
-
 // Iterator<T> and Iterable<T>
 #include "iter.ela";
 // impls for numeric types, mostly marker traits.
 #include "numeric.ela"; 
 // RangeBase!<T> and Range, Range_s32... etc.
 #include "range.ela";
-// a few libc functions that are used in most programs.
-#include "libc.ela";
+
+#ifndef FREESTANDING {
+  // a few libc functions that are used in most programs.
+  #include "libc.ela";
+}
+
+#def LIB_ELA_IMPLEMENTATION // TODO: once conditionals are pushed back to type time, this will make sense. for now, it's permanently enabled.
+// some alternatives to libc functions, so we don't _need_ 
+// to link against libc to get basic memory and string functions
+#ifdef LIB_ELA_IMPLEMENTATION {
+  import libela;
+}
+
 // dynamic trait for allocator.
 #include "memory.ela";
 // List!<T>
@@ -44,6 +54,7 @@
 #ifdef TESTING {  
   import testing;
 }
+
 
 struct Env {
   args_slice: [str],
