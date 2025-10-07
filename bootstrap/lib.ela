@@ -116,7 +116,13 @@ impl Env {
     #ifndef FREESTANDING {
       mut data : *mut str = std::c::malloc(argc * sizeof(str));
     } else {
-      #static mut data : [str; 48]; // This is just a hack. idk what a reasonable value to put here is.
+      // This is just a hack. idk what a reasonable value to put here is.
+      // 'getconf ARG_MAX' shows my shell can take over 2 million arguments, 
+      // which obviously isn't possible to stack allocate here.
+      // I think 2048 is a reasonable compromise -- that would almost never be exceeded, especially
+      // since command line programs aren't often freestanding, and distributed programs aren't really taking
+      // command line arguments (in my experience, i could easily be wrong)
+      #static mut data : [str; 2048]; 
     }
     
 

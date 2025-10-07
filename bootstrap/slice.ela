@@ -1,22 +1,22 @@
 
-#ifndef FREESTANDING {
-  impl!<T> [T] {
-    fn clone!<Alloc>(self, allocator: *mut Alloc) -> Self where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
-      data : *mut T = allocator.allocate_array(sizeof(T), self.length);
-      std::c::memcpy(data, self.data, self.length * sizeof(T));
-      return .{
-        data: data,
-        length: self.length,
-      };
-    }
+impl!<T> [T] {
+  fn clone!<Alloc>(self, allocator: *mut Alloc) -> Self where Alloc: Allocator | dyn Allocator {
+    data : *mut T = allocator.allocate_array(sizeof(T), self.length);
+    std::memory::copy(data, self.data, self.length * sizeof(T));
+    return .{
+      data: data,
+      length: self.length,
+    };
+  }
 
-    // this is really just for cloned slices, that which take ownership.
-    // To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
-    // since [T] is supposed to be like blatantly non-owning.
-    // it's confusing and muddles the intended purpose and clarity of having the _type in the standard.
-    fn destroy!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | dyn Allocator | *mut dyn Allocator {
-      allocator.free(self.data);
-    }
+  /* 
+    this is really just for cloned slices, that which take ownership.
+    To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
+    since [T] is supposed to be like blatantly non-owning.
+    it's confusing and muddles the intended purpose and clarity of having the _type in the standard. 
+  */
+  fn destroy!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | dyn Allocator{
+    allocator.free(self.data);
   }
 }
 
@@ -91,7 +91,7 @@ impl [u8] {
   // it does allocate, therefore it returns a string. just use .data, and a using statement
   fn null_terminated(self, allocator: dyn Allocator) -> String {
     buf: *mut u8 = allocator.allocate(sizeof(u8) * self.length + 1);
-    std::c::strncpy(buf, self.data, self.length + 1);
+    std::string::copy(buf, self.data, self.length + 1);
     return .{
       data: buf,
       length: self.length,
@@ -121,8 +121,6 @@ impl!<T> AsSlice!<T> for [T] {
     return self;
   }
 }
-
-
 
 impl!<T> Index!<T> for mut [T] {
   fn index(*const self, idx: u64) -> *const T {

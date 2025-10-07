@@ -164,8 +164,8 @@ impl Destroy for StreamReader {
 }
 
 #ifndef FREESTANDING {
-  extern stdin: *mut fs::FILE;
-  extern stdout: *mut fs::FILE;
+  extern stdin: *mut std::c::FILE;
+  extern stdout: *mut std::c::FILE;
 
   fn get_stdin() -> StreamReader {
     return StreamReader::from(fs::File.{

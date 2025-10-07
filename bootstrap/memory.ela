@@ -116,10 +116,6 @@
       return new_ptr;
     }
   }
-
-  fn temp_allocator() -> TrackingAllocator {
-    return .{};
-  }
 }
 
 /* 
@@ -127,10 +123,8 @@
     explore how we could make this (the global allocator system) thread safe.
     It relies heavily on pointers/function pointers, which i highly doubt are just thread safe.
 */
-#ifndef FREESTANDING {
-  mut global_LibcAllocator: LibcAllocator;
-}
-mut global_dyn_LibcAllocator: dyn Allocator;
+
+
 mut global_allocator: dyn Allocator;
 
 impl dyn Allocator {
@@ -143,7 +137,12 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
   return old
 }
 
+// Provide a default libc allocator that lazily initializes itself and provides a thin wrapper to common
+// std::c::* memory allocations/deallocations
 #ifndef FREESTANDING {
+  mut global_LibcAllocator: LibcAllocator;
+  mut global_dyn_LibcAllocator: dyn Allocator;
+
   fn get_global_allocator() -> dyn Allocator {
     /* 
       We have to initialize the global data here conditionally because we don't have
@@ -176,16 +175,5 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
   // If you're freestanding, it's totally up to you to set the global allocators up.
   fn get_global_allocator() -> dyn Allocator {
     return global_allocator;
-  }
-}
-
-
-struct DefaultContext {
-  allocator: dyn Allocator,
-}
-
-impl Context for DefaultContext {
-  fn get_allocator(*self) -> dyn Allocator {
-    return get_global_allocator();
   }
 }
