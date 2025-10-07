@@ -190,10 +190,10 @@ fn eq_s32(a: s32, b: s32) -> bool => a == b;
   list.sort(fn(a: s32, b: s32) -> bool { 
     return a < b;
   });
-  std::c::printf("test_list_sort() failed\n"c);
-  // assert_eq(list.data![0], 1);
-  // assert_eq(list.data![1], 2);
-  // assert_eq(list.data![2], 3);
+  // std::c::printf("test_list_sort() failed\n"c);
+  assert_eq(list.data![0], 1);
+  assert_eq(list.data![1], 2);
+  assert_eq(list.data![2], 3);
 }
 
 #test fn test_list_contains_and_remove() {

@@ -377,6 +377,45 @@ module std {
     fn errno() -> Errno {
       return *__errno_location();
     }
+
+
+    const SIGSET_NUM_WORDS := (1024 / (8 * sizeof(u64)))
+    struct SigSet_T
+    {
+      val: [u32; SIGSET_NUM_WORDS],
+    }
+
+    // NOTE: this may not match your libc/glibc/musl etc.
+    // This is the version of jmp_buf_t that includes the signal mask save stating,
+    // which is not specified by posix, but is common in newer libraries.
+
+    struct JmpBufTag;
+
+    type JmpBuf :: *JmpBufTag;
+
+    struct JmpBufTag
+    {
+      buf: JmpBuf,		      /* Calling environment.  */
+      mask_was_saved: s32,	/* Saved the signal mask?  */
+      saved_mask: SigSet_T,	/* Saved signal mask.  */
+    }
+
+    // this is just how C declares this for seemingly no reason, prefixed with underscores then a macro
+    // wraps it. we just use an inline function.
+    extern fn _setjmp(env: JmpBuf) -> s32;
+    extern fn __sigsetjmp(env: JmpBuf, save_mask: s32) -> s32;
+
+    @[inline]
+    fn setjmp(env: JmpBuf) -> s32 {
+      return _setjmp(env);
+    }
+    
+    @[inline]
+    fn sigsetjmp(env: JmpBuf, save_mask: s32) -> s32 {
+      return __sigsetjmp(env, save_mask);
+    }
+
+    extern fn longjmp(env: JmpBuf, value_returned_at_setjmp_callsite: s32);
   }
 
   fn system(cmd: str) -> s32 {

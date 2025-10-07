@@ -20,6 +20,13 @@ fn set_panic_handler(handler: Panic_Handler) -> Panic_Handler {
   return old;
 }
 
+fn set_panic_user_arg(arg: *mut void) -> *mut void {
+  old := panic_user_arg;
+  panic_user_arg = arg;
+  return old;
+}
+
+
 @[no_return]
 fn panic(msg: str) {
   panic_handler(msg, panic_user_arg);
