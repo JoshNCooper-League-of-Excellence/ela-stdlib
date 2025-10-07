@@ -1,3 +1,5 @@
+//module sqlite3;
+
 enum OpenFlag {
   ReadOnly = 0x00000001,
   ReadWrite = 0x00000002,

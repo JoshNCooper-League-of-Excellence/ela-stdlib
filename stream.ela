@@ -6,6 +6,8 @@
   fn format!<Tuple>(fmt : str, tuple: Tuple, options: FormatOptions = .{}, allocator: dyn Allocator = get_global_allocator()) -> String where Tuple: IsTuple;  
 };
 
+//module stream;
+
 trait Writer!<T> {
   fn write(*mut self, value: T);
   fn write_many(*mut self, values: [T]) {

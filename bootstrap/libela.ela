@@ -14,6 +14,39 @@
 
 */
 
+/* 
+  There's a better assertion library with pretty printing and such, however,
+  we don't have out of order compilation, so we use this for the bootstrap libraries, because
+  the fmt, io, and assertion library depend on many of the types we'll be testing here.
+
+  hence the '_' prefix. this isn't meant to be used -- use 'import assertion::*' for access to better
+  asserts.
+*/
+
+fn _assert(cond: bool, msg: str = "assertion failed") {
+  if !cond { 
+    panic(msg);
+  }
+}
+
+fn _assert_eq!<T>(a: T, b: T, msg: str = "assertion failed") where T: IsInteger | IsFloat | bool | IsPointer | Eq  {
+  if a != b {
+    where T: IsInteger {
+      std::c::printf("%d != %d\n"c, a, b);
+    } else where T: IsFloat {
+      std::c::printf("%f != %f\n"c, a, b);
+    } else where T: bool {
+      a_string : str = if a { return "true"; } else { return "false"; };
+      b_string : str = if b { return "true"; } else { return "false"; };
+      std::c::printf("%s != %s\n"c, a_string.data, b_string.data);
+    } else where T: IsPointer {
+      std::c::printf("%p != %p\n"c, a, b);
+    }
+    panic(msg);
+  }
+}
+
+
 module memory {
   @[inline] // an alternative to libc's memcpy
   fn copy!<T>(dest: *mut u8, src: *u8, len: T) where T: IsInteger {
@@ -21,12 +54,14 @@ module memory {
       dest![i] = src![i];
     }
   }
+
   @[inline] // an alternative to libc's memset
   fn set!<T>(dest: *mut u8, value: u8, len: T) where T: IsInteger {
     for i in 0..len {
       dest![i] = value;
     }
   }
+
   @[inline] // an alternative to libc's memmove
   fn move!<T>(dest: *mut u8, src: *u8, len: T) where T: IsInteger {
     if dest == src || len == 0 {
@@ -62,9 +97,7 @@ module memory {
     mut arr: [u8; 4] = .[0, 0, 0, 0];
     set(arr, 7, 4);
     for i in 0..4 {
-      if arr[i] != 7 {
-        panic("arr[i] != 7 in test_set");
-      }
+      _assert_eq(arr[i], 7, "arr[i] != 7 in test_set");
     }
   }
 
@@ -73,19 +106,17 @@ module memory {
     mut dest: [u8; 3] = .[0, 0, 0];
     move(dest, src, 3);
     for i in 0..3 {
-      if dest[i] != src[i] {
-        panic("dest[i] != src[i] in test_move_no_overlap");
-      }
+      _assert_eq(dest[i], src[i], "dest[i] != src[i] in test_move_no_overlap");
     }
   }
 
   #test fn test_move_overlap() {
     mut arr: [u8; 6] = .[1, 2, 3, 4, 5, 6];
     move(&mut arr[2], arr, 4);
-    if arr[2] != 1 { panic("arr[2] != 1 in test_move_overlap"); }
-    if arr[3] != 2 { panic("arr[3] != 2 in test_move_overlap"); }
-    if arr[4] != 3 { panic("arr[4] != 3 in test_move_overlap"); }
-    if arr[5] != 4 { panic("arr[5] != 4 in test_move_overlap"); }
+    _assert_eq(arr[2], 1, "arr[2] != 1 in test_move_overlap");
+    _assert_eq(arr[3], 2, "arr[3] != 2 in test_move_overlap");
+    _assert_eq(arr[4], 3, "arr[4] != 3 in test_move_overlap");
+    _assert_eq(arr[5], 4, "arr[5] != 4 in test_move_overlap");
   }
 }
 
@@ -109,9 +140,7 @@ module string {
   #test fn test_length() {
     arr: [u8; 6] = .['h', 'e', 'l', 'l', 'o', '\0'];
     len := length(arr);
-    if len != 5 {
-      panic("len != 5 in test_length");
-    }
+    _assert_eq(len, 5, "len != 5 in test_length");
   }
 
   #test fn test_copy() {
@@ -119,13 +148,8 @@ module string {
     mut dest: [u8; 7] = .[0, 0, 0, 0, 0, 0, 0];
     copy(dest, src, 5);
     for i in 0..5 {
-      if dest[i] != src[i] {
-        panic("dest[i] != src[i] in test_string_copy");
-      }
+      _assert_eq(dest[i], src[i], "dest[i] != src[i] in test_string_copy");
     }
-    if dest[5] != '\0' {
-      panic("dest[5] != '\\0' in test_string_copy");
-    }
+    _assert_eq(dest[5], '\0', "dest[5] != '\\0' in test_string_copy");
   }
 }
-

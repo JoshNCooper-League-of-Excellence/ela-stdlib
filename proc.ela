@@ -17,6 +17,8 @@ import std::c::{
   PtraceRequest
 };
 
+//module proc;
+
 /*  
 Find the best candidate to be the readable memory page in /proc/<PID>/maps
  This function searches through the memory mappings of a process to find the base address

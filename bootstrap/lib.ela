@@ -22,17 +22,34 @@
 // some alternatives to libc functions, so we don't _need_ 
 // to link against libc to get basic memory and string functions
 #ifdef LIB_ELA_IMPLEMENTATION {
-  import libela;
+  module std {
+    #include "libela.ela";
+  }
 }
 
 // dynamic trait for allocator.
 #include "memory.ela";
-// List!<T>
-#include "list.ela";
-// Iterators and such for InitList!<T>
-#include "init_list.ela";
-// [T] and SliceMut!<T>, views over memory.
-#include "slice.ela";
+
+module collections { // TODO: put the typedefs in this module too.
+  // List!<T>
+  #include "list.ela";
+  // Iterators and such for InitList!<T>
+  #include "init_list.ela";
+  // [T] and SliceMut!<T>, views over memory.
+  #include "slice.ela";
+
+  #ifdef TESTING {
+    #include "tests/collections/list.ela";
+    #include "tests/collections/init_list.ela";
+    #include "tests/collections/slice.ela";
+  }
+}
+
+import collections::{
+  Slice,
+  SliceMut,
+};
+
 // utils that both string types use, avoiding some redundancy
 #include "stringutils.ela";
 // str, the default _type of a string literal.
@@ -54,7 +71,6 @@
 #ifdef TESTING {  
   import testing;
 }
-
 
 struct Env {
   args_slice: [str],
@@ -216,3 +232,4 @@ fn default!<T>() -> T {
      - interop into managed environments,
      - copying buffers of data into a new owned buffer, etc.
 */
+

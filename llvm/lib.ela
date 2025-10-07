@@ -1,3 +1,4 @@
+//module llvm;
 
 /* 
   These enums are here because the generator does a poor job of translating the subvariant names

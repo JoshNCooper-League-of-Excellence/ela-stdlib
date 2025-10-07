@@ -1,5 +1,7 @@
 import stream;
 
+//module stringstream;
+
 struct Block {
   data: *mut u8,
   length: u64,

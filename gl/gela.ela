@@ -1,3 +1,5 @@
+//module gl;
+
 struct Shader {
   handle: u32
 }

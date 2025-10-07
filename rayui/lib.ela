@@ -1,3 +1,5 @@
+//module rayui;
+
 import raylib::*;
 import fmt::*;
 

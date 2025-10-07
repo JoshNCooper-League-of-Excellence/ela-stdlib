@@ -3,6 +3,8 @@ import fmt;
 import stream;
 import stringstream;
 
+//module io;
+
 const FILE_STREAM_BUFFER_LENGTH: u16 = 1024;
 
 struct StreamWriter {

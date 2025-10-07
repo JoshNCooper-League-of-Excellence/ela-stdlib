@@ -35,12 +35,12 @@ fn panic(msg: str);
     fn is_empty(self) -> bool => self.length == 0;
 
     /* 
-      Copy out a sub array. use as_slice if you want a borrowed, un-owning view into the array at a specific range.
+      Copy out a sub array. use as_slice if you want a borrowed, non-owning view into the array at a specific range.
     */
     fn subarray(self, range: Range) -> Self {
       len := range.end - range.begin;
       new_data := self.allocator.allocate_array(sizeof(T), len);
-      libela::memory::copy(new_data, self.data + range.begin, sizeof(T) * len);
+      std::memory::copy(new_data, self.data + range.begin, sizeof(T) * len);
       return .{
         data: new_data,
         length: len,
@@ -75,7 +75,7 @@ fn panic(msg: str);
     @[inline]
     fn initialize(*mut self, num_to_fill: u64) {
       self.resize(num_to_fill);
-      libela::memory::set(self.data, 0, sizeof(T) * self.capacity);
+      std::memory::set(self.data, 0, sizeof(T) * self.capacity);
       self.length = num_to_fill;
     }
 
@@ -130,7 +130,7 @@ fn panic(msg: str);
       }
   
       // Shift elements to the right to make space at the front
-      libela::memory::move(self.data + 1, self.data, sizeof(T) * self.length);
+      std::memory::move(self.data + 1, self.data, sizeof(T) * self.length);
   
       // Insert the new value at the front
       self.data![0] = v;
@@ -143,7 +143,7 @@ fn panic(msg: str);
     @[inline]
     fn pop_front(*mut self) -> T {
       value := self.data![0];
-      libela::memory::move(self.data, self.data + 1, sizeof(T) * (self.length - 1));
+      std::memory::move(self.data, self.data + 1, sizeof(T) * (self.length - 1));
       self.length -= 1;
       return value;
     }
@@ -156,7 +156,7 @@ fn panic(msg: str);
     @[inline]
     fn clone(self, allocator: dyn Allocator = get_global_allocator()) -> Self {
       new_data := allocator.allocate_array(sizeof(T), self.capacity);
-      libela::memory::copy(new_data, self.data, sizeof(T) * self.length);
+      std::memory::copy(new_data, self.data, sizeof(T) * self.length);
       return .{
         data: new_data,
         length: self.length,
@@ -179,7 +179,7 @@ fn panic(msg: str);
     fn init(init: InitList!<T>) -> Self {
       mut self: Self;
       self.resize(init.length);
-      libela::memory::copy(self.data, init.data, sizeof(T) * init.length);
+      std::memory::copy(self.data, init.data, sizeof(T) * init.length);
       self.length = init.length;
       return self;
     }
@@ -383,25 +383,16 @@ impl!<T> List!<T> {
 
 #ifndef FREESTANDING {
   impl!<T> List!<T>  {
-    type OrderingPredicate :: fn(*const T) -> u32;
-    /* 
-      return a new list with the order specified by the predicate.
-    */
-    fn sort(*mut self, predicate: OrderingPredicate) {
+    type Comparator :: fn(T, T) -> bool;
+    fn sort(*mut self, comparator: Comparator) {
       if self.is_empty() {
         return;
       }
-
-      mut swapped: bool;
       mut n := self.length;
-
       while {
         mut swapped := false;
         for i in 0..(n - 1) {
-          a := predicate(&const (*self)[i]);
-          b := predicate(&const (*self)[i + 1]);
-
-          if b > a {
+          if !comparator((*self)[i], (*self)[i + 1]) {
             temp := self![i];
             self![i] = self![i + 1];
             self![i + 1] = temp;
@@ -410,12 +401,11 @@ impl!<T> List!<T> {
         }
         if !swapped {
           break;
-        } 
+        }
         --n;
       }
     }
 
-    type Comparator :: fn(T, T) -> bool;
     /* 
       Check if the list contains an item. This uses the `a == b` operator, so this is only valid
       on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
@@ -441,7 +431,7 @@ impl!<T> List!<T> {
     fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
       for idx in 0..self.length {
         if comparator(self.data![idx], seek) {
-          libela::memory::move(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
+          std::memory::move(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
           self.length -= 1;
           return true;
         }

@@ -8,12 +8,15 @@ mut panic_user_arg: *mut void;
     std::c::exit(1);
   };
 } else {
-  mut panic_handler: Panic_Handler = null;
+  mut panic_handler: Panic_Handler;
 }
 
 fn set_panic_handler(handler: Panic_Handler) -> Panic_Handler {
   old := panic_handler;
   panic_handler = handler;
+  if panic_handler == old || panic_handler != handler {
+    std::c::printf("failed to set panic handler\n"c);
+  }
   return old;
 }
 

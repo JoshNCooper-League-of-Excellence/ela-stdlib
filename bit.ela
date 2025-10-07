@@ -1,4 +1,4 @@
-
+//module bit;
 // This will only work on POD structs & scalars!
 // there is much undefined behaviour here, anything with pointers
 // will behave very poorly.

@@ -1,3 +1,5 @@
+//module compiler;
+
 /* 
   A future API for when we have a build system embedded 
   in the language as a compile time 'build()' function

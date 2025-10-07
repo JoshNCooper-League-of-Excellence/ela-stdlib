@@ -1,4 +1,6 @@
 
+//module time;
+
 extern fn time(value: *const void) -> s32;
 
 struct timespec_t {

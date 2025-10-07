@@ -1,5 +1,7 @@
 import fmt;
 
+//module assertion;
+
 fn assert(condition: bool, message: str = "assertion failed") {
   if !condition {
     fmt::printlnf("assertion failed: '%'", (message,));

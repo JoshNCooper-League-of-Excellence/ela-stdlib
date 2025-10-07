@@ -1,7 +1,7 @@
-
 import fmt;
-
 import std::c::*;
+
+//module fs;
 
 struct File {
   fd: *mut FILE,

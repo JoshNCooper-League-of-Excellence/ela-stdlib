@@ -1,3 +1,5 @@
+//module interned;
+
 import map::Map;
 
 struct Interned!<T> where T:  Hash {

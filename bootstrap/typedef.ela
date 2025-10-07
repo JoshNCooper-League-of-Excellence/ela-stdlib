@@ -1,9 +1,8 @@
 
 type char :: u32; // this represents a single UTF-8 scalar.
-
 type c_str :: *const u8;
 
-struct Type;
+struct Type; // forward declare reflection type.
 
 /*  
   Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
@@ -33,7 +32,6 @@ trait Allocator: Destroy {
   fn allocate_array(*mut self, size: u64, n: u64) -> *mut void;
   fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
-
   fn strcpy(*mut self, ptr: *const u8, n: u64) -> *mut u8  {
     buf: *mut u8 = self.copy(ptr, sizeof(u8), n+1);
     buf![n] = '\0';
@@ -81,13 +79,6 @@ struct List!<V> {
   allocator: dyn Allocator,
 }
 
-// A semi-_type-erased pointer that carries the RTTI (Runtime _type information)
-// with it for a way to do "duck typing" in a way.
-struct any {
-  ptr:  *mut void,
-  _type: *const Type
-};
-
 // A non-owning immutable fat pointer. This should just be a view into a pointer, that tracks length.
 // very useful for efficiently passing arrays of data to functions for quick usage with a known (temporary)lifetime,
 // iterating over subarrays, etc.
@@ -101,6 +92,15 @@ struct SliceMut!<V> {
   data:  *mut V,
   length: u64,
 }
+
+
+// A semi-_type-erased pointer that carries the RTTI (Runtime _type information)
+// with it for a way to do "duck typing" in a way.
+struct any {
+  ptr:  *mut void,
+  _type: *const Type
+};
+
 
 choice Result!<_Ok, _Err> {
   Ok(_Ok),

@@ -1,0 +1,42 @@
+import std::{
+  _assert_eq as assert_eq,
+  _assert as assert,
+};
+
+#test fn test_init_list_iter() {
+  init: InitList!<s32> = .[10, 20, 30];
+  mut iter := init.iter();
+  assert_eq(iter.next().unwrap(), 10);
+  assert_eq(iter.next().unwrap(), 20);
+  assert_eq(iter.next().unwrap(), 30);
+  assert(iter.next().is_none());
+}
+
+#test fn test_init_list_iter_mut() {
+  mut init: InitList!<s32> = .[1, 2, 3];
+  mut iter_mut := init.iter_mut();
+  *iter_mut.next().unwrap() = 42;
+  assert_eq(init.data![0], 42);
+}
+
+#test fn test_init_list_enumerate() {
+  init: InitList!<u64> = .[5, 6, 7];
+  mut enumerator := init.enumerate();
+  idx, val := enumerator.next().unwrap();
+  assert_eq(idx, 0 as u64);
+  assert_eq(val, 5 as u64);
+  idx, val = enumerator.next().unwrap();
+  assert_eq(idx, 1 as u64);
+  assert_eq(val, 6 as u64);
+  idx, val = enumerator.next().unwrap();
+  assert_eq(idx, 2 as u64);
+  assert_eq(val, 7 as u64);
+  assert(enumerator.next().is_none());
+}
+
+#test fn test_init_list_as_slice() {
+  init: InitList!<s32> = .[100, 200, 300];
+  slice := init.as_slice();
+  assert_eq(slice.length, 3 as u64);
+  assert_eq(slice.data![1], 200);
+}

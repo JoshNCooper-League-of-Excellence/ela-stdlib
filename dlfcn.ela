@@ -1,3 +1,4 @@
+//module dlfcn;
 type c_str :: *const u8;
 
 #ifndef PLATFORM_LINUX {

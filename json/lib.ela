@@ -1,3 +1,5 @@
+//module json;
+
 #include "lexer.ela"
 #include "value.ela"
 #include "parser.ela"

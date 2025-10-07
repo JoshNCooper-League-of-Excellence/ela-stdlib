@@ -1,3 +1,5 @@
+//module math;
+
 #c_flags " -lm "
 
 extern fn rand() -> s32;

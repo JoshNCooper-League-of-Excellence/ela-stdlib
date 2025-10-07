@@ -1,7 +1,7 @@
+//module map;
 /* 
   Since @Cooper-Pilot's hashmap implementation got lost from the git,
   this is just a reallly crappy hashmap I had chat gpt write pretty quickly.
-
   This should be replaced with one that is made with attention to detail and performaance in mind.
 */
 

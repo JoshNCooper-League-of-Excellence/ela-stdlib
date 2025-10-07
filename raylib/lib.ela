@@ -1,3 +1,5 @@
+//module raylib;
+
 import math::*;
 
 #include "raylib.ela";

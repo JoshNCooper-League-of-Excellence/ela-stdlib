@@ -1,3 +1,5 @@
+//module elexify;
+
 /*
   This is a generalized lexing library suitable for most use cases.
 
