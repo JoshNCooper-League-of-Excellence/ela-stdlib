@@ -393,9 +393,9 @@ impl!<T> List!<T> {
         mut swapped := false;
         for i in 0..(n - 1) {
           if !comparator((*self)[i], (*self)[i + 1]) {
-            temp := self![i];
-            self![i] = self![i + 1];
-            self![i + 1] = temp;
+            temp := (*self)[i];
+            (*self)[i] = (*self)[i + 1];
+            (*self)[i + 1] = temp;
             swapped = true;
           }
         }
