@@ -14,6 +14,8 @@ struct Type; // forward declare reflection type.
   if you pass false, say to a List!<T>, where T implements Destroy,
   the destroy function will not call destroy on the objects in the list.
 */
+
+@[compiler_feature(Destroy)]
 trait Destroy {
   // TODO: do we wanna remove the recursive thing, 
   // and have a different destroy type for collections?
@@ -39,14 +41,13 @@ trait Allocator: Destroy {
   }
 }
 
-trait Context {
-  fn get_allocator(*self) -> dyn Allocator;
-}
+// NOTE: to get a 'u8*' literal, use `"..."c` `c` postfix, example:
+// "Hello, World!"c <- *u8
+// "Hello, World!"  <- str
 
 // This is a string literal _type. "..." will return this _type.
 // It's meant to be an immutable constant string.
-
-// to get a 'u8*' literal, use `"..."c` the little `c` postfix.                              ^
+@[compiler_feature(str)]
 struct str {
   data: c_str,
   length:  u64,
@@ -55,6 +56,7 @@ struct str {
 // This is basically just a List!<u8>
 // but it has some particularly special methods for dealing with strings,
 // so it gets it's own distinct type.
+@[compiler_feature(String)]
 struct String {
   data: *mut u8,
   length: u64,
@@ -66,12 +68,14 @@ struct String {
 // .[0, 1, 2, 3]
 // it is stack allocated and does not need to be freed, nor
 // should it ever be held on to.
+@[compiler_feature(InitList)]
 struct InitList!<V> {
   data:   *const V,
   length: u64,
 }
 
 // A collection of items.
+@[compiler_feature(List)]
 struct List!<V> {
   data:     *mut V,
   length:   u64,
@@ -82,17 +86,18 @@ struct List!<V> {
 // A non-owning immutable fat pointer. This should just be a view into a pointer, that tracks length.
 // very useful for efficiently passing arrays of data to functions for quick usage with a known (temporary)lifetime,
 // iterating over subarrays, etc.
+@[compiler_feature(Slice)]
 struct Slice!<V> {
   data:  *const V,
   length: u64,
 }
 
 // Same as above but mutable, for cheaply modifying subsets of data within ranges of memory.
+@[compiler_feature(SliceMut)]
 struct SliceMut!<V> {
   data:  *mut V,
   length: u64,
 }
-
 
 // A semi-_type-erased pointer that carries the RTTI (Runtime _type information)
 // with it for a way to do "duck typing" in a way.
@@ -101,15 +106,16 @@ struct any {
   _type: *const Type
 };
 
-
 choice Result!<_Ok, _Err> {
   Ok(_Ok),
   Err(_Err),
 }
 
+@[compiler_feature(Option)]
 choice Option!<T> {
   None,
   Some(T),
 }
 
+// A type that never holds any value.
 choice Infallible {}

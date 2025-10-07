@@ -157,7 +157,7 @@ impl!<Key, Value> Iterable for Map!<Key, Value> {
 }
 
 impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
-  fn init(init_list: InitList!<(Key, Value)>) -> Self {
+  fn init(init_list: InitList!<(Key, Value)>, allocator: dyn Allocator = get_global_allocator()) -> Self {
     mut self: Self;
     for key, value in init_list {
       self.insert(key, value);

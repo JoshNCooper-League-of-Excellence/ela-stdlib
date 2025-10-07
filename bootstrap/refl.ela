@@ -1,3 +1,5 @@
+
+@[compiler_feature(Field)]
 struct Field {
   name: str,
   _type: *const Type,
@@ -7,11 +9,13 @@ struct Field {
   discriminant: u32, // This is only relevant to children of choice types. TODO: make Option!<u32>
 };
 
+@[compiler_feature(Method)]
 struct Method {
   name: str,
   pointer: *mut void,
 }
 
+@[compiler_feature(Type)]
 struct Type {
   id: s32,                                                          // the integer ID used to identify this _type.
   name: str,
