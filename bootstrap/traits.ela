@@ -13,6 +13,7 @@ trait Clone {
 }
 
 // Construct from an InitList!<V>. This is never done automatically/implicitly, as of now.
+@[compiler_feature(Init)]
 trait Init!<V> {
   fn init(init: InitList!<V>, allocator: dyn Allocator) -> Self;
 }

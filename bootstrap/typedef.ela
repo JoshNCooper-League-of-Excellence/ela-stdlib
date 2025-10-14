@@ -70,16 +70,16 @@ struct String {
 // should it ever be held on to.
 @[compiler_feature(InitList)]
 struct InitList!<V> {
-  data:   *const V,
-  length: u64,
+  data:    *const V,
+  length:  u64,
 }
 
 // A collection of items.
 @[compiler_feature(List)]
 struct List!<V> {
-  data:     *mut V,
-  length:   u64,
-  capacity: u64,
+  data:      *mut V,
+  length:    u64,
+  capacity:  u64,
   allocator: dyn Allocator,
 }
 

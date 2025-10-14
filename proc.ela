@@ -65,7 +65,7 @@ fn find_module_memory_base(pid: u32, module_substr: String) -> Option!<u64> {
     mut pathname_buf: [u8; 256];
     n := std::c::sscanf(line.data, "%lx-%lx %7s %lx %15s %lu %255[^\n]"c, &start, &end, perms_buf, &offset, dev_buf, &inode, pathname_buf);
 
-    // io::printlnf("find_module_memory_base: sscanf parsed % on line: %", (n, line));
+    io::printlnf("find_module_memory_base: sscanf parsed % on line: %", (n, line));
 
 
     using perms :=  String::from_ptr(perms_buf);

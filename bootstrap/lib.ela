@@ -18,7 +18,9 @@
   #include "libc.ela";
 }
 
-#def LIB_ELA_IMPLEMENTATION // TODO: once conditionals are pushed back to type time, this will make sense. for now, it's permanently enabled.
+#def LIB_ELA_IMPLEMENTATION 
+// TODO: once conditionals are pushed back to type time, this will make sense. 
+// for now, it's permanently enabled.
 // some alternatives to libc functions, so we don't _need_ 
 // to link against libc to get basic memory and string functions
 #ifdef LIB_ELA_IMPLEMENTATION {
@@ -52,7 +54,7 @@ import collections::{
 
 // utils that both string types use, avoiding some redundancy
 #include "stringutils.ela";
-// str, the default _type of a string literal.
+// str, the default type of a string literal.
 #include "str.ela";
 // String, heap allocated string.
 #include "String.ela";
@@ -69,7 +71,7 @@ import collections::{
 
 // default testing apparatus.
 #ifdef TESTING {  
-  import testing;
+  #include "testing.ela";
 }
 
 struct Env {
