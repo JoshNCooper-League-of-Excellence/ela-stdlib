@@ -667,10 +667,12 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
   return formatter.writer.get_string(Some(allocator));
 }
 
+@[deprecated ("format supports better default arguments now", format)]
 fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
   return format(fmt, tuple, *FormatOptions::current(), get_global_allocator());
 }
 
+@[deprecated ("use the io module", "io::print")]
 fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
     using mut sstream: StringStream;
@@ -688,6 +690,7 @@ fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   }
 }
 
+@[deprecated ("use the io module", "io::println")]
 fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
     mut sstream: StringStream;
@@ -709,12 +712,14 @@ fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   }
 }
 
+@[deprecated ("use the io module", "io::printlnf")]
 fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s\n"c, formatted.data);
   formatted.destroy();
 }
 
+@[deprecated ("use the io module", "io::printf")]
 fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s"c, formatted.data);
