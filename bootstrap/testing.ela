@@ -1,4 +1,3 @@
-
 @[compiler_feature(Test)]
 struct Test {
   // TODO: add more flags here, for extended behaviour. just doing most simple cases right now
@@ -7,48 +6,46 @@ struct Test {
 }
 
 @[compiler_feature(tests)]
-_all_tests: List!<Test>;
+_all_tests: [Test];
 
 const TEST_RUNNER_LONG_JUMP_PANICKED: s32 = 2;
 
-#ifndef CUSTOM_TEST_RUNNER {
-  @[compiler_feature(test_runner)]
-  fn _run_all_tests() {
-    old_handler := panic_handler;
+@[compiler_feature(test_runner)]
+fn _run_all_tests() {
+  old_handler := panic_handler;
 
-    panic_handler = fn(msg: str, arg: *mut void) {
-      // Format: bold_red(test) bold_gray(') bold_blue(%s) bold_gray(') bold_red(failed)  <message in blue>
-      values: *mut (str, *std::c::JmpBufTag) = arg;
-      test_name, jmp_buf := *values;
-      std::c::printf("\e[1;31mtest \e[1;90m'\e[1;34m%s\e[1;90m' \e[1;31mfailed!\e[0m \e[1;34m%s\e[0m\n"c, ((arg as *str).data), msg.data);
-      std::c::longjmp(jmp_buf, TEST_RUNNER_LONG_JUMP_PANICKED);
-    };
+  panic_handler = fn(msg: str, arg: *mut void) {
+    // Format: bold_red(test) bold_gray(') bold_blue(%s) bold_gray(') bold_red(failed)  <message in blue>
+    values: *mut (str, *std::c::JmpBufTag) = arg;
+    test_name, jmp_buf := *values;
+    std::c::printf("\e[1;31mtest \e[1;90m'\e[1;34m%s\e[1;90m' \e[1;31mfailed!\e[0m \e[1;34m%s\e[0m\n"c, ((arg as *str).data), msg.data);
+    std::c::longjmp(jmp_buf, TEST_RUNNER_LONG_JUMP_PANICKED);
+  };
 
-    mut passed_count := 0;
-    mut failed_count := 0;
+  mut passed_count := 0;
+  mut failed_count := 0;
 
-    for test in _all_tests {
-      std::c::printf("\e[1;90;3mrunning test: %s\e[0m\n"c, test.name.data);
-      mut jmp_buf: [std::c::JmpBufTag; 1];
+  for test in _all_tests {
+    std::c::printf("\e[1;90;3mrunning test: %s\e[0m\n"c, test.name.data);
+    mut jmp_buf: [std::c::JmpBufTag; 1];
 
-      set_panic_user_arg(&mut (test.name, jmp_buf));
-      if std::c::setjmp(jmp_buf) == TEST_RUNNER_LONG_JUMP_PANICKED {
-        failed_count += 1;
-        continue;
-      }
-
-      test.function();
-      // Format: bold_green(test) bold_gray(') bold_blue(%s) bold_gray(') bold_green(passed)
-      std::c::printf("\e[1;32mtest \e[1;90m'\e[1;34m%s\e[1;90m' \e[1;32mpassed!\e[0m\n"c, test.name.data);
-
-      passed_count += 1;
+    set_panic_user_arg(&mut (test.name, jmp_buf));
+    if std::c::setjmp(jmp_buf) == TEST_RUNNER_LONG_JUMP_PANICKED {
+      failed_count += 1;
+      continue;
     }
 
-    set_panic_handler(old_handler);
+    test.function();
+    // Format: bold_green(test) bold_gray(') bold_blue(%s) bold_gray(') bold_green(passed)
+    std::c::printf("\e[1;32mtest \e[1;90m'\e[1;34m%s\e[1;90m' \e[1;32mpassed!\e[0m\n"c, test.name.data);
 
-    std::c::printf(
-      "\n\e[1;32mpassed: %d\e[0m, \e[1;31mfailed: %d\e[0m, \e[1;36mtotal: %d\e[0m\n"c,
-      passed_count, failed_count, passed_count + failed_count
-    );
+    passed_count += 1;
   }
+
+  set_panic_handler(old_handler);
+
+  std::c::printf(
+    "\n\e[1;32mpassed: %d\e[0m, \e[1;31mfailed: %d\e[0m, \e[1;36mtotal: %d\e[0m\n"c,
+    passed_count, failed_count, passed_count + failed_count
+  );
 }

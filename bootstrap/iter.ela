@@ -9,6 +9,15 @@ trait Iterator!<V> {
   fn next(*mut self) -> Option!<V>;
 }
 
+fn find_first_of!<I>(iterator: I, closure: *mut void, finder: fn(*mut void, I::V) -> bool) -> Option!<I::V> where I: Iterator!<I::V>  {
+  for v in iterator {
+    if finder(closure, v) {
+      return Some(v);
+    }
+  }
+  return None();
+}
+
 /* 
   A basic iterator, can be used as a general purpose way to iterate over
   collections that are implemented as contiguous chunks of memory, and 

@@ -74,7 +74,6 @@ struct InitList!<V> {
 }
 
 // A collection of items.
-@[compiler_feature(List)]
 struct List!<V> {
   data:     *mut V,
   length:   u64,

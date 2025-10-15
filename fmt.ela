@@ -273,20 +273,20 @@ trait Format {
 fn new_dyn_format(value: any) -> dyn Format {
   instance, _type := value;
   
-  method := _type.methods.find_first_of(
-    fn(method: *const Method) -> bool {
+  method := find_first_of(_type.methods.iter(), null,
+    fn(_: *mut void, method: Method) -> bool {
       return method.name == "format";
     }
   )
 
-  if !method {
+  if method.is_none() {
     std::c::printf("unable to find 'format' in _type %s\n"c, _type.name);
     panic("DynFormat failure");
   }
   
   mut dynamic: dyn Format;
   dynamic.instance = instance;
-  dynamic.format =  method.pointer as fn (*const void, *mut Formatter);
+  dynamic.format =  method.unwrap().pointer as fn (*const void, *mut Formatter);
   return dynamic;
 }
 

@@ -22,10 +22,10 @@ struct Type {
   size: u64,                                                        // sizeof(T)
   flags: u64,                                                       // defined in reflection.ela and emit.cpp, the values of the flags.
   element_type: *const Type,                                        // the _type this _type has a pointer to, is an array of, etc.
-  fields: List!<Field>,                                             // get a list of struct fields, enum variants.
-  traits: List!<*const Type>,                                       // a list of implemented traits.
-  generic_args: List!<*const Type>,                                 // a list of the generic arguments.
-  methods:    List!<Method>,                                        // a list of method function pointers, 
+  fields: [Field],                                                  // get a slice of struct fields, enum variants.
+  traits: [*const Type],                                            // a slice of implemented traits.
+  generic_args: [*const Type],                                      // a slice of the generic arguments.
+  methods: [Method],                                                // a slice of method function pointers,
 };
 
 impl Field {
@@ -206,17 +206,21 @@ impl Iterator!<any> for ElementIter {
 impl Type {
   fn elements(self, ptr: *const u8) -> ElementIter {
     if self.name.starts_with("List") {
-      length_field := self.fields.find_first_of (
-        fn (field: *const Field) -> bool {
+      length_field := find_first_of(self.fields.iter(), null,
+        fn (_: *mut void, field: Field) -> bool {
           return field.name.eq("length");
         }
-      );
+      ).expect(fn() {
+        panic("unable to find length field in list type.");
+      });
 
-      data_field := self.fields.find_first_of(
-        fn (field: *const Field) -> bool {
+      data_field := find_first_of(self.fields.iter(), null,
+        fn (_: *mut void, field: Field) -> bool {
           return field.name.eq("data");
         }
-      )
+      ).expect(fn() {
+        panic("unable to find data field in list type.");
+      });
 
       length := *(length_field.get(ptr) as *const u64);
       data   := *(data_field.get(ptr) as *const *const u8);
