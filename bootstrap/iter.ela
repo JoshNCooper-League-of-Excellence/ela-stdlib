@@ -4,6 +4,7 @@
   where my_object implements either Iterable!<T> (which just indicates we can be converted into an iterator)
   or my_object implements Iterator!<> where it: an iterator itself.
 */
+@[compiler_feature(Iterator)]
 trait Iterator!<V> {
   fn next(*mut self) -> Option!<V>;
 }
@@ -102,6 +103,7 @@ trait Enumerable!<T> {
   Iterable is a generic trait that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
 */
+@[compiler_feature(Iterable)]
 trait Iterable {
   // Returns an iterator for the collection.
   fn iter(*const self) -> Iterator;

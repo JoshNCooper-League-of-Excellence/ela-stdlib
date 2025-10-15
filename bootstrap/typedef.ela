@@ -1,4 +1,3 @@
-
 type char :: u32; // this represents a single UTF-8 scalar.
 type c_str :: *const u8;
 
