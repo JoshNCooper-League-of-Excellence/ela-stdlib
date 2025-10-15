@@ -8,30 +8,30 @@ trait Serializable {
 fn new_dyn_serializable(value: any) -> dyn Serializable {
   instance, _type := value;
 
-  serialize_method := _type.methods.find_first_of(
-    fn(method: *const Method) -> bool {
+  serialize_method := find_first_of(_type.methods.iter(), null,
+    fn(_: *mut void, method: Method) -> bool {
       return method.name == "serialize";
     }
   )
 
-  if !serialize_method {
+  if serialize_method.is_none() {
     panic(format("unable to find 'serialize' in _type %s\n", (_type.name,), FormatOptions::default()).as_str());
   }
 
-  deserialize_method := _type.methods.find_first_of(
-    fn(method: *const Method) -> bool {
+  deserialize_method := find_first_of(_type.methods.iter(), null,
+    fn(_: *mut void, method: Method) -> bool {
       return method.name == "deserialize";
     }
   );
 
-  if !deserialize_method {
+  if deserialize_method.is_none() {
     panic(format("unable to find 'deserialize' in _type %s\n", (_type.name,), FormatOptions::default()).as_str());
   }
 
   mut dynamic: dyn Serializable;
   dynamic.instance = instance;
-  dynamic.serialize = serialize_method.pointer as fn (*const void) -> JsonResult;
-  dynamic.deserialize = deserialize_method.pointer as fn(*mut void, *mut JsonValue) -> Option!<String>;
+  dynamic.serialize = serialize_method.unwrap().pointer as fn (*const void) -> JsonResult;
+  dynamic.deserialize = deserialize_method.unwrap().pointer as fn(*mut void, *mut JsonValue) -> Option!<String>;
   return dynamic;
 }
 
