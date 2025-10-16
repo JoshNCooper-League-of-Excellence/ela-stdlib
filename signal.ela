@@ -1,0 +1,180 @@
+type SignalHandler :: fn(s32);
+
+
+struct Sig_Info {
+  si_signo: s32,      // Signal number
+  si_errno: s32,      // Errno value associated with signal
+  si_code: s32,       // Signal code
+  __pad0: s32,        // Explicit padding for 64-bit
+
+  // Sifields union
+  _pad: [s32; 28],    // Padding to match union size
+
+  // kill()
+  _kill_pid: s32,
+  _kill_uid: s32,
+
+  // timer
+  _timer_tid: s32,
+  _timer_overrun: s32,
+  _timer_sigval: s32,
+
+  // rt
+  _rt_pid: s32,
+  _rt_uid: s32,
+  _rt_sigval: s32,
+
+  // sigchld
+  _sigchld_pid: s32,
+  _sigchld_uid: s32,
+  _sigchld_status: s32,
+  _sigchld_utime: s64,
+  _sigchld_stime: s64,
+
+  // sigfault
+  _sigfault_addr: *void,
+  _sigfault_addr_lsb: s16,
+  _sigfault_addr_bnd_lower: *void,
+  _sigfault_addr_bnd_upper: *void,
+  _sigfault_pkey: u32,
+
+  // sigpoll
+  _sigpoll_band: s64,
+  _sigpoll_fd: s32,
+
+  // sigsys (optional, Linux only)
+  _sigsys_call_addr: *void,
+  _sigsys_syscall: s32,
+  _sigsys_arch: u32,
+};
+
+struct Sig_Set {
+  __val: [u64; 16], // 128 bytes on linux
+};
+
+enum Signal {
+  /* ISO C99 signals. */
+  Interrupt                  = 2,   /* Interactive attention signal.      */
+  Illegal_Instruction        = 4,   /* Illegal instruction.               */
+  Abort                      = 6,   /* Abnormal termination.              */
+  Floating_Point_Exception   = 8,   /* Erroneous arithmetic operation.    */
+  Segmentation_Fault         = 11,  /* Invalid access to storage.         */
+  Termination                = 15,  /* Termination request.               */
+
+  /* Historical signals specified by POSIX. */
+  Hang_Up                    = 1,   /* Hangup.                            */
+  Quit                       = 3,   /* Quit.                              */
+  Trap                       = 5,   /* Trace/breakpoint trap.             */
+  Kill                       = 9,   /* Killed.                            */
+  Pipe                       = 13,  /* Broken pipe.                       */
+  Alarm                      = 14,  /* Alarm clock.                       */
+  Bus_Error                  = 7,   /* Bus error.                         */
+  Bad_System_Call            = 31,  /* Bad system call.                   */
+
+  /* Adjustments and additions to the signal number constants for most Linux systems. */
+  Stack_Fault                = 16,  /* Stack fault (obsolete).            */
+  Power_Failure              = 30,  /* Power failure imminent.            */
+
+  /* New(er) POSIX signals (1003.1-2008, 1003.1-2013). */
+  Urgent_Socket_Data         = 23,  /* Urgent data at socket.             */
+  Stop                       = 19,  /* Stop, unblockable.                 */
+  Keyboard_Stop              = 20,  /* Keyboard stop.                     */
+  Continue                   = 18,  /* Continue.                          */
+  Child_Stopped              = 17,  /* Child terminated/stopped.          */
+  Background_Read            = 21,  /* Background read from terminal.     */
+  Background_Write           = 22,  /* Background write to terminal.      */
+  Poll_Event                 = 29,  /* Pollable event occurred.           */
+  File_Size_Exceeded         = 25,  /* File size limit exceeded.          */
+  Cpu_Time_Exceeded          = 24,  /* CPU time limit exceeded.           */
+  Virtual_Timer_Expired      = 26,  /* Virtual timer expired.             */
+  Profiling_Timer_Expired    = 27,  /* Profiling timer expired.           */
+  User_Signal_1              = 10,  /* User-defined signal 1.             */
+  User_Signal_2              = 12,  /* User-defined signal 2.             */
+
+  Window_Size_Change         = 28,  /* Window size change.                */
+
+  Io_Possible                = 29,  /* I/O now possible (alias SIGPOLL/Poll_Evenet).  */
+  Iot_Instruction            = 6,   /* IOT instruction (alias SIGABRT/Abort).   */
+  Old_Child_Stopped          = 17   /* Old System V name (alias SIGCHLD/Child_Stopped). */
+}
+
+const Runtime_Signal_Min: s32 =	32;
+const Runtime_Signal_Max: s32 =	64;
+
+struct Sig_Action {
+  union {
+    sa_handler: fn(s32),
+    sa_sigaction: fn(s32, *Sig_Info, *void),
+  }
+  sa_mask: Sig_Set,
+  sa_flags: s32,
+};
+
+fn sigemptyset(set: *mut Sig_Set);
+fn sigaction(signum: s32, action: *Sig_Action, old_action: *mut Sig_Action);
+
+/* Invoke signal-catching function with three arguments instead of one.  */
+const Signal_Action_Info := 4;
+
+extern fn backtrace(buffer: **void, size: s32) -> s32;
+extern fn backtrace_symbols_fd(buffer: **void, size: s32, fd: s32);
+
+extern fn strsignal(sig: s32) -> *u8;
+
+// human-readable signal name
+fn signal_to_string(sig: s32) -> String {
+  return String::from_ptr(strsignal(sig));
+}
+
+
+// Force the names of all symbols into dynamic symbol table so we can read them on 
+// an error signal.
+#ifdef SIGNAL_HANDLER_INCLUDE_FUNCTION_NAMES  {
+  #c_flags " -rdynamic "
+} else ifdef DEBUG {
+  // #run std::c::printf("[metaprogram:note] compiling with -rdynamic so the signal handler can print function names in debug\n"c);
+  #c_flags " -rdynamic "
+}
+
+#ifndef USE_CUSTOM_SIGNAL_HANDLER {
+  // #run std::c::printf("[metaprogram:note] using signal::setup_default_signal_handler\n"c);
+  @[constructor(true)]
+  fn setup_default_signal_handler() {
+    dummy: *void = null;
+    backtrace(&dummy, 1); 
+
+    mut handler: Sig_Action = .{
+      sa_flags: Signal_Action_Info,
+      sa_sigaction: fn(sig: s32, info: *Sig_Info, c: *void) {
+        switch (true) {
+          sig == Signal::Segmentation_Fault ||
+          sig == Signal::Abort ||
+          sig == Signal::Illegal_Instruction ||
+          sig == Signal::Floating_Point_Exception ||
+          sig == Signal::Bus_Error ||
+          sig == Signal::Bad_System_Call ||
+          sig == Signal::Stack_Fault ||
+          sig == Signal::Power_Failure ||
+          sig == Signal::File_Size_Exceeded ||
+          sig == Signal::Cpu_Time_Exceeded: {
+            // printf is not signal-async-safe but it works on most linux machines.
+            // TODO: do this with write(..., fd);
+            std::c::printf("Fatal error: %s (%d)\n"c, (strsignal(sig), sig));
+            if (sig == Signal::Segmentation_Fault || sig == Signal::Bus_Error) {
+              std::c::printf("Fault address: %p\n"c, info._sigfault_addr);
+            }
+
+            mut buffer: [*void; 32];
+            size := backtrace((&buffer) as **void, 32);
+            backtrace_symbols_fd((&buffer) as **void, size, 2);
+            std::c::exit(1);
+          }
+        }
+      }
+    };
+
+    mut old_handler: Sig_Action;
+    sigemptyset(&mut handler.sa_mask);
+    sigaction(Signal::Segmentation_Fault, &handler, &mut old_handler);
+  }
+}
