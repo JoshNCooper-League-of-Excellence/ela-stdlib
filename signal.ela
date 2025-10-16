@@ -133,6 +133,12 @@ fn signal_to_string(sig: s32) -> String {
   #c_flags " -rdynamic "
 }
 
+fn print_backtrace() {
+  mut buffer: [*void; 8];
+  size := backtrace((&buffer) as **void, 8);
+  backtrace_symbols_fd((&buffer) as **void, size, 2);
+}
+
 #ifndef USE_CUSTOM_SIGNAL_HANDLER {
   // #run std::c::printf("[metaprogram:note] using signal::setup_default_signal_handler\n"c);
   @[constructor(true)]
