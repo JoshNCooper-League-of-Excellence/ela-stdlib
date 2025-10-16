@@ -98,7 +98,7 @@ impl Env {
     if slice.length == 0 {
       return .{};
     }
-    return slice.slice(1..slice.length);
+    return slice[1..slice.length];
   }
   
   fn env_strlen(s: *const u8) -> u32 {

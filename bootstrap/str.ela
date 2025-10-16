@@ -51,21 +51,37 @@ impl Index!<u8> for str {
   }
 }
 
-impl str {
-  fn slice(*const self, range: Range) -> [u8] {
-    start, end := (range.begin, range.end);
-    length := end - start;
-
-    if start < 0 || length < 0 || start + length > self.length {
-      return .{};
+impl Slice_Index!<u8> for str {
+  fn slice_index(*self, mut range: Range) -> [u8] {
+    mut begin: Range::V = default();
+    if range.begin is Option!<Range::V>::Some(b) {
+      begin = b;
     }
+
+    mut end: Range::V = default();
+    if range.end is Option!<Range::V>::Some(e) {
+      end = e;
+    } else {
+      end = self.length;
+    }
+
+    if end > self.length {
+      panic("unable to create subslice from slice in [T][begin..start] (slice_index operator): range exceeded bounds of slice.\nWe no longer truncate invalid slices, and -1 is no longer a valid indicator for end. use 'begin..' syntax");
+    }
+
+    length := end - begin;
     
+    if length <= 0 {
+      panic("got a range in [T][begin..start] (slice_index operator) for which length was negative, or zero");
+    }
+
     return .{
-      data: self.data + start,
+      data: self.data + begin,
       length: length,
-    };
+    }
   }
 }
+
 
 // This iterator is over the bytes.
 impl Iterable for str { 

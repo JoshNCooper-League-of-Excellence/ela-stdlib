@@ -37,9 +37,9 @@ impl!<T> List!<T> {
     Copy out a sub array. use as_slice if you want a borrowed, non-owning view into the array at a specific range.
   */
   fn subarray(self, range: Range) -> Self {
-    len := range.end - range.begin;
+    len := range.length();
     new_data := self.allocator.allocate_array(sizeof(T), len);
-    std::memory::copy(new_data, self.data + range.begin, sizeof(T) * len);
+    std::memory::copy(new_data, self.data + range.get_begin_or_default(), sizeof(T) * len);
     return .{
       data: new_data,
       length: len,

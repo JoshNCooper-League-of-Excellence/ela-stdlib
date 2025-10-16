@@ -125,6 +125,28 @@ trait AsSlice!<T> {
   fn as_slice(self) -> [T];
 
   fn subslice(self, range: Range) -> [T] {
-    return self.as_slice().slice(range);
+    return self.as_slice()[range];
+  }
+}
+
+/* 
+  index operator that takes [some_range], such as
+  list[..10];
+  list[10..20];
+  etc
+*/
+/* 
+  TODO: when we can support generic operators, we should take a Range_T: IsRange
+  right now it's just limited to s32. (which is a dumb default that we chose a long time ago.)
+  it should be u32, and collections should all use u32 as length, not u64 (overkill)
+*/
+trait Slice_Index!<T> {
+  fn slice_index(*const self, range: Range) -> [T];
+  fn slice_index_mut(*mut self, range: Range) -> mut [T] {
+    slice := self.slice_index(range);
+    return .{
+      data: slice.data as *mut T,
+      length: slice.length,
+    };
   }
 }

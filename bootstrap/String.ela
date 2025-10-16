@@ -277,26 +277,44 @@ impl Index!<u8> for String {
   }
 }
 
+
+impl Slice_Index!<u8> for String {
+  fn slice_index(*self, mut range: Range) -> [u8] {
+    mut begin: Range::V = default();
+    if range.begin is Option!<Range::V>::Some(b) {
+      begin = b;
+    }
+
+    mut end: Range::V = default();
+    if range.end is Option!<Range::V>::Some(e) {
+      end = e;
+    } else {
+      end = self.length;
+    }
+
+    if end > self.length {
+      panic("unable to create subslice from slice in [T][begin..start] (slice_index operator): range exceeded bounds of slice.\nWe no longer truncate invalid slices, and -1 is no longer a valid indicator for end. use 'begin..' syntax");
+    }
+
+    length := end - begin;
+    
+    if length <= 0 {
+      panic("got a range in [T][begin..start] (slice_index operator) for which length was negative, or zero");
+    }
+
+    return .{
+      data: self.data + begin,
+      length: length,
+    }
+  }
+}
+
 impl String {
   // this is just a view of the current string, we still own the memory in the 'str'
   fn as_str(self) -> str {
     return .{
       data: self.data,
       length: self.length,
-    }
-  }
-
-  fn slice(self, range: Range) -> [u8] {
-    return .{
-      data: self.data + range.begin,
-      length: range.end - range.begin,
-    }
-  }
-
-  fn slice_mut(self, range: Range) -> SliceMut!<u8> {
-    return .{
-      data: (self.data + range.begin) as *mut u8,
-      length: range.end - range.begin,
     }
   }
 

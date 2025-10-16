@@ -2,10 +2,44 @@
 // TODO: add reverse ranges?
 
 struct RangeBase!<V> where V: Eq | IsNumeric {
-  begin: V,
-  end:   V,
+  begin: Option!<V>,
+  end:   Option!<V>,
+  is_inclusive: bool,
 }
 
+
+impl!<V> RangeBase!<V> {
+  fn length(self) -> V  {
+    begin := self.get_begin_or_default();
+    end := self.get_end_or_default();
+    return end - begin;    
+  }
+
+  fn get_begin_or_default(self) -> V {
+    mut begin: V = default();
+    if self.begin is Option!<V>::Some(b) {
+      begin = b;
+    }
+    return begin;
+  }
+
+  fn get_end_or_default(self) -> V {
+    mut end: V = default();
+    if self.end is Option!<V>::Some(e) {
+      end = e;
+    } else {
+      where V: IsNumeric {
+        end = V::max_value();
+      } else {
+        // we have nothing to do here, because we have no way to reason about the type V.
+        // range needs to have a set of supertraits for V that allow us to get ValueRange {min/maxvalue} for 
+        // arbitrary non-integer values.
+        end = 0; 
+      }
+    }
+    return end;
+  }
+}
 
 // default range for most things.
 type Range :: RangeBase!<s32>;
@@ -13,7 +47,7 @@ type Range :: RangeBase!<s32>;
 
 impl!<T> RangeBase!<T> {
   fn contains(self, value: T) -> bool {
-    return self.begin <= value && self.end >= value;
+    return self.get_begin_or_default() <= value && self.get_end_or_default() >= value;
   }
 }
 
@@ -21,12 +55,16 @@ struct RangeIter!<V> where V: Eq | IsNumeric | IsPointer {
   begin: V,
   end:   V,
   idx:   V,
+  // TODO: we should just add 1 to the end, instead of taking up extra space here
+  is_inclusive: bool,
 }
 
 struct RangeIterMut!<V> where V: Eq| IsNumeric | IsPointer {
   begin: V,
   idx:   V,
   end:   V,
+  // TODO: we should just add 1 to the end, instead of taking up extra space here
+  is_inclusive: bool,
 }
 
 impl!<V> Iterator!<V> for RangeIter!<V>  {
@@ -66,27 +104,66 @@ impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
 
 impl!<V> Iterable for RangeBase!<V> {
   fn iter(*const self) -> RangeIter!<V> {
+    begin: V = if self.begin is Option!<V>::Some(v) {
+      return v;
+    } else {
+      // begin at 0 if we don't have a min. we won't use V::min_value() here 
+      // otherwise for i in ..10 would go from like -4 billion to 10
+      return default(); 
+    }
+
+    end: V = if self.end is Option!<V>::Some(v) {
+      return v;
+    } else {
+      where V: IsNumeric {
+        return V::max_value();
+      } else {
+        // we can't reason about non-numeric values here, so you're out of luck.
+        // TODO: for range, we should require that you implement Default, and ValueRange { min / maxvalue };
+        return default(); 
+      }
+    }
+
     return .{
-      begin: self.begin,
-      idx:   self.begin,
-      end:   self.end,
+      begin: begin,
+      idx:   begin,
+      end:   end,
+      is_inclusive: self.is_inclusive,
     };
   }
 
   fn iter_mut(*mut self) -> RangeIterMut!<V> {
+    begin: V = if self.begin is Option!<V>::Some(v) {
+      return v;
+    } else {
+      // begin at 0 if we don't have a min. we won't use V::min_value() here 
+      // otherwise for i in ..10 would go from like -4 billion to 10
+      return default(); 
+    }
+
+    end: V = if self.end is Option!<V>::Some(v) {
+      return v;
+    } else {
+      where V: IsNumeric {
+        return V::max_value();
+      } else {
+        // we can't reason about non-numeric values here, so you're out of luck.
+        // TODO: for range, we should require that you implement Default, and ValueRange { min / maxvalue };
+        return default(); 
+      }
+    }
+
     return .{
-      begin: self.begin,
-      idx:  self.begin,
-      end:  self.end,
+      begin: begin,
+      idx:   begin,
+      end:   end,
+      is_inclusive: self.is_inclusive,
     };
   }
 }
 
 impl!<V> PartialEq!<RangeBase!<V>> for RangeBase!<V> {
   fn eq(self, right: Self) -> bool {
-    return self.begin == right.begin && self.end == right.end;
-  }
-  fn neq(self, right: Self) -> bool {
-    return self.begin != right.begin || self.end != right.end;
+    return self.get_begin_or_default() == right.get_begin_or_default() && self.get_end_or_default() == right.get_end_or_default();
   }
 }

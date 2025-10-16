@@ -1,5 +1,3 @@
-type SignalHandler :: fn(s32);
-
 
 struct Sig_Info {
   si_signo: s32,      // Signal number
@@ -126,7 +124,6 @@ fn signal_to_string(sig: s32) -> String {
   return String::from_ptr(strsignal(sig));
 }
 
-
 // Force the names of all symbols into dynamic symbol table so we can read them on 
 // an error signal.
 #ifdef SIGNAL_HANDLER_INCLUDE_FUNCTION_NAMES  {
@@ -161,7 +158,7 @@ fn signal_to_string(sig: s32) -> String {
             // TODO: do this with write(..., fd);
             std::c::printf("Fatal error: %s (%d)\n"c, (strsignal(sig), sig));
             if (sig == Signal::Segmentation_Fault || sig == Signal::Bus_Error) {
-              std::c::printf("Fault address: %p\n"c, info._sigfault_addr);
+              std::c::printf("Faulty address: %p\n"c, info._sigfault_addr);
             }
 
             mut buffer: [*void; 32];
