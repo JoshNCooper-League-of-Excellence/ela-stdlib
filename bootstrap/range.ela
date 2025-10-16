@@ -12,7 +12,7 @@ impl!<V> RangeBase!<V> {
   fn length(self) -> V  {
     begin := self.get_begin_or_default();
     end := self.get_end_or_default();
-    return end - begin;    
+    return (end - begin) + (self.is_inclusive as V);
   }
 
   fn get_begin_or_default(self) -> V {
@@ -39,17 +39,14 @@ impl!<V> RangeBase!<V> {
     }
     return end;
   }
+
+  fn contains(self, value: V) -> bool {
+    return self.get_begin_or_default() <= value && self.get_end_or_default() >= value;
+  }
 }
 
 // default range for most things.
 type Range :: RangeBase!<s32>;
-
-
-impl!<T> RangeBase!<T> {
-  fn contains(self, value: T) -> bool {
-    return self.get_begin_or_default() <= value && self.get_end_or_default() >= value;
-  }
-}
 
 struct RangeIter!<V> where V: Eq | IsNumeric | IsPointer {
   begin: V,
@@ -69,7 +66,7 @@ struct RangeIterMut!<V> where V: Eq| IsNumeric | IsPointer {
 
 impl!<V> Iterator!<V> for RangeIter!<V>  {
   fn next(*mut self) -> Option!<V> {
-    if self.idx >= self.end {
+    if self.idx >= self.end + (self.is_inclusive as V) {
       return Option!<V>::None;
     }
 
@@ -87,7 +84,7 @@ impl!<V> Iterator!<V> for RangeIter!<V>  {
 impl!<V> Iterator!<*mut V> for RangeIterMut!<V>  {
   type Option :: Option!<*mut V>;
   fn next(*mut self) -> Option {
-    if self.idx == self.end
+    if self.idx >= self.end + (self.is_inclusive as V)
       then return Option::None;
 
     value := Option::Some(&mut self.idx);

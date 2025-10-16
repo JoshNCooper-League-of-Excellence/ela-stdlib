@@ -215,7 +215,7 @@ impl StringUtils for String {}
       }
 
       if sep.length == 0 {
-        result.push(self.slice(0..(self.length as s32)));
+        result.push(self[0..(self.length as s32)]);
         return result;
       }
 
@@ -223,7 +223,7 @@ impl StringUtils for String {}
         if i + (sep.length as s32) <= (self.length as s32) &&
            std::c::memcmp(self.data + i, sep.data, sep.length as s32) == 0 {
           // push range begin..end (end is i)
-          result.push(self.slice(start..i));
+          result.push(self[start..i]);
           start = i + (sep.length as s32);
           i = start;
         } else {
@@ -232,7 +232,7 @@ impl StringUtils for String {}
       }
 
       if start <= (self.length as s32) {
-        result.push(self.slice(start..(self.length as s32)));
+        result.push(self[start..(self.length as s32)]);
       }
 
       return result;
