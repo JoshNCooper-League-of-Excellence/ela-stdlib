@@ -100,18 +100,9 @@ impl Env {
     }
     return slice[1..slice.length];
   }
-  
-  fn env_strlen(s: *const u8) -> u32 {
-    mut i := 0;
-    while *s {
-      ++i;
-      ++s;
-    }
-    return i;
-  }
 
   fn initialize(argc: s32, argv: *const c_str) {
-    self := Env::current();
+    mut env := Env::current();
 
     #ifndef FREESTANDING {
       mut data : *mut str = std::c::malloc(argc * sizeof(str));
@@ -124,16 +115,15 @@ impl Env {
       // command line arguments (in my experience, i could easily be wrong)
       #static mut data : [str; 2048]; 
     }
-    
 
     for i in 0..argc {
       data![i] = .{
         data: argv![i],
-        length: Env::env_strlen(argv![i]),
+        length: std::string::length(argv![i]),
       };
     }
 
-    self.args_slice = .{
+    env.args_slice = .{
       data: data,
       length: argc,
     };
@@ -162,6 +152,7 @@ impl Env {
 
 impl AsSlice!<u8> for u32 {
   fn as_slice(self) -> [u8] {
+    // this is awful.
     #static mut chars : [u8; 2] = .[
       '\0', '\0'
     ];
