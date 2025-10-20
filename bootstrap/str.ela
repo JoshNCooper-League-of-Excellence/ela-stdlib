@@ -10,7 +10,7 @@ impl str {
 
   fn from_ptr(ptr: *u8, mut length: s32 = -1) -> Self {
     if length < 0 {
-      length = std::c::strlen(ptr);
+      length = std::string::length(ptr);
     }
     return .{
       data: ptr,

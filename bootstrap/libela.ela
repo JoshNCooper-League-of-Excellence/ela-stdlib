@@ -81,6 +81,22 @@ module memory {
       }
     }
   }
+
+
+  fn compare!<T, T1, Size_T>(s1: *T, s2: *T1, n: Size_T) {
+    p1 := s1 as *u8;
+    p2 := s1 as *u8;
+
+    for i in 0..n {
+      if (p1![i] < p2![i]) {
+        return -1; // s1 is less than s2
+      } else if (p1![i] > p2![i]) {
+        return 1;  // s1 is greater than s2
+      }
+    }
+    
+    return 0; // s1 and s2 are equal for the first 'n' bytes
+  }
   
   #test fn test_copy() {
     mut src: [u8; 5] = .[1, 2, 3, 4, 5];
