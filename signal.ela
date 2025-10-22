@@ -108,8 +108,8 @@ struct Sig_Action {
   sa_flags: s32,
 };
 
-fn sigemptyset(set: *mut Sig_Set);
-fn sigaction(signum: s32, action: *Sig_Action, old_action: *mut Sig_Action);
+extern fn sigemptyset(set: *mut Sig_Set);
+extern fn sigaction(signum: s32, action: *Sig_Action, old_action: *mut Sig_Action);
 
 /* Invoke signal-catching function with three arguments instead of one.  */
 const Signal_Action_Info := 4;
@@ -149,30 +149,31 @@ fn print_backtrace() {
     mut handler: Sig_Action = .{
       sa_flags: Signal_Action_Info,
       sa_sigaction: fn(sig: s32, info: *Sig_Info, c: *void) {
-        switch (true) {
-          sig == Signal::Segmentation_Fault ||
-          sig == Signal::Abort ||
-          sig == Signal::Illegal_Instruction ||
-          sig == Signal::Floating_Point_Exception ||
-          sig == Signal::Bus_Error ||
-          sig == Signal::Bad_System_Call ||
-          sig == Signal::Stack_Fault ||
-          sig == Signal::Power_Failure ||
-          sig == Signal::File_Size_Exceeded ||
-          sig == Signal::Cpu_Time_Exceeded: {
-            // printf is not signal-async-safe but it works on most linux machines.
-            // TODO: do this with write(..., fd);
-            std::c::printf("Fatal error: %s (%d)\n"c, (strsignal(sig), sig));
-            if (sig == Signal::Segmentation_Fault || sig == Signal::Bus_Error) {
-              std::c::printf("Faulty address: %p\n"c, info._sigfault_addr);
-            }
+        if (sig == Signal::Segmentation_Fault ||
+            sig == Signal::Abort ||
+            sig == Signal::Illegal_Instruction ||
+            sig == Signal::Floating_Point_Exception ||
+            sig == Signal::Bus_Error ||
+            sig == Signal::Bad_System_Call ||
+            sig == Signal::Stack_Fault ||
+            sig == Signal::Power_Failure ||
+            sig == Signal::File_Size_Exceeded ||
+            sig == Signal::Cpu_Time_Exceeded) {
 
-            mut buffer: [*void; 32];
-            size := backtrace((&buffer) as **void, 32);
-            backtrace_symbols_fd((&buffer) as **void, size, 2);
-            std::c::exit(1);
+          // printf is not signal-async-safe but it works on most linux machines.
+          // TODO: do this with write(..., fd);
+          std::c::printf("Fatal error: %s (%d)\n"c, strsignal(sig), sig);
+
+          if (sig == Signal::Segmentation_Fault || sig == Signal::Bus_Error) {
+            std::c::printf("Faulty address: %p\n"c, info._sigfault_addr);
           }
+
+          mut buffer: [*void; 32];
+          size := backtrace((&buffer) as **void, 32);
+          backtrace_symbols_fd((&buffer) as **void, size, 2);
+          std::c::exit(1);
         }
+
       }
     };
 

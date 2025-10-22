@@ -639,7 +639,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
     }
 
     while *fmt.data {
-      if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
+      if (*fmt.data) == '\\' && (*(fmt.data + 1)) == '%' {
         formatter.writer.append('%');
         fmt.data += 2;
         continue;
@@ -651,7 +651,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
 
       if (*fmt.data) == '%' && value_index < fields.length {
         field := fields[value_index];
-        value :any = .{
+        value: any = .{
           _type: field._type,
           ptr: field.get(&const tuple),
         };

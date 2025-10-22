@@ -139,8 +139,11 @@ module memory {
 module string {
   @[inline] // an alternative to libc's strlen
   fn length(mut s: *u8) -> u32 {
+    if !s {
+      return 0;
+    }
     mut len: u32;
-    while (*s) {
+    while *s != 0 {
       len += 1;
       s += sizeof(u8);
     }
