@@ -202,7 +202,7 @@ impl Span {
   }
 
   fn to_string(self) -> String {
-    files := Span::files();
+    mut files := Span::files();
     filename := (*files)[self.file];
     return format("%:%:%", (filename, self.line, self.column), FormatOptions::default());
   }
