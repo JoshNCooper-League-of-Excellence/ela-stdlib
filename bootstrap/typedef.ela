@@ -97,10 +97,10 @@ struct SliceMut!<V> {
   length: u64,
 }
 
-// A semi-_type-erased pointer that carries the RTTI (Runtime _type information)
+// A semi-_type-erased pointer that carries the RTTI (Runtime Type Isnformation)
 // with it for a way to do "duck typing" in a way.
 struct any {
-  ptr:  *mut void,
+  ptr:  *mut u8,
   _type: *const Type
 };
 
