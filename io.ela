@@ -67,14 +67,14 @@ struct StreamReader {
   file: fs::File,
   buffer: List!<u8>,
   buffer_index: u64,
-  buffer_capacity: u64 = 1024 
 }
 
 impl StreamReader {
   fn from(file: fs::File, capacity: u64) -> Self {
-    mut self: Self = .{ file: file };
-    self.buffer.resize(self.buffer_capacity = capacity);
-    return self;
+    mut reader: Self = .{ file: file };
+    reader.buffer.capacity = capacity;
+    reader.buffer.resize(capacity);
+    return reader;
   }
 
   fn new!<PathT>(path: PathT, open_flags: fs::FileOpenFlags, capacity: u64) -> Self where PathT: AsSlice!<u8> {
@@ -88,7 +88,7 @@ impl stream::Reader!<u8> for StreamReader {
     if self.buffer_index >= self.buffer.length {
       self.buffer.clear();
       mut buffer: [u8; 1024];
-      bytes_read := self.file.read(buffer, self.buffer_capacity);
+      bytes_read := self.file.read(buffer, self.buffer.capacity);
 
       if bytes_read == 0 {
         return None();
@@ -127,7 +127,7 @@ impl StreamReader {
     if self.buffer_index >= self.buffer.length {
       self.buffer.clear();
       mut buffer: [u8; 1024];
-      bytes_read := self.file.read(buffer, self.buffer_capacity);
+      bytes_read := self.file.read(buffer, self.buffer.capacity);
       if bytes_read == 0 {
         return None();
       }
@@ -140,7 +140,7 @@ impl StreamReader {
     return Some(byte);
   }
 
-  fn read_line(*mut self) -> String {
+  fn read_line(*mut self) -> Option!<String> {
     mut buffer: String;
     while {
       if self.read() is Option!<u8>::Some(ch) {
@@ -149,10 +149,15 @@ impl StreamReader {
         }
         buffer.push(ch);
       } else {
-        break;
+        return None();
       }
     }
-    return buffer;
+
+    if buffer.is_empty() {
+      return None();
+    }
+
+    return Some(buffer);
   }
 }
 

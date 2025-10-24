@@ -11,7 +11,7 @@
       std::c::free(ptr);
     }
     fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
-      return std::c::realloc(ptr, element_size * new_size);
+      return std::c::realloc(ptr, new_size * element_size);
     }
     fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
       return std::c::calloc(size, n);

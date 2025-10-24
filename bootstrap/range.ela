@@ -71,6 +71,7 @@ impl!<V> Iterator!<V> for RangeIter!<V>  {
     }
 
     value := Option!<V>::Some(self.idx);
+    
     if self.begin > self.end {
       self.idx -= 1;
     } else {
@@ -121,12 +122,23 @@ impl!<V> Iterable for RangeBase!<V> {
       }
     }
 
-    return .{
+    extern fn printf(_: *u8, ...);
+
+    iter: RangeIter!<V> = .{
       begin: begin,
       idx:   begin,
       end:   end,
       is_inclusive: self.is_inclusive,
     };
+
+    // printf("begin := %d, end := %d, is_inclusive := %d, idx := %d\n"c, 
+    //   iter.begin, 
+    //   iter.end, 
+    //   iter.is_inclusive, 
+    //   iter.begin
+    // );
+
+    return iter;
   }
 
   fn iter_mut(*mut self) -> RangeIterMut!<V> {

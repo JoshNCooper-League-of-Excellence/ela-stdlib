@@ -108,6 +108,7 @@ module std {
           panic("unexpected file flags passed to a file api function");
           return null;
         }
+        return null; // TODO: remove this, it's a hack to do some testing while lowering MIR.
       }
     }
 

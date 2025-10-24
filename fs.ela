@@ -3,6 +3,8 @@ import std::c::*;
 
 //module fs;
 
+type FileOpenFlags :: std::c::FileOpenFlags;
+
 struct File {
   fd: *mut FILE,
   mode: FileOpenFlags,
@@ -100,6 +102,12 @@ impl File {
     return fread(buffer, sizeof(u8), size, self.fd);
   }
 
+  fn read_to_end(*mut self) -> String {
+    length := File::length(self.fd);
+    string := String::with_length(length);
+    self.read(string.data, string.length);
+    return string;
+  }
 
   fn seek(*mut self, offset: s64, position: SeekPosition) -> s64 {
     fd := fileno(self.fd);
@@ -139,9 +147,9 @@ impl File {
 
   fn length(file: *mut FILE) -> u32 {
     original_pos := ftell(file);
-    fseek(file, 0, SeekPosition::End);
+    fseek(file, 0, SeekPosition::End as s32);
     len := ftell(file);
-    fseek(file, original_pos, SeekPosition::Current);
+    fseek(file, original_pos, SeekPosition::Current as s32);
     return len as u32;
   }
 
@@ -204,16 +212,22 @@ impl File {
     return Option::None;
   }
 
-  fn read_line(*mut self) -> String {
+  fn read_line(*mut self) -> Option!<String> {
     mut line: String;
+    mut did_work := false;
     while {
       c := fgetc(self.fd);
       if c == EOF || c == '\n' {
         break;
       }
+      did_work = true;
       line.push(c);
     }
-    return line;
+
+    if !did_work {
+      return None();
+    }
+    return Some(line);
   }
 }
 

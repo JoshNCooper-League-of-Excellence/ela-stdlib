@@ -86,6 +86,14 @@ impl String {
   These are the 'List' like functions for dynamic strings.
 */
 impl String {
+  fn with_length(length: u64, allocator: dyn Allocator = get_global_allocator()) -> Self {
+    return .{
+      data: allocator.allocate(length * sizeof(u8)),
+      length: length,
+      capacity: length
+    };
+  }
+
   fn resize(*mut self, new_size: u64) {
     if new_size < self.length then self.length = new_size;
     self.capacity = new_size;

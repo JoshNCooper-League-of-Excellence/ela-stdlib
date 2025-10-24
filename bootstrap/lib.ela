@@ -81,7 +81,8 @@ extern fn getenv(buf: c_str) -> c_str;
 impl Env {
   fn current() -> *mut Self {
     #static mut self: Self;
-    return &mut self;
+    pointer := &mut self;
+    return pointer;
   }
 
   /* 
