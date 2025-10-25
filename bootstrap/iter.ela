@@ -18,16 +18,16 @@ fn find_first_of!<I>(iterator: I, closure: *mut void, finder: fn(*mut void, I::V
   return None();
 }
 
-/* 
+/*
   A basic iterator, can be used as a general purpose way to iterate over
-  collections that are implemented as contiguous chunks of memory, and 
+  collections that are implemented as contiguous chunks of memory, and
   a pointer just needs to be incremented until an end point to fully traverse it.
 */
 struct Iter!<V> {
   // Pointer to the current element in the collection.
   // Of course, this has to be mutable because we use pointer arithmetic
   // to advance the iterator.
-  ptr: *mut V,  
+  ptr: *mut V,
   end: *const V,  // Pointer to the end of the collection.
 }
 
@@ -40,11 +40,11 @@ impl!<V> Iter!<V> {
   }
 }
 
-/* 
+/*
   a mutable version of Iter!<>, where it returns a pointer to each element, instead of dereferencing it.
 */
 struct IterMut!<V> {
-  ptr: *mut V,  
+  ptr: *mut V,
   end: *const V,  // Pointer to the end of the collection.
 }
 
@@ -53,7 +53,7 @@ impl!<V> Iterator!<V> for Iter!<V> {
   // Advances the iterator to the next element in the collection.
   @[inline]
   fn next(*mut self) -> Option {
-    if self.ptr >= self.end {
+    if self.ptr >= self.end || !self.ptr  {
       return Option::None;
     }
     value := Option::Some(*self.ptr);
@@ -108,7 +108,7 @@ trait Enumerable!<T> {
   fn enumerate_mut(*mut self) -> Enumerate!<*mut T, IterMut!<T>>;
 }
 
-/* 
+/*
   Iterable is a generic trait that represents a collection that can be iterated over.
   It defines a single method, iter, which returns an iterator for the collection.
 */
@@ -124,7 +124,7 @@ impl!<V, I> Iterator!<(u64, V)> for Enumerate!<V, I> {
     index := self.idx;
     self.idx++;
     next := self.iterator.next();
-    
+
     if next is Option!<V>::Some(v) {
       return Option!<(u64, V)>::Some((index, v));
     } else {
@@ -140,7 +140,7 @@ impl!<V> Iter!<V> {
     if self.ptr + count > self.end {
       return Option!<[V]>::None;
     }
-    
+
     slice: [V] = .{
       data: self.ptr,
       length: count

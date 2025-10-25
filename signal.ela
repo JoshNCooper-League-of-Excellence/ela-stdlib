@@ -124,7 +124,7 @@ fn signal_to_string(sig: s32) -> String {
   return String::from_ptr(strsignal(sig));
 }
 
-// Force the names of all symbols into dynamic symbol table so we can read them on 
+// Force the names of all symbols into dynamic symbol table so we can read them on
 // an error signal.
 #ifdef SIGNAL_HANDLER_INCLUDE_FUNCTION_NAMES  {
   #c_flags " -rdynamic "
@@ -144,7 +144,7 @@ fn print_backtrace() {
   @[constructor(true)]
   fn setup_default_signal_handler() {
     dummy: *void = null;
-    backtrace(&dummy, 1); 
+    backtrace(&dummy, 1);
 
     mut handler: Sig_Action = .{
       sa_flags: Signal_Action_Info,
