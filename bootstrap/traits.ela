@@ -54,43 +54,37 @@ trait PartialOrd!<Right> where Right: PartialEq!<Self> {
   fn cmp(self, right: Right) -> Option!<Ordering>;
 
   fn lt(self, right: Right) -> bool {
-    ordering_opt := self.cmp(right);
-    if ordering_opt is Option!<Ordering>::None {
+    if self.cmp(right) is Option!<Ordering>::Some(order) {
+      return ordering == Ordering::Less;
+    } else {
       return false;
     }
-    ordering := ordering_opt.unwrap();
-    return ordering == Ordering::Less;
   }
 
   fn gt(self, right: Right) -> bool {
-    ordering_opt := self.cmp(right);
-    if ordering_opt is Option!<Ordering>::None {
+    if self.cmp(right) is Option!<Ordering>::Some(order) {
+      return ordering == Ordering::Greater;
+    } else {
       return false;
     }
-    ordering := ordering_opt.unwrap();
-    return ordering == Ordering::Greater;
   }
 
   fn lte(self, right: Right) -> bool {
-    ordering_opt := self.cmp(right);
-    if ordering_opt is Option!<Ordering>::None {
-      return false;
+    if self.cmp(right) is Option!<Ordering>::Some(order) {
+      return ordering == Ordering::Less || ordering == Ordering::Equal;
     }
-    ordering := ordering_opt.unwrap();
-    return ordering == Ordering::Less || ordering == Ordering::Equal;
+    return false;
   }
 
   fn gte(self, right: Right) -> bool {
-    ordering_opt := self.cmp(right);
-    if ordering_opt is Option!<Ordering>::None {
-      return false;
+    if self.cmp(right) is Option!<Ordering>::Some(order) {
+      return ordering == Ordering::Greater || ordering == Ordering::Equal;
     }
-    ordering := ordering_opt.unwrap();
-    return ordering == Ordering::Greater || ordering == Ordering::Equal;
+    return false;
   }
 }
 
-trait Ord where Self: Eq & PartialOrd!<Self> {
+trait Ord: Eq & PartialOrd!<Self> {
   fn max(self, other: Self) -> Self {
     if self > other {
       return self;
@@ -103,7 +97,6 @@ trait Ord where Self: Eq & PartialOrd!<Self> {
     }
     return other;
   }
-
   fn clamp(self, min: Self, max: Self) -> Self {
     return self.max(min).min(max);
   }
@@ -115,7 +108,6 @@ trait Index!<T> {
     return self.index(index) as *mut T;
   }
 }
-
 
 trait Hash {
   fn hash(self) -> u64;

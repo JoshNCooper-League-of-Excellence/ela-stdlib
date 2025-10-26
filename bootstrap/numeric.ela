@@ -1,4 +1,4 @@
-/* 
+/*
   * Marker traits for numerical type constraints.
   TODO: this is bad, it should be implemented by the compiler when you instantiate a numeric type.
 
@@ -51,10 +51,6 @@ impl IsNumeric for s64 {
   fn max_value() -> s64 => 9223372036854775807;
 }
 
-impl IsNumeric for f32 {
-  fn min_value() -> f32 => -340282350000000000000000000000000000000.0;
-  fn max_value() -> f32 => 340282350000000000000000000000000000000.0;
-}
 
 impl IsNumeric for f64 {
   fn min_value() -> f64 => -179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000.0;
@@ -65,12 +61,28 @@ trait IsFloat {
   fn epsilon() -> Self;
 }
 
+impl IsNumeric for f32 {
+  fn min_value() -> f32 => -340282350000000000000000000000000000000.0;
+  fn max_value() -> f32 => 340282350000000000000000000000000000000.0;
+}
+
 impl IsFloat for f32 {
   fn epsilon() -> f32 => 0.00000011920929;
 }
+
 impl IsFloat for f64 {
   fn epsilon() -> f64 => 0.0000000000000002220446049250313;
 }
+
+impl IsNumeric for f16 {
+  fn min_value() -> f16 => -65504.0;
+  fn max_value() -> f16 => 65504.0;
+}
+
+impl IsFloat for f16 {
+  fn epsilon() -> f16 => 0.0009765625;
+}
+
 
 trait IsInteger {}
 
