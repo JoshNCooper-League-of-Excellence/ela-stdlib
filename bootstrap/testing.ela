@@ -12,7 +12,6 @@ const TEST_RUNNER_LONG_JUMP_PANICKED: s32 = 2;
 
 @[compiler_feature(test_runner), constructor(false)]
 fn _run_all_tests() {
-
   old_handler := panic_handler;
 
   panic_handler = fn(msg: str, arg: *mut void) {
@@ -26,8 +25,16 @@ fn _run_all_tests() {
   mut passed_count := 0;
   mut failed_count := 0;
 
-  for test in _all_tests {
-    std::c::printf("\e[1;90;3mrunning test: %s\e[0m\n"c, test.name.data);
+  plural : *u8 = if _all_tests.length > 1 {
+    return "s"c;
+  } else {
+    return ""c;
+  };
+
+  std::c::printf("running \e[1;90;3m%d\e[0m test%s\n"c, _all_tests.length, plural);
+
+  for test in _all_tests  {
+    std::c::printf("\e[1;90;3mrunning test: '%s'\e[0m\n"c, test.name.data);
     mut jmp_buf: [std::c::JmpBufTag; 1];
 
     set_panic_user_arg(&mut (test.name, jmp_buf));

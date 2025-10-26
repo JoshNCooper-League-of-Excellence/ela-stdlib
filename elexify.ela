@@ -9,7 +9,7 @@
   However it's absolutely suitable for other formats, such as JSON, XAML, etc.
 */
 
-/* 
+/*
   USAGE:
 
   Explained:
@@ -25,17 +25,17 @@
       reserved word in C would clash normally. this avoids that clashing, and your frontend doesn't have to worry about it.
 
     (4) the 'state' object is used to control a stack of various inputs, or to switch between different inputs.
-      this is primarily used for things like text "include"s, where you encounter an "include" to a file, 
+      this is primarily used for things like text "include"s, where you encounter an "include" to a file,
       start to read it, and want to jump back to your last "state" when done.
 
-      This can be achieved by simply pushing a state on the lexer, and continuing to execute. 
+      This can be achieved by simply pushing a state on the lexer, and continuing to execute.
       Once the lexer gets to an EOF token (and it has more states left on its stack)
       it will pop the finished state, and resume it's operation wherever you left off on your old state.
 
       I'm sure this could also be used to parallelize your parsing, however care must be taken as the containers used
       for keywords, operators, and reserved words are not thread safe, nor is the lookahead buffer used within each state.
       This may not be important for your use case, but it's worth noting.
-    
+
     (5) We simply push the first state onto the lexers stack, before beginning lexing.
       It should be obvious, but we take a shallow copy of the state when we pass this by value.
       You can keep track of your states and copy them back if you wanted to do something like multi threading,
@@ -64,7 +64,7 @@
   }
 */
 
-/* 
+/*
   --------------------------------------------------------------------------
   ## A FULL, CORRECT EXAMPLE ###############################################
   --------------------------------------------------------------------------
@@ -75,7 +75,7 @@
 
     // We don't need to worry about clashes with
     // the builtin token types, because the lexer
-    // uses incredibly large u32's to represent those, 
+    // uses incredibly large u32's to represent those,
     // with the express intent to avoid said clashes.
 
     // You may want to type these types in your own enum,
@@ -143,26 +143,26 @@
       mut state := State::from_file("sample.txt");
 
       lexer.push_state(state);
-      
+
       while {
         token := lexer.eat();
 
         if token.is_eof() then break;
 
-        // print the tokens out. 
+        // print the tokens out.
         println(token.to_string());
       }
     }
-    
+
   -----------------------------------------------------------------------
   ## END ################################################################
   -----------------------------------------------------------------------
 */
 
-/* 
-  TODO: 
-    add customizable string delimiters, 
-    char delimiters, 
+/*
+  TODO:
+    add customizable string delimiters,
+    char delimiters,
     and comment syntax.
 */
 
@@ -197,7 +197,7 @@ struct Span {
 
 impl Span {
   fn files() -> *mut List!<String> {
-    #static mut files: List!<String>;
+    static mut files: List!<String>;
     return &mut files;
   }
 
@@ -287,7 +287,7 @@ struct Token {
 
 impl Token {
   fn Eof() -> Token {
-    #static eof: Token = .{
+    static eof: Token = .{
       kind: TOKEN_EOF,
     };
     return eof;
@@ -378,7 +378,7 @@ impl State {
         io::panicf("[elexify]: file '%' was unable to be canonicalized.", (filename,));
         return .{};
       }
-      
+
       parent: String = if parent_path(canonical) is Option!<String>::Some(v) {
         return v;
       } else {
@@ -525,7 +525,7 @@ impl Lexer {
         file: state.file_idx
       };
 
-      
+
       // Try to match whitespace sequences as operators
       while temp_pos < state.input.length {
         mut temp_c := state.input[temp_pos];
@@ -788,7 +788,7 @@ impl Lexer {
         }
 
         mut value := token_builder.get_string();
-        
+
         if self.keywords.contains(value.as_str()) {
           self.lookahead_buffer.push(Token::new(span, None(), self.keywords.get(value.as_str()).unwrap()));
           value.destroy();

@@ -14,7 +14,7 @@ union pthread_mutex_t {
   __align: s64,
 }
 
-/* forward */ 
+/* forward */
 fn start_thread(arg: *mut void) -> *mut void;
 
 /* Simple thread struct */
@@ -22,7 +22,7 @@ struct Thread {
   handle: pthread_t
 }
 
-impl Thread {    
+impl Thread {
   fn start(start_function: ThreadFunction, arg: *mut void) -> Result!<Self, str> {
     self: Self;
     // this memory gets deleted in start_thread();
@@ -32,14 +32,14 @@ impl Thread {
     }
     return Result!<Self, str>::Ok(self);
   }
-  
+
   fn join(*mut self) -> void {
-    #static n : *mut void;
+    static n : *mut void;
     pthread_join(&mut self.handle, &mut n);
   }
 }
 
-/* wrapper callback to init Thread struct. */ 
+/* wrapper callback to init Thread struct. */
 fn start_thread(arg: *mut void) -> *mut void {
   tuple_ptr := arg as *const (ThreadFunction, *mut void);
   tuple := *tuple_ptr;
@@ -48,7 +48,7 @@ fn start_thread(arg: *mut void) -> *mut void {
   std::c::free(arg);   // allocated by Thread::start();
   return null;
 }
-  
+
 extern fn pthread_mutex_init(mutex: *mut pthread_mutex_t, attr: *const void) -> s32;
 extern fn pthread_mutex_lock(mutex: *mut pthread_mutex_t) -> s32;
 extern fn pthread_mutex_unlock(mutex: *mut pthread_mutex_t) -> s32;
@@ -83,7 +83,7 @@ impl Destroy for SimpleMutex {
 }
 
 
-/* 
+/*
   Typed mutex which holds the data it's protecting.
 */
 struct Mutex!<T> {

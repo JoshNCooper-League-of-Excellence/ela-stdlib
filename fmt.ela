@@ -202,7 +202,7 @@ impl FormatOptions {
   };
 
   fn current() -> *mut Self {
-    #static mut current: FormatOptions;
+    static mut current: FormatOptions;
     return &mut current;
   }
 

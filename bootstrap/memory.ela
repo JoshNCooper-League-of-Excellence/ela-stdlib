@@ -5,6 +5,7 @@
   }
   impl Allocator for LibcAllocator {
     fn allocate(*mut self, size: u64) -> *mut void {
+      std::c::printf("allocating: %zu\n"c, size);
       return std::c::malloc(size);
     }
     fn free(*mut self, ptr: *mut void) {
@@ -24,7 +25,7 @@
   }
   impl LibcAllocator {
     fn get() -> Self {
-      #static self: LibcAllocator;
+      static self: LibcAllocator;
       return self;
     }
   }
@@ -118,7 +119,7 @@
   }
 }
 
-/* 
+/*
   TODO:
     explore how we could make this (the global allocator system) thread safe.
     It relies heavily on pointers/function pointers, which i highly doubt are just thread safe.
@@ -144,7 +145,7 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
   mut global_dyn_LibcAllocator: dyn Allocator;
 
   fn get_global_allocator() -> dyn Allocator {
-    /* 
+    /*
       We have to initialize the global data here conditionally because we don't have
       global static initializers.
 
@@ -154,7 +155,7 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
 
       Of course that's not guaranteed protection, but it's a measure.
 
-      An alternative would be beginning every program with 'set_global_allocator()' 
+      An alternative would be beginning every program with 'set_global_allocator()'
       which would just be annoying
     */
 
