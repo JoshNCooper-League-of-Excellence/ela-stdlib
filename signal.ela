@@ -145,7 +145,7 @@ fn print_backtrace() {
 
 #ifndef USE_CUSTOM_SIGNAL_HANDLER {
   // #run std::c::printf("[metaprogram:note] using signal::setup_default_signal_handler\n"c);
-  @[constructor(true)]
+  @[constructor(1)]
   fn setup_default_signal_handler() {
     dummy: *void = null;
     backtrace(&dummy, 1);
