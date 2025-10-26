@@ -85,12 +85,13 @@ impl File {
     if self.fd {
       return Some(self);
     }
-    
+
     return None();
   }
 
   fn write_raw(*mut self, data: *u8, length: u64) -> u64 {
     return fwrite(data, sizeof(u8), length, self.fd);
+    return 0;
   }
 
   fn write!<Data>(*mut self, data: Data) -> u64 where Data: AsSlice!<u8> {
@@ -172,7 +173,7 @@ impl File {
     fclose(file);
     return Result::Ok(string);
   }
-  
+
   fn read_bytes!<Path>(path: Path) -> Result!<List!<u8>, str> where Path: AsSlice!<u8> {
     type Result :: Result!<List!<u8>, str>;
     filename := path.as_slice();
@@ -186,12 +187,12 @@ impl File {
       if c == EOF then break;
       bytes.push(c);
     }
-    
+
     fclose(file);
     return Result::Ok(bytes);
   }
-  
-  fn write_all!<Path, Data>(path: Path, data_slice: Data) -> Option!<str> 
+
+  fn write_all!<Path, Data>(path: Path, data_slice: Data) -> Option!<str>
     where Path: AsSlice!<u8>, Data: AsSlice!<u8> {
     type Option :: Option!<str>;
 
@@ -253,7 +254,7 @@ fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8>
   return Some(result);
 }
 
-/* 
+/*
   The option return _type simply says when it .is_none(), it has failed in some capacity.
   We don't have a way to interact with perror, so we don't really get much information as to why
   this has failed, just that it did fail.
@@ -356,7 +357,7 @@ impl Directory {
     closedir(dir);
 
     return Option!<Directory>::Some(.{
-      path: String::from(path), 
+      path: String::from(path),
       entries: entries
     });
   }
@@ -416,7 +417,7 @@ impl Directory {
           buf[j] = slice[j];
           j += 1;
         }
-        buf[i] = 0; 
+        buf[i] = 0;
         // >
         // attempt to create prefix (ignore errors, e.g. already exists)
         mkdir(buf, DEFAULT_MODE);

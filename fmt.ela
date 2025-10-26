@@ -272,7 +272,7 @@ trait Format {
 
 fn new_dyn_format(value: any) -> dyn Format {
   instance, _type := value;
-  
+
   method := find_first_of(_type.methods.iter(), null,
     fn(_: *mut void, method: Method) -> bool {
       return method.name == "format";
@@ -283,7 +283,7 @@ fn new_dyn_format(value: any) -> dyn Format {
     std::c::printf("unable to find 'format' in _type %s\n"c, _type.name);
     panic("DynFormat failure");
   }
-  
+
   mut dynamic: dyn Format;
   dynamic.instance = instance;
   dynamic.format =  method.unwrap().pointer as fn (*const void, *mut Formatter);
@@ -307,7 +307,7 @@ impl StringStream {
   }
 }
 
-/* 
+/*
   This is really just for numerical values,
   and anything that can use the negate operator. i.e pointers, strings, whatever.
   Structs by value will cause this function to fail.
@@ -329,7 +329,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
     mut sstream: StringStream;
     mut formatter := Formatter.{
       options: *FormatOptions::current(),
-      writer: &mut sstream, 
+      writer: &mut sstream,
     };
     value.format(&mut formatter);
   } else {
@@ -437,7 +437,7 @@ fn format_struct(value: any, formatter: *mut Formatter) {
 
     if formatter.options.indented {
       formatter.writer.append("\n");
-    } 
+    }
     idx++;
   }
 
@@ -483,7 +483,7 @@ fn format_choice(value: any, formatter: *mut Formatter) {
         // offset of discriminant is where the union starts
         // ! this just seems wrong because we have no idea if the payload
         // ! causes this to be padded, i am not sure if this is good.
-        ptr: value.ptr + sizeof(u32) 
+        ptr: value.ptr + sizeof(u32)
       }, formatter);
       return;
     }
@@ -525,11 +525,11 @@ fn format_any(value: any, formatter: *mut Formatter) {
     if formatter.options.typename {
       formatter.writer.append(value._type.name);
       formatter.writer.append("::(");
-    } 
+    }
     input_value := value.unwrap!<s32>();
     mut found_any := false;
     for field in value._type.fields {
-      if input_value & field.enum_value {
+      if (input_value & field.enum_value) != 0 {
         if found_any {
           formatter.writer.append(" | ");
         }
@@ -547,7 +547,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
     if formatter.options.typename {
       formatter.writer.append(value._type.name);
       formatter.writer.append("::");
-    } 
+    }
     val := value.unwrap!<s32>();
     for field in value._type.fields {
       if field.enum_value == val {
@@ -588,7 +588,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
 }
 
 // TODO: this is unintuitive and strange. what if you wanted to emplace a \ and then a %. just not possible.
-// I think %% worked better, but whatever. we'll find a better solution; 
+// I think %% worked better, but whatever. we'll find a better solution;
 // maybe just using {}, and {{ }} for escaped (the obvious modern solution)
 const FORMAT_ESCAPED_PERCENT_STRING := "\\%";
 

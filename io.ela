@@ -30,7 +30,7 @@ impl StreamWriter {
 
 impl stream::Buffered!<u8> for StreamWriter {
   fn flush(*mut self) {
-    if self.position == 0 {
+    if self.position == 0 || !(self.buffer as *u8) {
       return;
     }
 
@@ -120,7 +120,7 @@ impl StreamReader {
     if poll(&mut p, 1, 0) <= 0 {
       //>
       // no data available right now
-      return None(); 
+      return None();
     }
 
     // existing buffer refill logic (will now not block because poll said its ready)
@@ -277,7 +277,7 @@ fn panicf!<StringT, ArgsT>(msg: StringT, args: ArgsT, options: fmt::FormatOption
 
 impl!<_Ok, _Err> ResultFormat for Result!<_Ok, _Err> {
   fn print_err(self) {
-    err := self.unwrap_err();    
+    err := self.unwrap_err();
     panicf("unwrapped an 'Err' result: %", (err,));
   }
 }

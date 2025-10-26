@@ -23,8 +23,6 @@ extern fn asin(f: f64) -> f64;
 extern fn atan(f: f64) -> f64;
 extern fn atan2(y: f64, x: f64) -> f64;
 
-
-// We use this struct for namespacing.
 struct Random;
 
 const RAND_MAX := 2147483647;
