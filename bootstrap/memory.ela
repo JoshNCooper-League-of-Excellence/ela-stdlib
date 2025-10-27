@@ -48,7 +48,7 @@
       if self.length + 1 > self.capacity {
         if self.capacity == 0 then self.capacity = 4;
         self.capacity *= 2;
-        self.pointers = std::c::realloc(self.pointers, sizeof(*const void) * self.capacity);
+        self.pointers = std::c::realloc(self.pointers, size_of(*const void) * self.capacity);
       }
       self.pointers![self.length] = ptr;
       self.length += 1;
@@ -66,7 +66,7 @@
     fn remove_pointer(*mut self, ptr: *const void) {
       for i in 0..self.length {
         if self.pointers![i] == ptr {
-          std::c::memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
+          std::c::memmove(self.pointers + i, self.pointers + i + 1, size_of(*const void) * (self.length - i - 1));
           self.length -= 1;
           break;
         }
@@ -162,9 +162,9 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
     // check .instance here to see if this even points to anything.
     if !global_allocator.has_instance() {
 
-      // we have to setup the dynof here because of static initializer limitations.
+      // we have to setup the dyn_of here because of static initializer limitations.
       if !global_dyn_LibcAllocator.has_instance() {
-        global_dyn_LibcAllocator = dynof(&mut global_LibcAllocator, Allocator);
+        global_dyn_LibcAllocator = dyn_of(&mut global_LibcAllocator, Allocator);
       }
 
       global_allocator = global_dyn_LibcAllocator;

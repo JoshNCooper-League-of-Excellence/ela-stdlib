@@ -3,7 +3,7 @@ type c_str :: *const u8;
 
 struct Type; // forward declare reflection type.
 
-/*  
+/*
   Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
   often paired with defer blocks, to emulate a nice 'RAII' _type behaviour.
 
@@ -16,7 +16,7 @@ struct Type; // forward declare reflection type.
 
 @[compiler_feature(Destroy)]
 trait Destroy {
-  // TODO: do we wanna remove the recursive thing, 
+  // TODO: do we wanna remove the recursive thing,
   // and have a different destroy type for collections?
   // it's redundant in like 99% of cases, and the compiler
   // bypasses mutability checks for any method called 'destroy()'
@@ -34,7 +34,7 @@ trait Allocator: Destroy {
   fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void;
   fn copy(*mut self, ptr: *const void, element_size: u64, n: u64) -> *mut void;
   fn strcpy(*mut self, ptr: *const u8, n: u64) -> *mut u8  {
-    buf: *mut u8 = self.copy(ptr, sizeof(u8), n+1);
+    buf: *mut u8 = self.copy(ptr, size_of(u8), n+1);
     buf![n] = '\0';
     return buf;
   }

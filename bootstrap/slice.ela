@@ -1,19 +1,19 @@
 
 impl!<T> [T] {
   fn clone!<Alloc>(self, allocator: *mut Alloc) -> Self where Alloc: Allocator | dyn Allocator {
-    data : *mut T = allocator.allocate_array(sizeof(T), self.length);
-    std::memory::copy(data, self.data, self.length * sizeof(T));
+    data : *mut T = allocator.allocate_array(size_of(T), self.length);
+    std::memory::copy(data, self.data, self.length * size_of(T));
     return .{
       data: data,
       length: self.length,
     };
   }
 
-  /* 
+  /*
     this is really just for cloned slices, that which take ownership.
     To be honest, this shouldnt really be neccesary, we should return a tuple with the memory and the length,
     since [T] is supposed to be like blatantly non-owning.
-    it's confusing and muddles the intended purpose and clarity of having the _type in the standard. 
+    it's confusing and muddles the intended purpose and clarity of having the _type in the standard.
   */
   fn destroy!<Alloc>(*mut self, allocator: *mut Alloc) where Alloc: Allocator | dyn Allocator{
     allocator.free(self.data);
@@ -23,10 +23,10 @@ impl!<T> [T] {
 impl!<T> [T] {
   fn cast!<ToInner>(*self) -> [ToInner] {
     mut length: s64;
-    if (sizeof(T) < sizeof(ToInner)) {
-      length = self.length / sizeof(ToInner);
+    if (size_of(T) < size_of(ToInner)) {
+      length = self.length / size_of(ToInner);
     } else {
-      length = self.length * sizeof(ToInner);
+      length = self.length * size_of(ToInner);
     }
 
     return .{
@@ -57,7 +57,7 @@ impl!<T> [T] {
 }
 
 impl!<T> Slice_Index!<T> for [T] {
-  // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
+  // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of
   // data available??
   fn slice_index(*self, mut range: Range) -> [T] {
     mut begin: Range::V = default();
@@ -77,7 +77,7 @@ impl!<T> Slice_Index!<T> for [T] {
     }
 
     length := end - begin;
-    
+
     if length <= 0 {
       panic("got a range in [T][begin..start] (slice_index operator) for which length was negative, or zero");
     }
@@ -103,7 +103,7 @@ impl [u8] {
   // if passing this pointer to C api's, you may need to use this.
   // it does allocate, therefore it returns a string. just use .data, and a using statement
   fn null_terminated(self, allocator: dyn Allocator) -> String {
-    buf: *mut u8 = allocator.allocate(sizeof(u8) * self.length + 1);
+    buf: *mut u8 = allocator.allocate(size_of(u8) * self.length + 1);
     std::string::copy(buf, self.data, self.length + 1);
     return .{
       data: buf,
@@ -153,18 +153,18 @@ impl!<T> mut [T] {
     data: data,
     length: len,
   }
-  
-  // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of 
+
+  // TODO: do we want to truncate or throw an error when the requested range's length is greater than the amount of
   // data available??
   fn slice!<Range>(self, mut range: Range) -> [T] where Range: RangeBase!<u8>  |  RangeBase!<u16> |  RangeBase!<u32> | RangeBase!<u64> | RangeBase!<s8>  | RangeBase!<s16> | RangeBase!<s32> |  RangeBase!<s64> {
     if range.begin < 0 then range.begin = 0;
 
     if range.end == -1 || range.end > self.length {
-      range.end = self.length;  
+      range.end = self.length;
     }
 
     length := range.end - range.begin;
-    
+
     // TODO: support reverse ranges?
     if length < 0 then return .{};
 

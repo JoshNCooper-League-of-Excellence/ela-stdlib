@@ -106,7 +106,7 @@ impl Env {
     mut env := Env::current();
 
     #ifndef FREESTANDING {
-      mut data : *mut str = std::c::malloc((argc * sizeof(str)) as u64);
+      mut data : *mut str = std::c::malloc((argc * size_of(str)) as u64);
     } else {
       // This is just a hack. idk what a reasonable value to put here is.
       // 'getconf ARG_MAX' shows my shell can take over 2 million arguments,
@@ -166,7 +166,7 @@ impl AsSlice!<u8> for u32 {
 }
 
 fn new!<T>(initial_value: T) -> *mut T {
-  ptr: *mut T = get_global_allocator().allocate(sizeof(T));
+  ptr: *mut T = get_global_allocator().allocate(size_of(T));
   *ptr = initial_value;
   return ptr;
 }

@@ -3,7 +3,7 @@ impl StringUtils for str {}
 impl str {
   fn to_string!<Alloc>(self, allocator: Alloc) -> String where Alloc: Allocator | dyn Allocator {
     return .{
-      data: allocator.copy(self.data, sizeof(u8), self.length),
+      data: allocator.copy(self.data, size_of(u8), self.length),
       length: self.length,
     };
   }
@@ -27,8 +27,8 @@ impl str {
   }
 
 
-  fn join!<SepT>(strings: [str], separator: SepT) -> String 
-    where SepT: AsSlice!<u8> 
+  fn join!<SepT>(strings: [str], separator: SepT) -> String
+    where SepT: AsSlice!<u8>
   {
     sep := separator.as_slice();
     mut result: String;
@@ -70,7 +70,7 @@ impl Slice_Index!<u8> for str {
     }
 
     length := end - begin;
-    
+
     if length <= 0 {
       panic("got a range in [T][begin..start] (slice_index operator) for which length was negative, or zero");
     }
@@ -84,7 +84,7 @@ impl Slice_Index!<u8> for str {
 
 
 // This iterator is over the bytes.
-impl Iterable for str { 
+impl Iterable for str {
   fn iter(*const self) -> Iter!<u8> {
     return .{
       ptr: self.data as *mut u8,

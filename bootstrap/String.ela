@@ -7,7 +7,7 @@ impl String {
     if !self.allocator.has_instance() {
       self.allocator = get_global_allocator();
     }
-  }  
+  }
 }
 
 impl String {
@@ -43,7 +43,7 @@ impl String {
     if slice.is_empty() {
       return .{};
     }
-    
+
     return .{
       allocator: allocator,
       data: allocator.strcpy(slice.data, slice.length),
@@ -66,9 +66,9 @@ impl String {
     slice := other.as_slice();
     if self.capacity == 0 then self.capacity = 256 / 3;
 
-    if self.length + slice.length >= self.capacity 
+    if self.length + slice.length >= self.capacity
       then self.resize(self.capacity * 3 + slice.length);
-    
+
     self.get_allocator_if_needed();
     std::memory::copy(self.data + self.length, slice.data, slice.length);
 
@@ -88,7 +88,7 @@ impl String {
 impl String {
   fn with_length(length: u64, allocator: dyn Allocator = get_global_allocator()) -> Self {
     return .{
-      data: allocator.allocate(length * sizeof(u8)),
+      data: allocator.allocate(length * size_of(u8)),
       length: length,
       capacity: length
     };
@@ -100,7 +100,7 @@ impl String {
 
     self.get_allocator_if_needed();
 
-    self.data = self.allocator.resize(self.data, sizeof(u8), new_size + 1);
+    self.data = self.allocator.resize(self.data, size_of(u8), new_size + 1);
     self.data![self.length] = 0;
   }
 
@@ -142,15 +142,15 @@ impl String {
   }
 
   fn insert_at(*mut self, index: u64, ch: u8) {
-    if index > self.length 
+    if index > self.length
       then return;
 
-    if self.capacity == 0 
+    if self.capacity == 0
       then self.capacity = 256 / 3;
 
-    if !self.data || self.length + 1 >= self.capacity 
+    if !self.data || self.length + 1 >= self.capacity
       then self.resize(self.capacity * 3);
-    
+
     std::memory::move(self.data + index + 1, self.data + index, self.length - index);
     self.data![index] = ch;
     self.length++;
@@ -173,7 +173,7 @@ impl String {
   fn substr(self, start: u64, mut length: u64) -> String {
     if start >= self.length then return .{};
 
-    if start + length > self.length 
+    if start + length > self.length
       then length = self.length - start;
 
     return .{
@@ -192,8 +192,8 @@ impl String {
     return out;
   }
 
-  fn join!<SepT>(strings: [String], separator: SepT) -> String 
-    where SepT: AsSlice!<u8> 
+  fn join!<SepT>(strings: [String], separator: SepT) -> String
+    where SepT: AsSlice!<u8>
   {
     sep := separator.as_slice();
     mut result: String;
@@ -306,7 +306,7 @@ impl Slice_Index!<u8> for String {
     }
 
     length := end - begin;
-    
+
     if length <= 0 {
       panic("got a range in [T][begin..start] (slice_index operator) for which length was negative, or zero");
     }

@@ -482,7 +482,7 @@ impl Widget for ListBox {
 impl ListBox {
   fn add_child!<T>(*mut self, widget: *mut T) where T: Widget {
     self.base.children.push(widget.get_base());
-    self.children.push(dynof(widget, Widget));
+    self.children.push(dyn_of(widget, Widget));
   }
 }
 
@@ -970,7 +970,7 @@ impl!<Ctx> Window!<Ctx> {
   }
 
   fn add_widget!<T>(*mut self, t: *mut T) -> *mut Self where T: Widget  {
-    trait_obj := dynof(t, Widget);
+    trait_obj := dyn_of(t, Widget);
     trait_obj.on_window_resized(.{
       x: 0, y: 0,
       width: GetScreenWidth(),
