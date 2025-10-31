@@ -157,3 +157,21 @@ impl Destroy for CondVar {
     self.free();
   }
 }
+
+struct Atomic!<T> where T: IsNumber | bool {
+  value: T,
+}
+
+impl!<T> Atomic!<T> where T: Copy {
+  fn new(val: T) -> Self {
+    self: Self;
+    self.value = val;
+    return self;
+  }
+  fn load(*const self) -> T {
+    return __atomic_load_n(&self.value as *const void, 5) as T;
+  }
+  fn store(*mut self, val: T) {
+    __atomic_store_n(&mut self.value as *mut void, val as u64, 5);
+  }
+}

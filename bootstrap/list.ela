@@ -88,15 +88,9 @@ impl!<T> List!<T> {
 
   @[inline]
   fn with_allocator!<T>(mut allocator: T) -> Self where T: Allocator | dyn Allocator {
-    where T: Allocator {
-      return .{
-        allocator: dynof(&mut allocator),
-      };
-    } else {
-      return .{
-        allocator: allocator
-      };
-    }
+    return .{
+      allocator: allocator
+    };
   }
   
   /* 
