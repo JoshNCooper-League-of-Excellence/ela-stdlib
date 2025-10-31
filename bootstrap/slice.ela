@@ -183,7 +183,7 @@ impl mut [u8] {
     };
   }
   fn as_c_str(self) -> c_str {
-    return self.data;
+    return self.data as c_str;
   }
 }
 

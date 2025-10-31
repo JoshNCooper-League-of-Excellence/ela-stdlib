@@ -277,16 +277,13 @@ fn new_dyn_format(value: any) -> dyn Format {
     fn(_: *mut void, method: Method) -> bool {
       return method.name == "format";
     }
-  )
+  ).expect(fn() {
+    panic("DynFormat failure :: couldn't find 'format()'");
+  });
 
-  if method.is_none() {
-    std::c::printf("unable to find 'format' in _type %s\n"c, _type.name);
-    panic("DynFormat failure");
-  }
-  
   mut dynamic: dyn Format;
   dynamic.instance = instance;
-  dynamic.format =  method.unwrap().pointer as fn (*const void, *mut Formatter);
+  dynamic.format =  method.pointer as fn (*const void, *mut Formatter);
   return dynamic;
 }
 
@@ -478,6 +475,9 @@ fn format_choice(value: any, formatter: *mut Formatter) {
   for field in ty.fields {
     if field.discriminant == *discriminant {
       formatter.writer.append(field.name);
+      if field._type == typeof(void) {
+        return;
+      }
       format_any(any.{
         _type: field._type,
         // offset of discriminant is where the union starts

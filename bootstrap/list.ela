@@ -85,6 +85,19 @@ impl!<T> List!<T> {
     list.initialize(length);
     return list;
   }
+
+  @[inline]
+  fn with_allocator!<T>(mut allocator: T) -> Self where T: Allocator | dyn Allocator {
+    where T: Allocator {
+      return .{
+        allocator: dynof(&mut allocator),
+      };
+    } else {
+      return .{
+        allocator: allocator
+      };
+    }
+  }
   
   /* 
     push an element to the array. this will, of course, expand the array if needed.

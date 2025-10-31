@@ -230,3 +230,9 @@ fn default!<T>() -> T {
      - copying buffers of data into a new owned buffer, etc.
 */
 
+
+@[inline]
+fn discriminant_of!<T>(t: T) -> u32 where T: IsChoice {
+  return *((&t) as *u32);
+}
+

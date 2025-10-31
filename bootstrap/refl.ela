@@ -5,8 +5,8 @@ struct Field {
   _type: *const Type,
   size: u64,
   offset: u64,
-  enum_value: s64,   // this is only relevant to children of enum types.   TODO: make Option!<s64>
-  discriminant: u32, // This is only relevant to children of choice types. TODO: make Option!<u32>
+  enum_value: s64,
+  discriminant: u32,
 };
 
 @[compiler_feature(Method)]

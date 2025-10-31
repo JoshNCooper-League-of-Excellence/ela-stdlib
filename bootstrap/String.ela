@@ -64,6 +64,9 @@ impl String {
 
   fn append!<T>(*mut self, other: T) where T: AsSlice!<u8> {
     slice := other.as_slice();
+
+    if slice.length == 0 then return;
+
     if self.capacity == 0 then self.capacity = 256 / 3;
 
     if self.length + slice.length >= self.capacity 
@@ -196,6 +199,31 @@ impl String {
       }
     }
     return result;
+  }
+
+  fn from_with_allocator!<SliceT>(data: SliceT, mut allocator: dyn Allocator) -> Self 
+    where SliceT: AsSlice!<u8>
+  {
+    mut string: String = .{
+      allocator: allocator
+    };
+
+    slice := data.as_slice();
+
+    if slice.is_empty() {
+      return string;
+    }
+    
+    string.data = allocator.strcpy(slice.data, slice.length);
+    string.capacity = slice.length;
+    string.length = slice.length;
+    return string;
+  }
+
+  fn with_allocator!<T>(allocator: dyn Allocator) -> Self {
+    return .{
+        allocator: allocator
+    };
   }
 
   // Split view is kind of a misnomer, we still allocate in this function.
@@ -368,5 +396,19 @@ impl AsSlice!<u8> for String {
 impl Hash for String {
   fn hash(self) -> u64 {
     return self.as_str().hash();
+  }
+}
+
+impl String {
+  fn parse!<T>(self) -> T {
+    where T: IsFloat {
+      return std::c::atof(self.data) as T;
+    } else where T: IsInteger {
+      return std::c::atoi(self.data) as T;
+    } else where T: bool {
+      return self == "true";
+    } else {
+      panic("Invalid type passed to String::parse!<T>");
+    }
   }
 }

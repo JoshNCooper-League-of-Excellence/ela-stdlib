@@ -140,7 +140,10 @@ fn print_backtrace() {
 }
 
 #ifndef USE_CUSTOM_SIGNAL_HANDLER {
-  // #run std::c::printf("[metaprogram:note] using signal::setup_default_signal_handler\n"c);
+  #run std::c::printf("[metaprogram:note] using signal::setup_default_signal_handler\n"c);
+
+  mut DUMP_BACKTRACE_ON_SIGNAL := true;
+
   @[constructor(true)]
   fn setup_default_signal_handler() {
     dummy: *void = null;
@@ -168,9 +171,12 @@ fn print_backtrace() {
             std::c::printf("Faulty address: %p\n"c, info._sigfault_addr);
           }
 
-          mut buffer: [*void; 32];
-          size := backtrace((&buffer) as **void, 32);
-          backtrace_symbols_fd((&buffer) as **void, size, 2);
+          if DUMP_BACKTRACE_ON_SIGNAL {
+            mut buffer: [*void; 32];
+            size := backtrace((&buffer) as **void, 32);
+            backtrace_symbols_fd((&buffer) as **void, size, 2);
+          }
+
           std::c::exit(1);
         }
 

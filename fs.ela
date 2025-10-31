@@ -71,7 +71,7 @@ impl File {
   }
 
   fn is_valid(*self) -> bool {
-    return self.fd;
+    return self.fd as bool;
   }
 
   fn open!<T>(path: T, flags: FileOpenFlags) -> Option!<Self> where T: AsSlice!<u8> {
