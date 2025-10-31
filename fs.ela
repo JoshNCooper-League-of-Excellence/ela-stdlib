@@ -3,6 +3,8 @@ import std::c::*;
 
 //module fs;
 
+type FileOpenFlags :: std::c::FileOpenFlags;
+
 struct File {
   fd: *mut FILE,
   mode: FileOpenFlags,
@@ -38,11 +40,11 @@ impl File {
     mut buf: [u8; 8192];
 
     while {
-      read := fread(buf, sizeof(u8), 8192, in_file);
+      read := fread(buf, size_of(u8), 8192, in_file);
       if read == 0 {
         break;
       }
-      written := fwrite(buf, sizeof(u8), read, out_file);
+      written := fwrite(buf, size_of(u8), read, out_file);
       if written != read {
         fclose(in_file);
         fclose(out_file);
@@ -83,23 +85,30 @@ impl File {
     if self.fd {
       return Some(self);
     }
-    
+
     return None();
   }
 
   fn write_raw(*mut self, data: *u8, length: u64) -> u64 {
-    return fwrite(data, sizeof(u8), length, self.fd);
+    return fwrite(data, size_of(u8), length, self.fd);
+    return 0;
   }
 
   fn write!<Data>(*mut self, data: Data) -> u64 where Data: AsSlice!<u8> {
     slice := data.as_slice();
-    return fwrite(slice.data, sizeof(u8), slice.length, self.fd);
+    return fwrite(slice.data, size_of(u8), slice.length, self.fd);
   }
 
   fn read(*mut self, buffer: *mut u8, size: u64) -> u64 {
-    return fread(buffer, sizeof(u8), size, self.fd);
+    return fread(buffer, size_of(u8), size, self.fd);
   }
 
+  fn read_to_end(*mut self) -> String {
+    length := File::length(self.fd);
+    string := String::with_length(length);
+    self.read(string.data, string.length);
+    return string;
+  }
 
   fn seek(*mut self, offset: s64, position: SeekPosition) -> s64 {
     fd := fileno(self.fd);
@@ -139,9 +148,9 @@ impl File {
 
   fn length(file: *mut FILE) -> u32 {
     original_pos := ftell(file);
-    fseek(file, 0, SeekPosition::End);
+    fseek(file, 0, SeekPosition::End as s32);
     len := ftell(file);
-    fseek(file, original_pos, SeekPosition::Current);
+    fseek(file, original_pos, SeekPosition::Current as s32);
     return len as u32;
   }
 
@@ -164,7 +173,7 @@ impl File {
     fclose(file);
     return Result::Ok(string);
   }
-  
+
   fn read_bytes!<Path>(path: Path) -> Result!<List!<u8>, str> where Path: AsSlice!<u8> {
     type Result :: Result!<List!<u8>, str>;
     filename := path.as_slice();
@@ -178,12 +187,12 @@ impl File {
       if c == EOF then break;
       bytes.push(c);
     }
-    
+
     fclose(file);
     return Result::Ok(bytes);
   }
-  
-  fn write_all!<Path, Data>(path: Path, data_slice: Data) -> Option!<str> 
+
+  fn write_all!<Path, Data>(path: Path, data_slice: Data) -> Option!<str>
     where Path: AsSlice!<u8>, Data: AsSlice!<u8> {
     type Option :: Option!<str>;
 
@@ -197,23 +206,29 @@ impl File {
       return Option::Some("Unable to open file");
     }
 
-    fwrite(data.data, sizeof(u8), data.length, file);
+    fwrite(data.data, size_of(u8), data.length, file);
 
     fclose(file);
 
     return Option::None;
   }
 
-  fn read_line(*mut self) -> String {
+  fn read_line(*mut self) -> Option!<String> {
     mut line: String;
+    mut did_work := false;
     while {
       c := fgetc(self.fd);
       if c == EOF || c == '\n' {
         break;
       }
+      did_work = true;
       line.push(c);
     }
-    return line;
+
+    if !did_work {
+      return None();
+    }
+    return Some(line);
   }
 }
 
@@ -239,7 +254,7 @@ fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8>
   return Some(result);
 }
 
-/* 
+/*
   The option return _type simply says when it .is_none(), it has failed in some capacity.
   We don't have a way to interact with perror, so we don't really get much information as to why
   this has failed, just that it did fail.
@@ -342,7 +357,7 @@ impl Directory {
     closedir(dir);
 
     return Option!<Directory>::Some(.{
-      path: String::from(path), 
+      path: String::from(path),
       entries: entries
     });
   }
@@ -402,7 +417,7 @@ impl Directory {
           buf[j] = slice[j];
           j += 1;
         }
-        buf[i] = 0; 
+        buf[i] = 0;
         // >
         // attempt to create prefix (ignore errors, e.g. already exists)
         mkdir(buf, DEFAULT_MODE);

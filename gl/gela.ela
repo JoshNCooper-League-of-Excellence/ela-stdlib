@@ -15,7 +15,7 @@ impl Shader {
     if success == 0 {
       mut length: s32;
       glGetShaderiv(shader, GL::INFO_LOG_LENGTH, &const length);
-      info_log: c_str = std::c::malloc(sizeof(c_str) * length);
+      info_log: c_str = std::c::malloc(size_of(c_str) * length);
       glGetShaderInfoLog(shader, length, &mut length, info_log);
       std::printf("Shader compilation failed: %s\n", info_log);
       std::c::free(info_log);
@@ -42,7 +42,7 @@ impl Shader {
     if success == 0 {
       mut length: s32;
       glGetProgramiv(program, GL::INFO_LOG_LENGTH, &mut length);
-      info_log: c_str = std::c::malloc(sizeof(c_str) * length);
+      info_log: c_str = std::c::malloc(size_of(c_str) * length);
       glGetProgramInfoLog(program, length, &mut length, info_log);
       std::printf("Program linking failed: %s\n", info_log);
       std::c::free(info_log);
@@ -60,7 +60,7 @@ impl Shader {
   fn use(*mut self) {
     glUseProgram(self.handle);
   }
-  
+
   fn create(vertexSource: String, fragSource: String) -> Self {
     return .{
       handle: Shader::compile_program(vertexSource.data, fragSource.data),
@@ -75,7 +75,7 @@ impl Shader {
       std::printf("failed to get uniform : %s\n", name.data);
     }
   }
-  
+
   fn set_vec4(*mut self, name: str, v: *const Vec4) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
@@ -84,7 +84,7 @@ impl Shader {
       std::printf("failed to get uniform : %s\n", name.data);
     }
   }
-  
+
   fn set_vec3(*mut self, name: str, v: *const Vec3) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
@@ -93,7 +93,7 @@ impl Shader {
       std::printf("failed to get uniform : %s\n", name.data);
     }
   }
-  
+
   fn set_vec2(*mut self, name: str, v: *const Vec2) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
@@ -102,7 +102,7 @@ impl Shader {
       std::printf("failed to get uniform : %s\n", name.data);
     }
   }
-  
+
   fn set_float(*mut self, name: str, v: f32) {
     index := glGetUniformLocation(self.handle, name.data);
     if index != -1 {
@@ -142,40 +142,40 @@ struct Window {
 impl Window {
   fn create(width: s32, height: s32, title: str) -> Self {
     mut self: Self;
-    
-    if !glfwInit() {
+
+    if glfwInit() != 0 {
       std::puts("Failed to initialize glfw\n");
       return self;
     }
-    
+
     self.handle = glfwCreateWindow(width, height, title.data, null, null);
-    
+
     if self.handle == null {
       std::puts("Failed to create window\n");
       glfwTerminate();
       return self;
     }
-    
+
     glfwMakeContextCurrent(self.handle);
-    
+
     if glewInit() != 0 {
       std::puts("Failed to initialize glew\n");
       glfwTerminate();
       return self;
     }
-    
+
     return self;
   }
-  
+
   fn should_close(*mut self) -> bool {
     return glfwWindowShouldClose(self.handle) as bool;
   }
-  
+
   fn present(*mut self) {
     glfwSwapBuffers(self.handle);
     glfwPollEvents();
   }
-  
+
   fn clear(flags: GL) {
     glClear(flags);
   }

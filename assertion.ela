@@ -1,38 +1,77 @@
-import fmt;
+import io;
 
 //module assertion;
 
 fn assert(condition: bool, message: str = "assertion failed") {
   if !condition {
-    fmt::printlnf("assertion failed: '%'", (message,));
+    io::printlnf("assertion failed: '%'", (message,));
     std::c::exit(1);
   }
 }
 
-fn assert_eq_f32(a: f32, b: f32, message: str = "assertion failed") {
-  if (a - b) > f32::epsilon() {
-    fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
-    std::c::exit(1);
-  }
-}
-
-fn assert_eq_f64(a: f64, b: f64, message: str = "assertion failed") {
-  if (a - b) > f64::epsilon() {
-    fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
-    std::c::exit(1);
-  }
-}
 
 fn assert_eq!<T>(a: T, b: T, message: str = "assertion failed") {
-  if a != b {
-    fmt::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
-    std::c::exit(1);
+  where T: f16 {
+    if (a - b) > f16::epsilon() {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  } else where T: f32 {
+    if (a - b) > f32::epsilon() {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  }
+  else where T: f64 {
+    if (a - b) > f64::epsilon() {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  } else {
+    if a != b {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
   }
 }
 
 fn assert_neq!<T>(a: T, b: T, message: str = "assertion failed") {
-  if a == b {
-    fmt::printlnf("assertion failed: '%', (% != %) evaluated to false", (message, a, b));
+  where T: f16 {
+    if (a - b) < f16::epsilon() {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  } else where T: f32 {
+    if (a - b) < f32::epsilon() {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  }
+  else where T: f64 {
+    if (a - b) < f64::epsilon() {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  } else {
+    if a == b {
+      io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+      std::c::exit(1);
+    }
+  }
+}
+
+@[deprecated("floating point asserts no longer require a special function.", assert_eq)]
+fn assert_eq_f32(a: f32, b: f32, message: str = "assertion failed") {
+  if (a - b) > f32::epsilon() {
+    io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
+    std::c::exit(1);
+  }
+}
+
+@[deprecated("floating point asserts no longer require a special function.", assert_eq)]
+fn assert_eq_f64(a: f64, b: f64, message: str = "assertion failed") {
+  if (a - b) > f64::epsilon() {
+    io::printlnf("assertion failed: '%', (% == %) evaluated to false", (message, a, b));
     std::c::exit(1);
   }
 }

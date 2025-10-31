@@ -9,7 +9,7 @@
 // Iterator<T> and Iterable<T>
 #include "iter.ela";
 // impls for numeric types, mostly marker traits.
-#include "numeric.ela"; 
+#include "numeric.ela";
 // RangeBase!<T> and Range, Range_s32... etc.
 #include "range.ela";
 
@@ -19,7 +19,7 @@
 }
 
 #def LIB_ELA_IMPLEMENTATION // TODO: once conditionals are pushed back to type time, this will make sense. for now, it's permanently enabled.
-// some alternatives to libc functions, so we don't _need_ 
+// some alternatives to libc functions, so we don't _need_
 // to link against libc to get basic memory and string functions
 #ifdef LIB_ELA_IMPLEMENTATION {
   module std {
@@ -68,7 +68,7 @@ import collections::{
 #include "result.ela";
 
 // default testing apparatus.
-#ifdef TESTING {  
+#ifdef TESTING {
   import testing;
 }
 
@@ -80,11 +80,12 @@ extern fn getenv(buf: c_str) -> c_str;
 
 impl Env {
   fn current() -> *mut Self {
-    #static mut self: Self;
-    return &mut self;
+    static mut self: Self;
+    pointer := &mut self;
+    return pointer;
   }
 
-  /* 
+  /*
     The args are passed by the C runtime,
     and never need to be deallocated. Nor should they be
     mutated.
@@ -98,42 +99,32 @@ impl Env {
     if slice.length == 0 {
       return .{};
     }
-    return slice.slice(1..slice.length);
-  }
-  
-  fn env_strlen(s: *const u8) -> u32 {
-    mut i := 0;
-    while *s {
-      ++i;
-      ++s;
-    }
-    return i;
+    return slice[1..slice.length];
   }
 
   fn initialize(argc: s32, argv: *const c_str) {
-    self := Env::current();
+    mut env := Env::current();
 
     #ifndef FREESTANDING {
-      mut data : *mut str = std::c::malloc(argc * sizeof(str));
+      mut data : *mut str = std::c::malloc((argc * size_of(str)) as u64);
     } else {
       // This is just a hack. idk what a reasonable value to put here is.
-      // 'getconf ARG_MAX' shows my shell can take over 2 million arguments, 
+      // 'getconf ARG_MAX' shows my shell can take over 2 million arguments,
       // which obviously isn't possible to stack allocate here.
       // I think 2048 is a reasonable compromise -- that would almost never be exceeded, especially
       // since command line programs aren't often freestanding, and distributed programs aren't really taking
       // command line arguments (in my experience, i could easily be wrong)
-      #static mut data : [str; 2048]; 
+      static mut data : [str; 2048];
     }
-    
 
     for i in 0..argc {
       data![i] = .{
         data: argv![i],
-        length: Env::env_strlen(argv![i]),
+        length: std::string::length(argv![i]),
       };
     }
 
-    self.args_slice = .{
+    env.args_slice = .{
       data: data,
       length: argc,
     };
@@ -162,7 +153,8 @@ impl Env {
 
 impl AsSlice!<u8> for u32 {
   fn as_slice(self) -> [u8] {
-    #static mut chars : [u8; 2] = .[
+    // this is awful.
+    static mut chars : [u8; 2] = .[
       '\0', '\0'
     ];
     chars[0] = self;
@@ -174,7 +166,7 @@ impl AsSlice!<u8> for u32 {
 }
 
 fn new!<T>(initial_value: T) -> *mut T {
-  ptr: *mut T = get_global_allocator().allocate(sizeof(T));
+  ptr: *mut T = get_global_allocator().allocate(size_of(T));
   *ptr = initial_value;
   return ptr;
 }
@@ -222,7 +214,7 @@ fn default!<T>() -> T {
       g: AnotherBlittableType   <- Ok.
     }
 
-    note: 
+    note:
       fixed arrays are not considered a pointer since the instantiated struct has to allocate all of the memory required to store it.
       subtypes don't disqualify the parent as long as the subtype is also blittable.
 
@@ -234,8 +226,7 @@ fn default!<T>() -> T {
     }
 
     The most common use cases for checking against Blittable are probably
-     - binary serialization, 
+     - binary serialization,
      - interop into managed environments,
      - copying buffers of data into a new owned buffer, etc.
 */
-

@@ -3,8 +3,10 @@ type Panic_Handler :: fn(str, *mut void);
 mut panic_user_arg: *mut void;
 
 #ifndef FREESTANDING {
+  import signal;
   mut panic_handler: Panic_Handler = fn(msg: str, arg_ignored: *mut void) {
     std::c::printf("panic(): %s\n"c, msg.data);
+    signal::print_backtrace();
     std::c::exit(1);
   };
 } else {

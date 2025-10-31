@@ -14,7 +14,7 @@ impl!<T> List!<T> {
 
   @[inline]
   fn get_allocator_if_needed(*mut self) {
-    if !self.allocator.has_instance() 
+    if !self.allocator.has_instance()
       then self.allocator = get_global_allocator();
   }
 
@@ -27,54 +27,54 @@ impl!<T> List!<T> {
     self.length = 0;
   }
 
-  /*  
-    Is the list empty. 
+  /*
+    Is the list empty.
   */
   @[inline]
   fn is_empty(self) -> bool => self.length == 0;
 
-  /* 
+  /*
     Copy out a sub array. use as_slice if you want a borrowed, non-owning view into the array at a specific range.
   */
   fn subarray(self, range: Range) -> Self {
-    len := range.end - range.begin;
-    new_data := self.allocator.allocate_array(sizeof(T), len);
-    std::memory::copy(new_data, self.data + range.begin, sizeof(T) * len);
+    len := range.length();
+    new_data := self.allocator.allocate_array(size_of(T), len);
+    std::memory::copy(new_data, self.data + range.get_begin_or_default(), size_of(T) * len);
     return .{
       data: new_data,
       length: len,
       capacity: len,
     }
   }
-  
-  /* 
+
+  /*
     You should probably not call this function, and you do not need to for normal push operations.
     In the case you want to shrink your array, you can pass in array.length or whatever you want to shrink to,
     and this will set your length appropriately.
     you can also 'reserve' memory by calling this, with a large value which will force allocate that much but not fill the array.
-    use 'initialize' if you want to fill the array up to that size. 
+    use 'initialize' if you want to fill the array up to that size.
   */
   @[inline]
   fn resize(*mut self, new_capacity: u64) {
     // Truncating.
     if new_capacity < self.capacity && new_capacity < self.length {
-      self.length = new_capacity; 
+      self.length = new_capacity;
     }
     self.capacity = new_capacity;
     self.get_allocator_if_needed();
-    self.data = self.allocator.resize(self.data, sizeof(T), self.capacity);
+    self.data = self.allocator.resize(self.data, size_of(T), self.capacity);
   }
-  
-  /* 
+
+  /*
     Initalize the array to a specific length, and zero initialize the data.
     useful to create a dynamic of at least num_to_fill length, and have all the elements be valid data.
-    Do not use this on an array that is already full of your data, unless you want to zero it out and reset to 
-    a specific new size. 
+    Do not use this on an array that is already full of your data, unless you want to zero it out and reset to
+    a specific new size.
   */
   @[inline]
   fn initialize(*mut self, num_to_fill: u64) {
     self.resize(num_to_fill);
-    std::memory::set(self.data, 0, sizeof(T) * self.capacity);
+    std::memory::set(self.data, 0, size_of(T) * self.capacity);
     self.length = num_to_fill;
   }
 
@@ -85,8 +85,8 @@ impl!<T> List!<T> {
     list.initialize(length);
     return list;
   }
-  
-  /* 
+
+  /*
     push an element to the array. this will, of course, expand the array if needed.
   */
   @[inline]
@@ -105,8 +105,8 @@ impl!<T> List!<T> {
       self.push(val);
     }
   }
-  
-  /* 
+
+  /*
     pop an element from the back of the array. this will never deallocate.
   */
   @[inline]
@@ -115,7 +115,7 @@ impl!<T> List!<T> {
     self.length -= 1;
     return value;
   }
-  
+
   /*
     push an element to the front of the array. again, of course, this will expand the array and allocate if needed.
   */
@@ -129,48 +129,48 @@ impl!<T> List!<T> {
     }
 
     // Shift elements to the right to make space at the front
-    std::memory::move(self.data + 1, self.data, sizeof(T) * self.length);
+    std::memory::move(self.data + 1, self.data, size_of(T) * self.length);
 
     // Insert the new value at the front
     self.data![0] = v;
     self.length++;
   }
 
-  /* 
+  /*
     pop an element from the front of the array. again, this will never de-allocate the old memory it used.
   */
   @[inline]
   fn pop_front(*mut self) -> T {
     value := self.data![0];
-    std::memory::move(self.data, self.data + 1, sizeof(T) * (self.length - 1));
+    std::memory::move(self.data, self.data + 1, size_of(T) * (self.length - 1));
     self.length -= 1;
     return value;
   }
 }
 
 impl!<T> Clone for List!<T> {
-  /* 
+  /*
     clone the entire array, duplicating all of the memory and copying all of the data into the new array.
   */
   @[inline]
   fn clone(self, allocator: dyn Allocator = get_global_allocator()) -> Self {
-    new_data := allocator.allocate_array(sizeof(T), self.capacity);
-    std::memory::copy(new_data, self.data, sizeof(T) * self.length);
+    new_data := allocator.allocate_array(size_of(T), self.capacity);
+    std::memory::copy(new_data, self.data, size_of(T) * self.length);
     return .{
       data: new_data,
       length: self.length,
       capacity: self.capacity,
     }
-  } 
+  }
 }
 
 impl!<T> Init!<T> for List!<T> {
-  /* 
-    construct the list from an initializer list. 
+  /*
+    construct the list from an initializer list.
     This is sure to change, but for now, you do have to do the obnoxious:
       `my_list := List!<s32>::init(.[0,1,2,3])`
     or whatever you need.
-    
+
     of course, this allocates. it will default to using the global allocator.
     When we have optional parameters, this will be much more intuitive.
   */
@@ -180,7 +180,7 @@ impl!<T> Init!<T> for List!<T> {
       allocator: allocator,
     };
     self.resize(init.length);
-    std::memory::copy(self.data, init.data, sizeof(T) * init.length);
+    std::memory::copy(self.data, init.data, size_of(T) * init.length);
     self.length = init.length;
     return self;
   }
@@ -189,15 +189,15 @@ impl!<T> Init!<T> for List!<T> {
 impl!<T> Iterable for List!<T> {
   /*
     Get an iterator to the list.
-    the 
-      `for .. in ...` 
+    the
+      `for .. in ...`
     syntax will automatically fetch this when you do
       `for v in list`
     but you can also use it manually, such as:
-      `for v in list.iter().reverse()` 
+      `for v in list.iter().reverse()`
     or whatever.
 
-    of course, this is always a view into the list, and holding on to this outside of the 
+    of course, this is always a view into the list, and holding on to this outside of the
     guaranteed lifetime of the List!<T> is inherently unsafe.
   */
   @[inline]
@@ -208,7 +208,7 @@ impl!<T> Iterable for List!<T> {
     }
   }
 
-  /* 
+  /*
     Get a mutable iterator.
   */
   @[inline]
@@ -222,8 +222,8 @@ impl!<T> Iterable for List!<T> {
 
 impl!<T> Destroy for List!<T> {
 
-  /* 
-    This does not actually destroy any of members in the list. 
+  /*
+    This does not actually destroy any of members in the list.
     it just empties the list by freeing the memory used to store the elements.
   */
   @[inline]
@@ -275,13 +275,13 @@ impl!<T> List!<T> {
         }
       }
     }
-    
+
     memmove(self, index);
 
     self.length -= 1;
     return true;
   }
-  
+
   fn find_first_of(self, finder: fn(*T) -> bool) -> *const T {
     for idx in 0..self.length {
       if finder(&const self.data![idx]) {
@@ -404,7 +404,7 @@ impl!<T> List!<T>  {
     }
   }
 
-  /* 
+  /*
     Check if the list contains an item. This uses the `a == b` operator, so this is only valid
     on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
 
@@ -421,7 +421,7 @@ impl!<T> List!<T>  {
     return false;
   }
 
-  /* 
+  /*
     erase the first element from the list that == value;
     this doesn't deallocate the old memory.
   */
@@ -429,7 +429,7 @@ impl!<T> List!<T>  {
   fn remove(*mut self, seek: T, comparator: Comparator) -> bool {
     for idx in 0..self.length {
       if comparator(self.data![idx], seek) {
-        std::memory::move(self.data + idx, self.data + idx + 1, sizeof(T) * (self.length - idx - 1));
+        std::memory::move(self.data + idx, self.data + idx + 1, size_of(T) * (self.length - idx - 1));
         self.length -= 1;
         return true;
       }
@@ -473,4 +473,3 @@ impl!<T> List!<T>  {
     return list;
   }
 }
-

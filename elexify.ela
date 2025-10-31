@@ -9,7 +9,7 @@
   However it's absolutely suitable for other formats, such as JSON, XAML, etc.
 */
 
-/* 
+/*
   USAGE:
 
   Explained:
@@ -25,17 +25,17 @@
       reserved word in C would clash normally. this avoids that clashing, and your frontend doesn't have to worry about it.
 
     (4) the 'state' object is used to control a stack of various inputs, or to switch between different inputs.
-      this is primarily used for things like text "include"s, where you encounter an "include" to a file, 
+      this is primarily used for things like text "include"s, where you encounter an "include" to a file,
       start to read it, and want to jump back to your last "state" when done.
 
-      This can be achieved by simply pushing a state on the lexer, and continuing to execute. 
+      This can be achieved by simply pushing a state on the lexer, and continuing to execute.
       Once the lexer gets to an EOF token (and it has more states left on its stack)
       it will pop the finished state, and resume it's operation wherever you left off on your old state.
 
       I'm sure this could also be used to parallelize your parsing, however care must be taken as the containers used
       for keywords, operators, and reserved words are not thread safe, nor is the lookahead buffer used within each state.
       This may not be important for your use case, but it's worth noting.
-    
+
     (5) We simply push the first state onto the lexers stack, before beginning lexing.
       It should be obvious, but we take a shallow copy of the state when we pass this by value.
       You can keep track of your states and copy them back if you wanted to do something like multi threading,
@@ -64,7 +64,7 @@
   }
 */
 
-/* 
+/*
   --------------------------------------------------------------------------
   ## A FULL, CORRECT EXAMPLE ###############################################
   --------------------------------------------------------------------------
@@ -75,7 +75,7 @@
 
     // We don't need to worry about clashes with
     // the builtin token types, because the lexer
-    // uses incredibly large u32's to represent those, 
+    // uses incredibly large u32's to represent those,
     // with the express intent to avoid said clashes.
 
     // You may want to type these types in your own enum,
@@ -143,26 +143,26 @@
       mut state := State::from_file("sample.txt");
 
       lexer.push_state(state);
-      
+
       while {
         token := lexer.eat();
 
         if token.is_eof() then break;
 
-        // print the tokens out. 
+        // print the tokens out.
         println(token.to_string());
       }
     }
-    
+
   -----------------------------------------------------------------------
   ## END ################################################################
   -----------------------------------------------------------------------
 */
 
-/* 
-  TODO: 
-    add customizable string delimiters, 
-    char delimiters, 
+/*
+  TODO:
+    add customizable string delimiters,
+    char delimiters,
     and comment syntax.
 */
 
@@ -197,12 +197,12 @@ struct Span {
 
 impl Span {
   fn files() -> *mut List!<String> {
-    #static mut files: List!<String>;
+    static mut files: List!<String>;
     return &mut files;
   }
 
   fn to_string(self) -> String {
-    files := Span::files();
+    mut files := Span::files();
     filename := (*files)[self.file];
     return format("%:%:%", (filename, self.line, self.column), FormatOptions::default());
   }
@@ -236,12 +236,6 @@ fn location_to_source_view!<T>(msg: T, span: Span) -> String where T: AsSlice!<u
     file_data
       .split('\n')
       .subslice(clamped_begin..clamped_end);
-
-  defer {
-    for line in lines {
-      line.destroy();
-    }
-  }
 
   builder.append("\033[1;3;37m\n");
   for i in 0..lines.length {
@@ -293,7 +287,7 @@ struct Token {
 
 impl Token {
   fn Eof() -> Token {
-    #static eof: Token = .{
+    static eof: Token = .{
       kind: TOKEN_EOF,
     };
     return eof;
@@ -384,7 +378,7 @@ impl State {
         io::panicf("[elexify]: file '%' was unable to be canonicalized.", (filename,));
         return .{};
       }
-      
+
       parent: String = if parent_path(canonical) is Option!<String>::Some(v) {
         return v;
       } else {
@@ -399,7 +393,7 @@ impl State {
       input: String = if File::read_all(canonical) is Result!<String, String>::Ok(v) {
         return v;
       } else {
-        fmt::printlnf("[elexify]: unable to read file from (relative path): %, (canonicalized): %, (parent dir): %", (filename, canonical, parent));
+        io::printlnf("[elexify]: unable to read file from (relative path): %, (canonicalized): %, (parent dir): %", (filename, canonical, parent));
         return .{};
       }
 
@@ -426,15 +420,17 @@ struct Lexer {
   states:    List!<State>,
   lookahead_buffer: List!<Token>,
   reserved_placeholder: String,
+  whitespace: List!<u8>,
 }
 
 impl Lexer {
-  fn new(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>) -> Self {
+  fn new(operators: Option!<Map!<str, u32>>, keywords: Option!<Map!<str, u32>>, reserved: Option!<List!<str>>, whitespace: Option!<List!<u8>>) -> Self {
     return .{
       operators:  operators.or_else(.{}),
       keywords:   keywords.or_else(.{}),
       reserved:   reserved.or_else(.{}),
       reserved_placeholder: String::from("$"),
+      whitespace: whitespace.or_else(List!<u8>::init(.[' '])),
     };
   }
 }
@@ -497,6 +493,10 @@ impl Lexer {
     return self.lookahead_buffer.pop_front();
   }
 
+  fn next(*mut self) -> u32 {
+    return self.peek().kind;
+  }
+
   fn get_token(*mut self, state: *mut State) {
     mut token_builder: StringStream;
     defer token_builder.destroy();
@@ -513,8 +513,42 @@ impl Lexer {
         continue;
       }
 
-      /* Whitespace */
-      if c == ' ' || c == '\t' {
+      /* Check for whitespace operators first */
+      mut whitespace_match: String = .{};
+      mut temp_pos := state.pos;
+      mut temp_col := state.col;
+
+      /* token-yielding symbols below. */
+      mut span : Span = .{
+        line: state.line,
+        column: state.col,
+        file: state.file_idx
+      };
+
+
+      // Try to match whitespace sequences as operators
+      while temp_pos < state.input.length {
+        mut temp_c := state.input[temp_pos];
+        if !self.whitespace.contains(temp_c, fn(a: u8, b: u8) -> bool { return a == b; }) {
+          break;
+        }
+        whitespace_match.push(temp_c);
+        option := self.operators.get(whitespace_match.as_str());
+        if (option is Option!<u32>::Some) {
+          // Found a whitespace operator match
+          state.pos = temp_pos + 1;
+          state.col = temp_col + 1;
+          self.lookahead_buffer.push(Token::new(span, None(), option.unwrap()));
+          whitespace_match.destroy();
+          return;
+        }
+        temp_pos++;
+        temp_col++;
+      }
+      whitespace_match.destroy();
+
+      /* Regular Whitespace (single character, not an operator) */
+      if self.whitespace.contains(c, fn(a: u8, b: u8) -> bool { return a == b; }) {
         state.pos++;
         state.col++;
         continue;
@@ -557,12 +591,6 @@ impl Lexer {
         continue;
       }
 
-      /* token-yielding symbols below. */
-      mut span : Span = .{
-        line: state.line,
-        column: state.col,
-        file: state.file_idx
-      };
 
       // Characters.
       if c == '\'' {
@@ -680,7 +708,7 @@ impl Lexer {
         state.pos++; // move past '
         state.col++;
         mut buffer: [u8; 32];
-        std::c::snprintf(buffer, 32 * sizeof(u8), "0x%X"c, codepoint);
+        std::c::snprintf(buffer, 32 * size_of(u8), "0x%X"c, codepoint);
         self.lookahead_buffer.push(Token::new(span, Some(String::from_ptr(buffer)), TOKEN_CHAR));
         return;
       }
@@ -760,7 +788,7 @@ impl Lexer {
         }
 
         mut value := token_builder.get_string();
-        
+
         if self.keywords.contains(value.as_str()) {
           self.lookahead_buffer.push(Token::new(span, None(), self.keywords.get(value.as_str()).unwrap()));
           value.destroy();

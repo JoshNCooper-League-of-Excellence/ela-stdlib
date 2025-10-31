@@ -202,7 +202,7 @@ impl FormatOptions {
   };
 
   fn current() -> *mut Self {
-    #static mut current: FormatOptions;
+    static mut current: FormatOptions;
     return &mut current;
   }
 
@@ -272,21 +272,21 @@ trait Format {
 
 fn new_dyn_format(value: any) -> dyn Format {
   instance, _type := value;
-  
-  method := _type.methods.find_first_of(
-    fn(method: *const Method) -> bool {
+
+  method := find_first_of(_type.methods.iter(), null,
+    fn(_: *mut void, method: Method) -> bool {
       return method.name == "format";
     }
   )
 
-  if !method {
+  if method.is_none() {
     std::c::printf("unable to find 'format' in _type %s\n"c, _type.name);
     panic("DynFormat failure");
   }
-  
+
   mut dynamic: dyn Format;
   dynamic.instance = instance;
-  dynamic.format =  method.pointer as fn (*const void, *mut Formatter);
+  dynamic.format =  method.unwrap().pointer as fn (*const void, *mut Formatter);
   return dynamic;
 }
 
@@ -307,7 +307,7 @@ impl StringStream {
   }
 }
 
-/* 
+/*
   This is really just for numerical values,
   and anything that can use the negate operator. i.e pointers, strings, whatever.
   Structs by value will cause this function to fail.
@@ -329,11 +329,11 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
     mut sstream: StringStream;
     mut formatter := Formatter.{
       options: *FormatOptions::current(),
-      writer: &mut sstream, 
+      writer: &mut sstream,
     };
     value.format(&mut formatter);
   } else {
-    _type := typeof(T);
+    _type := type_of(T);
     mut format : str;
     mut format_buffer: [u8; 255];
     where T: IsPointer {
@@ -403,9 +403,9 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       return .{};
     }
     buffer: [u8; 1024];
-    length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
+    length := std::c::snprintf(buffer, 1024 * size_of(u8), format_buffer, value);
     return String.{
-      data: allocator.copy(buffer, sizeof(u8), length),
+      data: allocator.copy(buffer, size_of(u8), length),
       length: length,
     };
   }
@@ -437,7 +437,7 @@ fn format_struct(value: any, formatter: *mut Formatter) {
 
     if formatter.options.indented {
       formatter.writer.append("\n");
-    } 
+    }
     idx++;
   }
 
@@ -483,7 +483,7 @@ fn format_choice(value: any, formatter: *mut Formatter) {
         // offset of discriminant is where the union starts
         // ! this just seems wrong because we have no idea if the payload
         // ! causes this to be padded, i am not sure if this is good.
-        ptr: value.ptr + sizeof(u32) 
+        ptr: value.ptr + size_of(u32)
       }, formatter);
       return;
     }
@@ -499,13 +499,13 @@ fn format_any(value: any, formatter: *mut Formatter) {
     return;
   }
 
-  if value._type == typeof(String)  {
+  if value._type == type_of(String)  {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
     formatter.writer.append(*(value.ptr as *const String));
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
-  } else if value._type == typeof(str) {
+  } else if value._type == type_of(str) {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
     formatter.writer.append((*(value.ptr as *const str)));
@@ -519,17 +519,17 @@ fn format_any(value: any, formatter: *mut Formatter) {
     format_tuple(value, formatter);
   } else if value.ptr == null {
     formatter.writer.append("null");
-  } else if value._type == typeof(c_str) {
+  } else if value._type == type_of(c_str) {
     formatter.writer.append(String::from_ptr(value.unwrap!<*const u8>()));
   } else if value._type.is_flags_enum() {
     if formatter.options.typename {
       formatter.writer.append(value._type.name);
       formatter.writer.append("::(");
-    } 
+    }
     input_value := value.unwrap!<s32>();
     mut found_any := false;
     for field in value._type.fields {
-      if input_value & field.enum_value {
+      if (input_value & field.enum_value) != 0 {
         if found_any {
           formatter.writer.append(" | ");
         }
@@ -547,7 +547,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
     if formatter.options.typename {
       formatter.writer.append(value._type.name);
       formatter.writer.append("::");
-    } 
+    }
     val := value.unwrap!<s32>();
     for field in value._type.fields {
       if field.enum_value == val {
@@ -571,24 +571,24 @@ fn format_any(value: any, formatter: *mut Formatter) {
     format_choice(value, formatter);
   } else {
     switch value._type {
-      typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
-      typeof(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>(), formatter.options, get_global_allocator()));       }
-      typeof(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>(), formatter.options, get_global_allocator()));       }
-      typeof(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>(), formatter.options, get_global_allocator()));       }
-      typeof(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>(), formatter.options, get_global_allocator()));        }
-      typeof(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>(), formatter.options, get_global_allocator()));       }
-      typeof(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>(), formatter.options, get_global_allocator()));       }
-      typeof(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>(), formatter.options, get_global_allocator()));       }
-      typeof(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>(), formatter.options, get_global_allocator()));       }
-      typeof(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>(), formatter.options, get_global_allocator()));       }
-      typeof(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>(), formatter.options, get_global_allocator()));      }
+      type_of(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
+      type_of(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>(), formatter.options, get_global_allocator()));       }
+      type_of(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>(), formatter.options, get_global_allocator()));       }
+      type_of(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>(), formatter.options, get_global_allocator()));       }
+      type_of(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>(), formatter.options, get_global_allocator()));        }
+      type_of(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>(), formatter.options, get_global_allocator()));       }
+      type_of(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>(), formatter.options, get_global_allocator()));       }
+      type_of(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>(), formatter.options, get_global_allocator()));       }
+      type_of(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>(), formatter.options, get_global_allocator()));       }
+      type_of(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>(), formatter.options, get_global_allocator()));       }
+      type_of(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>(), formatter.options, get_global_allocator()));      }
       else:            { formatter.writer.append("$$(unsupported fmt _type)$$");                                 }
     }
   }
 }
 
 // TODO: this is unintuitive and strange. what if you wanted to emplace a \ and then a %. just not possible.
-// I think %% worked better, but whatever. we'll find a better solution; 
+// I think %% worked better, but whatever. we'll find a better solution;
 // maybe just using {}, and {{ }} for escaped (the obvious modern solution)
 const FORMAT_ESCAPED_PERCENT_STRING := "\\%";
 
@@ -632,14 +632,14 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
   } else {
     value_index := 0;
 
-    fields := typeof(Tuple).fields;
+    fields := type_of(Tuple).fields;
 
     if fields.is_empty() {
       return "()".to_string(allocator);
     }
 
     while *fmt.data {
-      if (*fmt.data) == '\\' && *(fmt.data + 1) == '%' {
+      if (*fmt.data) == '\\' && (*(fmt.data + 1)) == '%' {
         formatter.writer.append('%');
         fmt.data += 2;
         continue;
@@ -651,7 +651,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
 
       if (*fmt.data) == '%' && value_index < fields.length {
         field := fields[value_index];
-        value :any = .{
+        value: any = .{
           _type: field._type,
           ptr: field.get(&const tuple),
         };
@@ -667,10 +667,12 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
   return formatter.writer.get_string(Some(allocator));
 }
 
+@[deprecated ("format supports better default arguments now", fmt::format)]
 fn qformat!<Tuple>(fmt: str, tuple: Tuple) -> String where Tuple: IsTuple {
   return format(fmt, tuple, *FormatOptions::current(), get_global_allocator());
 }
 
+@[deprecated ("use the io module", "io::print")]
 fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
     using mut sstream: StringStream;
@@ -688,6 +690,7 @@ fn print!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   }
 }
 
+@[deprecated ("use the io module", "io::println")]
 fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   where T: Format {
     mut sstream: StringStream;
@@ -709,12 +712,14 @@ fn println!<T>(message: T, options: FormatOptions = *FormatOptions::current()) {
   }
 }
 
+@[deprecated ("use the io module", "io::printlnf")]
 fn printlnf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s\n"c, formatted.data);
   formatted.destroy();
 }
 
+@[deprecated ("use the io module", "io::printf")]
 fn printf!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOptions::current()) where Tuple: IsTuple | Format {
   mut formatted := format(fmt, tuple, options);
   std::c::printf("%s"c, formatted.data);

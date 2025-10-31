@@ -204,7 +204,7 @@ impl Vector3 {
   fn new(x: f32, y: f32, z: f32) -> Self {
     return .{ x: x, y: y, z: z };
   }
-  
+
   fn zero() -> Self {
     return .{ x: 0.0, y: 0.0, z: 0.0 };
   }
@@ -394,7 +394,7 @@ const CYAN := Color.{ r: 0 as u8, g: 255 as u8, b: 255 as u8, a: 255 as u8 };
 const DARKCYAN := Color.{ r: 0 as u8, g: 139 as u8, b: 139 as u8, a: 255 as u8 };
 const LIGHTCYAN := Color.{ r: 224 as u8, g: 255 as u8, b: 255 as u8, a: 255 as u8 };
 
-#static All_Colors: InitList!<Color> = .[
+static All_Colors: InitList!<Color> = .[
   WHITE,
   RED,
   GREEN,
@@ -468,11 +468,11 @@ module util {
       y: GetScreenHeight() as f32 / 2.0
     };
   }
-  
+
   fn screen_rect() -> Rectangle {
     return Rectangle.{
-      x: 0, y: 0, 
-      width: GetScreenWidth(), 
+      x: 0, y: 0,
+      width: GetScreenWidth(),
       height: GetScreenHeight(),
     };
   }

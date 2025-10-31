@@ -63,27 +63,27 @@ module std {
       fn is_dir(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0x4000;
       }
-      
+
       fn is_file(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0x8000;
       }
-      
+
       fn is_symlink(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0xA000;
       }
-      
+
       fn is_block_device(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0x6000;
       }
-      
+
       fn is_char_device(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0x2000;
       }
-      
+
       fn is_fifo(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0x1000;
       }
-      
+
       fn is_socket(*const self) -> bool {
           return (self.st_mode & 0xF000) == 0xC000;
       }
@@ -108,6 +108,7 @@ module std {
           panic("unexpected file flags passed to a file api function");
           return null;
         }
+        return null; // TODO: remove this, it's a hack to do some testing while lowering MIR.
       }
     }
 
@@ -132,7 +133,7 @@ module std {
 
     type ProcId :: s32;
     // iovec is identical to our Slice type, so we can just use that. makes it easier to use in language, and works just fine with interop.
-    type IoVec :: [u8]; 
+    type IoVec :: [u8];
 
     enum PtraceRequest {
       Traceme        = 0,
@@ -373,13 +374,13 @@ module std {
     }
 
     extern fn __errno_location() -> *s32;
-    
+
     fn errno() -> Errno {
       return *__errno_location();
     }
 
 
-    const SIGSET_NUM_WORDS := (1024 / (8 * sizeof(u64)))
+    const SIGSET_NUM_WORDS := (1024 / (8 * size_of(u64)))
     struct SigSet_T
     {
       val: [u32; SIGSET_NUM_WORDS],
@@ -409,7 +410,7 @@ module std {
     fn setjmp(env: JmpBuf) -> s32 {
       return _setjmp(env);
     }
-    
+
     @[inline]
     fn sigsetjmp(env: JmpBuf, save_mask: s32) -> s32 {
       return __sigsetjmp(env, save_mask);
@@ -427,15 +428,15 @@ module std {
   }
 
   fn malloc!<T>() -> *mut T {
-    return c::malloc(sizeof(T));
+    return c::malloc(size_of(T));
   }
 
   fn calloc!<T>(num: u64) -> *mut T {
-    return c::calloc(num, sizeof(T));
+    return c::calloc(num, size_of(T));
   }
 
   fn realloc!<T>(ptr: *const T, n: u64) -> *mut T {
-    return c::realloc(ptr, n * sizeof(T));
+    return c::realloc(ptr, n * size_of(T));
   }
 
   @[no_return]
@@ -460,8 +461,8 @@ module std {
       std::c::puts(msg);
     }
   }
-  
-  
+
+
   @[inline]
   fn fprintf!<T>(stream: *mut c::FILE, format: str, arg: T) -> s32 {
     where T: IsTuple {
@@ -500,8 +501,8 @@ module std {
       return .{};
     }
 
-    buffer: *mut u8 = allocator.allocate((length + 1) * sizeof(u8));
-    
+    buffer: *mut u8 = allocator.allocate((length + 1) * size_of(u8));
+
     if buffer == null {
       return .{};
     }

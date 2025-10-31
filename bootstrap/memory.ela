@@ -5,13 +5,14 @@
   }
   impl Allocator for LibcAllocator {
     fn allocate(*mut self, size: u64) -> *mut void {
+      std::c::printf("allocating: %zu\n"c, size);
       return std::c::malloc(size);
     }
     fn free(*mut self, ptr: *mut void) {
       std::c::free(ptr);
     }
     fn resize(*mut self, ptr: *const void, element_size: u64, new_size: u64) -> *mut void {
-      return std::c::realloc(ptr, element_size * new_size);
+      return std::c::realloc(ptr, new_size * element_size);
     }
     fn allocate_array(*mut self, size: u64, n: u64) -> *mut void {
       return std::c::calloc(size, n);
@@ -24,7 +25,7 @@
   }
   impl LibcAllocator {
     fn get() -> Self {
-      #static self: LibcAllocator;
+      static self: LibcAllocator;
       return self;
     }
   }
@@ -47,7 +48,7 @@
       if self.length + 1 > self.capacity {
         if self.capacity == 0 then self.capacity = 4;
         self.capacity *= 2;
-        self.pointers = std::c::realloc(self.pointers, sizeof(*const void) * self.capacity);
+        self.pointers = std::c::realloc(self.pointers, size_of(*const void) * self.capacity);
       }
       self.pointers![self.length] = ptr;
       self.length += 1;
@@ -65,7 +66,7 @@
     fn remove_pointer(*mut self, ptr: *const void) {
       for i in 0..self.length {
         if self.pointers![i] == ptr {
-          std::c::memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
+          std::c::memmove(self.pointers + i, self.pointers + i + 1, size_of(*const void) * (self.length - i - 1));
           self.length -= 1;
           break;
         }
@@ -118,7 +119,7 @@
   }
 }
 
-/* 
+/*
   TODO:
     explore how we could make this (the global allocator system) thread safe.
     It relies heavily on pointers/function pointers, which i highly doubt are just thread safe.
@@ -144,7 +145,7 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
   mut global_dyn_LibcAllocator: dyn Allocator;
 
   fn get_global_allocator() -> dyn Allocator {
-    /* 
+    /*
       We have to initialize the global data here conditionally because we don't have
       global static initializers.
 
@@ -154,16 +155,16 @@ fn set_global_allocator(allocator: dyn Allocator) -> dyn Allocator {
 
       Of course that's not guaranteed protection, but it's a measure.
 
-      An alternative would be beginning every program with 'set_global_allocator()' 
+      An alternative would be beginning every program with 'set_global_allocator()'
       which would just be annoying
     */
 
     // check .instance here to see if this even points to anything.
     if !global_allocator.has_instance() {
 
-      // we have to setup the dynof here because of static initializer limitations.
+      // we have to setup the dyn_of here because of static initializer limitations.
       if !global_dyn_LibcAllocator.has_instance() {
-        global_dyn_LibcAllocator = dynof(&mut global_LibcAllocator, Allocator);
+        global_dyn_LibcAllocator = dyn_of(&mut global_LibcAllocator, Allocator);
       }
 
       global_allocator = global_dyn_LibcAllocator;

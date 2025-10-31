@@ -70,7 +70,7 @@ fn draw_character(char: u8, position: Vector2, style: Style) {
   Enabled,  // interactable.
 }
 
-#static widget_id: u32 = 0;
+static widget_id: u32 = 0;
 
 struct WidgetBase {
   is_active: bool = true,
@@ -132,7 +132,7 @@ trait Widget where Self: Destroy {
 
   fn get_children(*const self) -> *mut List!<dyn Widget>;
 
-  fn draw(*mut self);  
+  fn draw(*mut self);
 
   fn on_window_resized(*mut self, screen: Rectangle) {
     base := self.get_base()
@@ -284,7 +284,7 @@ enum RenderHookPriority {
   PostWidgetRender
 }
 
-/* 
+/*
   DEINIT IMPLEMENTATIONS MUST GO BEFORE WIDGET IMPLEMENTATIONS!
 */
 impl Destroy for ListBox {
@@ -345,7 +345,7 @@ impl Destroy for TextField {
   }
 }
 
-/* 
+/*
   WIDGET IMPLEMENTATIONS
 */
 impl!<TString, UserArg> Widget for Button!<TString, UserArg> {
@@ -372,7 +372,7 @@ impl!<TString, UserArg> Widget for Button!<TString, UserArg> {
     if self.label is Option!<TString>::Some(text) {
       text_width: f32 = MeasureText(text.data, self.base.style.font_size);
       text_height: f32 = self.base.style.font_size;
-      
+
       if text_width > self.base.rectangle.width {
         size.x = text_width;
         position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
@@ -399,7 +399,7 @@ impl Widget for ListBox {
 
     count := self.children.length as f32;
 
-    if count == 0 
+    if count == 0
       then return;
 
     rect := self.base.rectangle;
@@ -455,10 +455,10 @@ impl Widget for ListBox {
           cols = count;
           rows = 1;
         }
-    
+
         item_width := (rect.width - (self.base.style.margin * (cols + 1))) / cols as f32;
         item_height := (rect.height - (self.base.style.margin * (rows + 1))) / rows as f32;
-    
+
         for i, child in self.children.enumerate_mut() {
           row := i / cols;
           col := i % cols;
@@ -482,7 +482,7 @@ impl Widget for ListBox {
 impl ListBox {
   fn add_child!<T>(*mut self, widget: *mut T) where T: Widget {
     self.base.children.push(widget.get_base());
-    self.children.push(dynof(widget, Widget));
+    self.children.push(dyn_of(widget, Widget));
   }
 }
 
@@ -770,7 +770,7 @@ impl Widget for TextField {
 
     text_width: f32 = MeasureText(self.text.data, style.font_size);
     text_height: f32 = style.font_size;
-    
+
     if text_width > self.base.rectangle.width {
       size.x = text_width;
       position.x = self.base.rectangle.x - (text_width - self.base.rectangle.width) / 2;
@@ -912,7 +912,7 @@ impl!<Ctx> Window!<Ctx> {
             }
           }
         }
-      
+
         if base.input_state & InputState::Hovered && base.on_hovered {
           base.on_hovered(widget.get_base(), mouse_position);
         }
@@ -970,7 +970,7 @@ impl!<Ctx> Window!<Ctx> {
   }
 
   fn add_widget!<T>(*mut self, t: *mut T) -> *mut Self where T: Widget  {
-    trait_obj := dynof(t, Widget);
+    trait_obj := dyn_of(t, Widget);
     trait_obj.on_window_resized(.{
       x: 0, y: 0,
       width: GetScreenWidth(),

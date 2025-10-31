@@ -5,7 +5,7 @@
 
   This helps us be completely 'freestanding' compatible without compromising on providing useful types:
 
-  List!<T>, String, str, etc, can all work freestanding, so as long as this library provides basic operations 
+  List!<T>, String, str, etc, can all work freestanding, so as long as this library provides basic operations
   and an allocator is provided, which is a type erased interface that can be used regardless of build type.
 
   Right now, there isn't a way to disable this library, unless you compile with 'nostdlib', which has huge implications.
@@ -14,7 +14,7 @@
 
 */
 
-/* 
+/*
   There's a better assertion library with pretty printing and such, however,
   we don't have out of order compilation, so we use this for the bootstrap libraries, because
   the fmt, io, and assertion library depend on many of the types we'll be testing here.
@@ -24,7 +24,7 @@
 */
 
 fn _assert(cond: bool, msg: str = "assertion failed") {
-  if !cond { 
+  if !cond {
     panic(msg);
   }
 }
@@ -67,7 +67,7 @@ module memory {
     if dest == src || len == 0 {
       return;
     }
-    if dest < src || dest >= src + len * sizeof(u8) {
+    if dest < src || dest >= src + len * size_of(u8) {
       // No overlap or safe to copy forwards
       for i in 0..len {
         dest![i] = src![i];
@@ -81,7 +81,23 @@ module memory {
       }
     }
   }
-  
+
+
+  fn compare!<T, T1, Size_T>(s1: *T, s2: *T1, n: Size_T) {
+    p1 := s1 as *u8;
+    p2 := s1 as *u8;
+
+    for i in 0..n {
+      if (p1![i] < p2![i]) {
+        return -1; // s1 is less than s2
+      } else if (p1![i] > p2![i]) {
+        return 1;  // s1 is greater than s2
+      }
+    }
+
+    return 0; // s1 and s2 are equal for the first 'n' bytes
+  }
+
   #test fn test_copy() {
     mut src: [u8; 5] = .[1, 2, 3, 4, 5];
     mut dest: [u8; 5] = .[0, 0, 0, 0, 0];
@@ -123,10 +139,13 @@ module memory {
 module string {
   @[inline] // an alternative to libc's strlen
   fn length(mut s: *u8) -> u32 {
+    if !s {
+      return 0;
+    }
     mut len: u32;
-    while (*s) {
+    while *s != 0 {
       len += 1;
-      s += sizeof(u8);
+      s += size_of(u8);
     }
     return len;
   }

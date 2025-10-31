@@ -1,5 +1,5 @@
 //module map;
-/* 
+/*
   Since @Cooper-Pilot's hashmap implementation got lost from the git,
   this is just a reallly crappy hashmap I had chat gpt write pretty quickly.
   This should be replaced with one that is made with attention to detail and performaance in mind.
@@ -52,7 +52,7 @@ impl!<Key, Value> Map!<Key, Value> where Key: Hash {
 
     return None();
   }
-  
+
   fn get_mut(*mut self, search_key: Key) -> Option!<*mut Value> {
     if self.buckets.length == 0 {
       return None();
@@ -163,12 +163,12 @@ impl!<Key, Value> Init!<(Key, Value)> for Map!<Key, Value> {
       self.insert(key, value);
     }
     return self;
-  } 
+  }
 }
 
 impl!<Key, Value> Destroy for Map!<Key, Value> {
   fn destroy(*mut self, recursive: bool = true) {
-    // where Key: Destroy, 
+    // where Key: Destroy,
     //       Value: Destroy {
     //   if recursive {
     //     for key, value in *self {
@@ -202,9 +202,9 @@ impl!<Key, Value> Destroy for Map!<Key, Value> {
 import fmt::*;
 
 impl!<Key, Value> Format for Map!<Key, Value> {
-  fn format(*const self, formatter: *mut Formatter) { 
-    key_type := typeof(Key);
-    value_type := typeof(Value);
+  fn format(*const self, formatter: *mut Formatter) {
+    key_type := type_of(Key);
+    value_type := type_of(Value);
     formatter.writer.appendf("Map!<%, %>", (key_type.name, value_type.name), formatter.options.unquoted());
     formatter.writer.append(" {");
 

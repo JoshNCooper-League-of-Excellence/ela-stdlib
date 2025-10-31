@@ -3,14 +3,14 @@ impl StringUtils for str {}
 impl str {
   fn to_string!<Alloc>(self, allocator: Alloc) -> String where Alloc: Allocator | dyn Allocator {
     return .{
-      data: allocator.copy(self.data, sizeof(u8), self.length),
+      data: allocator.copy(self.data, size_of(u8), self.length),
       length: self.length,
     };
   }
 
   fn from_ptr(ptr: *u8, mut length: s32 = -1) -> Self {
     if length < 0 {
-      length = std::c::strlen(ptr);
+      length = std::string::length(ptr);
     }
     return .{
       data: ptr,
@@ -27,8 +27,8 @@ impl str {
   }
 
 
-  fn join!<SepT>(strings: [str], separator: SepT) -> String 
-    where SepT: AsSlice!<u8> 
+  fn join!<SepT>(strings: [str], separator: SepT) -> String
+    where SepT: AsSlice!<u8>
   {
     sep := separator.as_slice();
     mut result: String;
@@ -51,24 +51,40 @@ impl Index!<u8> for str {
   }
 }
 
-impl str {
-  fn slice(*const self, range: Range) -> [u8] {
-    start, end := (range.begin, range.end);
-    length := end - start;
-
-    if start < 0 || length < 0 || start + length > self.length {
-      return .{};
+impl Slice_Index!<u8> for str {
+  fn slice_index(*self, mut range: Range) -> [u8] {
+    mut begin: Range::V = default();
+    if range.begin is Option!<Range::V>::Some(b) {
+      begin = b;
     }
-    
+
+    mut end: Range::V = default();
+    if range.end is Option!<Range::V>::Some(e) {
+      end = e;
+    } else {
+      end = self.length;
+    }
+
+    if end > self.length {
+      panic("unable to create subslice from slice in [T][begin..start] (slice_index operator): range exceeded bounds of slice.\nWe no longer truncate invalid slices, and -1 is no longer a valid indicator for end. use 'begin..' syntax");
+    }
+
+    length := end - begin;
+
+    if length <= 0 {
+      panic("got a range in [T][begin..start] (slice_index operator) for which length was negative, or zero");
+    }
+
     return .{
-      data: self.data + start,
+      data: self.data + begin,
       length: length,
-    };
+    }
   }
 }
 
+
 // This iterator is over the bytes.
-impl Iterable for str { 
+impl Iterable for str {
   fn iter(*const self) -> Iter!<u8> {
     return .{
       ptr: self.data as *mut u8,

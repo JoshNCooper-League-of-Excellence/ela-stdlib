@@ -8,7 +8,7 @@ struct Interned!<T> where T:  Hash {
 
 impl!<T> Interned!<T> {
   fn table() -> *mut Map!<u64, *const T> {
-    #static mut table: Map!<u64, *const T>;
+    static mut table: Map!<u64, *const T>;
     return &mut table;
   }
 
@@ -21,11 +21,11 @@ impl!<T> Interned!<T> {
     mut table := Interned!<T>::table();
     result := table.get(hash);
 
-    /* 
-      Already had this value, just store the existing pointer in the  
+    /*
+      Already had this value, just store the existing pointer in the
       instance.
     */
-    if result.is_some() { 
+    if result.is_some() {
       self.data = result.unwrap();
     } else {
       self.data = new(value);
