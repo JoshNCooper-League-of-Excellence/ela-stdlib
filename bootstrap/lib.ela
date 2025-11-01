@@ -164,8 +164,8 @@ impl AsSlice!<u8> for u32 {
   }
 }
 
-fn new!<T>(initial_value: T) -> *mut T {
-  ptr: *mut T = get_global_allocator().allocate(sizeof(T));
+fn new!<T>(initial_value: T, allocator: dyn Allocator = get_global_allocator()) -> *mut T {
+  ptr: *mut T = allocator.allocate(sizeof(T));
   *ptr = initial_value;
   return ptr;
 }

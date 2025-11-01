@@ -127,7 +127,7 @@ impl File {
     fflush(self.fd);
   }
 
-  fn close(*const self) -> void {
+  fn close(*const self) {
     if !self.is_valid() {
       return;
     }

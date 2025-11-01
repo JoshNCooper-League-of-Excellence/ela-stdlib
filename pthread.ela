@@ -23,14 +23,21 @@ struct Thread {
 }
 
 impl Thread {    
-  fn start(start_function: ThreadFunction, arg: *mut void) -> Result!<Self, str> {
-    self: Self;
-    // this memory gets deleted in start_thread();
-    parameters := new((start_function, arg));
-    if pthread_create(&mut self.handle, null, &mut start_thread, parameters) != 0 {
+  fn start(start_function: ThreadFunction, arg: *mut void, allocator: dyn Allocator = get_global_allocator()) -> Result!<Self, str> {
+    if !start_function {
+      return Result!<Self, str>::Err("the thread start function was null");
+    }
+
+    thread: Self;
+
+    parameters := new((start_function, arg), allocator);
+    defer allocator.free(parameters);
+
+    if pthread_create(&mut thread.handle, null, &mut start_thread, parameters) != 0 {
       return Result!<Self, str>::Err("failed to create thread");
     }
-    return Result!<Self, str>::Ok(self);
+
+    return Result!<Self, str>::Ok(thread);
   }
   
   fn join(*mut self) -> void {
@@ -45,7 +52,6 @@ fn start_thread(arg: *mut void) -> *mut void {
   tuple := *tuple_ptr;
   function, user_arg := tuple;
   function(user_arg);
-  std::c::free(arg);   // allocated by Thread::start();
   return null;
 }
   
@@ -128,11 +134,11 @@ extern fn pthread_cond_destroy(cond: *mut pthread_cond_t) -> s32;
 
 
 /* Simple condition variable */
-struct CondVar {
+struct ConditionVariable {
   handle: pthread_cond_t
 }
 
-impl CondVar {
+impl ConditionVariable {
   fn new() -> Self {
     self: Self;
     pthread_cond_init(&mut self.handle, null);
@@ -147,31 +153,10 @@ impl CondVar {
   fn broadcast(*mut self) {
     pthread_cond_broadcast(&mut self.handle);
   }
-  fn free(*mut self) {
-    pthread_cond_destroy(&mut self.handle);
-  }
 }
 
-impl Destroy for CondVar {
+impl Destroy for ConditionVariable {
   fn destroy(*mut self, recursive: bool = false) {
-    self.free();
-  }
-}
-
-struct Atomic!<T> where T: IsNumber | bool {
-  value: T,
-}
-
-impl!<T> Atomic!<T> where T: Copy {
-  fn new(val: T) -> Self {
-    self: Self;
-    self.value = val;
-    return self;
-  }
-  fn load(*const self) -> T {
-    return __atomic_load_n(&self.value as *const void, 5) as T;
-  }
-  fn store(*mut self, val: T) {
-    __atomic_store_n(&mut self.value as *mut void, val as u64, 5);
+    pthread_cond_destroy(&mut self.handle);
   }
 }
