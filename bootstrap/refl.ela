@@ -178,12 +178,11 @@ struct ElementIter {
 }
 
 impl ElementIter {
-
   // TODO: let's make this a default method for any iterator.
   fn count(*self) -> u64 {
     mut p := self.ptr;
     mut ct: u64 = 0;
-    while (*p) {
+    while (p != self.end) {
       p = p + self.element_type.size;
       ct++;
     }
