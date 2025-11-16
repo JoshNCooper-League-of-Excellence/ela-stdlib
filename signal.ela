@@ -131,7 +131,7 @@ fn signal_to_string(sig: s32) -> String {
 #ifdef SIGNAL_HANDLER_INCLUDE_FUNCTION_NAMES  {
   #c_flags " -rdynamic "
 } else ifdef DEBUG {
-  // #run std::c::printf("[metaprogram:note] compiling with -rdynamic so the signal handler can print function names in debug\n"c);
+  #run std::c::printf("[metaprogram:note] compiling with -rdynamic so the signal handler can print function names in debug\n"c);
   #c_flags " -rdynamic "
 }
 

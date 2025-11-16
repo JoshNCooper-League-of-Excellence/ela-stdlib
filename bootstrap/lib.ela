@@ -79,6 +79,11 @@ struct Env {
 extern fn getenv(buf: c_str) -> c_str;
 
 impl Env {
+  @[no_return]
+  fn exit(code: s32 = 0) {
+    std::c::exit(1);
+  }
+
   fn current() -> *mut Self {
     static mut self: Self;
     pointer := &mut self;
