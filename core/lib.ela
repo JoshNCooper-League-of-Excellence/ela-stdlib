@@ -52,7 +52,7 @@ import collections::{
 
 // utils that both string types use, avoiding some redundancy
 #include "stringutils.ela";
-// str, the default _type of a string literal.
+// str, the default type of a string literal.
 #include "str.ela";
 // String, heap allocated string.
 #include "String.ela";

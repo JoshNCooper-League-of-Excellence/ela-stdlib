@@ -2,7 +2,7 @@
 @[compiler_feature(Field)]
 struct Field {
   name: str,
-  _type: *const Type,
+  ty: *const Type,
   size: u64,
   offset: u64,
   enum_value: s64,   // this is only relevant to children of enum types.   TODO: make Option!<s64>
@@ -17,11 +17,11 @@ struct Method {
 
 @[compiler_feature(Type)]
 struct Type {
-  id: s32,                                                          // the integer ID used to identify this _type.
+  id: s32,                                                          // the integer ID used to identify this type.
   name: str,
   size: u64,                                                        // size_of(T)
   flags: u64,                                                       // defined in reflection.ela and emit.cpp, the values of the flags.
-  element_type: *const Type,                                        // the _type this _type has a pointer to, is an array of, etc.
+  element_ty: *const Type,                                        // the type this type has a pointer to, is an array of, etc.
   fields: [Field],                                                  // get a slice of struct fields, enum variants.
   traits: [*const Type],                                            // a slice of implemented traits.
   generic_args: [*const Type],                                      // a slice of the generic arguments.
@@ -42,7 +42,7 @@ impl Field {
   fn as_any(*const self, source: *const u8) -> any {
     return any.{
       ptr: self.get!<u8>(source),
-      _type: self._type
+      ty: self.ty
     };
   }
 }
@@ -151,21 +151,21 @@ impl any {
   fn from!<T>(t: *mut T) -> Self {
     return .{
       ptr: t,
-      _type: type_of(T),
+      ty: type_of(T),
     }
   }
 
-  // return the pointer behind this any, or if the _type isn't matched,
+  // return the pointer behind this any, or if the type isn't matched,
   // return null.
   fn cast!<T>(*const self) -> *mut T {
-    if !_type then _type = type_of(T);
-    if _type != self._type then return null;
+    if !ty then ty = type_of(T);
+    if ty != self.ty then return null;
     return self.ptr as *mut T;
   }
 
   // an unchecked version of the 'cast' method.
-  // this will return junk data, or worse, if you pass in the wrong _type to cast to.
-  // use cast anywhere you can, it's much more _type safe.
+  // this will return junk data, or worse, if you pass in the wrong type to cast to.
+  // use cast anywhere you can, it's much more type safe.
   fn unwrap!<T>(*const self) -> T {
     return *(self.ptr as *const T);
   }
@@ -174,7 +174,7 @@ impl any {
 struct ElementIter {
   ptr: *mut u8,
   end: *const u8,
-  element_type: *const Type,
+  element_ty: *const Type,
 }
 
 impl ElementIter {
@@ -184,7 +184,7 @@ impl ElementIter {
     mut p := self.ptr;
     mut ct: u64 = 0;
     while (*p) {
-      p = p + self.element_type.size;
+      p = p + self.element_ty.size;
       ct++;
     }
     return ct;
@@ -197,8 +197,8 @@ impl Iterator!<any> for ElementIter {
     if self.ptr >= self.end {
       return None();
     }
-    value := Some(any.{ptr: self.ptr, _type: self.element_type});
-    self.ptr += self.element_type.size;
+    value := Some(any.{ptr: self.ptr, ty: self.element_ty});
+    self.ptr += self.element_ty.size;
     return value;
   }
 }
@@ -225,20 +225,20 @@ impl Type {
       length := *(length_field.get(ptr) as *const u64);
       data   := *(data_field.get(ptr) as *const *const u8);
 
-      element_type := self.generic_args[0];
+      element_ty := self.generic_args[0];
 
-      if element_type == null {
-        panic("Cannot obtain element iterator -- 'element_type' aka self.generic_args[0] was null. This is a compiler bug");
+      if element_ty == null {
+        panic("Cannot obtain element iterator -- 'element_ty' aka self.generic_args[0] was null. This is a compiler bug");
       }
 
-      end := data + length * element_type.size;
-      return .{ptr: data as *mut u8, end: end, element_type: element_type};
+      end := data + length * element_ty.size;
+      return .{ptr: data as *mut u8, end: end, element_ty: element_ty};
     }
 
     return .{
       ptr: ptr as *mut u8,
       end: ptr + self.size,
-      element_type: self.element_type,
+      element_ty: self.element_ty,
     };
   }
 }
@@ -256,11 +256,11 @@ impl Iterator!<any> for TupleElementIter {
     }
     field := self.tuple_type.fields[self.element_index];
 
-    element_type := field._type;
+    element_ty := field.ty;
     offset := self.tuple_type.offset(field.name);
     value : any = .{
       ptr: self.ptr + offset,
-      _type: element_type
+      ty: element_ty
     };
     self.element_index++;
     return Some(value);

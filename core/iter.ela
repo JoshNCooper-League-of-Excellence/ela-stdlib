@@ -94,8 +94,8 @@ impl!<T> Iterator!<T> {
   we should be able to return Enumerate!<T, Iterator!<T>>
 
   where:
-    - enumerate is a Enumerate!<...> is a concrete _type,
-    - T is a concrete _type
+    - enumerate is a Enumerate!<...> is a concrete type,
+    - T is a concrete type
     - Iterator!<T> is a trait -- not concrete. but we resolve this to be a trait bounds / constraint.
 
   for now, we'll just use Iter!<T> because it's overwhelmingly common.

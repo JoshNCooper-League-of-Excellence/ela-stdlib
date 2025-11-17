@@ -255,7 +255,7 @@ fn canonical_path!<Path>(path: Path) -> Option!<String> where Path: AsSlice!<u8>
 }
 
 /*
-  The option return _type simply says when it .is_none(), it has failed in some capacity.
+  The option return type simply says when it .is_none(), it has failed in some capacity.
   We don't have a way to interact with perror, so we don't really get much information as to why
   this has failed, just that it did fail.
 */

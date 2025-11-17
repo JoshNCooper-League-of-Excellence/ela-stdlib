@@ -18,7 +18,7 @@ enum TokenType {
 }
 
 struct Token {
-  _type: TokenType,
+  ty: TokenType,
   value: String,
   line: s32,
   column: s32,
@@ -51,7 +51,7 @@ impl JsonLexer {
       input: input,
     };
   }
-  
+
   fn get_location_string(self) -> String {
     column := self.position - self.line_start;
     line := self.cur_line + 1;
@@ -62,7 +62,7 @@ impl JsonLexer {
     type Result :: Result!<Token, String>;
     mut token : Token;
 
-    token._type = TokenType::Eof;
+    token.ty = TokenType::Eof;
     token.column = self.position - self.line_start;
     token.line = self.cur_line + 1;
 
@@ -110,7 +110,7 @@ impl JsonLexer {
       while c != '\n' && c != '\r' {
         self.position++;
         if self.position >= self.input.length || self.input[self.position] == 0 {
-          token._type = TokenType::Eof;
+          token.ty = TokenType::Eof;
           return Result::Ok(token);
         }
         c = self.input[self.position];
@@ -147,37 +147,37 @@ impl JsonLexer {
         token.value.push_front('-');
       }
 
-      token._type = TokenType::Number;
+      token.ty = TokenType::Number;
       return Result::Ok(token);
       // operators
     } else if c == ':' {
       token.value = String::from(":");
-      token._type = TokenType::Colon;
+      token.ty = TokenType::Colon;
       self.position++;
       return Result::Ok(token);
     } else if c == '{' {
       token.value = String::from("{");
-      token._type = TokenType::LCurly;
+      token.ty = TokenType::LCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '}' {
       token.value = String::from("}");
-      token._type = TokenType::RCurly;
+      token.ty = TokenType::RCurly;
       self.position++;
       return Result::Ok(token);
     } else if c == '[' {
       token.value = String::from("[");
-      token._type = TokenType::LBracket;
+      token.ty = TokenType::LBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ']' {
       token.value = String::from("]");
-      token._type = TokenType::RBracket;
+      token.ty = TokenType::RBracket;
       self.position++;
       return Result::Ok(token);
     } else if c == ',' {
       token.value = String::from(",");
-      token._type = TokenType::Comma;
+      token.ty = TokenType::Comma;
       self.position++;
       return Result::Ok(token);
     } else if c == '\"' {
@@ -201,21 +201,21 @@ impl JsonLexer {
         length: len
       };
 
-      token._type = TokenType::String;
+      token.ty = TokenType::String;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && std::c::strncmp(self.input.data + self.position, "true"c, 4) == 0 {
-      token.value = String::from("true"); 
-      token._type = TokenType::True;
+      token.value = String::from("true");
+      token.ty = TokenType::True;
       self.position += 4;
       return Result::Ok(token);
     } else if self.position + 5 <= self.input.length && std::c::strncmp(self.input.data + self.position, "false"c, 5) == 0 {
       token.value = String::from("false");
-      token._type = TokenType::False;
+      token.ty = TokenType::False;
       self.position += 5;
       return Result::Ok(token);
     } else if self.position + 4 <= self.input.length && std::c::strncmp(self.input.data + self.position, "null"c, 4) == 0 {
       token.value = String::from("null");
-      token._type = TokenType::Null;
+      token.ty = TokenType::Null;
       self.position += 4;
       return Result::Ok(token);
     } else {
@@ -224,8 +224,8 @@ impl JsonLexer {
   }
 }
 
-/* 
-TODO: 
+/*
+TODO:
   we could use the 'elexify' library, it's a port of the lexer that parses Ela itself.
   Should be pretty reliable and thorough.
 */
@@ -266,16 +266,16 @@ impl JsonLexer {
     }
 
     for i in 0..types.length {
-      _type := types.data![i];
-      if token._type == _type {
+      ty := types.data![i];
+      if token.ty == ty {
         return Result!<Token, String>::Ok(token);
       }
     }
-  
+
     error := format("at: \"%:%:%\" :: unexpected token, expected %, got %", (
         self.file, token.line, token.column,
         types,
-        token._type,
+        token.ty,
       ),
       *FormatOptions::current(),
     );
@@ -283,9 +283,7 @@ impl JsonLexer {
     return Result!<Token, String>::Err(error);
   }
 
-  fn expect_type(*mut self, _type: TokenType) -> Result!<Token, String> {
-    // TODO: it's much cheaper if we just check this, instead of making list lol.
-    // saves a stack alloc and a function call.
-    return self.expect_types(.[_type]);
+  fn expect_type(*mut self, ty: TokenType) -> Result!<Token, String> {
+    return self.expect_types(.[ty]);
   }
 }

@@ -22,7 +22,7 @@ impl!<_Some> Option!<_Some> {
       else: {
         panic("unwrapped a 'none' option");
       }
-    } 
+    }
   }
 
   fn or_else(self, fallback: _Some) -> _Some {
@@ -43,15 +43,15 @@ impl!<_Some> Option!<_Some> {
   }
 }
 
-/* 
+/*
   TODO:
   replace these with something like this:
   * type!<T> Some!<T> :: Option!<T>;
 */
 
-/* 
-  This can be inferred, but 
-  This only works with an expected _type, such as an argument, 
+/*
+  This can be inferred, but
+  This only works with an expected type, such as an argument,
   typed declaration, etc.
 */
 @[inline]
@@ -59,8 +59,8 @@ fn Some!<T>(t: T) -> Option!<T> {
   return Option!<T>::Some(t);
 }
 
-// This can be inferred, but 
-// This only works with an expected _type, such as an argument, 
+// This can be inferred, but
+// This only works with an expected type, such as an argument,
 // typed declaration, etc.
 @[inline]
 fn None!<T>() -> T {

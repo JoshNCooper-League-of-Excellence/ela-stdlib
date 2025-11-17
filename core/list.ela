@@ -408,8 +408,8 @@ impl!<T> List!<T>  {
     Check if the list contains an item. This uses the `a == b` operator, so this is only valid
     on scalars (integers, floats, etc), pointers, and types that implement Eq (self == self)
 
-    Right now we don't have a good way to check if a _type is a pointer with an trait and a where constraint,
-    so we can't really put a _type constraint on this function yet. in the future!
+    Right now we don't have a good way to check if a type is a pointer with an trait and a where constraint,
+    so we can't really put a type constraint on this function yet. in the future!
   */
   @[inline]
   fn contains(self, seek: T, comparator: Comparator) -> bool {

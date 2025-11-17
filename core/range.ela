@@ -1,12 +1,8 @@
-
-// TODO: add reverse ranges?
-
 struct RangeBase!<V> where V: Eq | IsNumeric {
   begin: Option!<V>,
   end:   Option!<V>,
   is_inclusive: bool,
 }
-
 
 impl!<V> RangeBase!<V> {
   fn length(self) -> V  {
@@ -32,9 +28,9 @@ impl!<V> RangeBase!<V> {
         end = V::max_value();
       } else {
         // we have nothing to do here, because we have no way to reason about the type V.
-        // range needs to have a set of supertraits for V that allow us to get ValueRange {min/maxvalue} for 
+        // range needs to have a set of supertraits for V that allow us to get ValueRange {min/maxvalue} for
         // arbitrary non-integer values.
-        end = 0; 
+        end = 0;
       }
     }
     return end;
@@ -71,7 +67,7 @@ impl!<V> Iterator!<V> for RangeIter!<V>  {
     }
 
     value := Option!<V>::Some(self.idx);
-    
+
     if self.begin > self.end {
       self.idx -= 1;
     } else {
@@ -105,9 +101,9 @@ impl!<V> Iterable for RangeBase!<V> {
     begin: V = if self.begin is Option!<V>::Some(v) {
       return v;
     } else {
-      // begin at 0 if we don't have a min. we won't use V::min_value() here 
+      // begin at 0 if we don't have a min. we won't use V::min_value() here
       // otherwise for i in ..10 would go from like -4 billion to 10
-      return default(); 
+      return default();
     }
 
     end: V = if self.end is Option!<V>::Some(v) {
@@ -118,7 +114,7 @@ impl!<V> Iterable for RangeBase!<V> {
       } else {
         // we can't reason about non-numeric values here, so you're out of luck.
         // TODO: for range, we should require that you implement Default, and ValueRange { min / maxvalue };
-        return default(); 
+        return default();
       }
     }
 
@@ -131,10 +127,10 @@ impl!<V> Iterable for RangeBase!<V> {
       is_inclusive: self.is_inclusive,
     };
 
-    // printf("begin := %d, end := %d, is_inclusive := %d, idx := %d\n"c, 
-    //   iter.begin, 
-    //   iter.end, 
-    //   iter.is_inclusive, 
+    // printf("begin := %d, end := %d, is_inclusive := %d, idx := %d\n"c,
+    //   iter.begin,
+    //   iter.end,
+    //   iter.is_inclusive,
     //   iter.begin
     // );
 
@@ -145,9 +141,9 @@ impl!<V> Iterable for RangeBase!<V> {
     begin: V = if self.begin is Option!<V>::Some(v) {
       return v;
     } else {
-      // begin at 0 if we don't have a min. we won't use V::min_value() here 
+      // begin at 0 if we don't have a min. we won't use V::min_value() here
       // otherwise for i in ..10 would go from like -4 billion to 10
-      return default(); 
+      return default();
     }
 
     end: V = if self.end is Option!<V>::Some(v) {
@@ -158,7 +154,7 @@ impl!<V> Iterable for RangeBase!<V> {
       } else {
         // we can't reason about non-numeric values here, so you're out of luck.
         // TODO: for range, we should require that you implement Default, and ValueRange { min / maxvalue };
-        return default(); 
+        return default();
       }
     }
 

@@ -116,22 +116,17 @@ extern fn sigaction(signum: s32, action: *Sig_Action, old_action: *mut Sig_Actio
 /* Invoke signal-catching function with three arguments instead of one.  */
 const Signal_Action_Info := 4;
 
+// from libbacktrace.
 extern fn backtrace(buffer: **void, size: s32) -> s32;
 extern fn backtrace_symbols_fd(buffer: **void, size: s32, fd: s32);
 
 extern fn strsignal(sig: s32) -> *u8;
-
-// human-readable signal name
-fn signal_to_string(sig: s32) -> String {
-  return String::from_ptr(strsignal(sig));
-}
 
 // Force the names of all symbols into dynamic symbol table so we can read them on
 // an error signal.
 #ifdef SIGNAL_HANDLER_INCLUDE_FUNCTION_NAMES  {
   #c_flags " -rdynamic "
 } else ifdef DEBUG {
-  #run std::c::printf("[metaprogram:note] compiling with -rdynamic so the signal handler can print function names in debug\n"c);
   #c_flags " -rdynamic "
 }
 

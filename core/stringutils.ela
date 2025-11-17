@@ -1,9 +1,9 @@
-
-
-// ! TODO: 
+// ! TODO:
   // fix the bug where this doesn't fricken work.
-  // emit_symbol tries to emit it as if the functions belong ot StringUtils where 
+  // emit_symbol tries to emit it as if the functions belong ot StringUtils where
   // we need to do like String$slice not StringUtils$slice
+  //
+  // idk if this is still relevant. 11/4/25
 
 trait StringUtils {
   fn is_empty(self) -> bool => self.length == 0;
@@ -27,13 +27,13 @@ trait StringUtils {
     if self.length < length then return false;
 
     for i in 0..length {
-      if self.data![i] != data![i] 
+      if self.data![i] != data![i]
         then return false;
     }
 
     return true;
   }
-  
+
   fn ends_with!<Suffix>(self, suffix: Suffix) -> bool where Suffix: AsSlice!<u8> {
     data, length := suffix.as_slice();
     if self.length < length then return false;
@@ -56,11 +56,11 @@ trait StringUtils {
   fn contains!<TString>(self, search: TString) -> bool where TString: AsSlice!<u8> {
     self_data, self_len := self.as_slice();
     search_data, search_len := search.as_slice();
-  
+
     if search_len == 0 || self_len < search_len {
       return false;
     }
-    
+
     for i in 0..(self_len - search_len + 1) {
       mut found := true;
       for j in 0..search_len {

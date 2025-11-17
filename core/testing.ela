@@ -10,7 +10,7 @@ _all_tests: [Test];
 
 const TEST_RUNNER_LONG_JUMP_PANICKED: s32 = 2;
 
-@[compiler_feature(test_runner), constructor(1)]
+@[compiler_feature(test_runner), constructor(2)]
 fn _run_all_tests() {
   old_handler := panic_handler;
 

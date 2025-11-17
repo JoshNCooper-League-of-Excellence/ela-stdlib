@@ -16,7 +16,7 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
 
     panic("called 'unwrap' on an Err result");
     default: _Ok;
-    
+
     return default;
   }
 
@@ -33,7 +33,7 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     if self is Result!<_Ok, _Err>::Err(err) {
       handler(err);
       panic("unwrapped a 'Err' result.");
-    } 
+    }
     return self.unwrap();
   }
 
@@ -51,10 +51,10 @@ impl!<_Ok, _Err> Result!<_Ok, _Err> {
     return false;
   }
 
-  // we can use this to propagate the error/ok into a new result _type,
+  // we can use this to propagate the error/ok into a new result type,
   // to create a hierarchy
   // for example
-  /* 
+  /*
       fn getter(..) -> Result!<(), String> ... // this function returns a Result that has a String for an error.
 
       fn other(..) -> Result!<s32, String> ... // this also returns a result that has a string for an error, but

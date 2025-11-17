@@ -1,8 +1,8 @@
 impl!<T> Format for InitList!<T> {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := type_of(T);
+    element_ty := type_of(T);
     if formatter.options.typename {
-      formatter.writer.appendf("InitList!<%>", (element_type.name,), formatter.options.unquoted());
+      formatter.writer.appendf("InitList!<%>", (element_ty.name,), formatter.options.unquoted());
     }
     formatter.writer.append("[");
     if formatter.options.indented {
@@ -13,7 +13,7 @@ impl!<T> Format for InitList!<T> {
     for i, val in self.enumerate() {
       value : any = any.{
         ptr: &mut self.data![i],
-        _type: element_type,
+        ty: element_ty,
       };
       if !first {
         if formatter.options.indented {
@@ -36,10 +36,10 @@ impl!<T> Format for InitList!<T> {
 
 impl!<T> Format for List!<T> {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := type_of(T);
+    element_ty := type_of(T);
 
     if formatter.options.typename {
-      formatter.writer.appendf("List!<%>", (element_type.name,), formatter.options.unquoted());
+      formatter.writer.appendf("List!<%>", (element_ty.name,), formatter.options.unquoted());
     }
     formatter.writer.append("[");
     if formatter.options.indented {
@@ -50,7 +50,7 @@ impl!<T> Format for List!<T> {
     for i, val in self.enumerate() {
       value : any = any.{
         ptr: &mut self.data![i],
-        _type: element_type,
+        ty: element_ty,
       };
       if !first {
         if formatter.options.indented {
@@ -73,8 +73,8 @@ impl!<T> Format for List!<T> {
 
 impl!<T> Format for [T] {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := type_of(T);
-    formatter.writer.appendf("[%]", (element_type.name,), formatter.options.unquoted());
+    element_ty := type_of(T);
+    formatter.writer.appendf("[%]", (element_ty.name,), formatter.options.unquoted());
     formatter.writer.append(" [");
     if formatter.options.indented {
       formatter.writer.append("\n  ");
@@ -85,7 +85,7 @@ impl!<T> Format for [T] {
     for val in *self {
       value : any = any.{
         ptr: &mut self.data![i],
-        _type: element_type,
+        ty: element_ty,
       };
       if !first {
         if formatter.options.indented {

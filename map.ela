@@ -225,11 +225,11 @@ impl!<Key, Value> Format for Map!<Key, Value> {
 
       key_any : any = any.{
         ptr: &mut key,
-        _type: key_type,
+        ty: key_type,
       };
       value_any : any = any.{
         ptr: &mut value,
-        _type: value_type,
+        ty: value_type,
       };
 
       formatter.writer.append_byte(' ');

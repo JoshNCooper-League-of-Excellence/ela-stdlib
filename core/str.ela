@@ -42,6 +42,7 @@ impl str {
   }
 }
 
+
 impl Index!<u8> for str {
   fn index(*const self, idx: u64) -> *const u8 {
     return &const self.data![idx];
@@ -81,7 +82,6 @@ impl Slice_Index!<u8> for str {
     }
   }
 }
-
 
 // This iterator is over the bytes.
 impl Iterable for str {

@@ -2,7 +2,7 @@
 // allow an object to be constructed from another.
 // Except it's not done via casting, just a call.
 trait From!<T> {
-  // construct a self _type from T.
+  // construct a self type from T.
   fn from(v: T) -> Self;
 }
 

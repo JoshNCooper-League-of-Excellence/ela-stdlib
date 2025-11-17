@@ -5,7 +5,7 @@ struct Type; // forward declare reflection type.
 
 /*
   Pretty much equivalent to an explicitly called destructor in C++, or a Drop trait in Rust.
-  often paired with defer blocks, to emulate a nice 'RAII' _type behaviour.
+  often paired with defer blocks, to emulate a nice 'RAII' type behaviour.
 
   recursive is defaulted to true. we set a precedent that this is the expected behaviour when calling destroy in most cases;
   every subobject that needs to be freed, will be.
@@ -44,7 +44,7 @@ trait Allocator: Destroy {
 // "Hello, World!"c <- *u8
 // "Hello, World!"  <- str
 
-// This is a string literal _type. "..." will return this _type.
+// This is a string literal type. "..." will return this type.
 // It's meant to be an immutable constant string.
 @[compiler_feature(str)]
 struct str {
@@ -97,11 +97,11 @@ struct SliceMut!<V> {
   length: u64,
 }
 
-// A semi-_type-erased pointer that carries the RTTI (Runtime Type Isnformation)
+// A semi-type-erased pointer that carries the RTTI (Runtime Type Isnformation)
 // with it for a way to do "duck typing" in a way.
 struct any {
   ptr:  *mut u8,
-  _type: *const Type
+  ty: *const Type
 };
 
 choice Result!<_Ok, _Err> {

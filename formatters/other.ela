@@ -30,6 +30,6 @@ impl Format for any {
     if formatter.options.typename {
       formatter.writer.append("any ");
     }
-    formatter.writer.appendf("{ type: %, ptr: % }", (self._type.name, self.ptr), formatter.options);
+    formatter.writer.appendf("{ type: %, ptr: % }", (self.ty.name, self.ptr), formatter.options);
   }
 }
