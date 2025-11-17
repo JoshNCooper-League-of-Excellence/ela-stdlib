@@ -197,7 +197,7 @@ struct Span {
 
 impl Span {
   fn files() -> *mut List!<String> {
-    #static mut files: List!<String>;
+    static mut files: List!<String>;
     return &mut files;
   }
 
@@ -287,7 +287,7 @@ struct Token {
 
 impl Token {
   fn Eof() -> Token {
-    #static eof: Token = .{
+    static eof: Token = .{
       kind: TOKEN_EOF,
     };
     return eof;
@@ -708,7 +708,7 @@ impl Lexer {
         state.pos++; // move past '
         state.col++;
         mut buffer: [u8; 32];
-        std::c::snprintf(buffer, 32 * sizeof(u8), "0x%X"c, codepoint);
+        std::c::snprintf(buffer, 32 * size_of(u8), "0x%X"c, codepoint);
         self.lookahead_buffer.push(Token::new(span, Some(String::from_ptr(buffer)), TOKEN_CHAR));
         return;
       }

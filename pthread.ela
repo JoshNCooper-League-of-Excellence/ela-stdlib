@@ -41,7 +41,7 @@ impl Thread {
   }
   
   fn join(*mut self) -> void {
-    #static n : *mut void;
+    static n : *mut void;
     pthread_join(&mut self.handle, &mut n);
   }
 }

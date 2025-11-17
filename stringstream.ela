@@ -12,9 +12,9 @@ struct Block {
 
 impl Block {
   fn new(allocator: dyn Allocator, size: u64) -> *mut Self {
-    mut self : *mut Self =  allocator.allocate(sizeof(Block));
+    mut self : *mut Self =  allocator.allocate(size_of(Block));
     self.allocator = allocator;
-    self.data = allocator.allocate_array(sizeof(u8), size);
+    self.data = allocator.allocate_array(size_of(u8), size);
     self.length = 0;
     self.next = null;
     self.block_size = size;
@@ -74,9 +74,9 @@ impl StringStream {
     mut data: *mut u8;
 
     if allocator is Option!<dyn Allocator>::None {
-      data = self.allocator.allocate(sizeof(u8) * length + 1);
+      data = self.allocator.allocate(size_of(u8) * length + 1);
     } else {
-      data = allocator.unwrap().allocate(sizeof(u8) * length + 1);
+      data = allocator.unwrap().allocate(size_of(u8) * length + 1);
     }
 
     data![length] = '\0'; // Null-terminate the final str

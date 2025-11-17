@@ -1,6 +1,6 @@
 impl!<T> Format for InitList!<T> {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := typeof(T);
+    element_type := type_of(T);
     if formatter.options.typename {
       formatter.writer.appendf("InitList!<%>", (element_type.name,), formatter.options.unquoted());
     }
@@ -36,7 +36,7 @@ impl!<T> Format for InitList!<T> {
 
 impl!<T> Format for List!<T> {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := typeof(T);
+    element_type := type_of(T);
 
     if formatter.options.typename {
       formatter.writer.appendf("List!<%>", (element_type.name,), formatter.options.unquoted());
@@ -73,7 +73,7 @@ impl!<T> Format for List!<T> {
 
 impl!<T> Format for [T] {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := typeof(T);
+    element_type := type_of(T);
     formatter.writer.appendf("[%]", (element_type.name,), formatter.options.unquoted());
     formatter.writer.append(" [");
     if formatter.options.indented {

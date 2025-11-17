@@ -95,7 +95,7 @@ impl String {
 
     self.get_allocator_if_needed();
 
-    self.data = self.allocator.resize(self.data, sizeof(u8), new_size + 1);
+    self.data = self.allocator.resize(self.data, size_of(u8), new_size + 1);
     self.data![self.length] = 0;
   }
 

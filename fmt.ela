@@ -202,7 +202,7 @@ impl FormatOptions {
   };
 
   fn current() -> *mut Self {
-    #static mut current: FormatOptions;
+    static mut current: FormatOptions;
     return &mut current;
   }
 
@@ -330,7 +330,7 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
     };
     value.format(&mut formatter);
   } else {
-    _type := typeof(T);
+    _type := type_of(T);
     mut format : str;
     mut format_buffer: [u8; 255];
     where T: IsPointer {
@@ -400,9 +400,9 @@ fn to_string!<T>(value: T, options: FormatOptions, allocator: dyn Allocator = ge
       return .{};
     }
     buffer: [u8; 1024];
-    length := std::c::snprintf(buffer, 1024 * sizeof(u8), format_buffer, value);
+    length := std::c::snprintf(buffer, 1024 * size_of(u8), format_buffer, value);
     return String.{
-      data: allocator.copy(buffer, sizeof(u8), length),
+      data: allocator.copy(buffer, size_of(u8), length),
       length: length,
     };
   }
@@ -475,7 +475,7 @@ fn format_choice(value: any, formatter: *mut Formatter) {
   for field in ty.fields {
     if field.discriminant == *discriminant {
       formatter.writer.append(field.name);
-      if field._type == typeof(void) {
+      if field._type == type_of(void) {
         return;
       }
       format_any(any.{
@@ -483,7 +483,7 @@ fn format_choice(value: any, formatter: *mut Formatter) {
         // offset of discriminant is where the union starts
         // ! this just seems wrong because we have no idea if the payload
         // ! causes this to be padded, i am not sure if this is good.
-        ptr: value.ptr + sizeof(u32) 
+        ptr: value.ptr + size_of(u32) 
       }, formatter);
       return;
     }
@@ -499,13 +499,13 @@ fn format_any(value: any, formatter: *mut Formatter) {
     return;
   }
 
-  if value._type == typeof(String)  {
+  if value._type == type_of(String)  {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
     formatter.writer.append(*(value.ptr as *const String));
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
-  } else if value._type == typeof(str) {
+  } else if value._type == type_of(str) {
     if formatter.options.quote_strings
       then formatter.writer.append("\"");
     formatter.writer.append((*(value.ptr as *const str)));
@@ -519,7 +519,7 @@ fn format_any(value: any, formatter: *mut Formatter) {
     format_tuple(value, formatter);
   } else if value.ptr == null {
     formatter.writer.append("null");
-  } else if value._type == typeof(c_str) {
+  } else if value._type == type_of(c_str) {
     formatter.writer.append(String::from_ptr(value.unwrap!<*const u8>()));
   } else if value._type.is_flags_enum() {
     if formatter.options.typename {
@@ -571,17 +571,17 @@ fn format_any(value: any, formatter: *mut Formatter) {
     format_choice(value, formatter);
   } else {
     switch value._type {
-      typeof(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
-      typeof(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>(), formatter.options, get_global_allocator()));       }
-      typeof(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>(), formatter.options, get_global_allocator()));       }
-      typeof(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>(), formatter.options, get_global_allocator()));       }
-      typeof(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>(), formatter.options, get_global_allocator()));        }
-      typeof(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>(), formatter.options, get_global_allocator()));       }
-      typeof(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>(), formatter.options, get_global_allocator()));       }
-      typeof(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>(), formatter.options, get_global_allocator()));       }
-      typeof(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>(), formatter.options, get_global_allocator()));       }
-      typeof(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>(), formatter.options, get_global_allocator()));       }
-      typeof(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>(), formatter.options, get_global_allocator()));      }
+      type_of(u8):      { formatter.writer.append_then_free(to_string(value.unwrap!<u8>(), formatter.options, get_global_allocator()));        }
+      type_of(u16):     { formatter.writer.append_then_free(to_string(value.unwrap!<u16>(), formatter.options, get_global_allocator()));       }
+      type_of(u32):     { formatter.writer.append_then_free(to_string(value.unwrap!<u32>(), formatter.options, get_global_allocator()));       }
+      type_of(u64):     { formatter.writer.append_then_free(to_string(value.unwrap!<u64>(), formatter.options, get_global_allocator()));       }
+      type_of(s8):      { formatter.writer.append_then_free(to_string(value.unwrap!<s8>(), formatter.options, get_global_allocator()));        }
+      type_of(s16):     { formatter.writer.append_then_free(to_string(value.unwrap!<s16>(), formatter.options, get_global_allocator()));       }
+      type_of(s32):     { formatter.writer.append_then_free(to_string(value.unwrap!<s32>(), formatter.options, get_global_allocator()));       }
+      type_of(s64):     { formatter.writer.append_then_free(to_string(value.unwrap!<s64>(), formatter.options, get_global_allocator()));       }
+      type_of(f32):     { formatter.writer.append_then_free(to_string(value.unwrap!<f32>(), formatter.options, get_global_allocator()));       }
+      type_of(f64):     { formatter.writer.append_then_free(to_string(value.unwrap!<f64>(), formatter.options, get_global_allocator()));       }
+      type_of(bool):    { formatter.writer.append_then_free(to_string(value.unwrap!<bool>(), formatter.options, get_global_allocator()));      }
       else:            { formatter.writer.append("$$(unsupported fmt _type)$$");                                 }
     }
   }
@@ -632,7 +632,7 @@ fn format!<Tuple>(fmt: str, tuple: Tuple, options: FormatOptions = *FormatOption
   } else {
     value_index := 0;
 
-    fields := typeof(Tuple).fields;
+    fields := type_of(Tuple).fields;
 
     if fields.is_empty() {
       return "()".to_string(allocator);

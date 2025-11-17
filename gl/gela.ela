@@ -15,7 +15,7 @@ impl Shader {
     if success == 0 {
       mut length: s32;
       glGetShaderiv(shader, GL::INFO_LOG_LENGTH, &const length);
-      info_log: c_str = std::c::malloc(sizeof(c_str) * length);
+      info_log: c_str = std::c::malloc(size_of(c_str) * length);
       glGetShaderInfoLog(shader, length, &mut length, info_log);
       std::printf("Shader compilation failed: %s\n", info_log);
       std::c::free(info_log);
@@ -42,7 +42,7 @@ impl Shader {
     if success == 0 {
       mut length: s32;
       glGetProgramiv(program, GL::INFO_LOG_LENGTH, &mut length);
-      info_log: c_str = std::c::malloc(sizeof(c_str) * length);
+      info_log: c_str = std::c::malloc(size_of(c_str) * length);
       glGetProgramInfoLog(program, length, &mut length, info_log);
       std::printf("Program linking failed: %s\n", info_log);
       std::c::free(info_log);

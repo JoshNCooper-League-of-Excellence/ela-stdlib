@@ -379,7 +379,7 @@ module std {
     }
 
 
-    const SIGSET_NUM_WORDS := (1024 / (8 * sizeof(u64)))
+    const SIGSET_NUM_WORDS := (1024 / (8 * size_of(u64)))
     struct SigSet_T
     {
       val: [u32; SIGSET_NUM_WORDS],
@@ -427,15 +427,15 @@ module std {
   }
 
   fn malloc!<T>() -> *mut T {
-    return c::malloc(sizeof(T));
+    return c::malloc(size_of(T));
   }
 
   fn calloc!<T>(num: u64) -> *mut T {
-    return c::calloc(num, sizeof(T));
+    return c::calloc(num, size_of(T));
   }
 
   fn realloc!<T>(ptr: *const T, n: u64) -> *mut T {
-    return c::realloc(ptr, n * sizeof(T));
+    return c::realloc(ptr, n * size_of(T));
   }
 
   @[no_return]
@@ -500,7 +500,7 @@ module std {
       return .{};
     }
 
-    buffer: *mut u8 = allocator.allocate((length + 1) * sizeof(u8));
+    buffer: *mut u8 = allocator.allocate((length + 1) * size_of(u8));
     
     if buffer == null {
       return .{};

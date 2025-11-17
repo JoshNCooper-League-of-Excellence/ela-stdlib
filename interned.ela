@@ -8,7 +8,7 @@ struct Interned!<T> where T:  Hash {
 
 impl!<T> Interned!<T> {
   fn table() -> *mut Map!<u64, *const T> {
-    #static mut table: Map!<u64, *const T>;
+    static mut table: Map!<u64, *const T>;
     return &mut table;
   }
 

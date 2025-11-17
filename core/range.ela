@@ -161,6 +161,8 @@ impl!<V> Iterable for RangeBase!<V> {
 
 impl!<V> PartialEq!<RangeBase!<V>> for RangeBase!<V> {
   fn eq(self, right: Self) -> bool {
-    return self.get_begin_or_default() == right.get_begin_or_default() && self.get_end_or_default() == right.get_end_or_default();
+    return 
+      self.get_begin_or_default() == right.get_begin_or_default() && 
+      self.get_end_or_default() == right.get_end_or_default();
   }
 }

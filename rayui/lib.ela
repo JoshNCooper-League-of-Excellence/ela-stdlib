@@ -70,7 +70,7 @@ fn draw_character(char: u8, position: Vector2, style: Style) {
   Enabled,  // interactable.
 }
 
-#static widget_id: u32 = 0;
+static widget_id: u32 = 0;
 
 struct WidgetBase {
   is_active: bool = true,

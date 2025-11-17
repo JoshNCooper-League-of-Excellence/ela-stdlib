@@ -80,7 +80,7 @@ extern fn getenv(buf: c_str) -> c_str;
 
 impl Env {
   fn current() -> *mut Self {
-    #static mut self: Self;
+    static mut self: Self;
     return &mut self;
   }
 
@@ -105,7 +105,7 @@ impl Env {
     mut env := Env::current();
 
     #ifndef FREESTANDING {
-      mut data : *mut str = std::c::malloc((argc * sizeof(str)) as u64);
+      mut data : *mut str = std::c::malloc((argc * size_of(str)) as u64);
     } else {
       // This is just a hack. idk what a reasonable value to put here is.
       // 'getconf ARG_MAX' shows my shell can take over 2 million arguments, 
@@ -113,7 +113,7 @@ impl Env {
       // I think 2048 is a reasonable compromise -- that would almost never be exceeded, especially
       // since command line programs aren't often freestanding, and distributed programs aren't really taking
       // command line arguments (in my experience, i could easily be wrong)
-      #static mut data : [str; 2048]; 
+      static mut data : [str; 2048]; 
     }
 
     for i in 0..argc {
@@ -153,7 +153,7 @@ impl Env {
 impl AsSlice!<u8> for u32 {
   fn as_slice(self) -> [u8] {
     // this is awful.
-    #static mut chars : [u8; 2] = .[
+    static mut chars : [u8; 2] = .[
       '\0', '\0'
     ];
     chars[0] = self;
@@ -165,7 +165,7 @@ impl AsSlice!<u8> for u32 {
 }
 
 fn new!<T>(initial_value: T, allocator: dyn Allocator = get_global_allocator()) -> *mut T {
-  ptr: *mut T = allocator.allocate(sizeof(T));
+  ptr: *mut T = allocator.allocate(size_of(T));
   *ptr = initial_value;
   return ptr;
 }
@@ -229,10 +229,4 @@ fn default!<T>() -> T {
      - interop into managed environments,
      - copying buffers of data into a new owned buffer, etc.
 */
-
-
-@[inline]
-fn discriminant_of!<T>(t: T) -> u32 where T: IsChoice {
-  return *((&t) as *u32);
-}
 

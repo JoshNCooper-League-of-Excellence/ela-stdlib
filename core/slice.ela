@@ -1,8 +1,8 @@
 
 impl!<T> [T] {
   fn clone!<Alloc>(self, allocator: *mut Alloc) -> Self where Alloc: Allocator | dyn Allocator {
-    data : *mut T = allocator.allocate_array(sizeof(T), self.length);
-    std::memory::copy(data, self.data, self.length * sizeof(T));
+    data : *mut T = allocator.allocate_array(size_of(T), self.length);
+    std::memory::copy(data, self.data, self.length * size_of(T));
     return .{
       data: data,
       length: self.length,
@@ -23,10 +23,10 @@ impl!<T> [T] {
 impl!<T> [T] {
   fn cast!<ToInner>(*self) -> [ToInner] {
     mut length: s64;
-    if (sizeof(T) < sizeof(ToInner)) {
-      length = self.length / sizeof(ToInner);
+    if (size_of(T) < size_of(ToInner)) {
+      length = self.length / size_of(ToInner);
     } else {
-      length = self.length * sizeof(ToInner);
+      length = self.length * size_of(ToInner);
     }
 
     return .{
@@ -103,7 +103,7 @@ impl [u8] {
   // if passing this pointer to C api's, you may need to use this.
   // it does allocate, therefore it returns a string. just use .data, and a using statement
   fn null_terminated(self, allocator: dyn Allocator) -> String {
-    buf: *mut u8 = allocator.allocate(sizeof(u8) * self.length + 1);
+    buf: *mut u8 = allocator.allocate(size_of(u8) * self.length + 1);
     std::string::copy(buf, self.data, self.length + 1);
     return .{
       data: buf,

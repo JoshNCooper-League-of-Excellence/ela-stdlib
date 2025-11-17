@@ -1,7 +1,7 @@
 
 impl!<T> Format for RangeBase!<T> {
   fn format(*const self, formatter: *mut Formatter) {
-    element_type := typeof(T);
+    element_type := type_of(T);
     formatter.writer.appendf("%..%", (self.begin, self.end), formatter.options);
   }
 }

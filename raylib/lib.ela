@@ -394,7 +394,7 @@ const CYAN := Color.{ r: 0 as u8, g: 255 as u8, b: 255 as u8, a: 255 as u8 };
 const DARKCYAN := Color.{ r: 0 as u8, g: 139 as u8, b: 139 as u8, a: 255 as u8 };
 const LIGHTCYAN := Color.{ r: 224 as u8, g: 255 as u8, b: 255 as u8, a: 255 as u8 };
 
-#static All_Colors: InitList!<Color> = .[
+static All_Colors: InitList!<Color> = .[
   WHITE,
   RED,
   GREEN,

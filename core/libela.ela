@@ -67,7 +67,7 @@ module memory {
     if dest == src || len == 0 {
       return;
     }
-    if dest < src || dest >= src + len * sizeof(u8) {
+    if dest < src || dest >= src + len * size_of(u8) {
       // No overlap or safe to copy forwards
       for i in 0..len {
         dest![i] = src![i];
@@ -145,7 +145,7 @@ module string {
     mut len: u32;
     while *s != 0 {
       len += 1;
-      s += sizeof(u8);
+      s += size_of(u8);
     }
     return len;
   }

@@ -203,8 +203,8 @@ import fmt::*;
 
 impl!<Key, Value> Format for Map!<Key, Value> {
   fn format(*const self, formatter: *mut Formatter) { 
-    key_type := typeof(Key);
-    value_type := typeof(Value);
+    key_type := type_of(Key);
+    value_type := type_of(Value);
     formatter.writer.appendf("Map!<%, %>", (key_type.name, value_type.name), formatter.options.unquoted());
     formatter.writer.append(" {");
 

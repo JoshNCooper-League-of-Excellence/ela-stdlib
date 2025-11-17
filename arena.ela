@@ -29,8 +29,8 @@ impl Arena {
     return .{
       size: size,
       flags: flags,
-      memory: std::c::calloc(sizeof(u8), size),
-      alignment: sizeof(*const void),
+      memory: std::c::calloc(size_of(u8), size),
+      alignment: size_of(*const void),
       next: null,
     }
   }
@@ -104,13 +104,13 @@ impl Allocator for Arena {
 
 impl Arena {
   fn emplace!<T>(*mut self, v: T = default!<T>()) -> *mut T {
-    ptr : *mut T = self.allocate(sizeof(T));
+    ptr : *mut T = self.allocate(size_of(T));
     *ptr = v;
     return ptr;
   }
 
   fn index!<T>(*const self, index: u64) -> *mut T {
-    offset := index * sizeof(T);
+    offset := index * size_of(T);
     mut arena := self;
     mut current_offset := offset;
 
@@ -132,9 +132,9 @@ impl Arena {
       start := arena.memory as *u8;
       end := start + arena.size;
       if (p as *u8) >= start && (p as *u8) < end {
-        return Option!<u64>::Some(offset + ((p as *u8) - start) / sizeof(T));
+        return Option!<u64>::Some(offset + ((p as *u8) - start) / size_of(T));
       }
-      offset += arena.size / sizeof(T);
+      offset += arena.size / size_of(T);
       arena = arena.next;
     }
     return Option!<u64>::None;

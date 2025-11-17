@@ -579,7 +579,7 @@ extern fn LLVMGetTargetExtTypeNumTypeParams(TargetExtTy: LLVMTypeRef) -> u32;
 extern fn LLVMGetTargetExtTypeTypeParam(TargetExtTy: LLVMTypeRef, Idx: u32) -> LLVMTypeRef;
 extern fn LLVMGetTargetExtTypeNumIntParams(TargetExtTy: LLVMTypeRef) -> u32;
 extern fn LLVMGetTargetExtTypeIntParam(TargetExtTy: LLVMTypeRef, Idx: u32) -> u32;
-extern fn LLVMTypeOf(Val: LLVMValueRef) -> LLVMTypeRef;
+extern fn LLVMtype_of(Val: LLVMValueRef) -> LLVMTypeRef;
 extern fn LLVMGetValueKind(Val: LLVMValueRef) -> LLVMValueKind;
 extern fn LLVMGetValueName2(Val: LLVMValueRef, Length: *mut u64) -> *const u8;
 extern fn LLVMSetValueName2(Val: LLVMValueRef, Name: *const u8, NameLen: u64) -> void;
@@ -724,7 +724,7 @@ extern fn LLVMConstVector(ScalarConstantVals: *mut LLVMValueRef, Size: u32) -> L
 extern fn LLVMConstantPtrAuth(Ptr: LLVMValueRef, Key: LLVMValueRef, Disc: LLVMValueRef, AddrDisc: LLVMValueRef) -> LLVMValueRef;
 extern fn LLVMGetConstOpcode(ConstantVal: LLVMValueRef) -> LLVMOpcode;
 extern fn LLVMAlignOf(Ty: LLVMTypeRef) -> LLVMValueRef;
-extern fn LLVMSizeOf(Ty: LLVMTypeRef) -> LLVMValueRef;
+extern fn LLVMsize_of(Ty: LLVMTypeRef) -> LLVMValueRef;
 extern fn LLVMConstNeg(ConstantVal: LLVMValueRef) -> LLVMValueRef;
 extern fn LLVMConstNSWNeg(ConstantVal: LLVMValueRef) -> LLVMValueRef;
 extern fn LLVMConstNUWNeg(ConstantVal: LLVMValueRef) -> LLVMValueRef;
@@ -1560,9 +1560,9 @@ extern fn LLVMIntPtrType(TD: LLVMTargetDataRef) -> LLVMTypeRef;
 extern fn LLVMIntPtrTypeForAS(TD: LLVMTargetDataRef, AS: u32) -> LLVMTypeRef;
 extern fn LLVMIntPtrTypeInContext(C: LLVMContextRef, TD: LLVMTargetDataRef) -> LLVMTypeRef;
 extern fn LLVMIntPtrTypeForASInContext(C: LLVMContextRef, TD: LLVMTargetDataRef, AS: u32) -> LLVMTypeRef;
-extern fn LLVMSizeOfTypeInBits(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u64;
-extern fn LLVMStoreSizeOfType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u64;
-extern fn LLVMABISizeOfType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u64;
+extern fn LLVMsize_ofTypeInBits(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u64;
+extern fn LLVMStoresize_ofType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u64;
+extern fn LLVMABIsize_ofType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u64;
 extern fn LLVMABIAlignmentOfType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u32;
 extern fn LLVMCallFrameAlignmentOfType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u32;
 extern fn LLVMPreferredAlignmentOfType(TD: LLVMTargetDataRef, Ty: LLVMTypeRef) -> u32;
@@ -1648,8 +1648,8 @@ extern fn LLVMDisposeGenericValue(GenVal: LLVMGenericValueRef) -> void;
 extern fn LLVMCreateExecutionEngineForModule(OutEE: *mut LLVMExecutionEngineRef, M: LLVMModuleRef, OutError: *mut *mut u8) -> bool;
 extern fn LLVMCreateInterpreterForModule(OutInterp: *mut LLVMExecutionEngineRef, M: LLVMModuleRef, OutError: *mut *mut u8) -> bool;
 extern fn LLVMCreateJITCompilerForModule(OutJIT: *mut LLVMExecutionEngineRef, M: LLVMModuleRef, OptLevel: u32, OutError: *mut *mut u8) -> bool;
-extern fn LLVMInitializeMCJITCompilerOptions(Options: *mut LLVMMCJITCompilerOptions, SizeOfOptions: u64) -> void;
-extern fn LLVMCreateMCJITCompilerForModule(OutJIT: *mut LLVMExecutionEngineRef, M: LLVMModuleRef, Options: *mut LLVMMCJITCompilerOptions, SizeOfOptions: u64, OutError: *mut *mut u8) -> bool;
+extern fn LLVMInitializeMCJITCompilerOptions(Options: *mut LLVMMCJITCompilerOptions, size_ofOptions: u64) -> void;
+extern fn LLVMCreateMCJITCompilerForModule(OutJIT: *mut LLVMExecutionEngineRef, M: LLVMModuleRef, Options: *mut LLVMMCJITCompilerOptions, size_ofOptions: u64, OutError: *mut *mut u8) -> bool;
 extern fn LLVMDisposeExecutionEngine(EE: LLVMExecutionEngineRef) -> void;
 extern fn LLVMRunStaticConstructors(EE: LLVMExecutionEngineRef) -> void;
 extern fn LLVMRunStaticDestructors(EE: LLVMExecutionEngineRef) -> void;
@@ -1922,7 +1922,7 @@ enum LLVMBinaryType {
   LLVMBinaryTypeMachO64L = 12,
   LLVMBinaryTypeMachO64B = 13,
   LLVMBinaryTypeWasm = 14,
-  LLVMBinaryTypeOffload = 15,
+  LLVMBinarytype_offload = 15,
 };
 extern fn LLVMCreateBinary(MemBuf: LLVMMemoryBufferRef, Context: LLVMContextRef, ErrorMessage: *mut *mut u8) -> LLVMBinaryRef;
 extern fn LLVMDisposeBinary(BR: LLVMBinaryRef) -> void;

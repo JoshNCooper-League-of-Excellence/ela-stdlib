@@ -24,7 +24,7 @@
   }
   impl LibcAllocator {
     fn get() -> Self {
-      #static self: LibcAllocator;
+      static self: LibcAllocator;
       return self;
     }
   }
@@ -47,7 +47,7 @@
       if self.length + 1 > self.capacity {
         if self.capacity == 0 then self.capacity = 4;
         self.capacity *= 2;
-        self.pointers = std::c::realloc(self.pointers, sizeof(*const void) * self.capacity);
+        self.pointers = std::c::realloc(self.pointers, size_of(*const void) * self.capacity);
       }
       self.pointers![self.length] = ptr;
       self.length += 1;
@@ -65,7 +65,7 @@
     fn remove_pointer(*mut self, ptr: *const void) {
       for i in 0..self.length {
         if self.pointers![i] == ptr {
-          std::c::memmove(self.pointers + i, self.pointers + i + 1, sizeof(*const void) * (self.length - i - 1));
+          std::c::memmove(self.pointers + i, self.pointers + i + 1, size_of(*const void) * (self.length - i - 1));
           self.length -= 1;
           break;
         }

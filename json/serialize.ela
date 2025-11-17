@@ -113,11 +113,11 @@ fn serialize_any(object: any) -> JsonResult {
   }
 
   if object._type.has_no_extension() {
-    if object._type == typeof(str) {
+    if object._type == type_of(str) {
       return JsonResult::Ok(new(JsonValue::String(String::from(*(object.ptr as *const str)))));
-    } else if object._type == typeof(String) {
+    } else if object._type == type_of(String) {
       return JsonResult::Ok(new(JsonValue::String((object.ptr as *const String).clone())));
-    } else if object._type == typeof(*const u8) {
+    } else if object._type == type_of(*const u8) {
       return JsonResult::Ok(new(JsonValue::String(String::from_ptr(*(object.ptr as *const *const u8)))));
     } else if object._type.is_scalar() {
       return serialize_scalar(object);

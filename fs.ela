@@ -38,11 +38,11 @@ impl File {
     mut buf: [u8; 8192];
 
     while {
-      read := fread(buf, sizeof(u8), 8192, in_file);
+      read := fread(buf, size_of(u8), 8192, in_file);
       if read == 0 {
         break;
       }
-      written := fwrite(buf, sizeof(u8), read, out_file);
+      written := fwrite(buf, size_of(u8), read, out_file);
       if written != read {
         fclose(in_file);
         fclose(out_file);
@@ -88,16 +88,16 @@ impl File {
   }
 
   fn write_raw(*mut self, data: *u8, length: u64) -> u64 {
-    return fwrite(data, sizeof(u8), length, self.fd);
+    return fwrite(data, size_of(u8), length, self.fd);
   }
 
   fn write!<Data>(*mut self, data: Data) -> u64 where Data: AsSlice!<u8> {
     slice := data.as_slice();
-    return fwrite(slice.data, sizeof(u8), slice.length, self.fd);
+    return fwrite(slice.data, size_of(u8), slice.length, self.fd);
   }
 
   fn read(*mut self, buffer: *mut u8, size: u64) -> u64 {
-    return fread(buffer, sizeof(u8), size, self.fd);
+    return fread(buffer, size_of(u8), size, self.fd);
   }
 
 
@@ -197,7 +197,7 @@ impl File {
       return Option::Some("Unable to open file");
     }
 
-    fwrite(data.data, sizeof(u8), data.length, file);
+    fwrite(data.data, size_of(u8), data.length, file);
 
     fclose(file);
 
